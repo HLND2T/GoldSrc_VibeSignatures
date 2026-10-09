@@ -1,0 +1,197 @@
+func_name: "CASBaseManager_OnMapEnd"
+func_va: "0x1cfa06"
+disasm_code: |-
+  .text:001CFA06                 push    ebp
+  .text:001CFA07                 mov     ebp, esp
+  .text:001CFA09                 push    edi
+  .text:001CFA0A                 push    esi
+  .text:001CFA0B                 push    ebx
+  .text:001CFA0C                 sub     esp, 24h
+  .text:001CFA0F                 call    __x86_get_pc_thunk_di
+  .text:001CFA14                 add     edi, (offset _GLOBAL_OFFSET_TABLE_ - $)
+  .text:001CFA1A                 mov     esi, [ebp+this]
+  .text:001CFA1D                 ; int
+  .text:001CFA1D                 push    0; int
+  .text:001CFA1F                 lea     eax, (_ZL15g_MapChangeHook.next - 8B0000h)[edi]; g_MapChangeHook
+  .text:001CFA25                 ; this
+  .text:001CFA25                 push    eax; this
+  .text:001CFA26                 mov     ebx, edi
+  .text:001CFA28                 ; CASHook_Call: CASHook_Call(int, ...), map-change hook before clearing map state; 5.15 has no map-name vararg. Resolve the PLT to the actual method body.
+  .text:001CFA28                 call    CASHook_Call@plt; CASHook_Call: CASHook_Call(int, ...), map-change hook before clearing map state; 5.15 has no map-name vararg. Resolve the PLT to the actual method body.
+  .text:001CFA2D                 mov     byte ptr [esi+6], 0
+  .text:001CFA31                 mov     byte ptr [esi+5], 0
+  .text:001CFA35                 mov     byte ptr [esi+4], 0
+  .text:001CFA39                 mov     edx, [esi+14h]
+  .text:001CFA3C                 add     esp, 10h
+  .text:001CFA3F                 test    edx, edx
+  .text:001CFA41                 jz      short loc_1CFA5C
+  .text:001CFA43                 sub     esp, 0Ch
+  .text:001CFA46                 mov     [ebp+var_1C], edx
+  .text:001CFA49                 ; this
+  .text:001CFA49                 push    edx; this
+  .text:001CFA4A                 call    __ZN15CASModuleHandleD1Ev; CASModuleHandle::~CASModuleHandle()
+  .text:001CFA4F                 pop     eax
+  .text:001CFA50                 mov     ecx, [ebp+var_1C]
+  .text:001CFA53                 ; void *
+  .text:001CFA53                 push    ecx; void *
+  .text:001CFA54                 call    __ZdlPv; operator delete(void *)
+  .text:001CFA59                 add     esp, 10h
+  .text:001CFA5C                 mov     dword ptr [esi+14h], 0
+  .text:001CFA63                 mov     ebx, [esi+18h]
+  .text:001CFA66                 test    ebx, ebx
+  .text:001CFA68                 mov     eax, ds:(_ZZN6CASLog11GetInstanceEvE9pInstance_ptr - 8B0000h)[edi]
+  .text:001CFA6E                 mov     [ebp+var_1C], eax
+  .text:001CFA71                 jz      short loc_1CFA9B
+  .text:001CFA73                 mov     edx, [eax]
+  .text:001CFA75                 mov     ecx, edx
+  .text:001CFA77                 test    edx, edx
+  .text:001CFA79                 jz      loc_1CFB2C
+  .text:001CFA7F                 push    eax
+  .text:001CFA80                 lea     eax, (aActiveModuleWa - 8B0000h)[edi]; "Active module was not set to null!\n"
+  .text:001CFA86                 push    eax
+  .text:001CFA87                 push    0
+  .text:001CFA89                 push    ecx
+  .text:001CFA8A                 mov     ebx, edi
+  .text:001CFA8C                 call    __ZN6CASLog5ErrorE12ASLogLevel_tPKcz; CASLog::Error(ASLogLevel_t,char const*,...)
+  .text:001CFA91                 mov     dword ptr [esi+18h], 0
+  .text:001CFA98                 add     esp, 10h
+  .text:001CFA9B                 mov     ebx, [esi+1Ch]
+  .text:001CFA9E                 cmp     ebx, [esi+20h]
+  .text:001CFAA1                 jz      short loc_1CFABA
+  .text:001CFAA3                 nop
+  .text:001CFAA4                 mov     ecx, [ebx]
+  .text:001CFAA6                 sub     esp, 0Ch
+  .text:001CFAA9                 mov     eax, [ecx]
+  .text:001CFAAB                 push    ecx
+  .text:001CFAAC                 call    dword ptr [eax+0Ch]
+  .text:001CFAAF                 add     ebx, 4
+  .text:001CFAB2                 add     esp, 10h
+  .text:001CFAB5                 cmp     [esi+20h], ebx
+  .text:001CFAB8                 jnz     short loc_1CFAA4
+  .text:001CFABA                 mov     ecx, [esi+0Ch]
+  .text:001CFABD                 push    ebx
+  .text:001CFABE                 mov     edx, [ecx]
+  .text:001CFAC0                 push    1
+  .text:001CFAC2                 push    1
+  .text:001CFAC4                 push    ecx
+  .text:001CFAC5                 call    dword ptr [edx+120h]
+  .text:001CFACB                 ; this
+  .text:001CFACB                 mov     [esp], esi; this
+  .text:001CFACE                 mov     ebx, edi
+  .text:001CFAD0                 call    __ZN14CASBaseManager20ClearObjectTypeCacheEv; CASBaseManager::ClearObjectTypeCache(void)
+  .text:001CFAD5                 mov     eax, [ebp+var_1C]
+  .text:001CFAD8                 mov     ecx, [eax]
+  .text:001CFADA                 add     esp, 10h
+  .text:001CFADD                 test    ecx, ecx
+  .text:001CFADF                 jz      short loc_1CFB08
+  .text:001CFAE1                 sub     esp, 0Ch
+  .text:001CFAE4                 ; this
+  .text:001CFAE4                 push    ecx; this
+  .text:001CFAE5                 mov     ebx, edi
+  .text:001CFAE7                 call    __ZN6CASLog12CloseLogFileEv; CASLog::CloseLogFile(void)
+  .text:001CFAEC                 pop     edx
+  .text:001CFAED                 mov     edi, [esi+28h]
+  .text:001CFAF0                 ; this
+  .text:001CFAF0                 push    edi; this
+  .text:001CFAF1                 call    __ZN20CASVirtualFileSystem9MapChangeEv; CASVirtualFileSystem::MapChange(void)
+  .text:001CFAF6                 mov     dword ptr [esi+48h], 5
+  .text:001CFAFD                 add     esp, 10h
+  .text:001CFB00                 lea     esp, [ebp-0Ch]
+  .text:001CFB03                 pop     ebx
+  .text:001CFB04                 pop     esi
+  .text:001CFB05                 pop     edi
+  .text:001CFB06                 pop     ebp
+  .text:001CFB07                 retn
+  .text:001CFB08                 sub     esp, 0Ch
+  .text:001CFB0B                 ; unsigned int
+  .text:001CFB0B                 push    4; unsigned int
+  .text:001CFB0D                 mov     ebx, edi
+  .text:001CFB0F                 call    __Znwj; operator new(uint)
+  .text:001CFB14                 mov     [ebp+var_20], eax
+  .text:001CFB17                 ; this
+  .text:001CFB17                 mov     [esp], eax; this
+  .text:001CFB1A                 call    __ZN6CASLogC2Ev; CASLog::CASLog(void)
+  .text:001CFB1F                 add     esp, 10h
+  .text:001CFB22                 mov     ebx, [ebp+var_1C]
+  .text:001CFB25                 mov     ecx, [ebp+var_20]
+  .text:001CFB28                 mov     [ebx], ecx
+  .text:001CFB2A                 jmp     short loc_1CFAE1
+  .text:001CFB2C                 sub     esp, 0Ch
+  .text:001CFB2F                 ; unsigned int
+  .text:001CFB2F                 push    4; unsigned int
+  .text:001CFB31                 mov     ebx, edi
+  .text:001CFB33                 call    __Znwj; operator new(uint)
+  .text:001CFB38                 mov     [ebp+var_20], eax
+  .text:001CFB3B                 ; this
+  .text:001CFB3B                 mov     [esp], eax; this
+  .text:001CFB3E                 call    __ZN6CASLogC2Ev; CASLog::CASLog(void)
+  .text:001CFB43                 add     esp, 10h
+  .text:001CFB46                 mov     ecx, [ebp+var_1C]
+  .text:001CFB49                 mov     ebx, [ebp+var_20]
+  .text:001CFB4C                 mov     [ecx], ebx
+  .text:001CFB4E                 mov     ecx, ebx
+  .text:001CFB50                 jmp     loc_1CFA7F
+  .text:001CFB55                 mov     esi, eax
+  .text:001CFB57                 sub     esp, 0Ch
+  .text:001CFB5A                 mov     edx, [ebp+var_20]
+  .text:001CFB5D                 ; void *
+  .text:001CFB5D                 push    edx; void *
+  .text:001CFB5E                 mov     ebx, edi
+  .text:001CFB60                 call    __ZdlPv; operator delete(void *)
+  .text:001CFB65                 mov     [esp], esi
+  .text:001CFB68                 call    __Unwind_Resume
+  .text:001CFB6D                 jmp     short loc_1CFB55
+procedure: |-
+  void __cdecl CASBaseManager::OnMapEnd(CASBaseManager *self)
+  {
+    CASModuleHandle *moduleHandle; // edx
+    _DWORD *v2; // eax
+    CASLog *v3; // ecx
+    void **i; // ebx
+    CASLog *v5; // ecx
+    CASLog *v6; // [esp+10h] [ebp-20h]
+    CASLog *v7; // [esp+10h] [ebp-20h]
+    void *v8; // [esp+14h] [ebp-1Ch]
+
+    CASHook_Call(&g_MapChangeHook, 0);           // CASHook_Call: CASHook_Call(int, ...), map-change hook before clearing map state; 5.15 has no map-name vararg. Resolve the PLT to the actual method body.
+    self->enabled = 0;
+    self->flag5 = 0;
+    self->flag4 = 0;
+    moduleHandle = (CASModuleHandle *)self->moduleHandle;
+    if ( moduleHandle )
+    {
+      v8 = self->moduleHandle;
+      CASModuleHandle::~CASModuleHandle(moduleHandle);
+      operator delete(v8);
+    }
+    self->moduleHandle = nullptr;
+    v2 = &CASLog::GetInstance(void)::pInstance;
+    if ( self->activeModule )
+    {
+      v3 = (CASLog *)CASLog::GetInstance(void)::pInstance;
+      if ( !CASLog::GetInstance(void)::pInstance )
+      {
+        v7 = (CASLog *)operator new(4u);
+        LOBYTE(v2) = (unsigned __int8)CASLog::CASLog(v7);
+        CASLog::GetInstance(void)::pInstance = v7;
+        v3 = v7;
+      }
+      CASLog::Error(v3, 0, "Active module was not set to null!\n", (char)v2);
+      self->activeModule = nullptr;
+    }
+    for ( i = self->listenersBegin; self->listenersEnd != i; ++i )
+      (*(void (__cdecl **)(void *))(*(_DWORD *)*i + 12))(*i);
+    (*(void (__cdecl **)(void *, int, int, void **))(*(_DWORD *)self->scriptEngine + 288))(self->scriptEngine, 1, 1, i);
+    CASBaseManager::ClearObjectTypeCache(self);
+    v5 = (CASLog *)CASLog::GetInstance(void)::pInstance;
+    if ( !CASLog::GetInstance(void)::pInstance )
+    {
+      v6 = (CASLog *)operator new(4u);
+      CASLog::CASLog(v6);
+      v5 = v6;
+      CASLog::GetInstance(void)::pInstance = v6;
+    }
+    CASLog::CloseLogFile(v5);
+    CASVirtualFileSystem::MapChange((CASVirtualFileSystem *)self->virtualFileSystem);
+    self->mapState = 5;
+  }

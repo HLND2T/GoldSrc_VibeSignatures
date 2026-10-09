@@ -1,0 +1,326 @@
+func_name: "CASBaseManager_OnMapEnd"
+func_va: "0x100a1df0"
+disasm_code: |-
+  .text:100A1DF0                 push    ebp
+  .text:100A1DF1                 mov     ebp, esp
+  .text:100A1DF3                 push    0FFFFFFFFh
+  .text:100A1DF5                 push    offset SEH_100A1DF0
+  .text:100A1DFA                 mov     eax, large fs:0
+  .text:100A1E00                 push    eax
+  .text:100A1E01                 sub     esp, 2Ch
+  .text:100A1E04                 mov     eax, ___security_cookie
+  .text:100A1E09                 xor     eax, ebp
+  .text:100A1E0B                 mov     [ebp+var_10], eax
+  .text:100A1E0E                 push    ebx
+  .text:100A1E0F                 push    esi
+  .text:100A1E10                 push    edi
+  .text:100A1E11                 push    eax
+  .text:100A1E12                 lea     eax, [ebp+var_C]
+  .text:100A1E15                 mov     large fs:0, eax
+  .text:100A1E1B                 mov     edi, ecx
+  .text:100A1E1D                 cmp     byte ptr [edi+6], 0
+  .text:100A1E21                 mov     eax, [ebp+nextMapName]
+  .text:100A1E24                 jz      short loc_100A1E58
+  .text:100A1E26                 ; text
+  .text:100A1E26                 push    eax; text
+  .text:100A1E27                 ; self
+  .text:100A1E27                 lea     ecx, [ebp+self]; self
+  .text:100A1E2A                 call    CString__CString
+  .text:100A1E2F                 lea     eax, [ebp+self]
+  .text:100A1E32                 mov     [ebp+var_4], 0
+  .text:100A1E39                 push    eax
+  .text:100A1E3A                 ; count
+  .text:100A1E3A                 push    0; count
+  .text:100A1E3C                 ; hook
+  .text:100A1E3C                 push    offset g_MapChangeHook; hook
+  .text:100A1E41                 ; CASHook_Call: CASHook_Call(int, ...), map-change hook receives &mapName in 5.16 before clearing map state.
+  .text:100A1E41                 call    CASHook_Call; CASHook_Call: CASHook_Call(int, ...), map-change hook receives &mapName in 5.16 before clearing map state.
+  .text:100A1E46                 add     esp, 0Ch
+  .text:100A1E49                 mov     [ebp+var_4], 0FFFFFFFFh
+  .text:100A1E50                 ; self
+  .text:100A1E50                 lea     ecx, [ebp+self]; self
+  .text:100A1E53                 call    CString__dtor
+  .text:100A1E58                 mov     esi, [edi+14h]
+  .text:100A1E5B                 mov     word ptr [edi+5], 0
+  .text:100A1E61                 mov     byte ptr [edi+4], 0
+  .text:100A1E65                 test    esi, esi
+  .text:100A1E67                 jz      short loc_100A1E7B
+  .text:100A1E69                 ; handle
+  .text:100A1E69                 mov     ecx, esi; handle
+  .text:100A1E6B                 call    CASModuleHandle__dtor
+  .text:100A1E70                 push    0Ch
+  .text:100A1E72                 ; Block
+  .text:100A1E72                 push    esi; Block
+  .text:100A1E73                 call    sub_1038EE37
+  .text:100A1E78                 add     esp, 8
+  .text:100A1E7B                 cmp     dword ptr [edi+18h], 0
+  .text:100A1E7F                 mov     dword ptr [edi+14h], 0
+  .text:100A1E86                 jz      short loc_100A1ED7
+  .text:100A1E88                 mov     eax, CASLog_pInstance
+  .text:100A1E8D                 test    eax, eax
+  .text:100A1E8F                 jnz     short loc_100A1EC0
+  .text:100A1E91                 ; Size
+  .text:100A1E91                 push    4; Size
+  .text:100A1E93                 call    ??2@YAPAXI@Z; operator new(uint)
+  .text:100A1E98                 add     esp, 4
+  .text:100A1E9B                 mov     [ebp+Block], eax
+  .text:100A1E9E                 mov     [ebp+var_4], 1
+  .text:100A1EA5                 test    eax, eax
+  .text:100A1EA7                 jz      short loc_100A1EB2
+  .text:100A1EA9                 ; log
+  .text:100A1EA9                 mov     ecx, eax; log
+  .text:100A1EAB                 call    CASLog__CASLog
+  .text:100A1EB0                 jmp     short loc_100A1EB4
+  .text:100A1EB2                 xor     eax, eax
+  .text:100A1EB4                 mov     [ebp+var_4], 0FFFFFFFFh
+  .text:100A1EBB                 mov     CASLog_pInstance, eax
+  .text:100A1EC0                 push    offset aActiveModuleWa; "Active module was not set to null!\n"
+  .text:100A1EC5                 ; level
+  .text:100A1EC5                 push    0; level
+  .text:100A1EC7                 ; log
+  .text:100A1EC7                 push    eax; log
+  .text:100A1EC8                 call    CASLog__Error
+  .text:100A1ECD                 add     esp, 0Ch
+  .text:100A1ED0                 mov     dword ptr [edi+18h], 0
+  .text:100A1ED7                 mov     esi, [edi+1Ch]
+  .text:100A1EDA                 cmp     esi, [edi+20h]
+  .text:100A1EDD                 jz      short loc_100A1EEF
+  .text:100A1EDF                 nop
+  .text:100A1EE0                 mov     ecx, [esi]
+  .text:100A1EE2                 mov     eax, [ecx]
+  .text:100A1EE4                 call    dword ptr [eax+8]
+  .text:100A1EE7                 add     esi, 4
+  .text:100A1EEA                 cmp     esi, [edi+20h]
+  .text:100A1EED                 jnz     short loc_100A1EE0
+  .text:100A1EEF                 mov     ecx, [edi+0Ch]
+  .text:100A1EF2                 push    1
+  .text:100A1EF4                 push    1
+  .text:100A1EF6                 mov     eax, [ecx]
+  .text:100A1EF8                 call    dword ptr [eax+120h]
+  .text:100A1EFE                 ; CASBaseManager::ClearObjectTypeCache is inlined here; preserve the MSVC tree cleanup.
+  .text:100A1EFE                 mov     ebx, [edi+2Ch]; CASBaseManager::ClearObjectTypeCache is inlined here; preserve the MSVC tree cleanup.
+  .text:100A1F01                 lea     eax, [edi+2Ch]
+  .text:100A1F04                 mov     esi, [ebx]
+  .text:100A1F06                 cmp     esi, ebx
+  .text:100A1F08                 jz      short loc_100A1F63
+  .text:100A1F0A                 nop     word ptr [eax+eax+00h]
+  .text:100A1F10                 mov     ecx, [esi+28h]
+  .text:100A1F13                 mov     eax, [ecx]
+  .text:100A1F15                 call    dword ptr [eax+14h]
+  .text:100A1F18                 mov     eax, [esi+8]
+  .text:100A1F1B                 cmp     byte ptr [eax+0Dh], 0
+  .text:100A1F1F                 jz      short loc_100A1F44
+  .text:100A1F21                 mov     eax, [esi+4]
+  .text:100A1F24                 cmp     byte ptr [eax+0Dh], 0
+  .text:100A1F28                 jnz     short loc_100A1F40
+  .text:100A1F2A                 nop     word ptr [eax+eax+00h]
+  .text:100A1F30                 cmp     esi, [eax+8]
+  .text:100A1F33                 jnz     short loc_100A1F40
+  .text:100A1F35                 mov     esi, eax
+  .text:100A1F37                 mov     eax, [eax+4]
+  .text:100A1F3A                 cmp     byte ptr [eax+0Dh], 0
+  .text:100A1F3E                 jz      short loc_100A1F30
+  .text:100A1F40                 mov     esi, eax
+  .text:100A1F42                 jmp     short loc_100A1F5C
+  .text:100A1F44                 mov     esi, eax
+  .text:100A1F46                 mov     ecx, [esi]
+  .text:100A1F48                 cmp     byte ptr [ecx+0Dh], 0
+  .text:100A1F4C                 jnz     short loc_100A1F5C
+  .text:100A1F4E                 xchg    ax, ax
+  .text:100A1F50                 mov     eax, [ecx]
+  .text:100A1F52                 mov     esi, ecx
+  .text:100A1F54                 mov     ecx, eax
+  .text:100A1F56                 cmp     byte ptr [eax+0Dh], 0
+  .text:100A1F5A                 jz      short loc_100A1F50
+  .text:100A1F5C                 cmp     esi, ebx
+  .text:100A1F5E                 jnz     short loc_100A1F10
+  .text:100A1F60                 lea     eax, [edi+2Ch]
+  .text:100A1F63                 mov     esi, [eax]
+  .text:100A1F65                 mov     ecx, eax
+  .text:100A1F67                 ; Block
+  .text:100A1F67                 push    dword ptr [esi+4]; Block
+  .text:100A1F6A                 ; int
+  .text:100A1F6A                 push    eax; int
+  .text:100A1F6B                 call    sub_100A5590
+  .text:100A1F70                 mov     [esi+4], esi
+  .text:100A1F73                 mov     [esi], esi
+  .text:100A1F75                 mov     [esi+8], esi
+  .text:100A1F78                 mov     dword ptr [edi+30h], 0
+  .text:100A1F7F                 mov     eax, CASLog_pInstance
+  .text:100A1F84                 test    eax, eax
+  .text:100A1F86                 jnz     short loc_100A1FB7
+  .text:100A1F88                 ; Size
+  .text:100A1F88                 push    4; Size
+  .text:100A1F8A                 call    ??2@YAPAXI@Z; operator new(uint)
+  .text:100A1F8F                 add     esp, 4
+  .text:100A1F92                 mov     [ebp+Block], eax
+  .text:100A1F95                 mov     [ebp+var_4], 2
+  .text:100A1F9C                 test    eax, eax
+  .text:100A1F9E                 jz      short loc_100A1FA9
+  .text:100A1FA0                 ; log
+  .text:100A1FA0                 mov     ecx, eax; log
+  .text:100A1FA2                 call    CASLog__CASLog
+  .text:100A1FA7                 jmp     short loc_100A1FAB
+  .text:100A1FA9                 xor     eax, eax
+  .text:100A1FAB                 mov     [ebp+var_4], 0FFFFFFFFh
+  .text:100A1FB2                 mov     CASLog_pInstance, eax
+  .text:100A1FB7                 ; log
+  .text:100A1FB7                 mov     ecx, eax; log
+  .text:100A1FB9                 call    CASLog__CloseLogFile
+  .text:100A1FBE                 ; fileSystem
+  .text:100A1FBE                 mov     ecx, [edi+28h]; fileSystem
+  .text:100A1FC1                 call    CASVirtualFileSystem__MapChange
+  .text:100A1FC6                 mov     dword ptr [edi+38h], 5
+  .text:100A1FCD                 mov     ecx, [ebp+var_C]
+  .text:100A1FD0                 mov     large fs:0, ecx
+  .text:100A1FD7                 pop     ecx
+  .text:100A1FD8                 pop     edi
+  .text:100A1FD9                 pop     esi
+  .text:100A1FDA                 pop     ebx
+  .text:100A1FDB                 mov     ecx, [ebp+var_10]
+  .text:100A1FDE                 ; StackCookie
+  .text:100A1FDE                 xor     ecx, ebp; StackCookie
+  .text:100A1FE0                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:100A1FE5                 mov     esp, ebp
+  .text:100A1FE7                 pop     ebp
+  .text:100A1FE8                 retn    4
+  .text:103CA995                 ; self
+  .text:103CA995                 lea     ecx, [ebp+self]; self
+  .text:103CA998                 jmp     CString__dtor
+  .text:103CA99D                 push    4
+  .text:103CA99F                 mov     eax, [ebp+Block]
+  .text:103CA9A2                 ; Block
+  .text:103CA9A2                 push    eax; Block
+  .text:103CA9A3                 call    sub_1038EE37
+  .text:103CA9A8                 add     esp, 8
+  .text:103CA9AB                 retn
+  .text:103CA9AC                 push    4
+  .text:103CA9AE                 mov     eax, [ebp+Block]
+  .text:103CA9B1                 ; Block
+  .text:103CA9B1                 push    eax; Block
+  .text:103CA9B2                 call    sub_1038EE37
+  .text:103CA9B7                 add     esp, 8
+  .text:103CA9BA                 retn
+  .text:103CA9C0                 nop
+  .text:103CA9C1                 nop
+  .text:103CA9C2                 mov     edx, [esp-4+arg_4]
+  .text:103CA9C6                 lea     eax, [edx+0Ch]
+  .text:103CA9C9                 mov     ecx, [edx-3Ch]
+  .text:103CA9CC                 ; StackCookie
+  .text:103CA9CC                 xor     ecx, eax; StackCookie
+  .text:103CA9CE                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:103CA9D3                 mov     ecx, [edx-4]
+  .text:103CA9D6                 ; StackCookie
+  .text:103CA9D6                 xor     ecx, eax; StackCookie
+  .text:103CA9D8                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:103CA9DD                 mov     eax, offset stru_104CB674
+  .text:103CA9E2                 jmp     ___CxxFrameHandler3
+procedure: |-
+  void __thiscall CASBaseManager::OnMapEnd(CASBaseManager *self, const char *nextMapName)
+  {
+    void *moduleHandle; // esi
+    bool v4; // zf
+    void *v5; // eax
+    void *v6; // eax
+    void **i; // esi
+    _DWORD *v8; // ebx
+    unsigned __int8 *objectTypeCache; // eax
+    _DWORD *v10; // esi
+    int **v11; // eax
+    int j; // eax
+    int *k; // ecx
+    _DWORD *v14; // esi
+    void *v15; // eax
+    void *v16; // eax
+    CString mapName; // [esp+14h] [ebp-34h] BYREF
+    int sehState; // [esp+44h] [ebp-4h]
+
+    if ( self->enabled )
+    {
+      CString::CString(&mapName, nextMapName);
+      sehState = 0;
+      CASHook_Call(&g_MapChangeHook, 0, &mapName);// CASHook_Call: CASHook_Call(int, ...), map-change hook receives &mapName in 5.16 before clearing map state.
+      sehState = -1;
+      CString::dtor(&mapName);
+    }
+    moduleHandle = self->moduleHandle;
+    *(_WORD *)&self->flag5 = 0;
+    self->flag4 = 0;
+    if ( moduleHandle )
+    {
+      CASModuleHandle::dtor(moduleHandle);
+      sub_1038EE37(moduleHandle);
+    }
+    v4 = self->activeModule == nullptr;
+    self->moduleHandle = nullptr;
+    if ( !v4 )
+    {
+      v5 = CASLog_pInstance;
+      if ( !CASLog_pInstance )
+      {
+        v6 = operator new(4u);
+        sehState = 1;
+        if ( v6 )
+          v5 = CASLog::CASLog(v6);
+        else
+          v5 = nullptr;
+        sehState = -1;
+        CASLog_pInstance = v5;
+      }
+      CASLog::Error(v5, 0, "Active module was not set to null!\n");
+      self->activeModule = nullptr;
+    }
+    for ( i = self->listenersBegin; i != self->listenersEnd; ++i )
+      (*(void (__thiscall **)(void *))(*(_DWORD *)*i + 8))(*i);
+    (*(void (__thiscall **)(void *, int, int))(*(_DWORD *)self->scriptEngine + 288))(self->scriptEngine, 1, 1);
+    v8 = *(_DWORD **)self->objectTypeCache;       // CASBaseManager::ClearObjectTypeCache is inlined here; preserve the MSVC tree cleanup.
+    objectTypeCache = self->objectTypeCache;
+    v10 = (_DWORD *)*v8;
+    if ( (_DWORD *)*v8 != v8 )
+    {
+      do
+      {
+        (*(void (__thiscall **)(_DWORD))(*(_DWORD *)v10[10] + 20))(v10[10]);
+        v11 = (int **)v10[2];
+        if ( *((_BYTE *)v11 + 13) )
+        {
+          for ( j = v10[1]; !*(_BYTE *)(j + 13); j = *(_DWORD *)(j + 4) )
+          {
+            if ( v10 != *(_DWORD **)(j + 8) )
+              break;
+            v10 = (_DWORD *)j;
+          }
+          v10 = (_DWORD *)j;
+        }
+        else
+        {
+          v10 = (_DWORD *)v10[2];
+          for ( k = *v11; !*((_BYTE *)k + 13); k = (int *)*k )
+            v10 = k;
+        }
+      }
+      while ( v10 != v8 );
+      objectTypeCache = self->objectTypeCache;
+    }
+    v14 = *(_DWORD **)objectTypeCache;
+    sub_100A5590((int)objectTypeCache, *(void **)(*(_DWORD *)objectTypeCache + 4));
+    v14[1] = v14;
+    *v14 = v14;
+    v14[2] = v14;
+    *(_DWORD *)&self->objectTypeCache[4] = 0;
+    v15 = CASLog_pInstance;
+    if ( !CASLog_pInstance )
+    {
+      v16 = operator new(4u);
+      sehState = 2;
+      if ( v16 )
+        v15 = CASLog::CASLog(v16);
+      else
+        v15 = nullptr;
+      sehState = -1;
+      CASLog_pInstance = v15;
+    }
+    CASLog::CloseLogFile(v15);
+    CASVirtualFileSystem::MapChange(self->virtualFileSystem);
+    self->mapState = 5;
+  }

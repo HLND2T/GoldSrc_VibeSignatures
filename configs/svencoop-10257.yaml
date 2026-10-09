@@ -3870,8 +3870,25 @@ modules:
     module_linux: server.so
     depot_windows: svencoop/dlls/server.dll
     depot_linux: svencoop/dlls/server.so
-    skills: []
-    symbols: []
+    skills:
+      - name: find-CASHook_CASHook
+        expected_output:
+          - CASHook_CASHook.{platform}.yaml
+      - name: find-CASBaseManager_OnMapEnd
+        expected_output:
+          - CASBaseManager_OnMapEnd.{platform}.yaml
+      - name: find-CASBaseManager_OnMapEnd-decompiles
+        expected_input:
+          - CASBaseManager_OnMapEnd.{platform}.yaml
+        expected_output:
+          - CASHook_Call.{platform}.yaml
+    symbols:
+      - name: CASHook_CASHook
+        category: func
+      - name: CASBaseManager_OnMapEnd
+        category: func
+      - name: CASHook_Call
+        category: func
   - name: serverbrowser
     module_windows: serverbrowser.dll
     module_linux: serverbrowser_linux.so
