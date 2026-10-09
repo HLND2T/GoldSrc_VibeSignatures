@@ -3506,7 +3506,9 @@ async def _inspect_llm_instruction(session, ea):
     return dict(payload)
 
 
-_RESOLVE_JMP_THUNK_PY_EVAL = r"""
+_RESOLVE_JMP_THUNK_PY_EVAL = (
+    ELF_RESOLVER_PY
+    + r"""
 import ida_funcs, ida_ua, ida_bytes, ida_ida, ida_idaapi, idc, json
 current_ea = EA_PLACEHOLDER
 resolved_ea = current_ea
@@ -3530,7 +3532,9 @@ for _ in range(8):
         # that evidence rather than guessing a PIC register base or a name.
         target_ea, pointer_ea = ida_funcs.calc_thunk_func_target(func)
         if target_ea == ida_idaapi.BADADDR or pointer_ea == ida_idaapi.BADADDR:
-            break
+            target_ea, pointer_ea = resolve_elf_got_thunk(current_ea)
+            if target_ea == ida_idaapi.BADADDR or pointer_ea == ida_idaapi.BADADDR:
+                break
         pointer_loaded = True
         for offset in range(4):
             if not ida_bytes.is_loaded(pointer_ea + offset):
@@ -3550,6 +3554,7 @@ for _ in range(8):
     current_ea = target_ea
 result = json.dumps({'func_va': hex(resolved_ea)})
 """
+)
 
 
 async def _resolve_jmp_thunk_target_via_mcp(session, func_va, debug=False):

@@ -51,6 +51,8 @@ class JumpThunkResolutionTests(unittest.TestCase):
             "ida_bytes": SimpleNamespace(is_loaded=lambda ea: 0x3000 <= ea < 0x3004, get_dword=lambda ea: stored),
             "ida_ida": SimpleNamespace(inf_is_64bit=lambda: False),
             "ida_idaapi": SimpleNamespace(BADADDR=0xFFFFFFFFFFFFFFFF),
+            "idaapi": SimpleNamespace(BADADDR=0xFFFFFFFFFFFFFFFF),
+            "ida_segment": SimpleNamespace(getseg=lambda ea: None),
         }
         namespace = {}
         with patch.dict("sys.modules", modules):
@@ -195,6 +197,98 @@ class ElfIndirectionTests(unittest.TestCase):
             stored[0] = 0x2000
             segments[0x2000].perm = 2
             self.assertEqual(0x1000, resolve(0x1000))
+
+
+class ElfPicGotThunkTests(unittest.TestCase):
+    def resolve(self, **changes):
+        from ida_analyze_util import _RESOLVE_JMP_THUNK_PY_EVAL
+        from ida_elf import ELF_RESOLVER_PY
+
+        options = dict(
+            opcode=b"\xff\xa3",
+            got_tag=3,
+            got_value=0x3100,
+            slot_segment=".got",
+            stored=0x2000,
+            refs=[0x2000],
+            loaded=True,
+            executable=True,
+            entry=True,
+            is_64bit=False,
+        )
+        options.update(changes)
+        segments = [
+            SimpleNamespace(start_ea=0x1000, end_ea=0x1006, name=".plt.got", perm=5),
+            SimpleNamespace(start_ea=0x2000, end_ea=0x2100, name=".text", perm=5 if options["executable"] else 2),
+            SimpleNamespace(start_ea=0x2F00, end_ea=0x3020, name=options["slot_segment"], perm=2),
+            SimpleNamespace(start_ea=0x3040, end_ea=0x3050, name="LOAD", perm=2),
+            SimpleNamespace(start_ea=0x3100, end_ea=0x3110, name=".got.plt", perm=2),
+        ]
+        words = {
+            0x3100: 0x3040,
+            0x3040: options["got_tag"],
+            0x3044: options["got_value"],
+            0x3048: 0,
+            0x304C: 0,
+            0x3000: options["stored"],
+        }
+        functions = {0x1000: SimpleNamespace(start_ea=0x1000, end_ea=0x1006)}
+        if options["entry"]:
+            functions[0x2000] = SimpleNamespace(start_ea=0x2000, end_ea=0x2040)
+        badaddr = 0xFFFFFFFFFFFFFFFF
+        operand = SimpleNamespace(type=2, addr=0xFFFFFF00)
+        modules = {
+            "ida_funcs": SimpleNamespace(get_func=functions.get, calc_thunk_func_target=lambda fn: (badaddr, badaddr)),
+            "ida_ua": SimpleNamespace(
+                insn_t=lambda: SimpleNamespace(ops=[operand]),
+                decode_insn=lambda insn, ea: 6,
+                o_near=1,
+                o_displ=2,
+                o_mem=3,
+            ),
+            "idc": SimpleNamespace(print_insn_mnem=lambda ea: "jmp" if ea == 0x1000 else "push"),
+            "ida_bytes": SimpleNamespace(
+                get_bytes=lambda ea, size: options["opcode"] + bytes.fromhex("00 FF FF FF"),
+                get_dword=lambda ea: words.get(ea, 0),
+                is_loaded=lambda ea: ea // 4 * 4 in words and (options["loaded"] or ea != 0x3003),
+            ),
+            "ida_segment": SimpleNamespace(
+                getseg=lambda ea: next((seg for seg in segments if seg.start_ea <= ea < seg.end_ea), None),
+                get_segm_by_name=lambda name: next((seg for seg in segments if seg.name == name), None),
+                get_segm_name=lambda seg: seg.name,
+                SEGPERM_EXEC=4,
+            ),
+            "idautils": SimpleNamespace(DataRefsFrom=lambda ea: options["refs"] if ea == 0x3000 else []),
+            "ida_ida": SimpleNamespace(inf_is_64bit=lambda: options["is_64bit"]),
+            "ida_idaapi": SimpleNamespace(BADADDR=badaddr),
+            "idaapi": SimpleNamespace(BADADDR=badaddr),
+        }
+        namespace = {}
+        with patch.dict("sys.modules", modules):
+            exec(ELF_RESOLVER_PY, namespace)
+            forward = namespace["resolve_elf_plt"](0x1000)
+            exec(_RESOLVE_JMP_THUNK_PY_EVAL.replace("EA_PLACEHOLDER", "4096"), namespace)
+        return forward, int(json.loads(namespace["result"])["func_va"], 16)
+
+    def test_negative_ebx_displacement_uses_validated_dynamic_got_and_loader_pointer(self):
+        self.assertEqual((0x2000, 0x2000), self.resolve())
+
+    def test_unverified_pic_thunk_stays_unresolved(self):
+        for changes in (
+            {"opcode": b"\xff\xa2"},
+            {"is_64bit": True},
+            {"got_tag": 4},
+            {"got_value": 0x3200},
+            {"slot_segment": ".data"},
+            {"stored": 0x1006},
+            {"refs": []},
+            {"refs": [0x2000, 0x2010]},
+            {"loaded": False},
+            {"executable": False},
+            {"entry": False},
+        ):
+            with self.subTest(changes=changes):
+                self.assertEqual((0x1000, 0x1000), self.resolve(**changes))
 
 
 def scoreinfo_code(*, stride="imul eax, 74h", extra=(), store="mov word_600000[eax], di"):

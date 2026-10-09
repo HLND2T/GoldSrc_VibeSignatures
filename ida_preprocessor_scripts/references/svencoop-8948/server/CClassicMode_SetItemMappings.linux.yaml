@@ -1,0 +1,171 @@
+func_name: CClassicMode_SetItemMappings
+func_va: '0x388144'
+disasm_code: |
+  ; Release the previous item-mapping array before clearing it, or release the rejected incoming array after the invalid-type diagnostic. Both calls target CScriptArray::Release() const, not CScriptAny::Release, GetArrayObjectType, or CASLog::Error.
+  ; Linux ELF32: this, fixed arguments and varargs are stack-passed. A PLT/.plt.got operand is a thunk and must resolve to the actual method body.
+  .text:00388144                 push    ebp
+  .text:00388145                 mov     ebp, esp
+  .text:00388147                 push    edi
+  .text:00388148                 push    esi
+  .text:00388149                 push    ebx
+  .text:0038814A                 sub     esp, 1Ch
+  .text:0038814D                 call    __x86_get_pc_thunk_si
+  .text:00388152                 add     esi, (offset _GLOBAL_OFFSET_TABLE_ - $)
+  .text:00388158                 mov     edi, [ebp+incomingArray]
+  .text:0038815B                 mov     eax, [ebp+this]
+  .text:0038815E                 mov     edx, [eax+8]
+  .text:00388161                 test    edx, edx
+  .text:00388163                 jz      short loc_388173
+  .text:00388165                 sub     esp, 0Ch
+  .text:00388168                 ; array
+  .text:00388168                 push    edx; array
+  .text:00388169                 mov     ebx, esi
+  .text:0038816B                 ; CScriptArray_Release: release previous mappings through a relocated .plt.got pointer; body is CScriptArray::Release() const.
+    ; CScriptArray_Release (func): Release the previous item-mapping array before clearing it, or release the rejected incoming array after the invalid-type diagnostic. Both calls target CScriptArray::Release() const, not CScriptAny::Release, GetArrayObjectType, or CASLog::Error.
+  .text:0038816B                 call    CScriptArray_Release@plt_got; CScriptArray_Release: release previous mappings through a relocated .plt.got pointer; body is CScriptArray::Release() const.
+  .text:00388170                 add     esp, 10h
+  .text:00388173                 mov     ecx, [ebp+this]
+  .text:00388176                 mov     dword ptr [ecx+8], 0
+  .text:0038817D                 test    edi, edi
+  .text:0038817F                 jz      short loc_3881E9
+  .text:00388181                 mov     ebx, ds:(_ZZN16CASServerManager11GetInstanceEvE9pInstance_ptr - 8B0000h)[esi]
+  .text:00388187                 mov     [ebp+var_1C], ebx
+  .text:0038818A                 mov     eax, [ebx]
+  .text:0038818C                 test    eax, eax
+  .text:0038818E                 jz      short loc_388200
+  .text:00388190                 mov     ebx, [eax+0Ch]
+  .text:00388193                 sub     esp, 8
+  .text:00388196                 mov     edx, [ebx]
+  .text:00388198                 lea     ecx, (aArrayItemmappi - 8B0000h)[esi]; "array<ItemMapping@>"
+  .text:0038819E                 push    ecx
+  .text:0038819F                 push    ebx
+  .text:003881A0                 call    dword ptr [edx+0E4h]
+  .text:003881A6                 mov     [ebp+var_1C], eax
+  .text:003881A9                 ; this
+  .text:003881A9                 mov     [esp], edi; this
+  .text:003881AC                 mov     ebx, esi
+  .text:003881AE                 call    __ZNK12CScriptArray18GetArrayObjectTypeEv; CScriptArray::GetArrayObjectType(void)
+  .text:003881B3                 add     esp, 10h
+  .text:003881B6                 cmp     [ebp+var_1C], eax
+  .text:003881B9                 jz      short loc_3881F2
+  .text:003881BB                 mov     eax, ds:(_ZZN6CASLog11GetInstanceEvE9pInstance_ptr - 8B0000h)[esi]
+  .text:003881C1                 mov     [ebp+var_1C], eax
+  .text:003881C4                 mov     ebx, [eax]
+  .text:003881C6                 mov     edx, ebx
+  .text:003881C8                 test    ebx, ebx
+  .text:003881CA                 jz      short loc_388228
+  .text:003881CC                 push    eax
+  .text:003881CD                 lea     eax, (aCclassicmodeSe - 8B0000h)[esi]; "CClassicMode::SetItemMappings: Invalid "...
+  .text:003881D3                 push    eax
+  .text:003881D4                 push    0
+  .text:003881D6                 push    edx
+  .text:003881D7                 mov     ebx, esi
+  .text:003881D9                 call    __ZN6CASLog5ErrorE12ASLogLevel_tPKcz; CASLog::Error(ASLogLevel_t,char const*,...)
+  .text:003881DE                 ; array
+  .text:003881DE                 mov     [esp], edi; array
+  .text:003881E1                 ; CScriptArray_Release: release rejected incoming array; do not select GetArrayObjectType or logging.
+    ; CScriptArray_Release (func): Release the previous item-mapping array before clearing it, or release the rejected incoming array after the invalid-type diagnostic. Both calls target CScriptArray::Release() const, not CScriptAny::Release, GetArrayObjectType, or CASLog::Error.
+  .text:003881E1                 call    CScriptArray_Release@plt_got; CScriptArray_Release: release rejected incoming array; do not select GetArrayObjectType or logging.
+  .text:003881E6                 add     esp, 10h
+  .text:003881E9                 lea     esp, [ebp-0Ch]
+  .text:003881EC                 pop     ebx
+  .text:003881ED                 pop     esi
+  .text:003881EE                 pop     edi
+  .text:003881EF                 pop     ebp
+  .text:003881F0                 retn
+  .text:003881F2                 mov     esi, [ebp+this]
+  .text:003881F5                 mov     [esi+8], edi
+  .text:003881F8                 lea     esp, [ebp-0Ch]
+  .text:003881FB                 pop     ebx
+  .text:003881FC                 pop     esi
+  .text:003881FD                 pop     edi
+  .text:003881FE                 pop     ebp
+  .text:003881FF                 retn
+  .text:00388200                 sub     esp, 0Ch
+  .text:00388203                 ; unsigned int
+  .text:00388203                 push    54h ; 'T'; unsigned int
+  .text:00388205                 mov     ebx, esi
+  .text:00388207                 call    __Znwj; operator new(uint)
+  .text:0038820C                 mov     [ebp+var_20], eax
+  .text:0038820F                 ; this
+  .text:0038820F                 mov     [esp], eax; this
+  .text:00388212                 call    __ZN16CASServerManagerC1Ev; CASServerManager::CASServerManager(void)
+  .text:00388217                 add     esp, 10h
+  .text:0038821A                 mov     edx, [ebp+var_1C]
+  .text:0038821D                 mov     eax, [ebp+var_20]
+  .text:00388220                 mov     [edx], eax
+  .text:00388222                 jmp     loc_388190
+  .text:00388228                 sub     esp, 0Ch
+  .text:0038822B                 ; unsigned int
+  .text:0038822B                 push    4; unsigned int
+  .text:0038822D                 mov     ebx, esi
+  .text:0038822F                 call    __Znwj; operator new(uint)
+  .text:00388234                 mov     [ebp+var_20], eax
+  .text:00388237                 ; this
+  .text:00388237                 mov     [esp], eax; this
+  .text:0038823A                 call    __ZN6CASLogC2Ev; CASLog::CASLog(void)
+  .text:0038823F                 add     esp, 10h
+  .text:00388242                 mov     edx, [ebp+var_1C]
+  .text:00388245                 mov     ecx, [ebp+var_20]
+  .text:00388248                 mov     [edx], ecx
+  .text:0038824A                 mov     edx, ecx
+  .text:0038824C                 jmp     loc_3881CC
+  .text:00388251                 mov     edi, eax
+  .text:00388253                 sub     esp, 0Ch
+  .text:00388256                 ; void *
+  .text:00388256                 push    [ebp+var_20]; void *
+  .text:00388259                 mov     ebx, esi
+  .text:0038825B                 call    __ZdlPv; operator delete(void *)
+  .text:00388260                 mov     [esp], edi
+  .text:00388263                 call    __Unwind_Resume
+  .text:00388268                 jmp     short loc_388251
+procedure: |
+  // Release the previous item-mapping array before clearing it, or release the rejected incoming array after the invalid-type diagnostic. Both calls target CScriptArray::Release() const, not CScriptAny::Release, GetArrayObjectType, or CASLog::Error.
+  // Linux ELF32: this, fixed arguments and varargs are stack-passed. A PLT/.plt.got operand is a thunk and must resolve to the actual method body.
+  void __cdecl CClassicMode::SetItemMappings(CClassicMode *classicMode, CScriptArray *incomingArray)
+  {
+    CASServerManager *v2; // eax
+    CASLog *v3; // eax
+    CASLog *v4; // edx
+    CASServerManager *v5; // [esp+8h] [ebp-20h]
+    CASLog *v6; // [esp+8h] [ebp-20h]
+    int v7; // [esp+Ch] [ebp-1Ch]
+
+    if ( classicMode->itemMappings )
+    // CScriptArray_Release (func): Release the previous item-mapping array before clearing it, or release the rejected incoming array after the invalid-type diagnostic. Both calls target CScriptArray::Release() const, not CScriptAny::Release, GetArrayObjectType, or CASLog::Error.
+      CScriptArray_Release_plt_got(classicMode->itemMappings);
+    classicMode->itemMappings = nullptr;
+    if ( incomingArray )
+    {
+      v2 = CASServerManager::GetInstance(void)::pInstance;
+      if ( !CASServerManager::GetInstance(void)::pInstance )
+      {
+        v5 = (CASServerManager *)operator new(0x54u);
+        CASServerManager::CASServerManager(v5);
+        v2 = v5;
+        CASServerManager::GetInstance(void)::pInstance = v5;
+      }
+      v7 = (*(int (__cdecl **)(void *, const char *))(*(_DWORD *)v2->scriptEngine + 228))(
+             v2->scriptEngine,
+             "array<ItemMapping@>");
+      if ( v7 == CScriptArray::GetArrayObjectType(incomingArray) )
+      {
+        classicMode->itemMappings = incomingArray;
+      }
+      else
+      {
+        v3 = (CASLog *)&CASLog::GetInstance(void)::pInstance;
+        v4 = (CASLog *)CASLog::GetInstance(void)::pInstance;
+        if ( !CASLog::GetInstance(void)::pInstance )
+        {
+          v6 = (CASLog *)operator new(4u);
+          v3 = CASLog::CASLog(v6);
+          CASLog::GetInstance(void)::pInstance = v6;
+          v4 = v6;
+        }
+        CASLog::Error(v4, 0, "CClassicMode::SetItemMappings: Invalid array type passed!\n", v3);
+    // CScriptArray_Release (func): Release the previous item-mapping array before clearing it, or release the rejected incoming array after the invalid-type diagnostic. Both calls target CScriptArray::Release() const, not CScriptAny::Release, GetArrayObjectType, or CASLog::Error.
+        CScriptArray_Release_plt_got(incomingArray);
+      }
+    }
+  }

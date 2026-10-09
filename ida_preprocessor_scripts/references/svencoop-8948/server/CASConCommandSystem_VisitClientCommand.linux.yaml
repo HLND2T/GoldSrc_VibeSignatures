@@ -1,0 +1,181 @@
+func_name: CASConCommandSystem_VisitClientCommand
+func_va: '0x284cbe'
+disasm_code: |
+  ; Invoke command->callback after the invoking-player/admin-rights check, passing flags 0 and commandArguments. Invert its bool result into visit status. Select CASBaseCallable::Call(int, ...), not Call(int, va_list), GetPlugin, AdminLevel, or ClientPrint.
+  ; Linux ELF32: this, fixed arguments and varargs are stack-passed. A PLT/.plt.got operand is a thunk and must resolve to the actual method body.
+  .text:00284CBE                 push    ebp
+  .text:00284CBF                 mov     ebp, esp
+  .text:00284CC1                 push    edi
+  .text:00284CC2                 push    esi
+  .text:00284CC3                 push    ebx
+  .text:00284CC4                 sub     esp, 28h
+  .text:00284CC7                 call    __x86_get_pc_thunk_si
+  .text:00284CCC                 add     esi, (offset _GLOBAL_OFFSET_TABLE_ - $)
+  .text:00284CD2                 mov     eax, [ebp+this]
+  .text:00284CD5                 push    eax
+  .text:00284CD6                 mov     ebx, esi
+  .text:00284CD8                 call    sub_1929A0
+  .text:00284CDD                 mov     [ebp+var_1C], eax
+  .text:00284CE0                 add     esp, 10h
+  .text:00284CE3                 test    eax, eax
+  .text:00284CE5                 jz      loc_284DAC
+  .text:00284CEB                 mov     edx, [ebp+command]
+  .text:00284CEE                 mov     ecx, [edx+98h]
+  .text:00284CF4                 mov     [ebp+var_20], ecx
+  .text:00284CF7                 mov     ebx, ds:(_ZZN16CASServerManager11GetInstanceEvE9pInstance_ptr - 8B0000h)[esi]
+  .text:00284CFD                 mov     [ebp+var_24], ebx
+  .text:00284D00                 mov     edi, [ebx]
+  .text:00284D02                 test    edi, edi
+  .text:00284D04                 jz      loc_284DBE
+  .text:00284D0A                 sub     esp, 8
+  .text:00284D0D                 mov     edx, [ebp+var_20]
+  .text:00284D10                 ; char *
+  .text:00284D10                 push    edx; char *
+  .text:00284D11                 mov     edi, [edi+50h]
+  .text:00284D14                 ; this
+  .text:00284D14                 push    edi; this
+  .text:00284D15                 mov     ebx, esi
+  .text:00284D17                 call    __ZNK16CASPluginManager9GetPluginEPKc; CASPluginManager::GetPlugin(char const*)
+  .text:00284D1C                 mov     edi, eax
+  .text:00284D1E                 add     esp, 10h
+  .text:00284D21                 test    eax, eax
+  .text:00284D23                 jz      short loc_284D74
+  .text:00284D25                 sub     esp, 0Ch
+  .text:00284D28                 mov     ecx, [ebp+var_1C]
+  .text:00284D2B                 ; CBasePlayer *
+  .text:00284D2B                 push    ecx; CBasePlayer *
+  .text:00284D2C                 mov     ebx, esi
+  .text:00284D2E                 call    __Z10AdminLevelP11CBasePlayer; AdminLevel(CBasePlayer *)
+  .text:00284D33                 mov     ebx, [edi+10h]
+  .text:00284D36                 add     esp, 10h
+  .text:00284D39                 cmp     eax, [ebx+50h]
+  .text:00284D3C                 jge     short loc_284D74
+  .text:00284D3E                 push    eax
+  .text:00284D3F                 ; CMomentaryRotButton *
+  .text:00284D3F                 push    0; CMomentaryRotButton *
+  .text:00284D41                 ; CMomentaryRotButton *
+  .text:00284D41                 push    0; CMomentaryRotButton *
+  .text:00284D43                 ; CMomentaryRotButton *
+  .text:00284D43                 push    0; CMomentaryRotButton *
+  .text:00284D45                 ; int
+  .text:00284D45                 push    0; int
+  .text:00284D47                 lea     edx, (aYouDoNotHaveRi - 8B0000h)[esi]; "You do not have rights needed to use th"...
+  .text:00284D4D                 ; int
+  .text:00284D4D                 push    edx; int
+  .text:00284D4E                 ; int
+  .text:00284D4E                 push    2; int
+  .text:00284D50                 mov     edi, [ebp+var_1C]
+  .text:00284D53                 mov     ecx, [edi+4]
+  .text:00284D56                 ; int
+  .text:00284D56                 push    ecx; int
+  .text:00284D57                 mov     ebx, esi
+  .text:00284D59                 call    __Z11ClientPrintP9entvars_siPKcS2_S2_S2_S2_; ClientPrint(entvars_s *,int,char const*,char const*,char const*,char const*,char const*)
+  .text:00284D5E                 mov     ebx, [ebp+state]
+  .text:00284D61                 mov     dword ptr [ebx+4], 3
+  .text:00284D68                 add     esp, 20h
+  .text:00284D6B                 lea     esp, [ebp-0Ch]
+  .text:00284D6E                 pop     ebx
+  .text:00284D6F                 pop     esi
+  .text:00284D70                 pop     edi
+  .text:00284D71                 pop     ebp
+  .text:00284D72                 retn
+  .text:00284D74                 mov     eax, [ebp+command]
+  .text:00284D77                 mov     edx, [eax+80h]
+  .text:00284D7D                 test    edx, edx
+  .text:00284D7F                 jz      short loc_284DAC
+  .text:00284D81                 push    ecx
+  .text:00284D82                 mov     edi, [ebp+state]
+  .text:00284D85                 mov     ecx, [edi]
+  .text:00284D87                 push    ecx
+  .text:00284D88                 ; executionFlags
+  .text:00284D88                 push    0; executionFlags
+  .text:00284D8A                 ; callable
+  .text:00284D8A                 push    edx; callable
+  .text:00284D8B                 mov     ebx, esi
+  .text:00284D8D                 ; CASBaseCallable_Call: invoke stored command callback with flags 0 and command arguments; bool result is inverted into visit status.
+    ; CASBaseCallable_Call (func): Invoke command->callback after the invoking-player/admin-rights check, passing flags 0 and commandArguments. Invert its bool result into visit status. Select CASBaseCallable::Call(int, ...), not Call(int, va_list), GetPlugin, AdminLevel, or ClientPrint.
+  .text:00284D8D                 call    __ZN15CASBaseCallable4CallEiz; CASBaseCallable_Call: invoke stored command callback with flags 0 and command arguments; bool result is inverted into visit status.
+  .text:00284D92                 xor     eax, 1
+  .text:00284D95                 mov     bl, al
+  .text:00284D97                 xor     eax, eax
+  .text:00284D99                 mov     al, bl
+  .text:00284D9B                 mov     esi, [ebp+state]
+  .text:00284D9E                 mov     [esi+4], eax
+  .text:00284DA1                 add     esp, 10h
+  .text:00284DA4                 lea     esp, [ebp-0Ch]
+  .text:00284DA7                 pop     ebx
+  .text:00284DA8                 pop     esi
+  .text:00284DA9                 pop     edi
+  .text:00284DAA                 pop     ebp
+  .text:00284DAB                 retn
+  .text:00284DAC                 mov     eax, [ebp+state]
+  .text:00284DAF                 mov     dword ptr [eax+4], 1
+  .text:00284DB6                 lea     esp, [ebp-0Ch]
+  .text:00284DB9                 pop     ebx
+  .text:00284DBA                 pop     esi
+  .text:00284DBB                 pop     edi
+  .text:00284DBC                 pop     ebp
+  .text:00284DBD                 retn
+  .text:00284DBE                 sub     esp, 0Ch
+  .text:00284DC1                 ; unsigned int
+  .text:00284DC1                 push    54h ; 'T'; unsigned int
+  .text:00284DC3                 mov     ebx, esi
+  .text:00284DC5                 call    __Znwj; operator new(uint)
+  .text:00284DCA                 mov     edi, eax
+  .text:00284DCC                 ; this
+  .text:00284DCC                 mov     [esp], eax; this
+  .text:00284DCF                 call    __ZN16CASServerManagerC1Ev; CASServerManager::CASServerManager(void)
+  .text:00284DD4                 add     esp, 10h
+  .text:00284DD7                 mov     eax, [ebp+var_24]
+  .text:00284DDA                 mov     [eax], edi
+  .text:00284DDC                 jmp     loc_284D0A
+  .text:00284DE1                 mov     [ebp+var_1C], eax
+  .text:00284DE4                 sub     esp, 0Ch
+  .text:00284DE7                 ; void *
+  .text:00284DE7                 push    edi; void *
+  .text:00284DE8                 mov     ebx, esi
+  .text:00284DEA                 call    __ZdlPv; operator delete(void *)
+  .text:00284DEF                 pop     eax
+  .text:00284DF0                 push    [ebp+var_1C]
+  .text:00284DF3                 call    __Unwind_Resume
+procedure: |
+  // Invoke command->callback after the invoking-player/admin-rights check, passing flags 0 and commandArguments. Invert its bool result into visit status. Select CASBaseCallable::Call(int, ...), not Call(int, va_list), GetPlugin, AdminLevel, or ClientPrint.
+  // Linux ELF32: this, fixed arguments and varargs are stack-passed. A PLT/.plt.got operand is a thunk and must resolve to the actual method body.
+  void __cdecl CASConCommandSystem::Visit(
+          CASConCommandSystem *system,
+          CASClientCommand *command,
+          CommandVisitState *state)
+  {
+    CASServerManager *v3; // edi
+    int v4; // ecx
+    int Plugin; // edi
+    CASBaseCallable *callback; // edx
+    char *pluginName; // [esp+14h] [ebp-20h]
+    int *v8; // [esp+18h] [ebp-1Ch]
+
+    v8 = (int *)sub_1929A0(system);
+    if ( !v8 )
+      goto LABEL_9;
+    pluginName = (char *)command->pluginName;
+    v3 = CASServerManager::GetInstance(void)::pInstance;
+    if ( !CASServerManager::GetInstance(void)::pInstance )
+    {
+      v3 = (CASServerManager *)operator new(0x54u);
+      CASServerManager::CASServerManager(v3);
+      CASServerManager::GetInstance(void)::pInstance = v3;
+    }
+    Plugin = CASPluginManager::GetPlugin(v3->pluginManager, pluginName);
+    if ( Plugin && AdminLevel((CBasePlayer *)v8) < *(_DWORD *)(*(_DWORD *)(Plugin + 16) + 80) )
+    {
+      ClientPrint(v8[1], 2, (int)"You do not have rights needed to use this command\n", 0, nullptr, nullptr, nullptr);
+      state->status = 3;
+      return;
+    }
+    callback = command->callback;
+    if ( callback )
+    // CASBaseCallable_Call (func): Invoke command->callback after the invoking-player/admin-rights check, passing flags 0 and commandArguments. Invert its bool result into visit status. Select CASBaseCallable::Call(int, ...), not Call(int, va_list), GetPlugin, AdminLevel, or ClientPrint.
+      state->status = !CASBaseCallable::Call(callback, 0, state->commandArguments, v4);
+    else
+  LABEL_9:
+      state->status = 1;
+  }
