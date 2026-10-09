@@ -1,0 +1,315 @@
+func_name: CASPersistence_KeepIfPrevious
+func_va: '0x100b1520'
+disasm_code: |-
+  .text:100B1520                 push    ebp
+  .text:100B1521                 mov     ebp, esp
+  .text:100B1523                 push    0FFFFFFFFh
+  .text:100B1525                 push    offset SEH_100B1520
+  .text:100B152A                 mov     eax, large fs:0
+  .text:100B1530                 push    eax
+  .text:100B1531                 sub     esp, 2Ch
+  .text:100B1534                 mov     eax, ___security_cookie
+  .text:100B1539                 xor     eax, ebp
+  .text:100B153B                 mov     [ebp+var_10], eax
+  .text:100B153E                 push    esi
+  .text:100B153F                 push    edi
+  .text:100B1540                 push    eax
+  .text:100B1541                 lea     eax, [ebp+var_C]
+  .text:100B1544                 mov     large fs:0, eax
+  .text:100B154A                 mov     [ebp+var_38], ecx
+  .text:100B154D                 mov     eax, [ebp+array]
+  .text:100B1550                 mov     [ebp+Block], eax
+  .text:100B1553                 test    eax, eax
+  .text:100B1555                 jnz     short loc_100B15A6
+  .text:100B1557                 mov     eax, CASLog_pInstance
+  .text:100B155C                 test    eax, eax
+  .text:100B155E                 jnz     short loc_100B158F
+  .text:100B1560                 ; Size
+  .text:100B1560                 push    4; Size
+  .text:100B1562                 call    ??2@YAPAXI@Z; operator new(uint)
+  .text:100B1567                 add     esp, 4
+  .text:100B156A                 mov     [ebp+var_38], eax
+  .text:100B156D                 mov     [ebp+var_4], 0
+  .text:100B1574                 test    eax, eax
+  .text:100B1576                 jz      short loc_100B1581
+  .text:100B1578                 ; log
+  .text:100B1578                 mov     ecx, eax; log
+  .text:100B157A                 call    CASLog__CASLog
+  .text:100B157F                 jmp     short loc_100B1583
+  .text:100B1581                 xor     eax, eax
+  .text:100B1583                 mov     [ebp+var_4], 0FFFFFFFFh
+  .text:100B158A                 mov     CASLog_pInstance, eax
+  .text:100B158F                 push    offset aCaspersistence; "CASPersistence::KeepIfPrevious: array m"...
+  .text:100B1594                 ; level
+  .text:100B1594                 push    0; level
+  .text:100B1596                 ; log
+  .text:100B1596                 push    eax; log
+  .text:100B1597                 call    CASLog__Error
+  .text:100B159C                 add     esp, 0Ch
+  .text:100B159F                 xor     al, al
+  .text:100B15A1                 jmp     loc_100B16F7
+  .text:100B15A6                 mov     ecx, eax
+  .text:100B15A8                 call    CScriptArray__GetSize
+  .text:100B15AD                 mov     [ebp+var_34], eax
+  .text:100B15B0                 mov     eax, CASServerManager_pInstance
+  .text:100B15B5                 mov     [ebp+var_2C], eax
+  .text:100B15B8                 test    eax, eax
+  .text:100B15BA                 jnz     short loc_100B15E7
+  .text:100B15BC                 ; Size
+  .text:100B15BC                 push    44h ; 'D'; Size
+  .text:100B15BE                 call    ??2@YAPAXI@Z; operator new(uint)
+  .text:100B15C3                 add     esp, 4
+  .text:100B15C6                 mov     [ebp+var_2C], eax
+  .text:100B15C9                 mov     [ebp+var_4], 1
+  .text:100B15D0                 test    eax, eax
+  .text:100B15D2                 jz      short loc_100B15DD
+  .text:100B15D4                 mov     ecx, eax
+  .text:100B15D6                 call    CASServerManager__Constructor
+  .text:100B15DB                 jmp     short loc_100B15DF
+  .text:100B15DD                 xor     eax, eax
+  .text:100B15DF                 mov     [ebp+var_2C], eax
+  .text:100B15E2                 mov     CASServerManager_pInstance, eax
+  .text:100B15E7                 mov     edi, [eax+0Ch]
+  .text:100B15EA                 xorps   xmm0, xmm0
+  .text:100B15ED                 mov     eax, dword ptr ds:aString; "string"
+  .text:100B15F2                 movups  xmmword ptr [ebp+var_28], xmm0
+  .text:100B15F6                 ; Inlined MSVC string construction: 16-byte inline buffer, length=6, capacity=15.
+  .text:100B15F6                 mov     [ebp+var_28], eax; Inlined MSVC string construction: 16-byte inline buffer, length=6, capacity=15.
+  .text:100B15F9                 mov     ax, word ptr ds:aString+4; "ng"
+  .text:100B15FF                 mov     [ebp+var_18], 6
+  .text:100B1606                 mov     [ebp+var_14], 0Fh
+  .text:100B160D                 mov     word ptr [ebp+var_28+4], ax
+  .text:100B1611                 mov     byte ptr [ebp+var_28+6], 0
+  .text:100B1615                 mov     eax, [edi]
+  .text:100B1617                 mov     ecx, [ebp+Block]
+  .text:100B161A                 mov     [ebp+var_4], 3
+  .text:100B1621                 mov     esi, [eax+0DCh]
+  .text:100B1627                 call    CScriptArray__GetElementTypeId
+  .text:100B162C                 push    eax
+  .text:100B162D                 mov     ecx, edi
+  .text:100B162F                 call    esi
+  .text:100B1631                 mov     ecx, [ebp+var_2C]
+  .text:100B1634                 mov     esi, eax
+  .text:100B1636                 lea     eax, [ebp+var_28]
+  .text:100B1639                 push    eax
+  .text:100B163A                 call    CASBaseManager__GetTypeInfoByName; CASBaseManager_GetTypeInfoByName: cached manager query for temporary string("string").
+  .text:100B163F                 mov     ecx, [ebp+var_14]
+  .text:100B1642                 mov     edi, eax
+  .text:100B1644                 mov     [ebp+var_4], 0FFFFFFFFh
+  .text:100B164B                 cmp     ecx, 0Fh
+  .text:100B164E                 jbe     short loc_100B167C
+  .text:100B1650                 mov     edx, [ebp+var_28]
+  .text:100B1653                 inc     ecx
+  .text:100B1654                 mov     eax, edx
+  .text:100B1656                 cmp     ecx, 1000h
+  .text:100B165C                 jb      short loc_100B1672
+  .text:100B165E                 mov     edx, [eax-4]
+  .text:100B1661                 add     ecx, 23h ; '#'
+  .text:100B1664                 sub     eax, edx
+  .text:100B1666                 add     eax, 0FFFFFFFCh
+  .text:100B1669                 cmp     eax, 1Fh
+  .text:100B166C                 ja      loc_100B1714
+  .text:100B1672                 push    ecx
+  .text:100B1673                 ; Block
+  .text:100B1673                 push    edx; Block
+  .text:100B1674                 call    operator_delete
+  .text:100B1679                 add     esp, 8
+  .text:100B167C                 mov     [ebp+var_18], 0
+  .text:100B1683                 mov     [ebp+var_14], 0Fh
+  .text:100B168A                 mov     byte ptr [ebp+var_28], 0
+  .text:100B168E                 cmp     edi, esi
+  .text:100B1690                 jz      short loc_100B16AB
+  .text:100B1692                 call    CASLog__GetInstance
+  .text:100B1697                 push    offset aCaspersistence_0; "CASPersistence::KeepIfPrevious: array t"...
+  .text:100B169C                 ; level
+  .text:100B169C                 push    0; level
+  .text:100B169E                 ; log
+  .text:100B169E                 push    eax; log
+  .text:100B169F                 call    CASLog__Error
+  .text:100B16A4                 add     esp, 0Ch
+  .text:100B16A7                 xor     al, al
+  .text:100B16A9                 jmp     short loc_100B16F7
+  .text:100B16AB                 mov     edi, [ebp+var_38]
+  .text:100B16AE                 xor     esi, esi
+  .text:100B16B0                 mov     byte ptr [edi+5Ch], 0
+  .text:100B16B4                 cmp     [ebp+var_34], esi
+  .text:100B16B7                 jbe     short loc_100B16EC
+  .text:100B16B9                 lfence
+  .text:100B16BC                 nop     dword ptr [eax+00h]
+  .text:100B16C0                 mov     ecx, [ebp+Block]
+  .text:100B16C3                 push    esi
+  .text:100B16C4                 call    CScriptArray__At_const
+  .text:100B16C9                 push    eax
+  .text:100B16CA                 lea     ecx, [edi+14h]
+  .text:100B16CD                 ; Inlined KeepIfPrevious(CString const&): stored name at +20, keep flag at +92; preserve inline comparisons.
+  .text:100B16CD                 call    CString__operator_equal; Inlined KeepIfPrevious(CString const&): stored name at +20, keep flag at +92; preserve inline comparisons.
+  .text:100B16D2                 test    al, al
+  .text:100B16D4                 jz      short loc_100B16DA
+  .text:100B16D6                 mov     byte ptr [edi+5Ch], 1
+  .text:100B16DA                 cmp     byte ptr [edi+5Ch], 0
+  .text:100B16DE                 jnz     short loc_100B16E8
+  .text:100B16E0                 inc     esi
+  .text:100B16E1                 cmp     esi, [ebp+var_34]
+  .text:100B16E4                 jb      short loc_100B16C0
+  .text:100B16E6                 jmp     short loc_100B16EC
+  .text:100B16E8                 mov     byte ptr [edi+5Ch], 1
+  .text:100B16EC                 ; Block
+  .text:100B16EC                 mov     ecx, [ebp+Block]; Block
+  .text:100B16EF                 call    CScriptArray__Release
+  .text:100B16F4                 mov     al, [edi+5Ch]
+  .text:100B16F7                 mov     ecx, [ebp+var_C]
+  .text:100B16FA                 mov     large fs:0, ecx
+  .text:100B1701                 pop     ecx
+  .text:100B1702                 pop     edi
+  .text:100B1703                 pop     esi
+  .text:100B1704                 mov     ecx, [ebp+var_10]
+  .text:100B1707                 ; StackCookie
+  .text:100B1707                 xor     ecx, ebp; StackCookie
+  .text:100B1709                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:100B170E                 mov     esp, ebp
+  .text:100B1710                 pop     ebp
+  .text:100B1711                 retn    4
+  .text:100B1714                 call    __invalid_parameter_noinfo_noreturn
+  .text:103CC00D                 push    4
+  .text:103CC00F                 mov     eax, [ebp+var_38]
+  .text:103CC012                 ; Block
+  .text:103CC012                 push    eax; Block
+  .text:103CC013                 call    operator_delete
+  .text:103CC018                 add     esp, 8
+  .text:103CC01B                 retn
+  .text:103CC01C                 push    44h ; 'D'
+  .text:103CC01E                 mov     eax, [ebp+var_2C]
+  .text:103CC021                 ; Block
+  .text:103CC021                 push    eax; Block
+  .text:103CC022                 call    operator_delete
+  .text:103CC027                 add     esp, 8
+  .text:103CC02A                 retn
+  .text:103CC02B                 lea     ecx, [ebp+var_28]
+  .text:103CC02E                 jmp     sub_100A7060
+  .text:103CC038                 nop
+  .text:103CC039                 nop
+  .text:103CC03A                 mov     edx, [esp-4+arg_4]
+  .text:103CC03E                 lea     eax, [edx+0Ch]
+  .text:103CC041                 mov     ecx, [edx-38h]
+  .text:103CC044                 ; StackCookie
+  .text:103CC044                 xor     ecx, eax; StackCookie
+  .text:103CC046                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:103CC04B                 mov     ecx, [edx-4]
+  .text:103CC04E                 ; StackCookie
+  .text:103CC04E                 xor     ecx, eax; StackCookie
+  .text:103CC050                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:103CC055                 mov     eax, offset stru_104CC608
+  .text:103CC05A                 jmp     ___CxxFrameHandler3
+procedure: |
+  // ABI evidence: windows std::string is 24 bytes: inline buffer/pointer+0, length+16, capacity+20; manager.scriptEngine is +12.
+  bool __thiscall CASPersistence__KeepIfPrevious_Array(CASPersistenceArrayView *self, const CScriptArray *array)
+  {
+    void *v2; // eax
+    void *v3; // eax
+    CASManagerTypeQueryView *managerCopy; // eax
+    CASManagerTypeQueryView *v6; // eax
+    ASTypeQueryEngine *scriptEngine; // edi
+    ASTypeQueryVTable *vtable; // eax
+    asITypeInfo *(__thiscall *GetTypeInfoById)(ASTypeQueryEngine *, int); // esi
+    int ElementTypeId; // eax
+    int elementType; // esi
+    asITypeInfo *stringType; // edi
+    char *data; // edx
+    void *Instance; // eax
+    unsigned int index; // esi
+    const CStringReference *v16; // eax
+    unsigned int arraySize; // [esp+10h] [ebp-34h]
+    CASManagerTypeQueryView *manager; // [esp+18h] [ebp-2Ch]
+    MsvcStringView typeName; // [esp+1Ch] [ebp-28h] BYREF
+    int v21; // [esp+40h] [ebp-4h]
+
+    if ( array )
+    {
+      arraySize = CScriptArray__GetSize(array);
+      managerCopy = CASServerManager_pInstance;
+      manager = CASServerManager_pInstance;
+      if ( !CASServerManager_pInstance )
+      {
+        v6 = (CASManagerTypeQueryView *)operator new(0x44u);
+        v21 = 1;
+        if ( v6 )
+          managerCopy = CASServerManager__Constructor(v6);
+        else
+          managerCopy = nullptr;
+        manager = managerCopy;
+        CASServerManager_pInstance = managerCopy;
+      }
+      scriptEngine = managerCopy->scriptEngine;
+      typeName.storage = 0;
+      strcpy(typeName.storage.local, "string");
+      typeName.length = 6;
+      typeName.capacity = 15;
+      vtable = scriptEngine->vtable;
+      v21 = 3;
+      GetTypeInfoById = vtable->GetTypeInfoById;
+      ElementTypeId = CScriptArray__GetElementTypeId(array);
+      elementType = (int)GetTypeInfoById(scriptEngine, ElementTypeId);
+      stringType = CASBaseManager__GetTypeInfoByName(manager, &typeName); // CASBaseManager_GetTypeInfoByName: cached manager query for the temporary string("string").
+      v21 = -1;
+      if ( typeName.capacity > 0xF )
+      {
+        data = typeName.storage.data;
+        if ( typeName.capacity + 1 >= 0x1000 )
+        {
+          data = *((char **)typeName.storage.data - 1);
+          if ( (unsigned int)(typeName.storage.data - data - 4) > 0x1F )
+            _invalid_parameter_noinfo_noreturn();
+        }
+        operator_delete(data);
+      }
+      typeName.length = 0;
+      typeName.capacity = 15;
+      typeName.storage.local[0] = 0;
+      if ( stringType == (asITypeInfo *)elementType )
+      {
+        index = 0;
+        self->keepIfPrevious = 0;
+        if ( arraySize )
+        {
+          _mm_lfence();
+          while ( 1 )
+          {
+            v16 = (const CStringReference *)CScriptArray__At_const(array, index);
+            if ( CString__operator_equal(&self->matchName, v16) )
+              self->keepIfPrevious = 1;
+            if ( self->keepIfPrevious )
+              break;
+            if ( ++index >= arraySize )
+              goto LABEL_27;
+          }
+          self->keepIfPrevious = 1;
+        }
+  LABEL_27:
+        CScriptArray__Release(array);
+        return self->keepIfPrevious;
+      }
+      else
+      {
+        Instance = CASLog__GetInstance();
+        CASLog::Error(Instance, 0, "CASPersistence::KeepIfPrevious: array type must be string!\n");
+        return 0;
+      }
+    }
+    else
+    {
+      v2 = CASLog_pInstance;
+      if ( !CASLog_pInstance )
+      {
+        v3 = operator new(4u);
+        v21 = 0;
+        if ( v3 )
+          v2 = CASLog::CASLog(v3);
+        else
+          v2 = nullptr;
+        v21 = -1;
+        CASLog_pInstance = v2;
+      }
+      CASLog::Error(v2, 0, "CASPersistence::KeepIfPrevious: array must be non-null!\n");
+      return 0;
+    }
+  }

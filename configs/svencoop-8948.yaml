@@ -3866,6 +3866,18 @@ modules:
     depot_windows: svencoop/dlls/server.dll
     depot_linux: svencoop/dlls/server.so
     skills:
+      - name: find-CASDirectoryList-CASBaseManager
+        expected_output:
+          - CASDirectoryList_CreateDirectory.{platform}.yaml
+          - CASPersistence_KeepIfPrevious.{platform}.yaml
+        expected_output_windows:
+          - CASBaseManager_GetTypeInfoByName.windows.yaml
+      - name: find-CASPersistence_KeepIfPrevious-decompiles
+        platform: linux
+        expected_input_linux:
+          - CASPersistence_KeepIfPrevious.linux.yaml
+        expected_output_linux:
+          - CASBaseManager_GetTypeInfoByName.linux.yaml
       - name: find-CASDocumentation-registration-callers
         expected_output:
           - RegisterSCScriptCustomEntityDependencies.{platform}.yaml
@@ -3922,6 +3934,12 @@ modules:
         expected_output:
           - CASHook_Call.{platform}.yaml
     symbols:
+      - name: CASDirectoryList_CreateDirectory
+        category: func
+      - name: CASBaseManager_GetTypeInfoByName
+        category: func
+      - name: CASPersistence_KeepIfPrevious
+        category: func
       - name: CASDocumentation_RegisterObjectType
         category: func
       - name: CASDocumentation_RegisterObjectProperty
