@@ -1,0 +1,8 @@
+func_name: CASDocumentation::RegisterObjectBehaviour(char const*, char const*, asEBehaviours, char const*, asSFuncPtr const&,
+  unsigned int, void*)
+func_va: '0x100a8430'
+func_rva: '0xa8430'
+func_size: '0xac'
+func_sig: 53 8B 5C 24 ?? 55 8B 6C 24 ?? 56 8B 74 24 ?? 57 6A 00 6A 00 FF 74 24 ?? 8B F9 FF 74 24 ??
+func_sig_allow_across_function_boundary: true
+func_sig_resolve_jmp_thunk: true

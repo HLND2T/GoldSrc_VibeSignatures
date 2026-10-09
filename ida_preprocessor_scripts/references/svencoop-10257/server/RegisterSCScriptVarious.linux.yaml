@@ -1,0 +1,1244 @@
+func_name: RegisterSCScriptVarious
+func_va: '0x15c652'
+disasm_code: |-
+  .text:0015C652                 push    ebp
+  .text:0015C653                 push    edi
+  .text:0015C654                 push    esi
+  .text:0015C655                 push    ebx
+  .text:0015C656                 sub     esp, 5Ch
+  .text:0015C659                 call    __x86_get_pc_thunk_bx
+  .text:0015C65E                 add     ebx, (offset qword_B14000 - $)
+  .text:0015C664                 mov     esi, [esp+6Ch+documentation]
+  .text:0015C668                 lea     eax, (unk_890A50 - 0B14000h)[ebx]
+  .text:0015C66E                 ; pointer
+  .text:0015C66E                 mov     [esp+6Ch+pointer], eax; pointer
+  .text:0015C672                 lea     edx, (aConstFloatWorl - 0B14000h)[ebx]; "const float WORLD_BOUNDARY"
+  .text:0015C678                 ; declaration
+  .text:0015C678                 mov     [esp+6Ch+src], edx; declaration
+  .text:0015C67C                 lea     ecx, (aDistanceFromTh - 0B14000h)[ebx]; "Distance from the world origin to the w"...
+  .text:0015C682                 ; docs
+  .text:0015C682                 mov     [esp+6Ch+docs], ecx; docs
+  .text:0015C686                 ; documentation
+  .text:0015C686                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:0015C689                 call    CASDocumentation_RegisterGlobalProperty
+  .text:0015C68E                 ; documentation
+  .text:0015C68E                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:0015C691                 call    RegisterSCScriptForwardDeclareString
+  .text:0015C696                 ; flags
+  .text:0015C696                 mov     [esp+6Ch+flags], 200Ah; flags
+  .text:0015C69E                 ; byteSize
+  .text:0015C69E                 mov     [esp+6Ch+pointer], 1; byteSize
+  .text:0015C6A6                 lea     edi, (aChar - 0B14000h)[ebx]; "char"
+  .text:0015C6AC                 mov     [esp+6Ch+objectName], edi
+  .text:0015C6B0                 ; objectName
+  .text:0015C6B0                 mov     [esp+6Ch+src], edi; objectName
+  .text:0015C6B4                 lea     ebp, (aCharValueType - 0B14000h)[ebx]; "Char value type"
+  .text:0015C6BA                 ; docs
+  .text:0015C6BA                 mov     [esp+6Ch+docs], ebp; docs
+  .text:0015C6BE                 ; documentation
+  .text:0015C6BE                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:0015C6C1                 call    CASDocumentation_RegisterObjectType
+  .text:0015C6C6                 lea     edi, [esp+6Ch+functionPointer]
+  .text:0015C6CA                 lea     ebp, [esp+6Ch+functionPointer.pointer+19h]
+  .text:0015C6CE                 lea     eax, [esp+6Ch+functionPointer.pointer+1]
+  .text:0015C6D2                 mov     byte ptr [eax], 0
+  .text:0015C6D5                 mov     byte ptr [eax+1], 0
+  .text:0015C6D9                 mov     byte ptr [eax+2], 0
+  .text:0015C6DD                 mov     byte ptr [eax+3], 0
+  .text:0015C6E1                 mov     byte ptr [eax+4], 0
+  .text:0015C6E5                 mov     byte ptr [eax+5], 0
+  .text:0015C6E9                 mov     byte ptr [eax+6], 0
+  .text:0015C6ED                 mov     byte ptr [eax+7], 0
+  .text:0015C6F1                 add     eax, 8
+  .text:0015C6F4                 cmp     eax, ebp
+  .text:0015C6F6                 jnz     short loc_15C6D2
+  .text:0015C6F8                 mov     [esp+6Ch+functionPointer.flag], 2
+  .text:0015C6FD                 lea     edx, (ScriptChar_isalnum - 0B14000h)[ebx]
+  .text:0015C703                 mov     dword ptr [esp+6Ch+functionPointer.pointer], edx
+  .text:0015C707                 ; auxiliary
+  .text:0015C707                 mov     [esp+6Ch+auxiliary], 0; auxiliary
+  .text:0015C70F                 ; callConvention
+  .text:0015C70F                 mov     [esp+6Ch+flags], 0; callConvention
+  .text:0015C717                 ; functionPointer
+  .text:0015C717                 mov     [esp+6Ch+pointer], edi; functionPointer
+  .text:0015C71B                 lea     ecx, (aBoolIsalnumCha - 0B14000h)[ebx]; "bool isalnum(char character)"
+  .text:0015C721                 ; declaration
+  .text:0015C721                 mov     [esp+6Ch+src], ecx; declaration
+  .text:0015C725                 lea     eax, (aReturnsWhether_14 - 0B14000h)[ebx]; "Returns whether character is alphanumer"...
+  .text:0015C72B                 ; docs
+  .text:0015C72B                 mov     [esp+6Ch+docs], eax; docs
+  .text:0015C72F                 ; documentation
+  .text:0015C72F                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:0015C732                 call    CASDocumentation_RegisterGlobalFunction
+  .text:0015C737                 lea     edx, [edi+1]
+  .text:0015C73A                 mov     byte ptr [edx], 0
+  .text:0015C73D                 mov     byte ptr [edx+1], 0
+  .text:0015C741                 mov     byte ptr [edx+2], 0
+  .text:0015C745                 mov     byte ptr [edx+3], 0
+  .text:0015C749                 mov     byte ptr [edx+4], 0
+  .text:0015C74D                 mov     byte ptr [edx+5], 0
+  .text:0015C751                 mov     byte ptr [edx+6], 0
+  .text:0015C755                 mov     byte ptr [edx+7], 0
+  .text:0015C759                 add     edx, 8
+  .text:0015C75C                 cmp     edx, ebp
+  .text:0015C75E                 jnz     short loc_15C73A
+  .text:0015C760                 mov     [esp+6Ch+functionPointer.flag], 2
+  .text:0015C765                 lea     ecx, (ScriptChar_isalpha - 0B14000h)[ebx]
+  .text:0015C76B                 mov     dword ptr [esp+6Ch+functionPointer.pointer], ecx
+  .text:0015C76F                 ; auxiliary
+  .text:0015C76F                 mov     [esp+6Ch+auxiliary], 0; auxiliary
+  .text:0015C777                 ; callConvention
+  .text:0015C777                 mov     [esp+6Ch+flags], 0; callConvention
+  .text:0015C77F                 ; functionPointer
+  .text:0015C77F                 mov     [esp+6Ch+pointer], edi; functionPointer
+  .text:0015C783                 lea     eax, (aBoolIsalphaCha - 0B14000h)[ebx]; "bool isalpha(char character)"
+  .text:0015C789                 ; declaration
+  .text:0015C789                 mov     [esp+6Ch+src], eax; declaration
+  .text:0015C78D                 lea     edx, (aReturnsWhether_15 - 0B14000h)[ebx]; "Returns whether character is alphabetic"...
+  .text:0015C793                 ; docs
+  .text:0015C793                 mov     [esp+6Ch+docs], edx; docs
+  .text:0015C797                 ; documentation
+  .text:0015C797                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:0015C79A                 call    CASDocumentation_RegisterGlobalFunction
+  .text:0015C79F                 lea     ecx, [edi+1]
+  .text:0015C7A2                 mov     byte ptr [ecx], 0
+  .text:0015C7A5                 mov     byte ptr [ecx+1], 0
+  .text:0015C7A9                 mov     byte ptr [ecx+2], 0
+  .text:0015C7AD                 mov     byte ptr [ecx+3], 0
+  .text:0015C7B1                 mov     byte ptr [ecx+4], 0
+  .text:0015C7B5                 mov     byte ptr [ecx+5], 0
+  .text:0015C7B9                 mov     byte ptr [ecx+6], 0
+  .text:0015C7BD                 mov     byte ptr [ecx+7], 0
+  .text:0015C7C1                 add     ecx, 8
+  .text:0015C7C4                 cmp     ecx, ebp
+  .text:0015C7C6                 jnz     short loc_15C7A2
+  .text:0015C7C8                 mov     [esp+6Ch+functionPointer.flag], 2
+  .text:0015C7CD                 lea     eax, (ScriptChar_iscntrl - 0B14000h)[ebx]
+  .text:0015C7D3                 mov     dword ptr [esp+6Ch+functionPointer.pointer], eax
+  .text:0015C7D7                 ; auxiliary
+  .text:0015C7D7                 mov     [esp+6Ch+auxiliary], 0; auxiliary
+  .text:0015C7DF                 ; callConvention
+  .text:0015C7DF                 mov     [esp+6Ch+flags], 0; callConvention
+  .text:0015C7E7                 ; functionPointer
+  .text:0015C7E7                 mov     [esp+6Ch+pointer], edi; functionPointer
+  .text:0015C7EB                 lea     edx, (aBoolIscntrlCha - 0B14000h)[ebx]; "bool iscntrl(char character)"
+  .text:0015C7F1                 ; declaration
+  .text:0015C7F1                 mov     [esp+6Ch+src], edx; declaration
+  .text:0015C7F5                 lea     ecx, (aReturnsWhether_16 - 0B14000h)[ebx]; "Returns whether character is control."
+  .text:0015C7FB                 ; docs
+  .text:0015C7FB                 mov     [esp+6Ch+docs], ecx; docs
+  .text:0015C7FF                 ; documentation
+  .text:0015C7FF                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:0015C802                 call    CASDocumentation_RegisterGlobalFunction
+  .text:0015C807                 lea     eax, [edi+1]
+  .text:0015C80A                 mov     byte ptr [eax], 0
+  .text:0015C80D                 mov     byte ptr [eax+1], 0
+  .text:0015C811                 mov     byte ptr [eax+2], 0
+  .text:0015C815                 mov     byte ptr [eax+3], 0
+  .text:0015C819                 mov     byte ptr [eax+4], 0
+  .text:0015C81D                 mov     byte ptr [eax+5], 0
+  .text:0015C821                 mov     byte ptr [eax+6], 0
+  .text:0015C825                 mov     byte ptr [eax+7], 0
+  .text:0015C829                 add     eax, 8
+  .text:0015C82C                 cmp     eax, ebp
+  .text:0015C82E                 jnz     short loc_15C80A
+  .text:0015C830                 mov     [esp+6Ch+functionPointer.flag], 2
+  .text:0015C835                 lea     edx, (ScriptChar_isdigit - 0B14000h)[ebx]
+  .text:0015C83B                 mov     dword ptr [esp+6Ch+functionPointer.pointer], edx
+  .text:0015C83F                 ; auxiliary
+  .text:0015C83F                 mov     [esp+6Ch+auxiliary], 0; auxiliary
+  .text:0015C847                 ; callConvention
+  .text:0015C847                 mov     [esp+6Ch+flags], 0; callConvention
+  .text:0015C84F                 ; functionPointer
+  .text:0015C84F                 mov     [esp+6Ch+pointer], edi; functionPointer
+  .text:0015C853                 lea     ecx, (aBoolIsdigitCha - 0B14000h)[ebx]; "bool isdigit(char character)"
+  .text:0015C859                 ; declaration
+  .text:0015C859                 mov     [esp+6Ch+src], ecx; declaration
+  .text:0015C85D                 lea     eax, (aReturnsWhether_27 - 0B14000h)[ebx]; "Returns whether character is a decimal "...
+  .text:0015C863                 ; docs
+  .text:0015C863                 mov     [esp+6Ch+docs], eax; docs
+  .text:0015C867                 ; documentation
+  .text:0015C867                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:0015C86A                 call    CASDocumentation_RegisterGlobalFunction
+  .text:0015C86F                 lea     edx, [edi+1]
+  .text:0015C872                 mov     byte ptr [edx], 0
+  .text:0015C875                 mov     byte ptr [edx+1], 0
+  .text:0015C879                 mov     byte ptr [edx+2], 0
+  .text:0015C87D                 mov     byte ptr [edx+3], 0
+  .text:0015C881                 mov     byte ptr [edx+4], 0
+  .text:0015C885                 mov     byte ptr [edx+5], 0
+  .text:0015C889                 mov     byte ptr [edx+6], 0
+  .text:0015C88D                 mov     byte ptr [edx+7], 0
+  .text:0015C891                 add     edx, 8
+  .text:0015C894                 cmp     edx, ebp
+  .text:0015C896                 jnz     short loc_15C872
+  .text:0015C898                 mov     [esp+6Ch+functionPointer.flag], 2
+  .text:0015C89D                 lea     ecx, (ScriptChar_isgraph - 0B14000h)[ebx]
+  .text:0015C8A3                 mov     dword ptr [esp+6Ch+functionPointer.pointer], ecx
+  .text:0015C8A7                 ; auxiliary
+  .text:0015C8A7                 mov     [esp+6Ch+auxiliary], 0; auxiliary
+  .text:0015C8AF                 ; callConvention
+  .text:0015C8AF                 mov     [esp+6Ch+flags], 0; callConvention
+  .text:0015C8B7                 ; functionPointer
+  .text:0015C8B7                 mov     [esp+6Ch+pointer], edi; functionPointer
+  .text:0015C8BB                 lea     eax, (aBoolIsgraphCha - 0B14000h)[ebx]; "bool isgraph(char character)"
+  .text:0015C8C1                 ; declaration
+  .text:0015C8C1                 mov     [esp+6Ch+src], eax; declaration
+  .text:0015C8C5                 lea     edx, (aReturnsWhether_18 - 0B14000h)[ebx]; "Returns whether character is graph."
+  .text:0015C8CB                 ; docs
+  .text:0015C8CB                 mov     [esp+6Ch+docs], edx; docs
+  .text:0015C8CF                 ; documentation
+  .text:0015C8CF                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:0015C8D2                 call    CASDocumentation_RegisterGlobalFunction
+  .text:0015C8D7                 lea     ecx, [edi+1]
+  .text:0015C8DA                 mov     byte ptr [ecx], 0
+  .text:0015C8DD                 mov     byte ptr [ecx+1], 0
+  .text:0015C8E1                 mov     byte ptr [ecx+2], 0
+  .text:0015C8E5                 mov     byte ptr [ecx+3], 0
+  .text:0015C8E9                 mov     byte ptr [ecx+4], 0
+  .text:0015C8ED                 mov     byte ptr [ecx+5], 0
+  .text:0015C8F1                 mov     byte ptr [ecx+6], 0
+  .text:0015C8F5                 mov     byte ptr [ecx+7], 0
+  .text:0015C8F9                 add     ecx, 8
+  .text:0015C8FC                 cmp     ecx, ebp
+  .text:0015C8FE                 jnz     short loc_15C8DA
+  .text:0015C900                 mov     [esp+6Ch+functionPointer.flag], 2
+  .text:0015C905                 lea     eax, (ScriptChar_islower - 0B14000h)[ebx]
+  .text:0015C90B                 mov     dword ptr [esp+6Ch+functionPointer.pointer], eax
+  .text:0015C90F                 ; auxiliary
+  .text:0015C90F                 mov     [esp+6Ch+auxiliary], 0; auxiliary
+  .text:0015C917                 ; callConvention
+  .text:0015C917                 mov     [esp+6Ch+flags], 0; callConvention
+  .text:0015C91F                 ; functionPointer
+  .text:0015C91F                 mov     [esp+6Ch+pointer], edi; functionPointer
+  .text:0015C923                 lea     edx, (aBoolIslowerCha - 0B14000h)[ebx]; "bool islower(char character)"
+  .text:0015C929                 ; declaration
+  .text:0015C929                 mov     [esp+6Ch+src], edx; declaration
+  .text:0015C92D                 lea     ecx, (aReturnsWhether_19 - 0B14000h)[ebx]; "Returns whether character is lower."
+  .text:0015C933                 ; docs
+  .text:0015C933                 mov     [esp+6Ch+docs], ecx; docs
+  .text:0015C937                 ; documentation
+  .text:0015C937                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:0015C93A                 call    CASDocumentation_RegisterGlobalFunction
+  .text:0015C93F                 lea     eax, [edi+1]
+  .text:0015C942                 mov     byte ptr [eax], 0
+  .text:0015C945                 mov     byte ptr [eax+1], 0
+  .text:0015C949                 mov     byte ptr [eax+2], 0
+  .text:0015C94D                 mov     byte ptr [eax+3], 0
+  .text:0015C951                 mov     byte ptr [eax+4], 0
+  .text:0015C955                 mov     byte ptr [eax+5], 0
+  .text:0015C959                 mov     byte ptr [eax+6], 0
+  .text:0015C95D                 mov     byte ptr [eax+7], 0
+  .text:0015C961                 add     eax, 8
+  .text:0015C964                 cmp     eax, ebp
+  .text:0015C966                 jnz     short loc_15C942
+  .text:0015C968                 mov     [esp+6Ch+functionPointer.flag], 2
+  .text:0015C96D                 lea     edx, (ScriptChar_isprint - 0B14000h)[ebx]
+  .text:0015C973                 mov     dword ptr [esp+6Ch+functionPointer.pointer], edx
+  .text:0015C977                 ; auxiliary
+  .text:0015C977                 mov     [esp+6Ch+auxiliary], 0; auxiliary
+  .text:0015C97F                 ; callConvention
+  .text:0015C97F                 mov     [esp+6Ch+flags], 0; callConvention
+  .text:0015C987                 ; functionPointer
+  .text:0015C987                 mov     [esp+6Ch+pointer], edi; functionPointer
+  .text:0015C98B                 lea     ecx, (aBoolIsprintCha - 0B14000h)[ebx]; "bool isprint(char character)"
+  .text:0015C991                 ; declaration
+  .text:0015C991                 mov     [esp+6Ch+src], ecx; declaration
+  .text:0015C995                 lea     eax, (aReturnsWhether_20 - 0B14000h)[ebx]; "Returns whether character is print."
+  .text:0015C99B                 ; docs
+  .text:0015C99B                 mov     [esp+6Ch+docs], eax; docs
+  .text:0015C99F                 ; documentation
+  .text:0015C99F                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:0015C9A2                 call    CASDocumentation_RegisterGlobalFunction
+  .text:0015C9A7                 lea     edx, [edi+1]
+  .text:0015C9AA                 mov     byte ptr [edx], 0
+  .text:0015C9AD                 mov     byte ptr [edx+1], 0
+  .text:0015C9B1                 mov     byte ptr [edx+2], 0
+  .text:0015C9B5                 mov     byte ptr [edx+3], 0
+  .text:0015C9B9                 mov     byte ptr [edx+4], 0
+  .text:0015C9BD                 mov     byte ptr [edx+5], 0
+  .text:0015C9C1                 mov     byte ptr [edx+6], 0
+  .text:0015C9C5                 mov     byte ptr [edx+7], 0
+  .text:0015C9C9                 add     edx, 8
+  .text:0015C9CC                 cmp     edx, ebp
+  .text:0015C9CE                 jnz     short loc_15C9AA
+  .text:0015C9D0                 mov     [esp+6Ch+functionPointer.flag], 2
+  .text:0015C9D5                 lea     ecx, (ScriptChar_ispunct - 0B14000h)[ebx]
+  .text:0015C9DB                 mov     dword ptr [esp+6Ch+functionPointer.pointer], ecx
+  .text:0015C9DF                 ; auxiliary
+  .text:0015C9DF                 mov     [esp+6Ch+auxiliary], 0; auxiliary
+  .text:0015C9E7                 ; callConvention
+  .text:0015C9E7                 mov     [esp+6Ch+flags], 0; callConvention
+  .text:0015C9EF                 ; functionPointer
+  .text:0015C9EF                 mov     [esp+6Ch+pointer], edi; functionPointer
+  .text:0015C9F3                 lea     eax, (aBoolIspunctCha - 0B14000h)[ebx]; "bool ispunct(char character)"
+  .text:0015C9F9                 ; declaration
+  .text:0015C9F9                 mov     [esp+6Ch+src], eax; declaration
+  .text:0015C9FD                 lea     edx, (aReturnsWhether_21 - 0B14000h)[ebx]; "Returns whether character is punctualit"...
+  .text:0015CA03                 ; docs
+  .text:0015CA03                 mov     [esp+6Ch+docs], edx; docs
+  .text:0015CA07                 ; documentation
+  .text:0015CA07                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:0015CA0A                 call    CASDocumentation_RegisterGlobalFunction
+  .text:0015CA0F                 lea     ecx, [edi+1]
+  .text:0015CA12                 mov     byte ptr [ecx], 0
+  .text:0015CA15                 mov     byte ptr [ecx+1], 0
+  .text:0015CA19                 mov     byte ptr [ecx+2], 0
+  .text:0015CA1D                 mov     byte ptr [ecx+3], 0
+  .text:0015CA21                 mov     byte ptr [ecx+4], 0
+  .text:0015CA25                 mov     byte ptr [ecx+5], 0
+  .text:0015CA29                 mov     byte ptr [ecx+6], 0
+  .text:0015CA2D                 mov     byte ptr [ecx+7], 0
+  .text:0015CA31                 add     ecx, 8
+  .text:0015CA34                 cmp     ecx, ebp
+  .text:0015CA36                 jnz     short loc_15CA12
+  .text:0015CA38                 mov     [esp+6Ch+functionPointer.flag], 2
+  .text:0015CA3D                 lea     eax, (ScriptChar_isspace - 0B14000h)[ebx]
+  .text:0015CA43                 mov     dword ptr [esp+6Ch+functionPointer.pointer], eax
+  .text:0015CA47                 ; auxiliary
+  .text:0015CA47                 mov     [esp+6Ch+auxiliary], 0; auxiliary
+  .text:0015CA4F                 ; callConvention
+  .text:0015CA4F                 mov     [esp+6Ch+flags], 0; callConvention
+  .text:0015CA57                 ; functionPointer
+  .text:0015CA57                 mov     [esp+6Ch+pointer], edi; functionPointer
+  .text:0015CA5B                 lea     edx, (aBoolIsspaceCha - 0B14000h)[ebx]; "bool isspace(char character)"
+  .text:0015CA61                 ; declaration
+  .text:0015CA61                 mov     [esp+6Ch+src], edx; declaration
+  .text:0015CA65                 lea     ecx, (aReturnsWhether_22 - 0B14000h)[ebx]; "Returns whether character is space."
+  .text:0015CA6B                 ; docs
+  .text:0015CA6B                 mov     [esp+6Ch+docs], ecx; docs
+  .text:0015CA6F                 ; documentation
+  .text:0015CA6F                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:0015CA72                 call    CASDocumentation_RegisterGlobalFunction
+  .text:0015CA77                 lea     eax, [edi+1]
+  .text:0015CA7A                 mov     byte ptr [eax], 0
+  .text:0015CA7D                 mov     byte ptr [eax+1], 0
+  .text:0015CA81                 mov     byte ptr [eax+2], 0
+  .text:0015CA85                 mov     byte ptr [eax+3], 0
+  .text:0015CA89                 mov     byte ptr [eax+4], 0
+  .text:0015CA8D                 mov     byte ptr [eax+5], 0
+  .text:0015CA91                 mov     byte ptr [eax+6], 0
+  .text:0015CA95                 mov     byte ptr [eax+7], 0
+  .text:0015CA99                 add     eax, 8
+  .text:0015CA9C                 cmp     eax, ebp
+  .text:0015CA9E                 jnz     short loc_15CA7A
+  .text:0015CAA0                 mov     [esp+6Ch+functionPointer.flag], 2
+  .text:0015CAA5                 lea     edx, (ScriptChar_isupper - 0B14000h)[ebx]
+  .text:0015CAAB                 mov     dword ptr [esp+6Ch+functionPointer.pointer], edx
+  .text:0015CAAF                 ; auxiliary
+  .text:0015CAAF                 mov     [esp+6Ch+auxiliary], 0; auxiliary
+  .text:0015CAB7                 ; callConvention
+  .text:0015CAB7                 mov     [esp+6Ch+flags], 0; callConvention
+  .text:0015CABF                 ; functionPointer
+  .text:0015CABF                 mov     [esp+6Ch+pointer], edi; functionPointer
+  .text:0015CAC3                 lea     ecx, (aBoolIsupperCha - 0B14000h)[ebx]; "bool isupper(char character)"
+  .text:0015CAC9                 ; declaration
+  .text:0015CAC9                 mov     [esp+6Ch+src], ecx; declaration
+  .text:0015CACD                 lea     eax, (aReturnsWhether_23 - 0B14000h)[ebx]; "Returns whether character is upper."
+  .text:0015CAD3                 ; docs
+  .text:0015CAD3                 mov     [esp+6Ch+docs], eax; docs
+  .text:0015CAD7                 ; documentation
+  .text:0015CAD7                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:0015CADA                 call    CASDocumentation_RegisterGlobalFunction
+  .text:0015CADF                 lea     edx, [edi+1]
+  .text:0015CAE2                 mov     byte ptr [edx], 0
+  .text:0015CAE5                 mov     byte ptr [edx+1], 0
+  .text:0015CAE9                 mov     byte ptr [edx+2], 0
+  .text:0015CAED                 mov     byte ptr [edx+3], 0
+  .text:0015CAF1                 mov     byte ptr [edx+4], 0
+  .text:0015CAF5                 mov     byte ptr [edx+5], 0
+  .text:0015CAF9                 mov     byte ptr [edx+6], 0
+  .text:0015CAFD                 mov     byte ptr [edx+7], 0
+  .text:0015CB01                 add     edx, 8
+  .text:0015CB04                 cmp     edx, ebp
+  .text:0015CB06                 jnz     short loc_15CAE2
+  .text:0015CB08                 mov     [esp+6Ch+functionPointer.flag], 2
+  .text:0015CB0D                 lea     ecx, (ScriptChar_isxdigit - 0B14000h)[ebx]
+  .text:0015CB13                 mov     dword ptr [esp+6Ch+functionPointer.pointer], ecx
+  .text:0015CB17                 ; auxiliary
+  .text:0015CB17                 mov     [esp+6Ch+auxiliary], 0; auxiliary
+  .text:0015CB1F                 ; callConvention
+  .text:0015CB1F                 mov     [esp+6Ch+flags], 0; callConvention
+  .text:0015CB27                 ; functionPointer
+  .text:0015CB27                 mov     [esp+6Ch+pointer], edi; functionPointer
+  .text:0015CB2B                 lea     eax, (aBoolIsxdigitCh - 0B14000h)[ebx]; "bool isxdigit(char character)"
+  .text:0015CB31                 ; declaration
+  .text:0015CB31                 mov     [esp+6Ch+src], eax; declaration
+  .text:0015CB35                 lea     edx, (aReturnsWhether_28 - 0B14000h)[ebx]; "Returns whether character is a hexadeci"...
+  .text:0015CB3B                 ; docs
+  .text:0015CB3B                 mov     [esp+6Ch+docs], edx; docs
+  .text:0015CB3F                 ; documentation
+  .text:0015CB3F                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:0015CB42                 call    CASDocumentation_RegisterGlobalFunction
+  .text:0015CB47                 lea     ecx, [edi+1]
+  .text:0015CB4A                 mov     byte ptr [ecx], 0
+  .text:0015CB4D                 mov     byte ptr [ecx+1], 0
+  .text:0015CB51                 mov     byte ptr [ecx+2], 0
+  .text:0015CB55                 mov     byte ptr [ecx+3], 0
+  .text:0015CB59                 mov     byte ptr [ecx+4], 0
+  .text:0015CB5D                 mov     byte ptr [ecx+5], 0
+  .text:0015CB61                 mov     byte ptr [ecx+6], 0
+  .text:0015CB65                 mov     byte ptr [ecx+7], 0
+  .text:0015CB69                 add     ecx, 8
+  .text:0015CB6C                 cmp     ebp, ecx
+  .text:0015CB6E                 jnz     short loc_15CB4A
+  .text:0015CB70                 mov     [esp+6Ch+functionPointer.flag], 2
+  .text:0015CB75                 lea     eax, (ScriptChar_tolower - 0B14000h)[ebx]
+  .text:0015CB7B                 mov     dword ptr [esp+6Ch+functionPointer.pointer], eax
+  .text:0015CB7F                 ; auxiliary
+  .text:0015CB7F                 mov     [esp+6Ch+auxiliary], 0; auxiliary
+  .text:0015CB87                 ; callConvention
+  .text:0015CB87                 mov     [esp+6Ch+flags], 0; callConvention
+  .text:0015CB8F                 ; functionPointer
+  .text:0015CB8F                 mov     [esp+6Ch+pointer], edi; functionPointer
+  .text:0015CB93                 lea     edx, (aCharTolowerCha - 0B14000h)[ebx]; "char tolower(char character)"
+  .text:0015CB99                 ; declaration
+  .text:0015CB99                 mov     [esp+6Ch+src], edx; declaration
+  .text:0015CB9D                 lea     ecx, (aConvertsTheGiv_7 - 0B14000h)[ebx]; "Converts the given character to lower c"...
+  .text:0015CBA3                 ; docs
+  .text:0015CBA3                 mov     [esp+6Ch+docs], ecx; docs
+  .text:0015CBA7                 ; documentation
+  .text:0015CBA7                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:0015CBAA                 call    CASDocumentation_RegisterGlobalFunction
+  .text:0015CBAF                 lea     eax, [edi+1]
+  .text:0015CBB2                 mov     byte ptr [eax], 0
+  .text:0015CBB5                 mov     byte ptr [eax+1], 0
+  .text:0015CBB9                 mov     byte ptr [eax+2], 0
+  .text:0015CBBD                 mov     byte ptr [eax+3], 0
+  .text:0015CBC1                 mov     byte ptr [eax+4], 0
+  .text:0015CBC5                 mov     byte ptr [eax+5], 0
+  .text:0015CBC9                 mov     byte ptr [eax+6], 0
+  .text:0015CBCD                 mov     byte ptr [eax+7], 0
+  .text:0015CBD1                 add     eax, 8
+  .text:0015CBD4                 cmp     eax, ebp
+  .text:0015CBD6                 jnz     short loc_15CBB2
+  .text:0015CBD8                 mov     [esp+6Ch+functionPointer.flag], 2
+  .text:0015CBDD                 lea     edx, (ScriptChar_toupper - 0B14000h)[ebx]
+  .text:0015CBE3                 mov     dword ptr [esp+6Ch+functionPointer.pointer], edx
+  .text:0015CBE7                 ; auxiliary
+  .text:0015CBE7                 mov     [esp+6Ch+auxiliary], 0; auxiliary
+  .text:0015CBEF                 ; callConvention
+  .text:0015CBEF                 mov     [esp+6Ch+flags], 0; callConvention
+  .text:0015CBF7                 ; functionPointer
+  .text:0015CBF7                 mov     [esp+6Ch+pointer], edi; functionPointer
+  .text:0015CBFB                 lea     ecx, (aCharToupperCha - 0B14000h)[ebx]; "char toupper(char character)"
+  .text:0015CC01                 ; declaration
+  .text:0015CC01                 mov     [esp+6Ch+src], ecx; declaration
+  .text:0015CC05                 lea     eax, (aConvertsTheGiv_8 - 0B14000h)[ebx]; "Converts the given character to upper c"...
+  .text:0015CC0B                 ; docs
+  .text:0015CC0B                 mov     [esp+6Ch+docs], eax; docs
+  .text:0015CC0F                 ; documentation
+  .text:0015CC0F                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:0015CC12                 call    CASDocumentation_RegisterGlobalFunction
+  .text:0015CC17                 lea     edx, [edi+1]
+  .text:0015CC1A                 mov     byte ptr [edx], 0
+  .text:0015CC1D                 mov     byte ptr [edx+1], 0
+  .text:0015CC21                 mov     byte ptr [edx+2], 0
+  .text:0015CC25                 mov     byte ptr [edx+3], 0
+  .text:0015CC29                 mov     byte ptr [edx+4], 0
+  .text:0015CC2D                 mov     byte ptr [edx+5], 0
+  .text:0015CC31                 mov     byte ptr [edx+6], 0
+  .text:0015CC35                 mov     byte ptr [edx+7], 0
+  .text:0015CC39                 add     edx, 8
+  .text:0015CC3C                 cmp     ebp, edx
+  .text:0015CC3E                 jnz     short loc_15CC1A
+  .text:0015CC40                 mov     [esp+6Ch+functionPointer.flag], 2
+  .text:0015CC45                 lea     ecx, (DefaultConstructChar - 0B14000h)[ebx]
+  .text:0015CC4B                 mov     dword ptr [esp+6Ch+functionPointer.pointer], ecx
+  .text:0015CC4F                 ; auxiliary
+  .text:0015CC4F                 mov     [esp+6Ch+var_50], 0; auxiliary
+  .text:0015CC57                 ; callConvention
+  .text:0015CC57                 mov     [esp+6Ch+callConvention], 4; callConvention
+  .text:0015CC5F                 ; functionPointer
+  .text:0015CC5F                 mov     [esp+6Ch+auxiliary], edi; functionPointer
+  .text:0015CC63                 lea     eax, (aVoidChar - 0B14000h)[ebx]; "void char()"
+  .text:0015CC69                 mov     [esp+6Ch+declaration], eax
+  .text:0015CC6D                 ; declaration
+  .text:0015CC6D                 mov     [esp+6Ch+flags], eax; declaration
+  .text:0015CC71                 ; behaviour
+  .text:0015CC71                 mov     [esp+6Ch+pointer], 0; behaviour
+  .text:0015CC79                 mov     edx, [esp+6Ch+objectName]
+  .text:0015CC7D                 ; objectName
+  .text:0015CC7D                 mov     [esp+6Ch+src], edx; objectName
+  .text:0015CC81                 lea     ecx, (aDefaultConstru_0 - 0B14000h)[ebx]; "Default constructor"
+  .text:0015CC87                 ; docs
+  .text:0015CC87                 mov     [esp+6Ch+docs], ecx; docs
+  .text:0015CC8B                 ; documentation
+  .text:0015CC8B                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:0015CC8E                 call    CASDocumentation_RegisterObjectBehaviour
+  .text:0015CC93                 lea     eax, [edi+1]
+  .text:0015CC96                 mov     byte ptr [eax], 0
+  .text:0015CC99                 mov     byte ptr [eax+1], 0
+  .text:0015CC9D                 mov     byte ptr [eax+2], 0
+  .text:0015CCA1                 mov     byte ptr [eax+3], 0
+  .text:0015CCA5                 mov     byte ptr [eax+4], 0
+  .text:0015CCA9                 mov     byte ptr [eax+5], 0
+  .text:0015CCAD                 mov     byte ptr [eax+6], 0
+  .text:0015CCB1                 mov     byte ptr [eax+7], 0
+  .text:0015CCB5                 add     eax, 8
+  .text:0015CCB8                 cmp     ebp, eax
+  .text:0015CCBA                 jnz     short loc_15CC96
+  .text:0015CCBC                 mov     [esp+6Ch+functionPointer.flag], 2
+  .text:0015CCC1                 lea     edx, (CopyConstructChar - 0B14000h)[ebx]
+  .text:0015CCC7                 mov     dword ptr [esp+6Ch+functionPointer.pointer], edx
+  .text:0015CCCB                 ; auxiliary
+  .text:0015CCCB                 mov     [esp+6Ch+var_50], 0; auxiliary
+  .text:0015CCD3                 ; callConvention
+  .text:0015CCD3                 mov     [esp+6Ch+callConvention], 4; callConvention
+  .text:0015CCDB                 ; functionPointer
+  .text:0015CCDB                 mov     [esp+6Ch+auxiliary], edi; functionPointer
+  .text:0015CCDF                 lea     ecx, (aVoidCharConstC - 0B14000h)[ebx]; "void char(const char& in character)"
+  .text:0015CCE5                 ; declaration
+  .text:0015CCE5                 mov     [esp+6Ch+flags], ecx; declaration
+  .text:0015CCE9                 ; behaviour
+  .text:0015CCE9                 mov     [esp+6Ch+pointer], 0; behaviour
+  .text:0015CCF1                 mov     eax, [esp+6Ch+objectName]
+  .text:0015CCF5                 ; objectName
+  .text:0015CCF5                 mov     [esp+6Ch+src], eax; objectName
+  .text:0015CCF9                 lea     edx, (aCopyConstructo_0 - 0B14000h)[ebx]; "Copy constructor"
+  .text:0015CCFF                 ; docs
+  .text:0015CCFF                 mov     [esp+6Ch+docs], edx; docs
+  .text:0015CD03                 mov     [esp+6Ch+var_40], edx
+  .text:0015CD07                 ; documentation
+  .text:0015CD07                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:0015CD0A                 call    CASDocumentation_RegisterObjectBehaviour
+  .text:0015CD0F                 lea     ecx, [edi+1]
+  .text:0015CD12                 mov     edx, [esp+6Ch+var_40]
+  .text:0015CD16                 mov     byte ptr [ecx], 0
+  .text:0015CD19                 mov     byte ptr [ecx+1], 0
+  .text:0015CD1D                 mov     byte ptr [ecx+2], 0
+  .text:0015CD21                 mov     byte ptr [ecx+3], 0
+  .text:0015CD25                 mov     byte ptr [ecx+4], 0
+  .text:0015CD29                 mov     byte ptr [ecx+5], 0
+  .text:0015CD2D                 mov     byte ptr [ecx+6], 0
+  .text:0015CD31                 mov     byte ptr [ecx+7], 0
+  .text:0015CD35                 add     ecx, 8
+  .text:0015CD38                 cmp     ebp, ecx
+  .text:0015CD3A                 jnz     short loc_15CD16
+  .text:0015CD3C                 mov     [esp+6Ch+functionPointer.flag], 2
+  .text:0015CD41                 lea     eax, (CopyConstructCharFromString - 0B14000h)[ebx]
+  .text:0015CD47                 mov     dword ptr [esp+6Ch+functionPointer.pointer], eax
+  .text:0015CD4B                 ; auxiliary
+  .text:0015CD4B                 mov     [esp+6Ch+var_50], 0; auxiliary
+  .text:0015CD53                 ; callConvention
+  .text:0015CD53                 mov     [esp+6Ch+callConvention], 4; callConvention
+  .text:0015CD5B                 ; functionPointer
+  .text:0015CD5B                 mov     [esp+6Ch+auxiliary], edi; functionPointer
+  .text:0015CD5F                 lea     ecx, (aVoidCharConstS - 0B14000h)[ebx]; "void char(const string& in szString)"
+  .text:0015CD65                 ; declaration
+  .text:0015CD65                 mov     [esp+6Ch+flags], ecx; declaration
+  .text:0015CD69                 ; behaviour
+  .text:0015CD69                 mov     [esp+6Ch+pointer], 0; behaviour
+  .text:0015CD71                 mov     eax, [esp+6Ch+objectName]
+  .text:0015CD75                 ; objectName
+  .text:0015CD75                 mov     [esp+6Ch+src], eax; objectName
+  .text:0015CD79                 ; docs
+  .text:0015CD79                 mov     [esp+6Ch+docs], edx; docs
+  .text:0015CD7D                 ; documentation
+  .text:0015CD7D                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:0015CD80                 call    CASDocumentation_RegisterObjectBehaviour
+  .text:0015CD85                 lea     edx, [edi+1]
+  .text:0015CD88                 mov     byte ptr [edx], 0
+  .text:0015CD8B                 mov     byte ptr [edx+1], 0
+  .text:0015CD8F                 mov     byte ptr [edx+2], 0
+  .text:0015CD93                 mov     byte ptr [edx+3], 0
+  .text:0015CD97                 mov     byte ptr [edx+4], 0
+  .text:0015CD9B                 mov     byte ptr [edx+5], 0
+  .text:0015CD9F                 mov     byte ptr [edx+6], 0
+  .text:0015CDA3                 mov     byte ptr [edx+7], 0
+  .text:0015CDA7                 add     edx, 8
+  .text:0015CDAA                 cmp     ebp, edx
+  .text:0015CDAC                 jnz     short loc_15CD88
+  .text:0015CDAE                 mov     [esp+6Ch+functionPointer.flag], 2
+  .text:0015CDB3                 lea     ecx, (DestructChar - 0B14000h)[ebx]
+  .text:0015CDB9                 mov     dword ptr [esp+6Ch+functionPointer.pointer], ecx
+  .text:0015CDBD                 ; auxiliary
+  .text:0015CDBD                 mov     [esp+6Ch+var_50], 0; auxiliary
+  .text:0015CDC5                 ; callConvention
+  .text:0015CDC5                 mov     [esp+6Ch+callConvention], 4; callConvention
+  .text:0015CDCD                 ; functionPointer
+  .text:0015CDCD                 mov     [esp+6Ch+auxiliary], edi; functionPointer
+  .text:0015CDD1                 mov     eax, [esp+6Ch+declaration]
+  .text:0015CDD5                 ; declaration
+  .text:0015CDD5                 mov     [esp+6Ch+flags], eax; declaration
+  .text:0015CDD9                 ; behaviour
+  .text:0015CDD9                 mov     [esp+6Ch+pointer], 2; behaviour
+  .text:0015CDE1                 mov     edx, [esp+6Ch+objectName]
+  .text:0015CDE5                 ; objectName
+  .text:0015CDE5                 mov     [esp+6Ch+src], edx; objectName
+  .text:0015CDE9                 lea     ecx, (aDestructor - 0B14000h)[ebx]; "Destructor"
+  .text:0015CDEF                 ; docs
+  .text:0015CDEF                 mov     [esp+6Ch+docs], ecx; docs
+  .text:0015CDF3                 ; documentation
+  .text:0015CDF3                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:0015CDF6                 call    CASDocumentation_RegisterObjectBehaviour
+  .text:0015CDFB                 lea     eax, [edi+1]
+  .text:0015CDFE                 mov     byte ptr [eax], 0
+  .text:0015CE01                 mov     byte ptr [eax+1], 0
+  .text:0015CE05                 mov     byte ptr [eax+2], 0
+  .text:0015CE09                 mov     byte ptr [eax+3], 0
+  .text:0015CE0D                 mov     byte ptr [eax+4], 0
+  .text:0015CE11                 mov     byte ptr [eax+5], 0
+  .text:0015CE15                 mov     byte ptr [eax+6], 0
+  .text:0015CE19                 mov     byte ptr [eax+7], 0
+  .text:0015CE1D                 add     eax, 8
+  .text:0015CE20                 cmp     ebp, eax
+  .text:0015CE22                 jnz     short loc_15CDFE
+  .text:0015CE24                 mov     [esp+6Ch+functionPointer.flag], 2
+  .text:0015CE29                 lea     edx, (Char_Assign - 0B14000h)[ebx]
+  .text:0015CE2F                 mov     dword ptr [esp+6Ch+functionPointer.pointer], edx
+  .text:0015CE33                 ; callConvention
+  .text:0015CE33                 mov     [esp+6Ch+auxiliary], 4; callConvention
+  .text:0015CE3B                 ; functionPointer
+  .text:0015CE3B                 mov     [esp+6Ch+flags], edi; functionPointer
+  .text:0015CE3F                 lea     ecx, (aCharOpassignCo - 0B14000h)[ebx]; "char opAssign(const char& in character)"
+  .text:0015CE45                 ; declaration
+  .text:0015CE45                 mov     [esp+6Ch+pointer], ecx; declaration
+  .text:0015CE49                 mov     eax, [esp+6Ch+objectName]
+  .text:0015CE4D                 ; objectName
+  .text:0015CE4D                 mov     [esp+6Ch+src], eax; objectName
+  .text:0015CE51                 lea     edx, (aAssignsOneChar - 0B14000h)[ebx]; "Assigns one character to another."
+  .text:0015CE57                 ; docs
+  .text:0015CE57                 mov     [esp+6Ch+docs], edx; docs
+  .text:0015CE5B                 ; documentation
+  .text:0015CE5B                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:0015CE5E                 call    CASDocumentation_RegisterObjectMethod
+  .text:0015CE63                 lea     ecx, [edi+1]
+  .text:0015CE66                 mov     byte ptr [ecx], 0
+  .text:0015CE69                 mov     byte ptr [ecx+1], 0
+  .text:0015CE6D                 mov     byte ptr [ecx+2], 0
+  .text:0015CE71                 mov     byte ptr [ecx+3], 0
+  .text:0015CE75                 mov     byte ptr [ecx+4], 0
+  .text:0015CE79                 mov     byte ptr [ecx+5], 0
+  .text:0015CE7D                 mov     byte ptr [ecx+6], 0
+  .text:0015CE81                 mov     byte ptr [ecx+7], 0
+  .text:0015CE85                 add     ecx, 8
+  .text:0015CE88                 cmp     ebp, ecx
+  .text:0015CE8A                 jnz     short loc_15CE66
+  .text:0015CE8C                 mov     [esp+6Ch+functionPointer.flag], 2
+  .text:0015CE91                 lea     eax, (Char_ToUint32 - 0B14000h)[ebx]
+  .text:0015CE97                 mov     dword ptr [esp+6Ch+functionPointer.pointer], eax
+  .text:0015CE9B                 ; callConvention
+  .text:0015CE9B                 mov     [esp+6Ch+auxiliary], 5; callConvention
+  .text:0015CEA3                 ; functionPointer
+  .text:0015CEA3                 mov     [esp+6Ch+flags], edi; functionPointer
+  .text:0015CEA7                 lea     edx, (aUint32Opimplco - 0B14000h)[ebx]; "uint32 opImplConv() const"
+  .text:0015CEAD                 ; declaration
+  .text:0015CEAD                 mov     [esp+6Ch+pointer], edx; declaration
+  .text:0015CEB1                 mov     ecx, [esp+6Ch+objectName]
+  .text:0015CEB5                 ; objectName
+  .text:0015CEB5                 mov     [esp+6Ch+src], ecx; objectName
+  .text:0015CEB9                 lea     eax, (aImplicitlyConv - 0B14000h)[ebx]; "Implicitly converts this character to a"...
+  .text:0015CEBF                 ; docs
+  .text:0015CEBF                 mov     [esp+6Ch+docs], eax; docs
+  .text:0015CEC3                 ; documentation
+  .text:0015CEC3                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:0015CEC6                 call    CASDocumentation_RegisterObjectMethod
+  .text:0015CECB                 lea     edx, [edi+1]
+  .text:0015CECE                 mov     byte ptr [edx], 0
+  .text:0015CED1                 mov     byte ptr [edx+1], 0
+  .text:0015CED5                 mov     byte ptr [edx+2], 0
+  .text:0015CED9                 mov     byte ptr [edx+3], 0
+  .text:0015CEDD                 mov     byte ptr [edx+4], 0
+  .text:0015CEE1                 mov     byte ptr [edx+5], 0
+  .text:0015CEE5                 mov     byte ptr [edx+6], 0
+  .text:0015CEE9                 mov     byte ptr [edx+7], 0
+  .text:0015CEED                 add     edx, 8
+  .text:0015CEF0                 cmp     ebp, edx
+  .text:0015CEF2                 jnz     short loc_15CECE
+  .text:0015CEF4                 mov     [esp+6Ch+functionPointer.flag], 2
+  .text:0015CEF9                 lea     ecx, (Char_Assign_String - 0B14000h)[ebx]
+  .text:0015CEFF                 mov     dword ptr [esp+6Ch+functionPointer.pointer], ecx
+  .text:0015CF03                 ; callConvention
+  .text:0015CF03                 mov     [esp+6Ch+auxiliary], 4; callConvention
+  .text:0015CF0B                 ; functionPointer
+  .text:0015CF0B                 mov     [esp+6Ch+flags], edi; functionPointer
+  .text:0015CF0F                 lea     eax, (aCharOpassignCo_0 - 0B14000h)[ebx]; "char opAssign(const string& in szString"...
+  .text:0015CF15                 ; declaration
+  .text:0015CF15                 mov     [esp+6Ch+pointer], eax; declaration
+  .text:0015CF19                 mov     edx, [esp+6Ch+objectName]
+  .text:0015CF1D                 ; objectName
+  .text:0015CF1D                 mov     [esp+6Ch+src], edx; objectName
+  .text:0015CF21                 lea     ecx, (aAssignsTheFirs - 0B14000h)[ebx]; "Assigns the first character of the give"...
+  .text:0015CF27                 ; docs
+  .text:0015CF27                 mov     [esp+6Ch+docs], ecx; docs
+  .text:0015CF2B                 ; documentation
+  .text:0015CF2B                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:0015CF2E                 call    CASDocumentation_RegisterObjectMethod
+  .text:0015CF33                 lea     eax, [edi+1]
+  .text:0015CF36                 mov     byte ptr [eax], 0
+  .text:0015CF39                 mov     byte ptr [eax+1], 0
+  .text:0015CF3D                 mov     byte ptr [eax+2], 0
+  .text:0015CF41                 mov     byte ptr [eax+3], 0
+  .text:0015CF45                 mov     byte ptr [eax+4], 0
+  .text:0015CF49                 mov     byte ptr [eax+5], 0
+  .text:0015CF4D                 mov     byte ptr [eax+6], 0
+  .text:0015CF51                 mov     byte ptr [eax+7], 0
+  .text:0015CF55                 add     eax, 8
+  .text:0015CF58                 cmp     ebp, eax
+  .text:0015CF5A                 jnz     short loc_15CF36
+  .text:0015CF5C                 mov     [esp+6Ch+functionPointer.flag], 2
+  .text:0015CF61                 lea     ebp, (Char_Compare_String - 0B14000h)[ebx]
+  .text:0015CF67                 mov     dword ptr [esp+6Ch+functionPointer.pointer], ebp
+  .text:0015CF6B                 ; callConvention
+  .text:0015CF6B                 mov     [esp+6Ch+auxiliary], 4; callConvention
+  .text:0015CF73                 ; functionPointer
+  .text:0015CF73                 mov     [esp+6Ch+flags], edi; functionPointer
+  .text:0015CF77                 lea     edi, (aBoolOpequalsCo_6 - 0B14000h)[ebx]; "bool opEquals(const string& in szString"...
+  .text:0015CF7D                 ; declaration
+  .text:0015CF7D                 mov     [esp+6Ch+pointer], edi; declaration
+  .text:0015CF81                 mov     edx, [esp+6Ch+objectName]
+  .text:0015CF85                 ; objectName
+  .text:0015CF85                 mov     [esp+6Ch+src], edx; objectName
+  .text:0015CF89                 lea     ecx, (aComparesThisCh - 0B14000h)[ebx]; "Compares this char with the given chara"...
+  .text:0015CF8F                 ; docs
+  .text:0015CF8F                 mov     [esp+6Ch+docs], ecx; docs
+  .text:0015CF93                 ; documentation
+  .text:0015CF93                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:0015CF96                 call    CASDocumentation_RegisterObjectMethod
+  .text:0015CF9B                 lea     eax, (aUint32 - 0B14000h)[ebx]; "uint32"
+  .text:0015CFA1                 ; underlyingType
+  .text:0015CFA1                 mov     [esp+6Ch+pointer], eax; underlyingType
+  .text:0015CFA5                 lea     ebp, (aSizeT - 0B14000h)[ebx]; "size_t"
+  .text:0015CFAB                 ; name
+  .text:0015CFAB                 mov     [esp+6Ch+src], ebp; name
+  .text:0015CFAF                 lea     edi, (aSizeTypeUsedFo - 0B14000h)[ebx]; "Size type used for denoting sizes"
+  .text:0015CFB5                 ; docs
+  .text:0015CFB5                 mov     [esp+6Ch+docs], edi; docs
+  .text:0015CFB9                 ; documentation
+  .text:0015CFB9                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:0015CFBC                 call    CASDocumentation__RegisterTypedef
+  .text:0015CFC1                 add     esp, 5Ch
+  .text:0015CFC4                 pop     ebx
+  .text:0015CFC5                 pop     esi
+  .text:0015CFC6                 pop     edi
+  .text:0015CFC7                 pop     ebp
+  .text:0015CFC8                 retn
+procedure: |-
+  // Direct CASDocumentation calls below identify method entries. SDK virtual calls and registered callback pointers are distinct.
+  // Reference reconstruction: private server source unavailable; names/arguments are based on current instructions and the symbolized 5.15 ELF peer. Registration return values are discarded here. Partial types describe only observed fields.
+  void __cdecl RegisterSCScriptVarious(CASDocumentationReference *documentation)
+  {
+    ASFunctionPointerReference *v1; // eax
+    ASFunctionPointerReference *v2; // edx
+    ASFunctionPointerReference *v3; // ecx
+    ASFunctionPointerReference *v4; // eax
+    ASFunctionPointerReference *v5; // edx
+    ASFunctionPointerReference *v6; // ecx
+    ASFunctionPointerReference *v7; // eax
+    ASFunctionPointerReference *v8; // edx
+    ASFunctionPointerReference *v9; // ecx
+    ASFunctionPointerReference *v10; // eax
+    ASFunctionPointerReference *v11; // edx
+    ASFunctionPointerReference *v12; // ecx
+    ASFunctionPointerReference *v13; // eax
+    ASFunctionPointerReference *v14; // edx
+    ASFunctionPointerReference *v15; // eax
+    ASFunctionPointerReference *v16; // ecx
+    ASFunctionPointerReference *v17; // edx
+    ASFunctionPointerReference *v18; // eax
+    ASFunctionPointerReference *v19; // ecx
+    ASFunctionPointerReference *v20; // edx
+    ASFunctionPointerReference *v21; // eax
+    ASFunctionPointerReference functionPointer; // [esp+30h] [ebp-3Ch] BYREF
+
+    CASDocumentation_RegisterGlobalProperty(
+      documentation,
+      "Distance from the world origin to the world boundary in a single axis",
+      "const float WORLD_BOUNDARY",
+      &unk_890A50);
+    RegisterSCScriptForwardDeclareString(documentation);
+    CASDocumentation_RegisterObjectType(documentation, "Char value type", "char", 1, 0x200Au);
+    v1 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v1->pointer.storage[0] = 0;
+      v1->pointer.storage[1] = 0;
+      v1->pointer.storage[2] = 0;
+      v1->pointer.storage[3] = 0;
+      v1->pointer.storage[4] = 0;
+      v1->pointer.storage[5] = 0;
+      v1->pointer.storage[6] = 0;
+      v1->pointer.storage[7] = 0;
+      v1 = (ASFunctionPointerReference *)((char *)v1 + 8);
+    }
+    while ( v1 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())ScriptChar_isalnum;
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is alphanumeric.",
+      "bool isalnum(char character)",
+      &functionPointer,
+      0,
+      nullptr);
+    v2 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v2->pointer.storage[0] = 0;
+      v2->pointer.storage[1] = 0;
+      v2->pointer.storage[2] = 0;
+      v2->pointer.storage[3] = 0;
+      v2->pointer.storage[4] = 0;
+      v2->pointer.storage[5] = 0;
+      v2->pointer.storage[6] = 0;
+      v2->pointer.storage[7] = 0;
+      v2 = (ASFunctionPointerReference *)((char *)v2 + 8);
+    }
+    while ( v2 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())ScriptChar_isalpha;
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is alphabetic.",
+      "bool isalpha(char character)",
+      &functionPointer,
+      0,
+      nullptr);
+    v3 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v3->pointer.storage[0] = 0;
+      v3->pointer.storage[1] = 0;
+      v3->pointer.storage[2] = 0;
+      v3->pointer.storage[3] = 0;
+      v3->pointer.storage[4] = 0;
+      v3->pointer.storage[5] = 0;
+      v3->pointer.storage[6] = 0;
+      v3->pointer.storage[7] = 0;
+      v3 = (ASFunctionPointerReference *)((char *)v3 + 8);
+    }
+    while ( v3 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())ScriptChar_iscntrl;
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is control.",
+      "bool iscntrl(char character)",
+      &functionPointer,
+      0,
+      nullptr);
+    v4 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v4->pointer.storage[0] = 0;
+      v4->pointer.storage[1] = 0;
+      v4->pointer.storage[2] = 0;
+      v4->pointer.storage[3] = 0;
+      v4->pointer.storage[4] = 0;
+      v4->pointer.storage[5] = 0;
+      v4->pointer.storage[6] = 0;
+      v4->pointer.storage[7] = 0;
+      v4 = (ASFunctionPointerReference *)((char *)v4 + 8);
+    }
+    while ( v4 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())ScriptChar_isdigit;
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is a decimal digit character.",
+      "bool isdigit(char character)",
+      &functionPointer,
+      0,
+      nullptr);
+    v5 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v5->pointer.storage[0] = 0;
+      v5->pointer.storage[1] = 0;
+      v5->pointer.storage[2] = 0;
+      v5->pointer.storage[3] = 0;
+      v5->pointer.storage[4] = 0;
+      v5->pointer.storage[5] = 0;
+      v5->pointer.storage[6] = 0;
+      v5->pointer.storage[7] = 0;
+      v5 = (ASFunctionPointerReference *)((char *)v5 + 8);
+    }
+    while ( v5 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())ScriptChar_isgraph;
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is graph.",
+      "bool isgraph(char character)",
+      &functionPointer,
+      0,
+      nullptr);
+    v6 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v6->pointer.storage[0] = 0;
+      v6->pointer.storage[1] = 0;
+      v6->pointer.storage[2] = 0;
+      v6->pointer.storage[3] = 0;
+      v6->pointer.storage[4] = 0;
+      v6->pointer.storage[5] = 0;
+      v6->pointer.storage[6] = 0;
+      v6->pointer.storage[7] = 0;
+      v6 = (ASFunctionPointerReference *)((char *)v6 + 8);
+    }
+    while ( v6 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())ScriptChar_islower;
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is lower.",
+      "bool islower(char character)",
+      &functionPointer,
+      0,
+      nullptr);
+    v7 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v7->pointer.storage[0] = 0;
+      v7->pointer.storage[1] = 0;
+      v7->pointer.storage[2] = 0;
+      v7->pointer.storage[3] = 0;
+      v7->pointer.storage[4] = 0;
+      v7->pointer.storage[5] = 0;
+      v7->pointer.storage[6] = 0;
+      v7->pointer.storage[7] = 0;
+      v7 = (ASFunctionPointerReference *)((char *)v7 + 8);
+    }
+    while ( v7 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())ScriptChar_isprint;
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is print.",
+      "bool isprint(char character)",
+      &functionPointer,
+      0,
+      nullptr);
+    v8 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v8->pointer.storage[0] = 0;
+      v8->pointer.storage[1] = 0;
+      v8->pointer.storage[2] = 0;
+      v8->pointer.storage[3] = 0;
+      v8->pointer.storage[4] = 0;
+      v8->pointer.storage[5] = 0;
+      v8->pointer.storage[6] = 0;
+      v8->pointer.storage[7] = 0;
+      v8 = (ASFunctionPointerReference *)((char *)v8 + 8);
+    }
+    while ( v8 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())ScriptChar_ispunct;
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is punctuality.",
+      "bool ispunct(char character)",
+      &functionPointer,
+      0,
+      nullptr);
+    v9 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v9->pointer.storage[0] = 0;
+      v9->pointer.storage[1] = 0;
+      v9->pointer.storage[2] = 0;
+      v9->pointer.storage[3] = 0;
+      v9->pointer.storage[4] = 0;
+      v9->pointer.storage[5] = 0;
+      v9->pointer.storage[6] = 0;
+      v9->pointer.storage[7] = 0;
+      v9 = (ASFunctionPointerReference *)((char *)v9 + 8);
+    }
+    while ( v9 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())ScriptChar_isspace;
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is space.",
+      "bool isspace(char character)",
+      &functionPointer,
+      0,
+      nullptr);
+    v10 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v10->pointer.storage[0] = 0;
+      v10->pointer.storage[1] = 0;
+      v10->pointer.storage[2] = 0;
+      v10->pointer.storage[3] = 0;
+      v10->pointer.storage[4] = 0;
+      v10->pointer.storage[5] = 0;
+      v10->pointer.storage[6] = 0;
+      v10->pointer.storage[7] = 0;
+      v10 = (ASFunctionPointerReference *)((char *)v10 + 8);
+    }
+    while ( v10 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())ScriptChar_isupper;
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is upper.",
+      "bool isupper(char character)",
+      &functionPointer,
+      0,
+      nullptr);
+    v11 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v11->pointer.storage[0] = 0;
+      v11->pointer.storage[1] = 0;
+      v11->pointer.storage[2] = 0;
+      v11->pointer.storage[3] = 0;
+      v11->pointer.storage[4] = 0;
+      v11->pointer.storage[5] = 0;
+      v11->pointer.storage[6] = 0;
+      v11->pointer.storage[7] = 0;
+      v11 = (ASFunctionPointerReference *)((char *)v11 + 8);
+    }
+    while ( v11 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())ScriptChar_isxdigit;
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is a hexadecimal numeric character.",
+      "bool isxdigit(char character)",
+      &functionPointer,
+      0,
+      nullptr);
+    v12 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v12->pointer.storage[0] = 0;
+      v12->pointer.storage[1] = 0;
+      v12->pointer.storage[2] = 0;
+      v12->pointer.storage[3] = 0;
+      v12->pointer.storage[4] = 0;
+      v12->pointer.storage[5] = 0;
+      v12->pointer.storage[6] = 0;
+      v12->pointer.storage[7] = 0;
+      v12 = (ASFunctionPointerReference *)((char *)v12 + 8);
+    }
+    while ( &functionPointer.pointer.storage[25] != (char *)v12 );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())ScriptChar_tolower;
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Converts the given character to lower case.",
+      "char tolower(char character)",
+      &functionPointer,
+      0,
+      nullptr);
+    v13 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v13->pointer.storage[0] = 0;
+      v13->pointer.storage[1] = 0;
+      v13->pointer.storage[2] = 0;
+      v13->pointer.storage[3] = 0;
+      v13->pointer.storage[4] = 0;
+      v13->pointer.storage[5] = 0;
+      v13->pointer.storage[6] = 0;
+      v13->pointer.storage[7] = 0;
+      v13 = (ASFunctionPointerReference *)((char *)v13 + 8);
+    }
+    while ( v13 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())ScriptChar_toupper;
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Converts the given character to upper case.",
+      "char toupper(char character)",
+      &functionPointer,
+      0,
+      nullptr);
+    v14 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v14->pointer.storage[0] = 0;
+      v14->pointer.storage[1] = 0;
+      v14->pointer.storage[2] = 0;
+      v14->pointer.storage[3] = 0;
+      v14->pointer.storage[4] = 0;
+      v14->pointer.storage[5] = 0;
+      v14->pointer.storage[6] = 0;
+      v14->pointer.storage[7] = 0;
+      v14 = (ASFunctionPointerReference *)((char *)v14 + 8);
+    }
+    while ( &functionPointer.pointer.storage[25] != (char *)v14 );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())DefaultConstructChar;
+    CASDocumentation_RegisterObjectBehaviour(
+      documentation,
+      "Default constructor",
+      "char",
+      0,
+      "void char()",
+      &functionPointer,
+      4u,
+      nullptr);
+    v15 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v15->pointer.storage[0] = 0;
+      v15->pointer.storage[1] = 0;
+      v15->pointer.storage[2] = 0;
+      v15->pointer.storage[3] = 0;
+      v15->pointer.storage[4] = 0;
+      v15->pointer.storage[5] = 0;
+      v15->pointer.storage[6] = 0;
+      v15->pointer.storage[7] = 0;
+      v15 = (ASFunctionPointerReference *)((char *)v15 + 8);
+    }
+    while ( &functionPointer.pointer.storage[25] != (char *)v15 );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())CopyConstructChar;
+    CASDocumentation_RegisterObjectBehaviour(
+      documentation,
+      "Copy constructor",
+      "char",
+      0,
+      "void char(const char& in character)",
+      &functionPointer,
+      4u,
+      nullptr);
+    v16 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v16->pointer.storage[0] = 0;
+      v16->pointer.storage[1] = 0;
+      v16->pointer.storage[2] = 0;
+      v16->pointer.storage[3] = 0;
+      v16->pointer.storage[4] = 0;
+      v16->pointer.storage[5] = 0;
+      v16->pointer.storage[6] = 0;
+      v16->pointer.storage[7] = 0;
+      v16 = (ASFunctionPointerReference *)((char *)v16 + 8);
+    }
+    while ( &functionPointer.pointer.storage[25] != (char *)v16 );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())CopyConstructCharFromString;
+    CASDocumentation_RegisterObjectBehaviour(
+      documentation,
+      "Copy constructor",
+      "char",
+      0,
+      "void char(const string& in szString)",
+      &functionPointer,
+      4u,
+      nullptr);
+    v17 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v17->pointer.storage[0] = 0;
+      v17->pointer.storage[1] = 0;
+      v17->pointer.storage[2] = 0;
+      v17->pointer.storage[3] = 0;
+      v17->pointer.storage[4] = 0;
+      v17->pointer.storage[5] = 0;
+      v17->pointer.storage[6] = 0;
+      v17->pointer.storage[7] = 0;
+      v17 = (ASFunctionPointerReference *)((char *)v17 + 8);
+    }
+    while ( &functionPointer.pointer.storage[25] != (char *)v17 );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())DestructChar;
+    CASDocumentation_RegisterObjectBehaviour(
+      documentation,
+      "Destructor",
+      "char",
+      2,
+      "void char()",
+      &functionPointer,
+      4u,
+      nullptr);
+    v18 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v18->pointer.storage[0] = 0;
+      v18->pointer.storage[1] = 0;
+      v18->pointer.storage[2] = 0;
+      v18->pointer.storage[3] = 0;
+      v18->pointer.storage[4] = 0;
+      v18->pointer.storage[5] = 0;
+      v18->pointer.storage[6] = 0;
+      v18->pointer.storage[7] = 0;
+      v18 = (ASFunctionPointerReference *)((char *)v18 + 8);
+    }
+    while ( &functionPointer.pointer.storage[25] != (char *)v18 );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())Char_Assign;
+    CASDocumentation_RegisterObjectMethod(
+      documentation,
+      "Assigns one character to another.",
+      "char",
+      "char opAssign(const char& in character)",
+      &functionPointer,
+      4u);
+    v19 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v19->pointer.storage[0] = 0;
+      v19->pointer.storage[1] = 0;
+      v19->pointer.storage[2] = 0;
+      v19->pointer.storage[3] = 0;
+      v19->pointer.storage[4] = 0;
+      v19->pointer.storage[5] = 0;
+      v19->pointer.storage[6] = 0;
+      v19->pointer.storage[7] = 0;
+      v19 = (ASFunctionPointerReference *)((char *)v19 + 8);
+    }
+    while ( &functionPointer.pointer.storage[25] != (char *)v19 );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())Char_ToUint32;
+    CASDocumentation_RegisterObjectMethod(
+      documentation,
+      "Implicitly converts this character to an unsigned 32 bit integer.",
+      "char",
+      "uint32 opImplConv() const",
+      &functionPointer,
+      5u);
+    v20 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v20->pointer.storage[0] = 0;
+      v20->pointer.storage[1] = 0;
+      v20->pointer.storage[2] = 0;
+      v20->pointer.storage[3] = 0;
+      v20->pointer.storage[4] = 0;
+      v20->pointer.storage[5] = 0;
+      v20->pointer.storage[6] = 0;
+      v20->pointer.storage[7] = 0;
+      v20 = (ASFunctionPointerReference *)((char *)v20 + 8);
+    }
+    while ( &functionPointer.pointer.storage[25] != (char *)v20 );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())Char_Assign_String;
+    CASDocumentation_RegisterObjectMethod(
+      documentation,
+      "Assigns the first character of the given string to this character.",
+      "char",
+      "char opAssign(const string& in szString)",
+      &functionPointer,
+      4u);
+    v21 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v21->pointer.storage[0] = 0;
+      v21->pointer.storage[1] = 0;
+      v21->pointer.storage[2] = 0;
+      v21->pointer.storage[3] = 0;
+      v21->pointer.storage[4] = 0;
+      v21->pointer.storage[5] = 0;
+      v21->pointer.storage[6] = 0;
+      v21->pointer.storage[7] = 0;
+      v21 = (ASFunctionPointerReference *)((char *)v21 + 8);
+    }
+    while ( &functionPointer.pointer.storage[25] != (char *)v21 );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())Char_Compare_String;
+    CASDocumentation_RegisterObjectMethod(
+      documentation,
+      "Compares this char with the given character.",
+      "char",
+      "bool opEquals(const string& in szString) const",
+      &functionPointer,
+      4u);
+    CASDocumentation::RegisterTypedef(documentation, "Size type used for denoting sizes", "size_t", "uint32");
+  }

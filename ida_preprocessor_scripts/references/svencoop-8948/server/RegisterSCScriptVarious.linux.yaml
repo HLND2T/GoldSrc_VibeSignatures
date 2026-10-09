@@ -1,0 +1,1283 @@
+func_name: RegisterSCScriptVarious
+func_va: '0x2117c4'
+disasm_code: |-
+  .text:002117C4                 push    ebp
+  .text:002117C5                 push    edi
+  .text:002117C6                 push    esi
+  .text:002117C7                 push    ebx
+  .text:002117C8                 sub     esp, 3Ch
+  .text:002117CB                 call    __x86_get_pc_thunk_bx
+  .text:002117D0                 add     ebx, (offset _GLOBAL_OFFSET_TABLE_ - $)
+  .text:002117D6                 mov     edi, [esp+4Ch+documentation]
+  .text:002117DA                 lea     eax, (_ZL20CONST_WORLD_BOUNDARY - 8B0000h)[ebx]; CONST_WORLD_BOUNDARY
+  .text:002117E0                 ; pointer
+  .text:002117E0                 push    eax; pointer
+  .text:002117E1                 lea     edx, (aConstFloatWorl - 8B0000h)[ebx]; "const float WORLD_BOUNDARY"
+  .text:002117E7                 ; declaration
+  .text:002117E7                 push    edx; declaration
+  .text:002117E8                 lea     ecx, (aDistanceFromTh - 8B0000h)[ebx]; "Distance from the world origin to the w"...
+  .text:002117EE                 ; docs
+  .text:002117EE                 push    ecx; docs
+  .text:002117EF                 ; documentation
+  .text:002117EF                 push    edi; documentation
+  .text:002117F0                 call    CASDocumentation_RegisterGlobalProperty; CASDocumentation_RegisterGlobalProperty(char const*,char const*,void *)
+  .text:002117F5                 ; CASDocumentation *
+  .text:002117F5                 mov     [esp+5Ch+var_5C], edi; CASDocumentation *
+  .text:002117F8                 call    __Z36RegisterSCScriptForwardDeclareStringP16CASDocumentation; RegisterSCScriptForwardDeclareString(CASDocumentation *)
+  .text:002117FD                 ; flags
+  .text:002117FD                 mov     [esp+5Ch+var_5C], 200Ah; flags
+  .text:00211804                 ; byteSize
+  .text:00211804                 push    1; byteSize
+  .text:00211806                 lea     esi, (aChar - 8B0000h)[ebx]; "char"
+  .text:0021180C                 mov     [esp+60h+s], esi
+  .text:00211810                 ; objectName
+  .text:00211810                 push    esi; objectName
+  .text:00211811                 lea     ebp, (aCharValueType - 8B0000h)[ebx]; "Char value type"
+  .text:00211817                 ; docs
+  .text:00211817                 push    ebp; docs
+  .text:00211818                 ; documentation
+  .text:00211818                 push    edi; documentation
+  .text:00211819                 call    CASDocumentation_RegisterObjectType; CASDocumentation_RegisterObjectType(char const*,char const*,int,ulong)
+  .text:0021181E                 lea     ebp, [esp+6Ch+functionPointer]
+  .text:00211822                 lea     esi, [esp+6Ch+functionPointer.pointer+19h]
+  .text:00211826                 add     esp, 20h
+  .text:00211829                 lea     eax, [esp+4Ch+functionPointer.pointer+1]
+  .text:0021182D                 mov     byte ptr [eax], 0
+  .text:00211830                 mov     byte ptr [eax+1], 0
+  .text:00211834                 mov     byte ptr [eax+2], 0
+  .text:00211838                 mov     byte ptr [eax+3], 0
+  .text:0021183C                 mov     byte ptr [eax+4], 0
+  .text:00211840                 mov     byte ptr [eax+5], 0
+  .text:00211844                 mov     byte ptr [eax+6], 0
+  .text:00211848                 mov     byte ptr [eax+7], 0
+  .text:0021184C                 add     eax, 8
+  .text:0021184F                 cmp     eax, esi
+  .text:00211851                 jnz     short loc_21182D
+  .text:00211853                 mov     [esp+4Ch+functionPointer.flag], 2
+  .text:00211858                 lea     edx, (_ZL7isalnumc - 8B0000h)[ebx]; isalnum(char)
+  .text:0021185E                 mov     dword ptr [esp+4Ch+functionPointer.pointer], edx
+  .text:00211862                 sub     esp, 8
+  .text:00211865                 ; auxiliary
+  .text:00211865                 push    0; auxiliary
+  .text:00211867                 ; callConvention
+  .text:00211867                 push    0; callConvention
+  .text:00211869                 ; functionPointer
+  .text:00211869                 push    ebp; functionPointer
+  .text:0021186A                 lea     ecx, (aBoolIsalnumCha - 8B0000h)[ebx]; "bool isalnum(char character)"
+  .text:00211870                 ; declaration
+  .text:00211870                 push    ecx; declaration
+  .text:00211871                 lea     eax, (aReturnsWhether_14 - 8B0000h)[ebx]; "Returns whether character is alphanumer"...
+  .text:00211877                 ; docs
+  .text:00211877                 push    eax; docs
+  .text:00211878                 ; documentation
+  .text:00211878                 push    edi; documentation
+  .text:00211879                 call    CASDocumentation_RegisterGlobalFunction; CASDocumentation_RegisterGlobalFunction(char const*,char const*,asSFuncPtr const&,ulong,void *)
+  .text:0021187E                 add     esp, 20h
+  .text:00211881                 lea     edx, [ebp+1]
+  .text:00211884                 mov     byte ptr [edx], 0
+  .text:00211887                 mov     byte ptr [edx+1], 0
+  .text:0021188B                 mov     byte ptr [edx+2], 0
+  .text:0021188F                 mov     byte ptr [edx+3], 0
+  .text:00211893                 mov     byte ptr [edx+4], 0
+  .text:00211897                 mov     byte ptr [edx+5], 0
+  .text:0021189B                 mov     byte ptr [edx+6], 0
+  .text:0021189F                 mov     byte ptr [edx+7], 0
+  .text:002118A3                 add     edx, 8
+  .text:002118A6                 cmp     edx, esi
+  .text:002118A8                 jnz     short loc_211884
+  .text:002118AA                 mov     [esp+4Ch+functionPointer.flag], 2
+  .text:002118AF                 lea     ecx, (_ZL7isalphac - 8B0000h)[ebx]; isalpha(char)
+  .text:002118B5                 mov     dword ptr [esp+4Ch+functionPointer.pointer], ecx
+  .text:002118B9                 sub     esp, 8
+  .text:002118BC                 ; auxiliary
+  .text:002118BC                 push    0; auxiliary
+  .text:002118BE                 ; callConvention
+  .text:002118BE                 push    0; callConvention
+  .text:002118C0                 ; functionPointer
+  .text:002118C0                 push    ebp; functionPointer
+  .text:002118C1                 lea     eax, (aBoolIsalphaCha - 8B0000h)[ebx]; "bool isalpha(char character)"
+  .text:002118C7                 ; declaration
+  .text:002118C7                 push    eax; declaration
+  .text:002118C8                 lea     edx, (aReturnsWhether_15 - 8B0000h)[ebx]; "Returns whether character is alphabetic"...
+  .text:002118CE                 ; docs
+  .text:002118CE                 push    edx; docs
+  .text:002118CF                 ; documentation
+  .text:002118CF                 push    edi; documentation
+  .text:002118D0                 call    CASDocumentation_RegisterGlobalFunction; CASDocumentation_RegisterGlobalFunction(char const*,char const*,asSFuncPtr const&,ulong,void *)
+  .text:002118D5                 add     esp, 20h
+  .text:002118D8                 lea     ecx, [ebp+1]
+  .text:002118DB                 mov     byte ptr [ecx], 0
+  .text:002118DE                 mov     byte ptr [ecx+1], 0
+  .text:002118E2                 mov     byte ptr [ecx+2], 0
+  .text:002118E6                 mov     byte ptr [ecx+3], 0
+  .text:002118EA                 mov     byte ptr [ecx+4], 0
+  .text:002118EE                 mov     byte ptr [ecx+5], 0
+  .text:002118F2                 mov     byte ptr [ecx+6], 0
+  .text:002118F6                 mov     byte ptr [ecx+7], 0
+  .text:002118FA                 add     ecx, 8
+  .text:002118FD                 cmp     ecx, esi
+  .text:002118FF                 jnz     short loc_2118DB
+  .text:00211901                 mov     [esp+4Ch+functionPointer.flag], 2
+  .text:00211906                 lea     eax, (_ZL7iscntrlc - 8B0000h)[ebx]; iscntrl(char)
+  .text:0021190C                 mov     dword ptr [esp+4Ch+functionPointer.pointer], eax
+  .text:00211910                 sub     esp, 8
+  .text:00211913                 ; auxiliary
+  .text:00211913                 push    0; auxiliary
+  .text:00211915                 ; callConvention
+  .text:00211915                 push    0; callConvention
+  .text:00211917                 ; functionPointer
+  .text:00211917                 push    ebp; functionPointer
+  .text:00211918                 lea     edx, (aBoolIscntrlCha - 8B0000h)[ebx]; "bool iscntrl(char character)"
+  .text:0021191E                 ; declaration
+  .text:0021191E                 push    edx; declaration
+  .text:0021191F                 lea     ecx, (aReturnsWhether_16 - 8B0000h)[ebx]; "Returns whether character is control."
+  .text:00211925                 ; docs
+  .text:00211925                 push    ecx; docs
+  .text:00211926                 ; documentation
+  .text:00211926                 push    edi; documentation
+  .text:00211927                 call    CASDocumentation_RegisterGlobalFunction; CASDocumentation_RegisterGlobalFunction(char const*,char const*,asSFuncPtr const&,ulong,void *)
+  .text:0021192C                 add     esp, 20h
+  .text:0021192F                 lea     eax, [ebp+1]
+  .text:00211932                 mov     byte ptr [eax], 0
+  .text:00211935                 mov     byte ptr [eax+1], 0
+  .text:00211939                 mov     byte ptr [eax+2], 0
+  .text:0021193D                 mov     byte ptr [eax+3], 0
+  .text:00211941                 mov     byte ptr [eax+4], 0
+  .text:00211945                 mov     byte ptr [eax+5], 0
+  .text:00211949                 mov     byte ptr [eax+6], 0
+  .text:0021194D                 mov     byte ptr [eax+7], 0
+  .text:00211951                 add     eax, 8
+  .text:00211954                 cmp     eax, esi
+  .text:00211956                 jnz     short loc_211932
+  .text:00211958                 mov     [esp+4Ch+functionPointer.flag], 2
+  .text:0021195D                 lea     edx, (_ZL7isdigitc - 8B0000h)[ebx]; isdigit(char)
+  .text:00211963                 mov     dword ptr [esp+4Ch+functionPointer.pointer], edx
+  .text:00211967                 sub     esp, 8
+  .text:0021196A                 ; auxiliary
+  .text:0021196A                 push    0; auxiliary
+  .text:0021196C                 ; callConvention
+  .text:0021196C                 push    0; callConvention
+  .text:0021196E                 ; functionPointer
+  .text:0021196E                 push    ebp; functionPointer
+  .text:0021196F                 lea     ecx, (aBoolIsdigitCha - 8B0000h)[ebx]; "bool isdigit(char character)"
+  .text:00211975                 ; declaration
+  .text:00211975                 push    ecx; declaration
+  .text:00211976                 lea     eax, (aReturnsWhether_27 - 8B0000h)[ebx]; "Returns whether character is a decimal "...
+  .text:0021197C                 ; docs
+  .text:0021197C                 push    eax; docs
+  .text:0021197D                 ; documentation
+  .text:0021197D                 push    edi; documentation
+  .text:0021197E                 call    CASDocumentation_RegisterGlobalFunction; CASDocumentation_RegisterGlobalFunction(char const*,char const*,asSFuncPtr const&,ulong,void *)
+  .text:00211983                 add     esp, 20h
+  .text:00211986                 lea     edx, [ebp+1]
+  .text:00211989                 mov     byte ptr [edx], 0
+  .text:0021198C                 mov     byte ptr [edx+1], 0
+  .text:00211990                 mov     byte ptr [edx+2], 0
+  .text:00211994                 mov     byte ptr [edx+3], 0
+  .text:00211998                 mov     byte ptr [edx+4], 0
+  .text:0021199C                 mov     byte ptr [edx+5], 0
+  .text:002119A0                 mov     byte ptr [edx+6], 0
+  .text:002119A4                 mov     byte ptr [edx+7], 0
+  .text:002119A8                 add     edx, 8
+  .text:002119AB                 cmp     edx, esi
+  .text:002119AD                 jnz     short loc_211989
+  .text:002119AF                 mov     [esp+4Ch+functionPointer.flag], 2
+  .text:002119B4                 lea     ecx, (_ZL7isgraphc - 8B0000h)[ebx]; isgraph(char)
+  .text:002119BA                 mov     dword ptr [esp+4Ch+functionPointer.pointer], ecx
+  .text:002119BE                 sub     esp, 8
+  .text:002119C1                 ; auxiliary
+  .text:002119C1                 push    0; auxiliary
+  .text:002119C3                 ; callConvention
+  .text:002119C3                 push    0; callConvention
+  .text:002119C5                 ; functionPointer
+  .text:002119C5                 push    ebp; functionPointer
+  .text:002119C6                 lea     eax, (aBoolIsgraphCha - 8B0000h)[ebx]; "bool isgraph(char character)"
+  .text:002119CC                 ; declaration
+  .text:002119CC                 push    eax; declaration
+  .text:002119CD                 lea     edx, (aReturnsWhether_18 - 8B0000h)[ebx]; "Returns whether character is graph."
+  .text:002119D3                 ; docs
+  .text:002119D3                 push    edx; docs
+  .text:002119D4                 ; documentation
+  .text:002119D4                 push    edi; documentation
+  .text:002119D5                 call    CASDocumentation_RegisterGlobalFunction; CASDocumentation_RegisterGlobalFunction(char const*,char const*,asSFuncPtr const&,ulong,void *)
+  .text:002119DA                 add     esp, 20h
+  .text:002119DD                 lea     ecx, [ebp+1]
+  .text:002119E0                 mov     byte ptr [ecx], 0
+  .text:002119E3                 mov     byte ptr [ecx+1], 0
+  .text:002119E7                 mov     byte ptr [ecx+2], 0
+  .text:002119EB                 mov     byte ptr [ecx+3], 0
+  .text:002119EF                 mov     byte ptr [ecx+4], 0
+  .text:002119F3                 mov     byte ptr [ecx+5], 0
+  .text:002119F7                 mov     byte ptr [ecx+6], 0
+  .text:002119FB                 mov     byte ptr [ecx+7], 0
+  .text:002119FF                 add     ecx, 8
+  .text:00211A02                 cmp     ecx, esi
+  .text:00211A04                 jnz     short loc_2119E0
+  .text:00211A06                 mov     [esp+4Ch+functionPointer.flag], 2
+  .text:00211A0B                 lea     eax, (_ZL7islowerc - 8B0000h)[ebx]; islower(char)
+  .text:00211A11                 mov     dword ptr [esp+4Ch+functionPointer.pointer], eax
+  .text:00211A15                 sub     esp, 8
+  .text:00211A18                 ; auxiliary
+  .text:00211A18                 push    0; auxiliary
+  .text:00211A1A                 ; callConvention
+  .text:00211A1A                 push    0; callConvention
+  .text:00211A1C                 ; functionPointer
+  .text:00211A1C                 push    ebp; functionPointer
+  .text:00211A1D                 lea     edx, (aBoolIslowerCha - 8B0000h)[ebx]; "bool islower(char character)"
+  .text:00211A23                 ; declaration
+  .text:00211A23                 push    edx; declaration
+  .text:00211A24                 lea     ecx, (aReturnsWhether_19 - 8B0000h)[ebx]; "Returns whether character is lower."
+  .text:00211A2A                 ; docs
+  .text:00211A2A                 push    ecx; docs
+  .text:00211A2B                 ; documentation
+  .text:00211A2B                 push    edi; documentation
+  .text:00211A2C                 call    CASDocumentation_RegisterGlobalFunction; CASDocumentation_RegisterGlobalFunction(char const*,char const*,asSFuncPtr const&,ulong,void *)
+  .text:00211A31                 add     esp, 20h
+  .text:00211A34                 lea     eax, [ebp+1]
+  .text:00211A37                 mov     byte ptr [eax], 0
+  .text:00211A3A                 mov     byte ptr [eax+1], 0
+  .text:00211A3E                 mov     byte ptr [eax+2], 0
+  .text:00211A42                 mov     byte ptr [eax+3], 0
+  .text:00211A46                 mov     byte ptr [eax+4], 0
+  .text:00211A4A                 mov     byte ptr [eax+5], 0
+  .text:00211A4E                 mov     byte ptr [eax+6], 0
+  .text:00211A52                 mov     byte ptr [eax+7], 0
+  .text:00211A56                 add     eax, 8
+  .text:00211A59                 cmp     eax, esi
+  .text:00211A5B                 jnz     short loc_211A37
+  .text:00211A5D                 mov     [esp+4Ch+functionPointer.flag], 2
+  .text:00211A62                 lea     edx, (_ZL7isprintc - 8B0000h)[ebx]; isprint(char)
+  .text:00211A68                 mov     dword ptr [esp+4Ch+functionPointer.pointer], edx
+  .text:00211A6C                 sub     esp, 8
+  .text:00211A6F                 ; auxiliary
+  .text:00211A6F                 push    0; auxiliary
+  .text:00211A71                 ; callConvention
+  .text:00211A71                 push    0; callConvention
+  .text:00211A73                 ; functionPointer
+  .text:00211A73                 push    ebp; functionPointer
+  .text:00211A74                 lea     ecx, (aBoolIsprintCha - 8B0000h)[ebx]; "bool isprint(char character)"
+  .text:00211A7A                 ; declaration
+  .text:00211A7A                 push    ecx; declaration
+  .text:00211A7B                 lea     eax, (aReturnsWhether_20 - 8B0000h)[ebx]; "Returns whether character is print."
+  .text:00211A81                 ; docs
+  .text:00211A81                 push    eax; docs
+  .text:00211A82                 ; documentation
+  .text:00211A82                 push    edi; documentation
+  .text:00211A83                 call    CASDocumentation_RegisterGlobalFunction; CASDocumentation_RegisterGlobalFunction(char const*,char const*,asSFuncPtr const&,ulong,void *)
+  .text:00211A88                 add     esp, 20h
+  .text:00211A8B                 lea     edx, [ebp+1]
+  .text:00211A8E                 mov     byte ptr [edx], 0
+  .text:00211A91                 mov     byte ptr [edx+1], 0
+  .text:00211A95                 mov     byte ptr [edx+2], 0
+  .text:00211A99                 mov     byte ptr [edx+3], 0
+  .text:00211A9D                 mov     byte ptr [edx+4], 0
+  .text:00211AA1                 mov     byte ptr [edx+5], 0
+  .text:00211AA5                 mov     byte ptr [edx+6], 0
+  .text:00211AA9                 mov     byte ptr [edx+7], 0
+  .text:00211AAD                 add     edx, 8
+  .text:00211AB0                 cmp     edx, esi
+  .text:00211AB2                 jnz     short loc_211A8E
+  .text:00211AB4                 mov     [esp+4Ch+functionPointer.flag], 2
+  .text:00211AB9                 lea     ecx, (_ZL7ispunctc - 8B0000h)[ebx]; ispunct(char)
+  .text:00211ABF                 mov     dword ptr [esp+4Ch+functionPointer.pointer], ecx
+  .text:00211AC3                 sub     esp, 8
+  .text:00211AC6                 ; auxiliary
+  .text:00211AC6                 push    0; auxiliary
+  .text:00211AC8                 ; callConvention
+  .text:00211AC8                 push    0; callConvention
+  .text:00211ACA                 ; functionPointer
+  .text:00211ACA                 push    ebp; functionPointer
+  .text:00211ACB                 lea     eax, (aBoolIspunctCha - 8B0000h)[ebx]; "bool ispunct(char character)"
+  .text:00211AD1                 ; declaration
+  .text:00211AD1                 push    eax; declaration
+  .text:00211AD2                 lea     edx, (aReturnsWhether_21 - 8B0000h)[ebx]; "Returns whether character is punctualit"...
+  .text:00211AD8                 ; docs
+  .text:00211AD8                 push    edx; docs
+  .text:00211AD9                 ; documentation
+  .text:00211AD9                 push    edi; documentation
+  .text:00211ADA                 call    CASDocumentation_RegisterGlobalFunction; CASDocumentation_RegisterGlobalFunction(char const*,char const*,asSFuncPtr const&,ulong,void *)
+  .text:00211ADF                 add     esp, 20h
+  .text:00211AE2                 lea     ecx, [ebp+1]
+  .text:00211AE5                 mov     byte ptr [ecx], 0
+  .text:00211AE8                 mov     byte ptr [ecx+1], 0
+  .text:00211AEC                 mov     byte ptr [ecx+2], 0
+  .text:00211AF0                 mov     byte ptr [ecx+3], 0
+  .text:00211AF4                 mov     byte ptr [ecx+4], 0
+  .text:00211AF8                 mov     byte ptr [ecx+5], 0
+  .text:00211AFC                 mov     byte ptr [ecx+6], 0
+  .text:00211B00                 mov     byte ptr [ecx+7], 0
+  .text:00211B04                 add     ecx, 8
+  .text:00211B07                 cmp     ecx, esi
+  .text:00211B09                 jnz     short loc_211AE5
+  .text:00211B0B                 mov     [esp+4Ch+functionPointer.flag], 2
+  .text:00211B10                 lea     eax, (_ZL7isspacec - 8B0000h)[ebx]; isspace(char)
+  .text:00211B16                 mov     dword ptr [esp+4Ch+functionPointer.pointer], eax
+  .text:00211B1A                 sub     esp, 8
+  .text:00211B1D                 ; auxiliary
+  .text:00211B1D                 push    0; auxiliary
+  .text:00211B1F                 ; callConvention
+  .text:00211B1F                 push    0; callConvention
+  .text:00211B21                 ; functionPointer
+  .text:00211B21                 push    ebp; functionPointer
+  .text:00211B22                 lea     edx, (aBoolIsspaceCha - 8B0000h)[ebx]; "bool isspace(char character)"
+  .text:00211B28                 ; declaration
+  .text:00211B28                 push    edx; declaration
+  .text:00211B29                 lea     ecx, (aReturnsWhether_22 - 8B0000h)[ebx]; "Returns whether character is space."
+  .text:00211B2F                 ; docs
+  .text:00211B2F                 push    ecx; docs
+  .text:00211B30                 ; documentation
+  .text:00211B30                 push    edi; documentation
+  .text:00211B31                 call    CASDocumentation_RegisterGlobalFunction; CASDocumentation_RegisterGlobalFunction(char const*,char const*,asSFuncPtr const&,ulong,void *)
+  .text:00211B36                 add     esp, 20h
+  .text:00211B39                 lea     eax, [ebp+1]
+  .text:00211B3C                 mov     byte ptr [eax], 0
+  .text:00211B3F                 mov     byte ptr [eax+1], 0
+  .text:00211B43                 mov     byte ptr [eax+2], 0
+  .text:00211B47                 mov     byte ptr [eax+3], 0
+  .text:00211B4B                 mov     byte ptr [eax+4], 0
+  .text:00211B4F                 mov     byte ptr [eax+5], 0
+  .text:00211B53                 mov     byte ptr [eax+6], 0
+  .text:00211B57                 mov     byte ptr [eax+7], 0
+  .text:00211B5B                 add     eax, 8
+  .text:00211B5E                 cmp     eax, esi
+  .text:00211B60                 jnz     short loc_211B3C
+  .text:00211B62                 mov     [esp+4Ch+functionPointer.flag], 2
+  .text:00211B67                 lea     edx, (_ZL7isupperc - 8B0000h)[ebx]; isupper(char)
+  .text:00211B6D                 mov     dword ptr [esp+4Ch+functionPointer.pointer], edx
+  .text:00211B71                 sub     esp, 8
+  .text:00211B74                 ; auxiliary
+  .text:00211B74                 push    0; auxiliary
+  .text:00211B76                 ; callConvention
+  .text:00211B76                 push    0; callConvention
+  .text:00211B78                 ; functionPointer
+  .text:00211B78                 push    ebp; functionPointer
+  .text:00211B79                 lea     ecx, (aBoolIsupperCha - 8B0000h)[ebx]; "bool isupper(char character)"
+  .text:00211B7F                 ; declaration
+  .text:00211B7F                 push    ecx; declaration
+  .text:00211B80                 lea     eax, (aReturnsWhether_23 - 8B0000h)[ebx]; "Returns whether character is upper."
+  .text:00211B86                 ; docs
+  .text:00211B86                 push    eax; docs
+  .text:00211B87                 ; documentation
+  .text:00211B87                 push    edi; documentation
+  .text:00211B88                 call    CASDocumentation_RegisterGlobalFunction; CASDocumentation_RegisterGlobalFunction(char const*,char const*,asSFuncPtr const&,ulong,void *)
+  .text:00211B8D                 add     esp, 20h
+  .text:00211B90                 lea     edx, [ebp+1]
+  .text:00211B93                 mov     byte ptr [edx], 0
+  .text:00211B96                 mov     byte ptr [edx+1], 0
+  .text:00211B9A                 mov     byte ptr [edx+2], 0
+  .text:00211B9E                 mov     byte ptr [edx+3], 0
+  .text:00211BA2                 mov     byte ptr [edx+4], 0
+  .text:00211BA6                 mov     byte ptr [edx+5], 0
+  .text:00211BAA                 mov     byte ptr [edx+6], 0
+  .text:00211BAE                 mov     byte ptr [edx+7], 0
+  .text:00211BB2                 add     edx, 8
+  .text:00211BB5                 cmp     edx, esi
+  .text:00211BB7                 jnz     short loc_211B93
+  .text:00211BB9                 mov     [esp+4Ch+functionPointer.flag], 2
+  .text:00211BBE                 lea     ecx, (_ZL8isxdigitc - 8B0000h)[ebx]; isxdigit(char)
+  .text:00211BC4                 mov     dword ptr [esp+4Ch+functionPointer.pointer], ecx
+  .text:00211BC8                 sub     esp, 8
+  .text:00211BCB                 ; auxiliary
+  .text:00211BCB                 push    0; auxiliary
+  .text:00211BCD                 ; callConvention
+  .text:00211BCD                 push    0; callConvention
+  .text:00211BCF                 ; functionPointer
+  .text:00211BCF                 push    ebp; functionPointer
+  .text:00211BD0                 lea     eax, (aBoolIsxdigitCh - 8B0000h)[ebx]; "bool isxdigit(char character)"
+  .text:00211BD6                 ; declaration
+  .text:00211BD6                 push    eax; declaration
+  .text:00211BD7                 lea     edx, (aReturnsWhether_28 - 8B0000h)[ebx]; "Returns whether character is a hexadeci"...
+  .text:00211BDD                 ; docs
+  .text:00211BDD                 push    edx; docs
+  .text:00211BDE                 ; documentation
+  .text:00211BDE                 push    edi; documentation
+  .text:00211BDF                 call    CASDocumentation_RegisterGlobalFunction; CASDocumentation_RegisterGlobalFunction(char const*,char const*,asSFuncPtr const&,ulong,void *)
+  .text:00211BE4                 add     esp, 20h
+  .text:00211BE7                 lea     ecx, [ebp+1]
+  .text:00211BEA                 mov     byte ptr [ecx], 0
+  .text:00211BED                 mov     byte ptr [ecx+1], 0
+  .text:00211BF1                 mov     byte ptr [ecx+2], 0
+  .text:00211BF5                 mov     byte ptr [ecx+3], 0
+  .text:00211BF9                 mov     byte ptr [ecx+4], 0
+  .text:00211BFD                 mov     byte ptr [ecx+5], 0
+  .text:00211C01                 mov     byte ptr [ecx+6], 0
+  .text:00211C05                 mov     byte ptr [ecx+7], 0
+  .text:00211C09                 add     ecx, 8
+  .text:00211C0C                 cmp     esi, ecx
+  .text:00211C0E                 jnz     short loc_211BEA
+  .text:00211C10                 mov     [esp+4Ch+functionPointer.flag], 2
+  .text:00211C15                 lea     eax, (_ZL7tolowerc - 8B0000h)[ebx]; tolower(char)
+  .text:00211C1B                 mov     dword ptr [esp+4Ch+functionPointer.pointer], eax
+  .text:00211C1F                 sub     esp, 8
+  .text:00211C22                 ; auxiliary
+  .text:00211C22                 push    0; auxiliary
+  .text:00211C24                 ; callConvention
+  .text:00211C24                 push    0; callConvention
+  .text:00211C26                 ; functionPointer
+  .text:00211C26                 push    ebp; functionPointer
+  .text:00211C27                 lea     edx, (aCharTolowerCha - 8B0000h)[ebx]; "char tolower(char character)"
+  .text:00211C2D                 ; declaration
+  .text:00211C2D                 push    edx; declaration
+  .text:00211C2E                 lea     ecx, (aConvertsTheGiv_7 - 8B0000h)[ebx]; "Converts the given character to lower c"...
+  .text:00211C34                 ; docs
+  .text:00211C34                 push    ecx; docs
+  .text:00211C35                 ; documentation
+  .text:00211C35                 push    edi; documentation
+  .text:00211C36                 call    CASDocumentation_RegisterGlobalFunction; CASDocumentation_RegisterGlobalFunction(char const*,char const*,asSFuncPtr const&,ulong,void *)
+  .text:00211C3B                 add     esp, 20h
+  .text:00211C3E                 lea     eax, [ebp+1]
+  .text:00211C41                 mov     byte ptr [eax], 0
+  .text:00211C44                 mov     byte ptr [eax+1], 0
+  .text:00211C48                 mov     byte ptr [eax+2], 0
+  .text:00211C4C                 mov     byte ptr [eax+3], 0
+  .text:00211C50                 mov     byte ptr [eax+4], 0
+  .text:00211C54                 mov     byte ptr [eax+5], 0
+  .text:00211C58                 mov     byte ptr [eax+6], 0
+  .text:00211C5C                 mov     byte ptr [eax+7], 0
+  .text:00211C60                 add     eax, 8
+  .text:00211C63                 cmp     eax, esi
+  .text:00211C65                 jnz     short loc_211C41
+  .text:00211C67                 mov     [esp+4Ch+functionPointer.flag], 2
+  .text:00211C6C                 lea     edx, (_ZL7toupperc - 8B0000h)[ebx]; toupper(char)
+  .text:00211C72                 mov     dword ptr [esp+4Ch+functionPointer.pointer], edx
+  .text:00211C76                 sub     esp, 8
+  .text:00211C79                 ; auxiliary
+  .text:00211C79                 push    0; auxiliary
+  .text:00211C7B                 ; callConvention
+  .text:00211C7B                 push    0; callConvention
+  .text:00211C7D                 ; functionPointer
+  .text:00211C7D                 push    ebp; functionPointer
+  .text:00211C7E                 lea     ecx, (aCharToupperCha - 8B0000h)[ebx]; "char toupper(char character)"
+  .text:00211C84                 ; declaration
+  .text:00211C84                 push    ecx; declaration
+  .text:00211C85                 lea     eax, (aConvertsTheGiv_8 - 8B0000h)[ebx]; "Converts the given character to upper c"...
+  .text:00211C8B                 ; docs
+  .text:00211C8B                 push    eax; docs
+  .text:00211C8C                 ; documentation
+  .text:00211C8C                 push    edi; documentation
+  .text:00211C8D                 call    CASDocumentation_RegisterGlobalFunction; CASDocumentation_RegisterGlobalFunction(char const*,char const*,asSFuncPtr const&,ulong,void *)
+  .text:00211C92                 add     esp, 20h
+  .text:00211C95                 lea     edx, [ebp+1]
+  .text:00211C98                 mov     byte ptr [edx], 0
+  .text:00211C9B                 mov     byte ptr [edx+1], 0
+  .text:00211C9F                 mov     byte ptr [edx+2], 0
+  .text:00211CA3                 mov     byte ptr [edx+3], 0
+  .text:00211CA7                 mov     byte ptr [edx+4], 0
+  .text:00211CAB                 mov     byte ptr [edx+5], 0
+  .text:00211CAF                 mov     byte ptr [edx+6], 0
+  .text:00211CB3                 mov     byte ptr [edx+7], 0
+  .text:00211CB7                 add     edx, 8
+  .text:00211CBA                 cmp     esi, edx
+  .text:00211CBC                 jnz     short loc_211C98
+  .text:00211CBE                 mov     [esp+4Ch+functionPointer.flag], 2
+  .text:00211CC3                 lea     ecx, (_ZL20DefaultConstructCharPv - 8B0000h)[ebx]; DefaultConstructChar(void *)
+  .text:00211CC9                 mov     dword ptr [esp+4Ch+functionPointer.pointer], ecx
+  .text:00211CCD                 ; auxiliary
+  .text:00211CCD                 push    0; auxiliary
+  .text:00211CCF                 ; callConvention
+  .text:00211CCF                 push    4; callConvention
+  .text:00211CD1                 ; functionPointer
+  .text:00211CD1                 push    ebp; functionPointer
+  .text:00211CD2                 lea     eax, (aVoidChar - 8B0000h)[ebx]; "void char()"
+  .text:00211CD8                 mov     [esp+58h+declaration], eax
+  .text:00211CDC                 ; declaration
+  .text:00211CDC                 push    eax; declaration
+  .text:00211CDD                 ; behaviour
+  .text:00211CDD                 push    0; behaviour
+  .text:00211CDF                 mov     edx, [esp+60h+s]
+  .text:00211CE3                 ; objectName
+  .text:00211CE3                 push    edx; objectName
+  .text:00211CE4                 lea     ecx, (aDefaultConstru_0 - 8B0000h)[ebx]; "Default constructor"
+  .text:00211CEA                 ; docs
+  .text:00211CEA                 push    ecx; docs
+  .text:00211CEB                 ; documentation
+  .text:00211CEB                 push    edi; documentation
+  .text:00211CEC                 call    CASDocumentation_RegisterObjectBehaviour; CASDocumentation_RegisterObjectBehaviour(char const*,char const*,asEBehaviours,char const*,asSFuncPtr const&,ulong,void *)
+  .text:00211CF1                 add     esp, 20h
+  .text:00211CF4                 lea     eax, [ebp+1]
+  .text:00211CF7                 mov     byte ptr [eax], 0
+  .text:00211CFA                 mov     byte ptr [eax+1], 0
+  .text:00211CFE                 mov     byte ptr [eax+2], 0
+  .text:00211D02                 mov     byte ptr [eax+3], 0
+  .text:00211D06                 mov     byte ptr [eax+4], 0
+  .text:00211D0A                 mov     byte ptr [eax+5], 0
+  .text:00211D0E                 mov     byte ptr [eax+6], 0
+  .text:00211D12                 mov     byte ptr [eax+7], 0
+  .text:00211D16                 add     eax, 8
+  .text:00211D19                 cmp     esi, eax
+  .text:00211D1B                 jnz     short loc_211CF7
+  .text:00211D1D                 mov     [esp+4Ch+functionPointer.flag], 2
+  .text:00211D22                 lea     edx, (_ZL17CopyConstructCharRKcPv - 8B0000h)[ebx]; CopyConstructChar(char const&,void *)
+  .text:00211D28                 mov     dword ptr [esp+4Ch+functionPointer.pointer], edx
+  .text:00211D2C                 ; auxiliary
+  .text:00211D2C                 push    0; auxiliary
+  .text:00211D2E                 ; callConvention
+  .text:00211D2E                 push    4; callConvention
+  .text:00211D30                 ; functionPointer
+  .text:00211D30                 push    ebp; functionPointer
+  .text:00211D31                 lea     ecx, (aVoidCharConstC - 8B0000h)[ebx]; "void char(const char& in character)"
+  .text:00211D37                 ; declaration
+  .text:00211D37                 push    ecx; declaration
+  .text:00211D38                 ; behaviour
+  .text:00211D38                 push    0; behaviour
+  .text:00211D3A                 mov     eax, [esp+60h+s]
+  .text:00211D3E                 ; objectName
+  .text:00211D3E                 push    eax; objectName
+  .text:00211D3F                 lea     edx, (aCopyConstructo_0 - 8B0000h)[ebx]; "Copy constructor"
+  .text:00211D45                 ; docs
+  .text:00211D45                 push    edx; docs
+  .text:00211D46                 mov     [esp+68h+docs], edx
+  .text:00211D4A                 ; documentation
+  .text:00211D4A                 push    edi; documentation
+  .text:00211D4B                 call    CASDocumentation_RegisterObjectBehaviour; CASDocumentation_RegisterObjectBehaviour(char const*,char const*,asEBehaviours,char const*,asSFuncPtr const&,ulong,void *)
+  .text:00211D50                 add     esp, 20h
+  .text:00211D53                 lea     ecx, [ebp+1]
+  .text:00211D56                 mov     edx, [esp+4Ch+docs]
+  .text:00211D5A                 mov     byte ptr [ecx], 0
+  .text:00211D5D                 mov     byte ptr [ecx+1], 0
+  .text:00211D61                 mov     byte ptr [ecx+2], 0
+  .text:00211D65                 mov     byte ptr [ecx+3], 0
+  .text:00211D69                 mov     byte ptr [ecx+4], 0
+  .text:00211D6D                 mov     byte ptr [ecx+5], 0
+  .text:00211D71                 mov     byte ptr [ecx+6], 0
+  .text:00211D75                 mov     byte ptr [ecx+7], 0
+  .text:00211D79                 add     ecx, 8
+  .text:00211D7C                 cmp     esi, ecx
+  .text:00211D7E                 jnz     short loc_211D5A
+  .text:00211D80                 mov     [esp+4Ch+functionPointer.flag], 2
+  .text:00211D85                 lea     eax, (_ZL17CopyConstructCharRK7CStringPv - 8B0000h)[ebx]; CopyConstructChar(CString const&,void *)
+  .text:00211D8B                 mov     dword ptr [esp+4Ch+functionPointer.pointer], eax
+  .text:00211D8F                 ; auxiliary
+  .text:00211D8F                 push    0; auxiliary
+  .text:00211D91                 ; callConvention
+  .text:00211D91                 push    4; callConvention
+  .text:00211D93                 ; functionPointer
+  .text:00211D93                 push    ebp; functionPointer
+  .text:00211D94                 lea     ecx, (aVoidCharConstS - 8B0000h)[ebx]; "void char(const string& in szString)"
+  .text:00211D9A                 ; declaration
+  .text:00211D9A                 push    ecx; declaration
+  .text:00211D9B                 ; behaviour
+  .text:00211D9B                 push    0; behaviour
+  .text:00211D9D                 mov     eax, [esp+60h+s]
+  .text:00211DA1                 ; objectName
+  .text:00211DA1                 push    eax; objectName
+  .text:00211DA2                 ; docs
+  .text:00211DA2                 push    edx; docs
+  .text:00211DA3                 ; documentation
+  .text:00211DA3                 push    edi; documentation
+  .text:00211DA4                 call    CASDocumentation_RegisterObjectBehaviour; CASDocumentation_RegisterObjectBehaviour(char const*,char const*,asEBehaviours,char const*,asSFuncPtr const&,ulong,void *)
+  .text:00211DA9                 add     esp, 20h
+  .text:00211DAC                 lea     edx, [ebp+1]
+  .text:00211DAF                 mov     byte ptr [edx], 0
+  .text:00211DB2                 mov     byte ptr [edx+1], 0
+  .text:00211DB6                 mov     byte ptr [edx+2], 0
+  .text:00211DBA                 mov     byte ptr [edx+3], 0
+  .text:00211DBE                 mov     byte ptr [edx+4], 0
+  .text:00211DC2                 mov     byte ptr [edx+5], 0
+  .text:00211DC6                 mov     byte ptr [edx+6], 0
+  .text:00211DCA                 mov     byte ptr [edx+7], 0
+  .text:00211DCE                 add     edx, 8
+  .text:00211DD1                 cmp     esi, edx
+  .text:00211DD3                 jnz     short loc_211DAF
+  .text:00211DD5                 mov     [esp+4Ch+functionPointer.flag], 2
+  .text:00211DDA                 lea     ecx, (_ZL12DestructCharPv - 8B0000h)[ebx]; DestructChar(void *)
+  .text:00211DE0                 mov     dword ptr [esp+4Ch+functionPointer.pointer], ecx
+  .text:00211DE4                 ; auxiliary
+  .text:00211DE4                 push    0; auxiliary
+  .text:00211DE6                 ; callConvention
+  .text:00211DE6                 push    4; callConvention
+  .text:00211DE8                 ; functionPointer
+  .text:00211DE8                 push    ebp; functionPointer
+  .text:00211DE9                 mov     eax, [esp+58h+declaration]
+  .text:00211DED                 ; declaration
+  .text:00211DED                 push    eax; declaration
+  .text:00211DEE                 ; behaviour
+  .text:00211DEE                 push    2; behaviour
+  .text:00211DF0                 mov     edx, [esp+60h+s]
+  .text:00211DF4                 ; objectName
+  .text:00211DF4                 push    edx; objectName
+  .text:00211DF5                 lea     ecx, (aDestructor - 8B0000h)[ebx]; "Destructor"
+  .text:00211DFB                 ; docs
+  .text:00211DFB                 push    ecx; docs
+  .text:00211DFC                 ; documentation
+  .text:00211DFC                 push    edi; documentation
+  .text:00211DFD                 call    CASDocumentation_RegisterObjectBehaviour; CASDocumentation_RegisterObjectBehaviour(char const*,char const*,asEBehaviours,char const*,asSFuncPtr const&,ulong,void *)
+  .text:00211E02                 add     esp, 20h
+  .text:00211E05                 lea     eax, [ebp+1]
+  .text:00211E08                 mov     byte ptr [eax], 0
+  .text:00211E0B                 mov     byte ptr [eax+1], 0
+  .text:00211E0F                 mov     byte ptr [eax+2], 0
+  .text:00211E13                 mov     byte ptr [eax+3], 0
+  .text:00211E17                 mov     byte ptr [eax+4], 0
+  .text:00211E1B                 mov     byte ptr [eax+5], 0
+  .text:00211E1F                 mov     byte ptr [eax+6], 0
+  .text:00211E23                 mov     byte ptr [eax+7], 0
+  .text:00211E27                 add     eax, 8
+  .text:00211E2A                 cmp     esi, eax
+  .text:00211E2C                 jnz     short loc_211E08
+  .text:00211E2E                 mov     [esp+4Ch+functionPointer.flag], 2
+  .text:00211E33                 lea     edx, (_ZL11Char_AssignRKcPc - 8B0000h)[ebx]; Char_Assign(char const&,char *)
+  .text:00211E39                 mov     dword ptr [esp+4Ch+functionPointer.pointer], edx
+  .text:00211E3D                 sub     esp, 8
+  .text:00211E40                 ; callConvention
+  .text:00211E40                 push    4; callConvention
+  .text:00211E42                 ; functionPointer
+  .text:00211E42                 push    ebp; functionPointer
+  .text:00211E43                 lea     ecx, (aCharOpassignCo - 8B0000h)[ebx]; "char opAssign(const char& in character)"
+  .text:00211E49                 ; declaration
+  .text:00211E49                 push    ecx; declaration
+  .text:00211E4A                 mov     eax, [esp+60h+s]
+  .text:00211E4E                 ; objectName
+  .text:00211E4E                 push    eax; objectName
+  .text:00211E4F                 lea     edx, (aAssignsOneChar - 8B0000h)[ebx]; "Assigns one character to another."
+  .text:00211E55                 ; docs
+  .text:00211E55                 push    edx; docs
+  .text:00211E56                 ; documentation
+  .text:00211E56                 push    edi; documentation
+  .text:00211E57                 call    CASDocumentation_RegisterObjectMethod; CASDocumentation_RegisterObjectMethod(char const*,char const*,char const*,asSFuncPtr const&,ulong)
+  .text:00211E5C                 add     esp, 20h
+  .text:00211E5F                 lea     ecx, [ebp+1]
+  .text:00211E62                 mov     byte ptr [ecx], 0
+  .text:00211E65                 mov     byte ptr [ecx+1], 0
+  .text:00211E69                 mov     byte ptr [ecx+2], 0
+  .text:00211E6D                 mov     byte ptr [ecx+3], 0
+  .text:00211E71                 mov     byte ptr [ecx+4], 0
+  .text:00211E75                 mov     byte ptr [ecx+5], 0
+  .text:00211E79                 mov     byte ptr [ecx+6], 0
+  .text:00211E7D                 mov     byte ptr [ecx+7], 0
+  .text:00211E81                 add     ecx, 8
+  .text:00211E84                 cmp     esi, ecx
+  .text:00211E86                 jnz     short loc_211E62
+  .text:00211E88                 mov     [esp+4Ch+functionPointer.flag], 2
+  .text:00211E8D                 mov     eax, ds:(_Z13Char_ToUint32RKc_ptr - 8B0000h)[ebx]
+  .text:00211E93                 mov     dword ptr [esp+4Ch+functionPointer.pointer], eax
+  .text:00211E97                 sub     esp, 8
+  .text:00211E9A                 ; callConvention
+  .text:00211E9A                 push    5; callConvention
+  .text:00211E9C                 ; functionPointer
+  .text:00211E9C                 push    ebp; functionPointer
+  .text:00211E9D                 lea     edx, (aUint32Opimplco - 8B0000h)[ebx]; "uint32 opImplConv() const"
+  .text:00211EA3                 ; declaration
+  .text:00211EA3                 push    edx; declaration
+  .text:00211EA4                 mov     ecx, [esp+60h+s]
+  .text:00211EA8                 ; objectName
+  .text:00211EA8                 push    ecx; objectName
+  .text:00211EA9                 lea     eax, (aImplicitlyConv - 8B0000h)[ebx]; "Implicitly converts this character to a"...
+  .text:00211EAF                 ; docs
+  .text:00211EAF                 push    eax; docs
+  .text:00211EB0                 ; documentation
+  .text:00211EB0                 push    edi; documentation
+  .text:00211EB1                 call    CASDocumentation_RegisterObjectMethod; CASDocumentation_RegisterObjectMethod(char const*,char const*,char const*,asSFuncPtr const&,ulong)
+  .text:00211EB6                 add     esp, 20h
+  .text:00211EB9                 lea     edx, [ebp+1]
+  .text:00211EBC                 mov     byte ptr [edx], 0
+  .text:00211EBF                 mov     byte ptr [edx+1], 0
+  .text:00211EC3                 mov     byte ptr [edx+2], 0
+  .text:00211EC7                 mov     byte ptr [edx+3], 0
+  .text:00211ECB                 mov     byte ptr [edx+4], 0
+  .text:00211ECF                 mov     byte ptr [edx+5], 0
+  .text:00211ED3                 mov     byte ptr [edx+6], 0
+  .text:00211ED7                 mov     byte ptr [edx+7], 0
+  .text:00211EDB                 add     edx, 8
+  .text:00211EDE                 cmp     esi, edx
+  .text:00211EE0                 jnz     short loc_211EBC
+  .text:00211EE2                 mov     [esp+4Ch+functionPointer.flag], 2
+  .text:00211EE7                 lea     ecx, (_ZL18Char_Assign_StringRK7CStringPc - 8B0000h)[ebx]; Char_Assign_String(CString const&,char *)
+  .text:00211EED                 mov     dword ptr [esp+4Ch+functionPointer.pointer], ecx
+  .text:00211EF1                 sub     esp, 8
+  .text:00211EF4                 ; callConvention
+  .text:00211EF4                 push    4; callConvention
+  .text:00211EF6                 ; functionPointer
+  .text:00211EF6                 push    ebp; functionPointer
+  .text:00211EF7                 lea     eax, (aCharOpassignCo_0 - 8B0000h)[ebx]; "char opAssign(const string& in szString"...
+  .text:00211EFD                 ; declaration
+  .text:00211EFD                 push    eax; declaration
+  .text:00211EFE                 mov     edx, [esp+60h+s]
+  .text:00211F02                 ; objectName
+  .text:00211F02                 push    edx; objectName
+  .text:00211F03                 lea     ecx, (aAssignsTheFirs - 8B0000h)[ebx]; "Assigns the first character of the give"...
+  .text:00211F09                 ; docs
+  .text:00211F09                 push    ecx; docs
+  .text:00211F0A                 ; documentation
+  .text:00211F0A                 push    edi; documentation
+  .text:00211F0B                 call    CASDocumentation_RegisterObjectMethod; CASDocumentation_RegisterObjectMethod(char const*,char const*,char const*,asSFuncPtr const&,ulong)
+  .text:00211F10                 add     esp, 20h
+  .text:00211F13                 lea     eax, [ebp+1]
+  .text:00211F16                 mov     byte ptr [eax], 0
+  .text:00211F19                 mov     byte ptr [eax+1], 0
+  .text:00211F1D                 mov     byte ptr [eax+2], 0
+  .text:00211F21                 mov     byte ptr [eax+3], 0
+  .text:00211F25                 mov     byte ptr [eax+4], 0
+  .text:00211F29                 mov     byte ptr [eax+5], 0
+  .text:00211F2D                 mov     byte ptr [eax+6], 0
+  .text:00211F31                 mov     byte ptr [eax+7], 0
+  .text:00211F35                 add     eax, 8
+  .text:00211F38                 cmp     esi, eax
+  .text:00211F3A                 jnz     short loc_211F16
+  .text:00211F3C                 mov     [esp+4Ch+functionPointer.flag], 2
+  .text:00211F41                 lea     esi, (_ZL19Char_Compare_StringRK7CStringPc - 8B0000h)[ebx]; Char_Compare_String(CString const&,char *)
+  .text:00211F47                 mov     dword ptr [esp+4Ch+functionPointer.pointer], esi
+  .text:00211F4B                 sub     esp, 8
+  .text:00211F4E                 ; callConvention
+  .text:00211F4E                 push    4; callConvention
+  .text:00211F50                 ; functionPointer
+  .text:00211F50                 push    ebp; functionPointer
+  .text:00211F51                 lea     ebp, (aBoolOpequalsCo_6 - 8B0000h)[ebx]; "bool opEquals(const string& in szString"...
+  .text:00211F57                 ; declaration
+  .text:00211F57                 push    ebp; declaration
+  .text:00211F58                 mov     edx, [esp+60h+s]
+  .text:00211F5C                 ; objectName
+  .text:00211F5C                 push    edx; objectName
+  .text:00211F5D                 lea     ecx, (aComparesThisCh - 8B0000h)[ebx]; "Compares this char with the given chara"...
+  .text:00211F63                 ; docs
+  .text:00211F63                 push    ecx; docs
+  .text:00211F64                 ; documentation
+  .text:00211F64                 push    edi; documentation
+  .text:00211F65                 call    CASDocumentation_RegisterObjectMethod; CASDocumentation_RegisterObjectMethod(char const*,char const*,char const*,asSFuncPtr const&,ulong)
+  .text:00211F6A                 add     esp, 20h
+  .text:00211F6D                 lea     eax, (aUint32 - 8B0000h)[ebx]; "uint32"
+  .text:00211F73                 ; underlyingType
+  .text:00211F73                 push    eax; underlyingType
+  .text:00211F74                 lea     esi, (aSizeT - 8B0000h)[ebx]; "size_t"
+  .text:00211F7A                 ; name
+  .text:00211F7A                 push    esi; name
+  .text:00211F7B                 lea     ebp, (aSizeTypeUsedFo - 8B0000h)[ebx]; "Size type used for denoting sizes"
+  .text:00211F81                 ; docs
+  .text:00211F81                 push    ebp; docs
+  .text:00211F82                 ; documentation
+  .text:00211F82                 push    edi; documentation
+  .text:00211F83                 call    __ZN16CASDocumentation15RegisterTypedefEPKcS1_S1_; CASDocumentation::RegisterTypedef(char const*,char const*,char const*)
+  .text:00211F88                 add     esp, 4Ch
+  .text:00211F8B                 pop     ebx
+  .text:00211F8C                 pop     esi
+  .text:00211F8D                 pop     edi
+  .text:00211F8E                 pop     ebp
+  .text:00211F8F                 retn
+procedure: |-
+  // Direct CASDocumentation calls below identify method entries. SDK virtual calls and registered callback pointers are distinct.
+  // Reference reconstruction: private server source unavailable; names/arguments are based on current instructions and the symbolized 5.15 ELF peer. Registration return values are discarded here. Partial types describe only observed fields.
+  void __cdecl RegisterSCScriptVarious(CASDocumentationReference *documentation)
+  {
+    ASFunctionPointerReference *v1; // eax
+    ASFunctionPointerReference *v2; // edx
+    ASFunctionPointerReference *v3; // ecx
+    ASFunctionPointerReference *v4; // eax
+    ASFunctionPointerReference *v5; // edx
+    ASFunctionPointerReference *v6; // ecx
+    ASFunctionPointerReference *v7; // eax
+    ASFunctionPointerReference *v8; // edx
+    ASFunctionPointerReference *v9; // ecx
+    ASFunctionPointerReference *v10; // eax
+    ASFunctionPointerReference *v11; // edx
+    ASFunctionPointerReference *v12; // ecx
+    ASFunctionPointerReference *v13; // eax
+    ASFunctionPointerReference *v14; // edx
+    ASFunctionPointerReference *v15; // eax
+    ASFunctionPointerReference *v16; // ecx
+    ASFunctionPointerReference *v17; // edx
+    ASFunctionPointerReference *v18; // eax
+    ASFunctionPointerReference *v19; // ecx
+    ASFunctionPointerReference *v20; // edx
+    ASFunctionPointerReference *v21; // eax
+    ASFunctionPointerReference functionPointer; // [esp+20h] [ebp-3Ch] BYREF
+
+    CASDocumentation_RegisterGlobalProperty(
+      documentation,
+      "Distance from the world origin to the world boundary in a single axis",
+      "const float WORLD_BOUNDARY",
+      &CONST_WORLD_BOUNDARY);
+    RegisterSCScriptForwardDeclareString((CASDocumentation *)documentation);
+    CASDocumentation_RegisterObjectType(documentation, "Char value type", "char", 1, 0x200Au);
+    v1 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v1->pointer.storage[0] = 0;
+      v1->pointer.storage[1] = 0;
+      v1->pointer.storage[2] = 0;
+      v1->pointer.storage[3] = 0;
+      v1->pointer.storage[4] = 0;
+      v1->pointer.storage[5] = 0;
+      v1->pointer.storage[6] = 0;
+      v1->pointer.storage[7] = 0;
+      v1 = (ASFunctionPointerReference *)((char *)v1 + 8);
+    }
+    while ( v1 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())isalnum;
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is alphanumeric.",
+      "bool isalnum(char character)",
+      &functionPointer,
+      0,
+      nullptr);
+    v2 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v2->pointer.storage[0] = 0;
+      v2->pointer.storage[1] = 0;
+      v2->pointer.storage[2] = 0;
+      v2->pointer.storage[3] = 0;
+      v2->pointer.storage[4] = 0;
+      v2->pointer.storage[5] = 0;
+      v2->pointer.storage[6] = 0;
+      v2->pointer.storage[7] = 0;
+      v2 = (ASFunctionPointerReference *)((char *)v2 + 8);
+    }
+    while ( v2 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())isalpha;
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is alphabetic.",
+      "bool isalpha(char character)",
+      &functionPointer,
+      0,
+      nullptr);
+    v3 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v3->pointer.storage[0] = 0;
+      v3->pointer.storage[1] = 0;
+      v3->pointer.storage[2] = 0;
+      v3->pointer.storage[3] = 0;
+      v3->pointer.storage[4] = 0;
+      v3->pointer.storage[5] = 0;
+      v3->pointer.storage[6] = 0;
+      v3->pointer.storage[7] = 0;
+      v3 = (ASFunctionPointerReference *)((char *)v3 + 8);
+    }
+    while ( v3 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())iscntrl;
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is control.",
+      "bool iscntrl(char character)",
+      &functionPointer,
+      0,
+      nullptr);
+    v4 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v4->pointer.storage[0] = 0;
+      v4->pointer.storage[1] = 0;
+      v4->pointer.storage[2] = 0;
+      v4->pointer.storage[3] = 0;
+      v4->pointer.storage[4] = 0;
+      v4->pointer.storage[5] = 0;
+      v4->pointer.storage[6] = 0;
+      v4->pointer.storage[7] = 0;
+      v4 = (ASFunctionPointerReference *)((char *)v4 + 8);
+    }
+    while ( v4 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())isdigit;
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is a decimal digit character.",
+      "bool isdigit(char character)",
+      &functionPointer,
+      0,
+      nullptr);
+    v5 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v5->pointer.storage[0] = 0;
+      v5->pointer.storage[1] = 0;
+      v5->pointer.storage[2] = 0;
+      v5->pointer.storage[3] = 0;
+      v5->pointer.storage[4] = 0;
+      v5->pointer.storage[5] = 0;
+      v5->pointer.storage[6] = 0;
+      v5->pointer.storage[7] = 0;
+      v5 = (ASFunctionPointerReference *)((char *)v5 + 8);
+    }
+    while ( v5 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())isgraph;
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is graph.",
+      "bool isgraph(char character)",
+      &functionPointer,
+      0,
+      nullptr);
+    v6 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v6->pointer.storage[0] = 0;
+      v6->pointer.storage[1] = 0;
+      v6->pointer.storage[2] = 0;
+      v6->pointer.storage[3] = 0;
+      v6->pointer.storage[4] = 0;
+      v6->pointer.storage[5] = 0;
+      v6->pointer.storage[6] = 0;
+      v6->pointer.storage[7] = 0;
+      v6 = (ASFunctionPointerReference *)((char *)v6 + 8);
+    }
+    while ( v6 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())islower;
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is lower.",
+      "bool islower(char character)",
+      &functionPointer,
+      0,
+      nullptr);
+    v7 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v7->pointer.storage[0] = 0;
+      v7->pointer.storage[1] = 0;
+      v7->pointer.storage[2] = 0;
+      v7->pointer.storage[3] = 0;
+      v7->pointer.storage[4] = 0;
+      v7->pointer.storage[5] = 0;
+      v7->pointer.storage[6] = 0;
+      v7->pointer.storage[7] = 0;
+      v7 = (ASFunctionPointerReference *)((char *)v7 + 8);
+    }
+    while ( v7 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())isprint;
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is print.",
+      "bool isprint(char character)",
+      &functionPointer,
+      0,
+      nullptr);
+    v8 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v8->pointer.storage[0] = 0;
+      v8->pointer.storage[1] = 0;
+      v8->pointer.storage[2] = 0;
+      v8->pointer.storage[3] = 0;
+      v8->pointer.storage[4] = 0;
+      v8->pointer.storage[5] = 0;
+      v8->pointer.storage[6] = 0;
+      v8->pointer.storage[7] = 0;
+      v8 = (ASFunctionPointerReference *)((char *)v8 + 8);
+    }
+    while ( v8 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())ispunct;
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is punctuality.",
+      "bool ispunct(char character)",
+      &functionPointer,
+      0,
+      nullptr);
+    v9 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v9->pointer.storage[0] = 0;
+      v9->pointer.storage[1] = 0;
+      v9->pointer.storage[2] = 0;
+      v9->pointer.storage[3] = 0;
+      v9->pointer.storage[4] = 0;
+      v9->pointer.storage[5] = 0;
+      v9->pointer.storage[6] = 0;
+      v9->pointer.storage[7] = 0;
+      v9 = (ASFunctionPointerReference *)((char *)v9 + 8);
+    }
+    while ( v9 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())isspace;
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is space.",
+      "bool isspace(char character)",
+      &functionPointer,
+      0,
+      nullptr);
+    v10 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v10->pointer.storage[0] = 0;
+      v10->pointer.storage[1] = 0;
+      v10->pointer.storage[2] = 0;
+      v10->pointer.storage[3] = 0;
+      v10->pointer.storage[4] = 0;
+      v10->pointer.storage[5] = 0;
+      v10->pointer.storage[6] = 0;
+      v10->pointer.storage[7] = 0;
+      v10 = (ASFunctionPointerReference *)((char *)v10 + 8);
+    }
+    while ( v10 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())isupper;
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is upper.",
+      "bool isupper(char character)",
+      &functionPointer,
+      0,
+      nullptr);
+    v11 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v11->pointer.storage[0] = 0;
+      v11->pointer.storage[1] = 0;
+      v11->pointer.storage[2] = 0;
+      v11->pointer.storage[3] = 0;
+      v11->pointer.storage[4] = 0;
+      v11->pointer.storage[5] = 0;
+      v11->pointer.storage[6] = 0;
+      v11->pointer.storage[7] = 0;
+      v11 = (ASFunctionPointerReference *)((char *)v11 + 8);
+    }
+    while ( v11 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())isxdigit;
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is a hexadecimal numeric character.",
+      "bool isxdigit(char character)",
+      &functionPointer,
+      0,
+      nullptr);
+    v12 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v12->pointer.storage[0] = 0;
+      v12->pointer.storage[1] = 0;
+      v12->pointer.storage[2] = 0;
+      v12->pointer.storage[3] = 0;
+      v12->pointer.storage[4] = 0;
+      v12->pointer.storage[5] = 0;
+      v12->pointer.storage[6] = 0;
+      v12->pointer.storage[7] = 0;
+      v12 = (ASFunctionPointerReference *)((char *)v12 + 8);
+    }
+    while ( &functionPointer.pointer.storage[25] != (char *)v12 );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())tolower;
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Converts the given character to lower case.",
+      "char tolower(char character)",
+      &functionPointer,
+      0,
+      nullptr);
+    v13 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v13->pointer.storage[0] = 0;
+      v13->pointer.storage[1] = 0;
+      v13->pointer.storage[2] = 0;
+      v13->pointer.storage[3] = 0;
+      v13->pointer.storage[4] = 0;
+      v13->pointer.storage[5] = 0;
+      v13->pointer.storage[6] = 0;
+      v13->pointer.storage[7] = 0;
+      v13 = (ASFunctionPointerReference *)((char *)v13 + 8);
+    }
+    while ( v13 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())toupper;
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Converts the given character to upper case.",
+      "char toupper(char character)",
+      &functionPointer,
+      0,
+      nullptr);
+    v14 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v14->pointer.storage[0] = 0;
+      v14->pointer.storage[1] = 0;
+      v14->pointer.storage[2] = 0;
+      v14->pointer.storage[3] = 0;
+      v14->pointer.storage[4] = 0;
+      v14->pointer.storage[5] = 0;
+      v14->pointer.storage[6] = 0;
+      v14->pointer.storage[7] = 0;
+      v14 = (ASFunctionPointerReference *)((char *)v14 + 8);
+    }
+    while ( &functionPointer.pointer.storage[25] != (char *)v14 );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())DefaultConstructChar;
+    CASDocumentation_RegisterObjectBehaviour(
+      documentation,
+      "Default constructor",
+      "char",
+      0,
+      "void char()",
+      &functionPointer,
+      4u,
+      nullptr);
+    v15 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v15->pointer.storage[0] = 0;
+      v15->pointer.storage[1] = 0;
+      v15->pointer.storage[2] = 0;
+      v15->pointer.storage[3] = 0;
+      v15->pointer.storage[4] = 0;
+      v15->pointer.storage[5] = 0;
+      v15->pointer.storage[6] = 0;
+      v15->pointer.storage[7] = 0;
+      v15 = (ASFunctionPointerReference *)((char *)v15 + 8);
+    }
+    while ( &functionPointer.pointer.storage[25] != (char *)v15 );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())CopyConstructChar;
+    CASDocumentation_RegisterObjectBehaviour(
+      documentation,
+      "Copy constructor",
+      "char",
+      0,
+      "void char(const char& in character)",
+      &functionPointer,
+      4u,
+      nullptr);
+    v16 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v16->pointer.storage[0] = 0;
+      v16->pointer.storage[1] = 0;
+      v16->pointer.storage[2] = 0;
+      v16->pointer.storage[3] = 0;
+      v16->pointer.storage[4] = 0;
+      v16->pointer.storage[5] = 0;
+      v16->pointer.storage[6] = 0;
+      v16->pointer.storage[7] = 0;
+      v16 = (ASFunctionPointerReference *)((char *)v16 + 8);
+    }
+    while ( &functionPointer.pointer.storage[25] != (char *)v16 );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())CopyConstructChar;
+    CASDocumentation_RegisterObjectBehaviour(
+      documentation,
+      "Copy constructor",
+      "char",
+      0,
+      "void char(const string& in szString)",
+      &functionPointer,
+      4u,
+      nullptr);
+    v17 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v17->pointer.storage[0] = 0;
+      v17->pointer.storage[1] = 0;
+      v17->pointer.storage[2] = 0;
+      v17->pointer.storage[3] = 0;
+      v17->pointer.storage[4] = 0;
+      v17->pointer.storage[5] = 0;
+      v17->pointer.storage[6] = 0;
+      v17->pointer.storage[7] = 0;
+      v17 = (ASFunctionPointerReference *)((char *)v17 + 8);
+    }
+    while ( &functionPointer.pointer.storage[25] != (char *)v17 );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())DestructChar;
+    CASDocumentation_RegisterObjectBehaviour(
+      documentation,
+      "Destructor",
+      "char",
+      2,
+      "void char()",
+      &functionPointer,
+      4u,
+      nullptr);
+    v18 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v18->pointer.storage[0] = 0;
+      v18->pointer.storage[1] = 0;
+      v18->pointer.storage[2] = 0;
+      v18->pointer.storage[3] = 0;
+      v18->pointer.storage[4] = 0;
+      v18->pointer.storage[5] = 0;
+      v18->pointer.storage[6] = 0;
+      v18->pointer.storage[7] = 0;
+      v18 = (ASFunctionPointerReference *)((char *)v18 + 8);
+    }
+    while ( &functionPointer.pointer.storage[25] != (char *)v18 );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())Char_Assign;
+    CASDocumentation_RegisterObjectMethod(
+      documentation,
+      "Assigns one character to another.",
+      "char",
+      "char opAssign(const char& in character)",
+      &functionPointer,
+      4u);
+    v19 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v19->pointer.storage[0] = 0;
+      v19->pointer.storage[1] = 0;
+      v19->pointer.storage[2] = 0;
+      v19->pointer.storage[3] = 0;
+      v19->pointer.storage[4] = 0;
+      v19->pointer.storage[5] = 0;
+      v19->pointer.storage[6] = 0;
+      v19->pointer.storage[7] = 0;
+      v19 = (ASFunctionPointerReference *)((char *)v19 + 8);
+    }
+    while ( &functionPointer.pointer.storage[25] != (char *)v19 );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())Char_ToUint32;
+    CASDocumentation_RegisterObjectMethod(
+      documentation,
+      "Implicitly converts this character to an unsigned 32 bit integer.",
+      "char",
+      "uint32 opImplConv() const",
+      &functionPointer,
+      5u);
+    v20 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v20->pointer.storage[0] = 0;
+      v20->pointer.storage[1] = 0;
+      v20->pointer.storage[2] = 0;
+      v20->pointer.storage[3] = 0;
+      v20->pointer.storage[4] = 0;
+      v20->pointer.storage[5] = 0;
+      v20->pointer.storage[6] = 0;
+      v20->pointer.storage[7] = 0;
+      v20 = (ASFunctionPointerReference *)((char *)v20 + 8);
+    }
+    while ( &functionPointer.pointer.storage[25] != (char *)v20 );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())Char_Assign_String;
+    CASDocumentation_RegisterObjectMethod(
+      documentation,
+      "Assigns the first character of the given string to this character.",
+      "char",
+      "char opAssign(const string& in szString)",
+      &functionPointer,
+      4u);
+    v21 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v21->pointer.storage[0] = 0;
+      v21->pointer.storage[1] = 0;
+      v21->pointer.storage[2] = 0;
+      v21->pointer.storage[3] = 0;
+      v21->pointer.storage[4] = 0;
+      v21->pointer.storage[5] = 0;
+      v21->pointer.storage[6] = 0;
+      v21->pointer.storage[7] = 0;
+      v21 = (ASFunctionPointerReference *)((char *)v21 + 8);
+    }
+    while ( &functionPointer.pointer.storage[25] != (char *)v21 );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())Char_Compare_String;
+    CASDocumentation_RegisterObjectMethod(
+      documentation,
+      "Compares this char with the given character.",
+      "char",
+      "bool opEquals(const string& in szString) const",
+      &functionPointer,
+      4u);
+    CASDocumentation::RegisterTypedef(documentation, "Size type used for denoting sizes", "size_t", "uint32");
+  }

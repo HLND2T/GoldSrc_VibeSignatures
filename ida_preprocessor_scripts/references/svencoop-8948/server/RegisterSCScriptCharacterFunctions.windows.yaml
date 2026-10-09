@@ -1,0 +1,375 @@
+func_name: RegisterSCScriptCharacterFunctions
+func_va: '0x100bfbd0'
+disasm_code: |-
+  .text:100BFBD0                 sub     esp, 2Ch
+  .text:100BFBD3                 mov     eax, ___security_cookie
+  .text:100BFBD8                 xor     eax, esp
+  .text:100BFBDA                 mov     [esp+2Ch+var_4], eax
+  .text:100BFBDE                 push    esi
+  .text:100BFBDF                 mov     esi, [esp+30h+documentation]
+  .text:100BFBE3                 lea     eax, [esp+30h+storage]
+  .text:100BFBE7                 ; auxiliary
+  .text:100BFBE7                 push    0; auxiliary
+  .text:100BFBE9                 ; callConvention
+  .text:100BFBE9                 push    0; callConvention
+  .text:100BFBEB                 ; function
+  .text:100BFBEB                 push    offset ScriptChar_isalnum; function
+  .text:100BFBF0                 ; storage
+  .text:100BFBF0                 push    eax; storage
+  .text:100BFBF1                 call    asFunctionPtr
+  .text:100BFBF6                 add     esp, 8
+  .text:100BFBF9                 ; documentation
+  .text:100BFBF9                 mov     ecx, esi; documentation
+  .text:100BFBFB                 ; functionPointer
+  .text:100BFBFB                 push    eax; functionPointer
+  .text:100BFBFC                 push    offset aBoolIsalnumCha; "bool isalnum(char character)"
+  .text:100BFC01                 push    offset aReturnsWhether_42; "Returns whether character is alphanumer"...
+  .text:100BFC06                 call    CASDocumentation_RegisterGlobalFunction
+  .text:100BFC0B                 ; auxiliary
+  .text:100BFC0B                 push    0; auxiliary
+  .text:100BFC0D                 ; callConvention
+  .text:100BFC0D                 push    0; callConvention
+  .text:100BFC0F                 lea     eax, [esp+38h+storage]
+  .text:100BFC13                 ; function
+  .text:100BFC13                 push    offset ScriptChar_isalpha; function
+  .text:100BFC18                 ; storage
+  .text:100BFC18                 push    eax; storage
+  .text:100BFC19                 call    asFunctionPtr
+  .text:100BFC1E                 add     esp, 8
+  .text:100BFC21                 ; documentation
+  .text:100BFC21                 mov     ecx, esi; documentation
+  .text:100BFC23                 ; functionPointer
+  .text:100BFC23                 push    eax; functionPointer
+  .text:100BFC24                 push    offset aBoolIsalphaCha; "bool isalpha(char character)"
+  .text:100BFC29                 push    offset aReturnsWhether_43; "Returns whether character is alphabetic"...
+  .text:100BFC2E                 call    CASDocumentation_RegisterGlobalFunction
+  .text:100BFC33                 ; auxiliary
+  .text:100BFC33                 push    0; auxiliary
+  .text:100BFC35                 ; callConvention
+  .text:100BFC35                 push    0; callConvention
+  .text:100BFC37                 lea     eax, [esp+38h+storage]
+  .text:100BFC3B                 ; function
+  .text:100BFC3B                 push    offset ScriptChar_iscntrl; function
+  .text:100BFC40                 ; storage
+  .text:100BFC40                 push    eax; storage
+  .text:100BFC41                 call    asFunctionPtr
+  .text:100BFC46                 add     esp, 8
+  .text:100BFC49                 ; documentation
+  .text:100BFC49                 mov     ecx, esi; documentation
+  .text:100BFC4B                 ; functionPointer
+  .text:100BFC4B                 push    eax; functionPointer
+  .text:100BFC4C                 push    offset aBoolIscntrlCha; "bool iscntrl(char character)"
+  .text:100BFC51                 push    offset aReturnsWhether_44; "Returns whether character is control."
+  .text:100BFC56                 call    CASDocumentation_RegisterGlobalFunction
+  .text:100BFC5B                 ; auxiliary
+  .text:100BFC5B                 push    0; auxiliary
+  .text:100BFC5D                 ; callConvention
+  .text:100BFC5D                 push    0; callConvention
+  .text:100BFC5F                 lea     eax, [esp+38h+storage]
+  .text:100BFC63                 ; function
+  .text:100BFC63                 push    offset ScriptChar_isdigit; function
+  .text:100BFC68                 ; storage
+  .text:100BFC68                 push    eax; storage
+  .text:100BFC69                 call    asFunctionPtr
+  .text:100BFC6E                 add     esp, 8
+  .text:100BFC71                 ; documentation
+  .text:100BFC71                 mov     ecx, esi; documentation
+  .text:100BFC73                 ; functionPointer
+  .text:100BFC73                 push    eax; functionPointer
+  .text:100BFC74                 push    offset aBoolIsdigitCha; "bool isdigit(char character)"
+  .text:100BFC79                 push    offset aReturnsWhether_53; "Returns whether character is a decimal "...
+  .text:100BFC7E                 call    CASDocumentation_RegisterGlobalFunction
+  .text:100BFC83                 ; auxiliary
+  .text:100BFC83                 push    0; auxiliary
+  .text:100BFC85                 ; callConvention
+  .text:100BFC85                 push    0; callConvention
+  .text:100BFC87                 lea     eax, [esp+38h+storage]
+  .text:100BFC8B                 ; function
+  .text:100BFC8B                 push    offset ScriptChar_isgraph; function
+  .text:100BFC90                 ; storage
+  .text:100BFC90                 push    eax; storage
+  .text:100BFC91                 call    asFunctionPtr
+  .text:100BFC96                 add     esp, 8
+  .text:100BFC99                 ; documentation
+  .text:100BFC99                 mov     ecx, esi; documentation
+  .text:100BFC9B                 ; functionPointer
+  .text:100BFC9B                 push    eax; functionPointer
+  .text:100BFC9C                 push    offset aBoolIsgraphCha; "bool isgraph(char character)"
+  .text:100BFCA1                 push    offset aReturnsWhether_46; "Returns whether character is graph."
+  .text:100BFCA6                 call    CASDocumentation_RegisterGlobalFunction
+  .text:100BFCAB                 ; auxiliary
+  .text:100BFCAB                 push    0; auxiliary
+  .text:100BFCAD                 ; callConvention
+  .text:100BFCAD                 push    0; callConvention
+  .text:100BFCAF                 lea     eax, [esp+38h+storage]
+  .text:100BFCB3                 ; function
+  .text:100BFCB3                 push    offset ScriptChar_islower; function
+  .text:100BFCB8                 ; storage
+  .text:100BFCB8                 push    eax; storage
+  .text:100BFCB9                 call    asFunctionPtr
+  .text:100BFCBE                 add     esp, 8
+  .text:100BFCC1                 ; documentation
+  .text:100BFCC1                 mov     ecx, esi; documentation
+  .text:100BFCC3                 ; functionPointer
+  .text:100BFCC3                 push    eax; functionPointer
+  .text:100BFCC4                 push    offset aBoolIslowerCha; "bool islower(char character)"
+  .text:100BFCC9                 push    offset aReturnsWhether_47; "Returns whether character is lower."
+  .text:100BFCCE                 call    CASDocumentation_RegisterGlobalFunction
+  .text:100BFCD3                 ; auxiliary
+  .text:100BFCD3                 push    0; auxiliary
+  .text:100BFCD5                 ; callConvention
+  .text:100BFCD5                 push    0; callConvention
+  .text:100BFCD7                 lea     eax, [esp+38h+storage]
+  .text:100BFCDB                 ; function
+  .text:100BFCDB                 push    offset ScriptChar_isprint; function
+  .text:100BFCE0                 ; storage
+  .text:100BFCE0                 push    eax; storage
+  .text:100BFCE1                 call    asFunctionPtr
+  .text:100BFCE6                 add     esp, 8
+  .text:100BFCE9                 ; functionPointer
+  .text:100BFCE9                 push    eax; functionPointer
+  .text:100BFCEA                 push    offset aBoolIsprintCha; "bool isprint(char character)"
+  .text:100BFCEF                 push    offset aReturnsWhether_48; "Returns whether character is print."
+  .text:100BFCF4                 ; documentation
+  .text:100BFCF4                 mov     ecx, esi; documentation
+  .text:100BFCF6                 call    CASDocumentation_RegisterGlobalFunction
+  .text:100BFCFB                 ; auxiliary
+  .text:100BFCFB                 push    0; auxiliary
+  .text:100BFCFD                 ; callConvention
+  .text:100BFCFD                 push    0; callConvention
+  .text:100BFCFF                 lea     eax, [esp+38h+storage]
+  .text:100BFD03                 ; function
+  .text:100BFD03                 push    offset ScriptChar_ispunct; function
+  .text:100BFD08                 ; storage
+  .text:100BFD08                 push    eax; storage
+  .text:100BFD09                 call    asFunctionPtr
+  .text:100BFD0E                 add     esp, 8
+  .text:100BFD11                 ; documentation
+  .text:100BFD11                 mov     ecx, esi; documentation
+  .text:100BFD13                 ; functionPointer
+  .text:100BFD13                 push    eax; functionPointer
+  .text:100BFD14                 push    offset aBoolIspunctCha; "bool ispunct(char character)"
+  .text:100BFD19                 push    offset aReturnsWhether_49; "Returns whether character is punctualit"...
+  .text:100BFD1E                 call    CASDocumentation_RegisterGlobalFunction
+  .text:100BFD23                 ; auxiliary
+  .text:100BFD23                 push    0; auxiliary
+  .text:100BFD25                 ; callConvention
+  .text:100BFD25                 push    0; callConvention
+  .text:100BFD27                 lea     eax, [esp+38h+storage]
+  .text:100BFD2B                 ; function
+  .text:100BFD2B                 push    offset ScriptChar_isspace; function
+  .text:100BFD30                 ; storage
+  .text:100BFD30                 push    eax; storage
+  .text:100BFD31                 call    asFunctionPtr
+  .text:100BFD36                 add     esp, 8
+  .text:100BFD39                 ; documentation
+  .text:100BFD39                 mov     ecx, esi; documentation
+  .text:100BFD3B                 ; functionPointer
+  .text:100BFD3B                 push    eax; functionPointer
+  .text:100BFD3C                 push    offset aBoolIsspaceCha; "bool isspace(char character)"
+  .text:100BFD41                 push    offset aReturnsWhether_50; "Returns whether character is space."
+  .text:100BFD46                 call    CASDocumentation_RegisterGlobalFunction
+  .text:100BFD4B                 ; auxiliary
+  .text:100BFD4B                 push    0; auxiliary
+  .text:100BFD4D                 ; callConvention
+  .text:100BFD4D                 push    0; callConvention
+  .text:100BFD4F                 lea     eax, [esp+38h+storage]
+  .text:100BFD53                 ; function
+  .text:100BFD53                 push    offset ScriptChar_isupper; function
+  .text:100BFD58                 ; storage
+  .text:100BFD58                 push    eax; storage
+  .text:100BFD59                 call    asFunctionPtr
+  .text:100BFD5E                 add     esp, 8
+  .text:100BFD61                 ; documentation
+  .text:100BFD61                 mov     ecx, esi; documentation
+  .text:100BFD63                 ; functionPointer
+  .text:100BFD63                 push    eax; functionPointer
+  .text:100BFD64                 push    offset aBoolIsupperCha; "bool isupper(char character)"
+  .text:100BFD69                 push    offset aReturnsWhether_51; "Returns whether character is upper."
+  .text:100BFD6E                 call    CASDocumentation_RegisterGlobalFunction
+  .text:100BFD73                 ; auxiliary
+  .text:100BFD73                 push    0; auxiliary
+  .text:100BFD75                 ; callConvention
+  .text:100BFD75                 push    0; callConvention
+  .text:100BFD77                 lea     eax, [esp+38h+storage]
+  .text:100BFD7B                 ; function
+  .text:100BFD7B                 push    offset ScriptChar_isxdigit; function
+  .text:100BFD80                 ; storage
+  .text:100BFD80                 push    eax; storage
+  .text:100BFD81                 call    asFunctionPtr
+  .text:100BFD86                 add     esp, 8
+  .text:100BFD89                 ; documentation
+  .text:100BFD89                 mov     ecx, esi; documentation
+  .text:100BFD8B                 ; functionPointer
+  .text:100BFD8B                 push    eax; functionPointer
+  .text:100BFD8C                 push    offset aBoolIsxdigitCh; "bool isxdigit(char character)"
+  .text:100BFD91                 push    offset aReturnsWhether_54; "Returns whether character is a hexadeci"...
+  .text:100BFD96                 call    CASDocumentation_RegisterGlobalFunction
+  .text:100BFD9B                 ; auxiliary
+  .text:100BFD9B                 push    0; auxiliary
+  .text:100BFD9D                 ; callConvention
+  .text:100BFD9D                 push    0; callConvention
+  .text:100BFD9F                 lea     eax, [esp+38h+storage]
+  .text:100BFDA3                 ; function
+  .text:100BFDA3                 push    offset ScriptChar_tolower; function
+  .text:100BFDA8                 ; storage
+  .text:100BFDA8                 push    eax; storage
+  .text:100BFDA9                 call    asFunctionPtr
+  .text:100BFDAE                 add     esp, 8
+  .text:100BFDB1                 ; documentation
+  .text:100BFDB1                 mov     ecx, esi; documentation
+  .text:100BFDB3                 ; functionPointer
+  .text:100BFDB3                 push    eax; functionPointer
+  .text:100BFDB4                 push    offset aCharTolowerCha; "char tolower(char character)"
+  .text:100BFDB9                 push    offset aConvertsTheGiv_8; "Converts the given character to lower c"...
+  .text:100BFDBE                 call    CASDocumentation_RegisterGlobalFunction
+  .text:100BFDC3                 ; auxiliary
+  .text:100BFDC3                 push    0; auxiliary
+  .text:100BFDC5                 ; callConvention
+  .text:100BFDC5                 push    0; callConvention
+  .text:100BFDC7                 lea     eax, [esp+38h+storage]
+  .text:100BFDCB                 ; function
+  .text:100BFDCB                 push    offset ScriptChar_toupper; function
+  .text:100BFDD0                 ; storage
+  .text:100BFDD0                 push    eax; storage
+  .text:100BFDD1                 call    asFunctionPtr
+  .text:100BFDD6                 add     esp, 8
+  .text:100BFDD9                 ; documentation
+  .text:100BFDD9                 mov     ecx, esi; documentation
+  .text:100BFDDB                 ; functionPointer
+  .text:100BFDDB                 push    eax; functionPointer
+  .text:100BFDDC                 push    offset aCharToupperCha; "char toupper(char character)"
+  .text:100BFDE1                 push    offset aConvertsTheGiv_9; "Converts the given character to upper c"...
+  .text:100BFDE6                 call    CASDocumentation_RegisterGlobalFunction
+  .text:100BFDEB                 mov     ecx, [esp+30h+var_4]
+  .text:100BFDEF                 pop     esi
+  .text:100BFDF0                 ; StackCookie
+  .text:100BFDF0                 xor     ecx, esp; StackCookie
+  .text:100BFDF2                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:100BFDF7                 add     esp, 2Ch
+  .text:100BFDFA                 retn
+procedure: |-
+  // Direct CASDocumentation calls below identify method entries. SDK virtual calls and registered callback pointers are distinct.
+  // Descriptive Windows helper name: owns bool isalnum(char character); Linux emits these registrations inside RegisterSCScriptVarious.
+  void __cdecl RegisterSCScriptCharacterFunctions(CASDocumentationReference *documentation)
+  {
+    ASFunctionPointerReference *v1; // eax
+    ASFunctionPointerReference *v2; // eax
+    ASFunctionPointerReference *v3; // eax
+    ASFunctionPointerReference *v4; // eax
+    ASFunctionPointerReference *v5; // eax
+    ASFunctionPointerReference *v6; // eax
+    ASFunctionPointerReference *v7; // eax
+    ASFunctionPointerReference *v8; // eax
+    ASFunctionPointerReference *v9; // eax
+    ASFunctionPointerReference *v10; // eax
+    ASFunctionPointerReference *v11; // eax
+    ASFunctionPointerReference *v12; // eax
+    ASFunctionPointerReference *v13; // eax
+    ASFunctionPointerReference storage; // [esp+4h] [ebp-2Ch] BYREF
+
+    v1 = asFunctionPtr(&storage, ScriptChar_isalnum);
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is alphanumeric.",
+      "bool isalnum(char character)",
+      v1,
+      0,
+      nullptr);
+    v2 = asFunctionPtr(&storage, ScriptChar_isalpha);
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is alphabetic.",
+      "bool isalpha(char character)",
+      v2,
+      0,
+      nullptr);
+    v3 = asFunctionPtr(&storage, ScriptChar_iscntrl);
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is control.",
+      "bool iscntrl(char character)",
+      v3,
+      0,
+      nullptr);
+    v4 = asFunctionPtr(&storage, ScriptChar_isdigit);
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is a decimal digit character.",
+      "bool isdigit(char character)",
+      v4,
+      0,
+      nullptr);
+    v5 = asFunctionPtr(&storage, ScriptChar_isgraph);
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is graph.",
+      "bool isgraph(char character)",
+      v5,
+      0,
+      nullptr);
+    v6 = asFunctionPtr(&storage, ScriptChar_islower);
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is lower.",
+      "bool islower(char character)",
+      v6,
+      0,
+      nullptr);
+    v7 = asFunctionPtr(&storage, ScriptChar_isprint);
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is print.",
+      "bool isprint(char character)",
+      v7,
+      0,
+      nullptr);
+    v8 = asFunctionPtr(&storage, ScriptChar_ispunct);
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is punctuality.",
+      "bool ispunct(char character)",
+      v8,
+      0,
+      nullptr);
+    v9 = asFunctionPtr(&storage, ScriptChar_isspace);
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is space.",
+      "bool isspace(char character)",
+      v9,
+      0,
+      nullptr);
+    v10 = asFunctionPtr(&storage, ScriptChar_isupper);
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is upper.",
+      "bool isupper(char character)",
+      v10,
+      0,
+      nullptr);
+    v11 = asFunctionPtr(&storage, ScriptChar_isxdigit);
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Returns whether character is a hexadecimal numeric character.",
+      "bool isxdigit(char character)",
+      v11,
+      0,
+      nullptr);
+    v12 = asFunctionPtr(&storage, ScriptChar_tolower);
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Converts the given character to lower case.",
+      "char tolower(char character)",
+      v12,
+      0,
+      nullptr);
+    v13 = asFunctionPtr(&storage, ScriptChar_toupper);
+    CASDocumentation_RegisterGlobalFunction(
+      documentation,
+      "Converts the given character to upper case.",
+      "char toupper(char character)",
+      v13,
+      0,
+      nullptr);
+  }

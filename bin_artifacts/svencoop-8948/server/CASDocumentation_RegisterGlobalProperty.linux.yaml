@@ -1,0 +1,7 @@
+func_name: CASDocumentation::RegisterGlobalProperty(char const*, char const*, void*)
+func_va: '0x1d285c'
+func_rva: '0x1d285c'
+func_size: '0x5c'
+func_sig: 57 56 53 E8 ?? ?? ?? ?? 81 C3 ?? ?? ?? ?? 8B 74 24 ?? 8B 7C 24 ?? 8B 46 ?? 52 8B 10 8B 4C 24 ?? 51 57 50 FF 52 ??
+func_sig_allow_across_function_boundary: true
+func_sig_resolve_jmp_thunk: true

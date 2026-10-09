@@ -1,0 +1,413 @@
+func_name: RegisterSCScriptCustomEntityDependencies
+func_va: '0x2582fc'
+disasm_code: |-
+  .text:002582FC                 push    ebp
+  .text:002582FD                 mov     ebp, esp
+  .text:002582FF                 push    edi
+  .text:00258300                 push    esi
+  .text:00258301                 push    ebx
+  .text:00258302                 sub     esp, 60h
+  .text:00258305                 call    __x86_get_pc_thunk_si
+  .text:0025830A                 add     esi, (offset _GLOBAL_OFFSET_TABLE_ - $)
+  .text:00258310                 mov     edi, [ebp+documentation]
+  .text:00258313                 lea     eax, (aVoidThinkfunct - 8B0000h)[esi]; "void ThinkFunction()"
+  .text:00258319                 ; declaration
+  .text:00258319                 push    eax; declaration
+  .text:0025831A                 lea     edx, (aFunctionDefini - 8B0000h)[esi]; "Function definition for custom entity T"...
+  .text:00258320                 ; docs
+  .text:00258320                 push    edx; docs
+  .text:00258321                 ; documentation
+  .text:00258321                 push    edi; documentation
+  .text:00258322                 mov     ebx, esi
+  .text:00258324                 call    CASDocumentation_RegisterFuncDef; CASDocumentation_RegisterFuncDef(char const*,char const*)
+  .text:00258329                 add     esp, 0Ch
+  .text:0025832C                 lea     ecx, (aVoidUsefunctio - 8B0000h)[esi]; "void UseFunction(CBaseEntity@ pActivato"...
+  .text:00258332                 ; declaration
+  .text:00258332                 push    ecx; declaration
+  .text:00258333                 lea     eax, (aFunctionDefini_0 - 8B0000h)[esi]; "Function definition for custom entity U"...
+  .text:00258339                 ; docs
+  .text:00258339                 push    eax; docs
+  .text:0025833A                 ; documentation
+  .text:0025833A                 push    edi; documentation
+  .text:0025833B                 call    CASDocumentation_RegisterFuncDef; CASDocumentation_RegisterFuncDef(char const*,char const*)
+  .text:00258340                 add     esp, 0Ch
+  .text:00258343                 lea     edx, (aVoidTouchfunct - 8B0000h)[esi]; "void TouchFunction(CBaseEntity@ pOther)"
+  .text:00258349                 ; declaration
+  .text:00258349                 push    edx; declaration
+  .text:0025834A                 lea     ecx, (aFunctionDefini_1 - 8B0000h)[esi]; "Function definition for custom entity T"...
+  .text:00258350                 ; docs
+  .text:00258350                 push    ecx; docs
+  .text:00258351                 ; documentation
+  .text:00258351                 push    edi; documentation
+  .text:00258352                 call    CASDocumentation_RegisterFuncDef; CASDocumentation_RegisterFuncDef(char const*,char const*)
+  .text:00258357                 add     esp, 0Ch
+  .text:0025835A                 lea     eax, (aVoidBlockedfun - 8B0000h)[esi]; "void BlockedFunction(CBaseEntity@ pOthe"...
+  .text:00258360                 ; declaration
+  .text:00258360                 push    eax; declaration
+  .text:00258361                 lea     edx, (aFunctionDefini_2 - 8B0000h)[esi]; "Function definition for custom entity B"...
+  .text:00258367                 ; docs
+  .text:00258367                 push    edx; docs
+  .text:00258368                 ; documentation
+  .text:00258368                 push    edi; documentation
+  .text:00258369                 call    CASDocumentation_RegisterFuncDef; CASDocumentation_RegisterFuncDef(char const*,char const*)
+  .text:0025836E                 ; CASDocumentation *
+  .text:0025836E                 mov     [esp], edi; CASDocumentation *
+  .text:00258371                 call    __Z43RegisterSCScriptCustomEntityCallbackHandlerP16CASDocumentation; RegisterSCScriptCustomEntityCallbackHandler(CASDocumentation *)
+  .text:00258376                 pop     eax
+  .text:00258377                 pop     edx
+  .text:00258378                 ; mask
+  .text:00258378                 push    3; mask
+  .text:0025837A                 ; documentation
+  .text:0025837A                 push    edi; documentation
+  .text:0025837B                 call    __ZN16CASDocumentation20SetDefaultAccessMaskEm; CASDocumentation::SetDefaultAccessMask(ulong)
+  .text:00258380                 mov     [ebp+mask], eax
+  .text:00258383                 ; flags
+  .text:00258383                 mov     dword ptr [esp], 40001h; flags
+  .text:0025838A                 ; byteSize
+  .text:0025838A                 push    0; byteSize
+  .text:0025838C                 lea     ecx, (aCcustomentityf - 8B0000h)[esi]; "CCustomEntityFuncs"
+  .text:00258392                 mov     [ebp+s], ecx
+  .text:00258395                 ; objectName
+  .text:00258395                 push    ecx; objectName
+  .text:00258396                 lea     eax, (aCustomEntityFu - 8B0000h)[esi]; "Custom entity functions."
+  .text:0025839C                 ; docs
+  .text:0025839C                 push    eax; docs
+  .text:0025839D                 ; documentation
+  .text:0025839D                 push    edi; documentation
+  .text:0025839E                 call    CASDocumentation_RegisterObjectType; CASDocumentation_RegisterObjectType(char const*,char const*,int,ulong)
+  .text:002583A3                 mov     ebx, ds:(_ZNK20CASCustomEntityFuncs14IsCustomEntityERK7CString_ptr - 8B0000h)[esi]
+  .text:002583A9                 mov     [ebp+var_40], ebx
+  .text:002583AC                 mov     [ebp+var_3C], 0
+  .text:002583B3                 lea     ecx, [ebp+functionPointer]
+  .text:002583B6                 lea     edx, [ebp+functionPointer.pointer+19h]
+  .text:002583B9                 add     esp, 20h
+  .text:002583BC                 lea     eax, [ebp+functionPointer.pointer+1]
+  .text:002583BF                 mov     byte ptr [eax], 0
+  .text:002583C2                 mov     byte ptr [eax+1], 0
+  .text:002583C6                 mov     byte ptr [eax+2], 0
+  .text:002583CA                 mov     byte ptr [eax+3], 0
+  .text:002583CE                 mov     byte ptr [eax+4], 0
+  .text:002583D2                 mov     byte ptr [eax+5], 0
+  .text:002583D6                 mov     byte ptr [eax+6], 0
+  .text:002583DA                 mov     byte ptr [eax+7], 0
+  .text:002583DE                 add     eax, 8
+  .text:002583E1                 cmp     edx, eax
+  .text:002583E3                 jnz     short loc_2583BF
+  .text:002583E5                 mov     [ebp+var_68], edx
+  .text:002583E8                 mov     [ebp+functionPointer.flag], 3
+  .text:002583EC                 mov     bl, byte ptr [ebp+var_40]
+  .text:002583EF                 mov     byte ptr [ebp+functionPointer.pointer], bl
+  .text:002583F2                 mov     dl, byte ptr [ebp+var_40+1]
+  .text:002583F5                 mov     byte ptr [ebp+functionPointer.pointer+1], dl
+  .text:002583F8                 mov     al, byte ptr [ebp+var_40+2]
+  .text:002583FB                 mov     byte ptr [ebp+functionPointer.pointer+2], al
+  .text:002583FE                 mov     bl, byte ptr [ebp+var_40+3]
+  .text:00258401                 mov     byte ptr [ebp+functionPointer.pointer+3], bl
+  .text:00258404                 mov     dl, byte ptr [ebp+var_3C]
+  .text:00258407                 mov     byte ptr [ebp+functionPointer.pointer+4], dl
+  .text:0025840A                 mov     al, byte ptr [ebp+var_3C+1]
+  .text:0025840D                 mov     byte ptr [ebp+functionPointer.pointer+5], al
+  .text:00258410                 mov     bl, byte ptr [ebp+var_3C+2]
+  .text:00258413                 mov     byte ptr [ebp+functionPointer.pointer+6], bl
+  .text:00258416                 mov     dl, byte ptr [ebp+var_3C+3]
+  .text:00258419                 mov     byte ptr [ebp+functionPointer.pointer+7], dl
+  .text:0025841C                 sub     esp, 8
+  .text:0025841F                 ; callConvention
+  .text:0025841F                 push    3; callConvention
+  .text:00258421                 ; functionPointer
+  .text:00258421                 push    ecx; functionPointer
+  .text:00258422                 mov     [ebp+var_64], ecx
+  .text:00258425                 lea     ecx, (aBoolIscustomen - 8B0000h)[esi]; "bool IsCustomEntity(const string& in sz"...
+  .text:0025842B                 ; declaration
+  .text:0025842B                 push    ecx; declaration
+  .text:0025842C                 mov     eax, [ebp+s]
+  .text:0025842F                 ; objectName
+  .text:0025842F                 push    eax; objectName
+  .text:00258430                 lea     ebx, (aReturnsWhether_59 - 8B0000h)[esi]; "Returns whether the given entity name i"...
+  .text:00258436                 ; docs
+  .text:00258436                 push    ebx; docs
+  .text:00258437                 ; documentation
+  .text:00258437                 push    edi; documentation
+  .text:00258438                 mov     ebx, esi
+  .text:0025843A                 call    CASDocumentation_RegisterObjectMethod; CASDocumentation_RegisterObjectMethod(char const*,char const*,char const*,asSFuncPtr const&,ulong)
+  .text:0025843F                 mov     edx, ds:(_ZN20CASCustomEntityFuncs20RegisterCustomEntityERK7CStringS2__ptr - 8B0000h)[esi]
+  .text:00258445                 mov     [ebp+var_48], edx
+  .text:00258448                 mov     [ebp+var_44], 0
+  .text:0025844F                 add     esp, 20h
+  .text:00258452                 mov     ecx, [ebp+var_64]
+  .text:00258455                 lea     eax, [ecx+1]
+  .text:00258458                 mov     ebx, [ebp+var_68]
+  .text:0025845B                 mov     byte ptr [eax], 0
+  .text:0025845E                 mov     byte ptr [eax+1], 0
+  .text:00258462                 mov     byte ptr [eax+2], 0
+  .text:00258466                 mov     byte ptr [eax+3], 0
+  .text:0025846A                 mov     byte ptr [eax+4], 0
+  .text:0025846E                 mov     byte ptr [eax+5], 0
+  .text:00258472                 mov     byte ptr [eax+6], 0
+  .text:00258476                 mov     byte ptr [eax+7], 0
+  .text:0025847A                 add     eax, 8
+  .text:0025847D                 cmp     ebx, eax
+  .text:0025847F                 jnz     short loc_25845B
+  .text:00258481                 mov     [ebp+var_68], ebx
+  .text:00258484                 mov     [ebp+functionPointer.flag], 3
+  .text:00258488                 mov     dl, byte ptr [ebp+var_48]
+  .text:0025848B                 mov     byte ptr [ebp+functionPointer.pointer], dl
+  .text:0025848E                 mov     al, byte ptr [ebp+var_48+1]
+  .text:00258491                 mov     byte ptr [ebp+functionPointer.pointer+1], al
+  .text:00258494                 mov     bl, byte ptr [ebp+var_48+2]
+  .text:00258497                 mov     byte ptr [ebp+functionPointer.pointer+2], bl
+  .text:0025849A                 mov     dl, byte ptr [ebp+var_48+3]
+  .text:0025849D                 mov     byte ptr [ebp+functionPointer.pointer+3], dl
+  .text:002584A0                 mov     al, byte ptr [ebp+var_44]
+  .text:002584A3                 mov     byte ptr [ebp+functionPointer.pointer+4], al
+  .text:002584A6                 mov     bl, byte ptr [ebp+var_44+1]
+  .text:002584A9                 mov     byte ptr [ebp+functionPointer.pointer+5], bl
+  .text:002584AC                 mov     dl, byte ptr [ebp+var_44+2]
+  .text:002584AF                 mov     byte ptr [ebp+functionPointer.pointer+6], dl
+  .text:002584B2                 mov     al, byte ptr [ebp+var_44+3]
+  .text:002584B5                 mov     byte ptr [ebp+functionPointer.pointer+7], al
+  .text:002584B8                 sub     esp, 8
+  .text:002584BB                 ; callConvention
+  .text:002584BB                 push    3; callConvention
+  .text:002584BD                 ; functionPointer
+  .text:002584BD                 push    ecx; functionPointer
+  .text:002584BE                 mov     [ebp+var_64], ecx
+  .text:002584C1                 lea     ecx, (aVoidRegistercu - 8B0000h)[esi]; "void RegisterCustomEntity(const string&"...
+  .text:002584C7                 ; declaration
+  .text:002584C7                 push    ecx; declaration
+  .text:002584C8                 mov     ebx, [ebp+s]
+  .text:002584CB                 ; objectName
+  .text:002584CB                 push    ebx; objectName
+  .text:002584CC                 lea     edx, (aRegistersAClas - 8B0000h)[esi]; "Registers a class called szClassname as"...
+  .text:002584D2                 ; docs
+  .text:002584D2                 push    edx; docs
+  .text:002584D3                 ; documentation
+  .text:002584D3                 push    edi; documentation
+  .text:002584D4                 mov     ebx, esi
+  .text:002584D6                 call    CASDocumentation_RegisterObjectMethod; CASDocumentation_RegisterObjectMethod(char const*,char const*,char const*,asSFuncPtr const&,ulong)
+  .text:002584DB                 mov     eax, ds:(_ZN20CASCustomEntityFuncs22UnRegisterCustomEntityERK7CString_ptr - 8B0000h)[esi]
+  .text:002584E1                 mov     dword ptr [ebp+var_50], eax
+  .text:002584E4                 mov     dword ptr [ebp+var_50+4], 0
+  .text:002584EB                 add     esp, 20h
+  .text:002584EE                 mov     ecx, [ebp+var_64]
+  .text:002584F1                 lea     ebx, [ecx+1]
+  .text:002584F4                 mov     edx, [ebp+var_68]
+  .text:002584F7                 mov     byte ptr [ebx], 0
+  .text:002584FA                 mov     byte ptr [ebx+1], 0
+  .text:002584FE                 mov     byte ptr [ebx+2], 0
+  .text:00258502                 mov     byte ptr [ebx+3], 0
+  .text:00258506                 mov     byte ptr [ebx+4], 0
+  .text:0025850A                 mov     byte ptr [ebx+5], 0
+  .text:0025850E                 mov     byte ptr [ebx+6], 0
+  .text:00258512                 mov     byte ptr [ebx+7], 0
+  .text:00258516                 add     ebx, 8
+  .text:00258519                 cmp     ebx, edx
+  .text:0025851B                 jnz     short loc_2584F7
+  .text:0025851D                 mov     [ebp+functionPointer.flag], 3
+  .text:00258521                 mov     al, byte ptr [ebp+var_50]
+  .text:00258524                 mov     byte ptr [ebp+functionPointer.pointer], al
+  .text:00258527                 mov     bl, byte ptr [ebp+var_50+1]
+  .text:0025852A                 mov     byte ptr [ebp+functionPointer.pointer+1], bl
+  .text:0025852D                 mov     dl, byte ptr [ebp+var_50+2]
+  .text:00258530                 mov     byte ptr [ebp+functionPointer.pointer+2], dl
+  .text:00258533                 mov     al, byte ptr [ebp+var_50+3]
+  .text:00258536                 mov     byte ptr [ebp+functionPointer.pointer+3], al
+  .text:00258539                 mov     bl, byte ptr [ebp+var_50+4]
+  .text:0025853C                 mov     byte ptr [ebp+functionPointer.pointer+4], bl
+  .text:0025853F                 mov     dl, byte ptr [ebp+var_50+5]
+  .text:00258542                 mov     byte ptr [ebp+functionPointer.pointer+5], dl
+  .text:00258545                 mov     al, byte ptr [ebp+var_50+6]
+  .text:00258548                 mov     byte ptr [ebp+functionPointer.pointer+6], al
+  .text:0025854B                 mov     bl, byte ptr [ebp+var_50+7]
+  .text:0025854E                 mov     byte ptr [ebp+functionPointer.pointer+7], bl
+  .text:00258551                 sub     esp, 8
+  .text:00258554                 ; callConvention
+  .text:00258554                 push    3; callConvention
+  .text:00258556                 ; functionPointer
+  .text:00258556                 push    ecx; functionPointer
+  .text:00258557                 lea     ecx, (aVoidUnregister - 8B0000h)[esi]; "void UnRegisterCustomEntity(const strin"...
+  .text:0025855D                 ; declaration
+  .text:0025855D                 push    ecx; declaration
+  .text:0025855E                 mov     edx, [ebp+s]
+  .text:00258561                 ; objectName
+  .text:00258561                 push    edx; objectName
+  .text:00258562                 lea     eax, (aUnregistersACu - 8B0000h)[esi]; "Unregisters a custom entity by the give"...
+  .text:00258568                 ; docs
+  .text:00258568                 push    eax; docs
+  .text:00258569                 ; documentation
+  .text:00258569                 push    edi; documentation
+  .text:0025856A                 mov     ebx, esi
+  .text:0025856C                 call    CASDocumentation_RegisterObjectMethod; CASDocumentation_RegisterObjectMethod(char const*,char const*,char const*,asSFuncPtr const&,ulong)
+  .text:00258571                 mov     ecx, ds:(_ZN19CASBaseScriptGlobalI21IASServerScriptGlobal20CASCustomEntityFuncsE12ms_pInstanceE_ptr - 8B0000h)[esi]
+  .text:00258577                 mov     [ebp+s], ecx
+  .text:0025857A                 mov     edx, [ecx]
+  .text:0025857C                 add     esp, 20h
+  .text:0025857F                 test    edx, edx
+  .text:00258581                 jz      short loc_2585B2
+  .text:00258583                 ; pointer
+  .text:00258583                 push    edx; pointer
+  .text:00258584                 lea     eax, (aCcustomentityf_0 - 8B0000h)[esi]; "CCustomEntityFuncs g_CustomEntityFuncs"
+  .text:0025858A                 ; declaration
+  .text:0025858A                 push    eax; declaration
+  .text:0025858B                 lea     ecx, (aCustomEntityFu_0 - 8B0000h)[esi]; "Custom entity functions global instance"...
+  .text:00258591                 ; docs
+  .text:00258591                 push    ecx; docs
+  .text:00258592                 ; documentation
+  .text:00258592                 push    edi; documentation
+  .text:00258593                 mov     ebx, esi
+  .text:00258595                 call    CASDocumentation_RegisterGlobalProperty; CASDocumentation_RegisterGlobalProperty(char const*,char const*,void *)
+  .text:0025859A                 pop     edx
+  .text:0025859B                 pop     ecx
+  .text:0025859C                 mov     esi, [ebp+mask]
+  .text:0025859F                 ; mask
+  .text:0025859F                 push    esi; mask
+  .text:002585A0                 ; documentation
+  .text:002585A0                 push    edi; documentation
+  .text:002585A1                 call    __ZN16CASDocumentation20SetDefaultAccessMaskEm; CASDocumentation::SetDefaultAccessMask(ulong)
+  .text:002585A6                 add     esp, 10h
+  .text:002585A9                 lea     esp, [ebp-0Ch]
+  .text:002585AC                 pop     ebx
+  .text:002585AD                 pop     esi
+  .text:002585AE                 pop     edi
+  .text:002585AF                 pop     ebp
+  .text:002585B0                 retn
+  .text:002585B2                 sub     esp, 0Ch
+  .text:002585B5                 ; unsigned int
+  .text:002585B5                 push    1Ch; unsigned int
+  .text:002585B7                 call    __Znwj; operator new(uint)
+  .text:002585BC                 mov     [ebp+var_64], eax
+  .text:002585BF                 ; this
+  .text:002585BF                 mov     [esp], eax; this
+  .text:002585C2                 call    __ZN20CASCustomEntityFuncsC1Ev; CASCustomEntityFuncs::CASCustomEntityFuncs(void)
+  .text:002585C7                 add     esp, 10h
+  .text:002585CA                 mov     ebx, [ebp+s]
+  .text:002585CD                 mov     edx, [ebp+var_64]
+  .text:002585D0                 mov     [ebx], edx
+  .text:002585D2                 jmp     short loc_258583
+  .text:002585D4                 mov     edi, eax
+  .text:002585D6                 sub     esp, 0Ch
+  .text:002585D9                 mov     ebx, [ebp+var_64]
+  .text:002585DC                 ; void *
+  .text:002585DC                 push    ebx; void *
+  .text:002585DD                 mov     ebx, esi
+  .text:002585DF                 call    __ZdlPv; operator delete(void *)
+  .text:002585E4                 mov     [esp], edi
+  .text:002585E7                 call    __Unwind_Resume
+procedure: |-
+  // Direct CASDocumentation calls below identify method entries. SDK virtual calls and registered callback pointers are distinct.
+  // Reference reconstruction: private server source unavailable; names/arguments are based on current instructions and the symbolized 5.15 ELF peer. Registration return values are discarded here. Partial types describe only observed fields.
+  void __cdecl RegisterSCScriptCustomEntityDependencies(CASDocumentationReference *documentation)
+  {
+    ASFunctionPointerReference *v1; // eax
+    ASFunctionPointerReference *v2; // eax
+    ASFunctionPointerReference *v3; // ebx
+    CASCustomEntityFuncs *v4; // edx
+    CASCustomEntityFuncs *v5; // [esp+8h] [ebp-64h]
+    unsigned int mask; // [esp+Ch] [ebp-60h]
+    ASFunctionPointerReference functionPointer; // [esp+34h] [ebp-38h] BYREF
+
+    CASDocumentation_RegisterFuncDef(
+      documentation,
+      "Function definition for custom entity Think functions",
+      "void ThinkFunction()");
+    CASDocumentation_RegisterFuncDef(
+      documentation,
+      "Function definition for custom entity Use functions",
+      "void UseFunction(CBaseEntity@ pActivator, CBaseEntity@ pCaller, USE_TYPE useType, float flValue)");
+    CASDocumentation_RegisterFuncDef(
+      documentation,
+      "Function definition for custom entity Touch functions",
+      "void TouchFunction(CBaseEntity@ pOther)");
+    CASDocumentation_RegisterFuncDef(
+      documentation,
+      "Function definition for custom entity Blocked functions",
+      "void BlockedFunction(CBaseEntity@ pOther)");
+    RegisterSCScriptCustomEntityCallbackHandler((CASDocumentation *)documentation);
+    mask = CASDocumentation::SetDefaultAccessMask(documentation, 3u);
+    CASDocumentation_RegisterObjectType(documentation, "Custom entity functions.", "CCustomEntityFuncs", 0, 0x40001u);
+    v1 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v1->pointer.storage[0] = 0;
+      v1->pointer.storage[1] = 0;
+      v1->pointer.storage[2] = 0;
+      v1->pointer.storage[3] = 0;
+      v1->pointer.storage[4] = 0;
+      v1->pointer.storage[5] = 0;
+      v1->pointer.storage[6] = 0;
+      v1->pointer.storage[7] = 0;
+      v1 = (ASFunctionPointerReference *)((char *)v1 + 8);
+    }
+    while ( &functionPointer.pointer.storage[25] != (char *)v1 );
+    functionPointer.flag = 3;
+    functionPointer.pointer.function = (void (*)())CASCustomEntityFuncs::IsCustomEntity;
+    *(_DWORD *)&functionPointer.pointer.storage[4] = 0;
+    CASDocumentation_RegisterObjectMethod(
+      documentation,
+      "Returns whether the given entity name is a registered custom entity",
+      "CCustomEntityFuncs",
+      "bool IsCustomEntity(const string& in szEntityname) const",
+      &functionPointer,
+      3u);
+    v2 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v2->pointer.storage[0] = 0;
+      v2->pointer.storage[1] = 0;
+      v2->pointer.storage[2] = 0;
+      v2->pointer.storage[3] = 0;
+      v2->pointer.storage[4] = 0;
+      v2->pointer.storage[5] = 0;
+      v2->pointer.storage[6] = 0;
+      v2->pointer.storage[7] = 0;
+      v2 = (ASFunctionPointerReference *)((char *)v2 + 8);
+    }
+    while ( &functionPointer.pointer.storage[25] != (char *)v2 );
+    functionPointer.flag = 3;
+    functionPointer.pointer.function = (void (*)())CASCustomEntityFuncs::RegisterCustomEntity;
+    *(_DWORD *)&functionPointer.pointer.storage[4] = 0;
+    CASDocumentation_RegisterObjectMethod(
+      documentation,
+      "Registers a class called szClassname as a custom entity named szEntityname. The class must inherit from a script entity base class.",
+      "CCustomEntityFuncs",
+      "void RegisterCustomEntity(const string& in szClassname, const string& in szEntityname)",
+      &functionPointer,
+      3u);
+    v3 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v3->pointer.storage[0] = 0;
+      v3->pointer.storage[1] = 0;
+      v3->pointer.storage[2] = 0;
+      v3->pointer.storage[3] = 0;
+      v3->pointer.storage[4] = 0;
+      v3->pointer.storage[5] = 0;
+      v3->pointer.storage[6] = 0;
+      v3->pointer.storage[7] = 0;
+      v3 = (ASFunctionPointerReference *)((char *)v3 + 8);
+    }
+    while ( v3 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 3;
+    *(_QWORD *)&functionPointer.pointer.function = (unsigned int)CASCustomEntityFuncs::UnRegisterCustomEntity;
+    CASDocumentation_RegisterObjectMethod(
+      documentation,
+      "Unregisters a custom entity by the given name",
+      "CCustomEntityFuncs",
+      "void UnRegisterCustomEntity(const string& in szEntityname)",
+      &functionPointer,
+      3u);
+    v4 = (CASCustomEntityFuncs *)CASBaseScriptGlobal<IASServerScriptGlobal,CASCustomEntityFuncs>::ms_pInstance;
+    if ( !CASBaseScriptGlobal<IASServerScriptGlobal,CASCustomEntityFuncs>::ms_pInstance )
+    {
+      v5 = (CASCustomEntityFuncs *)operator new(0x1Cu);
+      CASCustomEntityFuncs::CASCustomEntityFuncs(v5);
+      v4 = v5;
+      CASBaseScriptGlobal<IASServerScriptGlobal,CASCustomEntityFuncs>::ms_pInstance = v5;
+    }
+    CASDocumentation_RegisterGlobalProperty(
+      documentation,
+      "Custom entity functions global instance.",
+      "CCustomEntityFuncs g_CustomEntityFuncs",
+      v4);
+    CASDocumentation::SetDefaultAccessMask(documentation, mask);
+  }

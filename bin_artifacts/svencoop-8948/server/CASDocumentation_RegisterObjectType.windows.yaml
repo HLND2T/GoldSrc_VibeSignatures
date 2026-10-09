@@ -1,0 +1,8 @@
+func_name: CASDocumentation::RegisterObjectType(char const*, char const*, int, unsigned int)
+func_va: '0x100a82c0'
+func_rva: '0xa82c0'
+func_size: '0xcd'
+func_sig: 81 EC 04 02 00 00 A1 ?? ?? ?? ?? 33 C4 89 84 24 ?? ?? ?? ?? 53 8B 9C 24 ?? ?? ?? ?? 55 8B AC 24 ?? ?? ?? ?? 57 8B
+  F9 55
+func_sig_allow_across_function_boundary: true
+func_sig_resolve_jmp_thunk: true
