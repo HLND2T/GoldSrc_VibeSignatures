@@ -44,9 +44,12 @@ The shared action pins `hzqst/actions-cache/restore` and `save` to commit `7128b
 (portable S3 object keys, zstd auto-detection) with bucket
 `actions-cache-goldsrc-vibesignatures` and GitHub cache fallback disabled. `http://HZVM:8333` becomes
 `endpoint=HZVM`, `port=8333`, `insecure=true`; HTTPS uses `insecure=false`.
-The producer discovers a previous snapshot under a repository/platform prefix, verifies and completes it,
+The producer discovers a previous snapshot under the repository-wide `shared` prefix, followed by legacy
+Windows, Linux, and macOS prefixes in that order. Existing objects remain untouched. It verifies and completes the store,
 then saves a new run ID/attempt key and checks publication. Consumers require that exact key before
 the existing selection, lease, and payload checks. Snapshots contain the whole IDB store, including retained generations.
+Runner OS is not part of the transport namespace; each entry still identifies its target binary platform.
+Producer and consumer use separate local staging roots and do not require a cross-OS shared filesystem.
 
 Self-hosted selections, rebuilt artifacts, diagnostics, and release bundles are also archived in S3 per run/attempt.
 GitHub artifacts remain for transport to hosted runners, which cannot reach the private endpoint, and for publication digest checks.

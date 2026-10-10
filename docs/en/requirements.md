@@ -5,7 +5,7 @@
 ## Required tools
 
 1. [uv](https://docs.astral.sh/uv/getting-started/installation/)
-2. [DepotDownloader](https://github.com/SteamRE/DepotDownloader), with `depotdownloader.exe` available in `PATH`
+2. [DepotDownloader](https://github.com/SteamRE/DepotDownloader), with `DepotDownloader` available in `PATH` (`.exe` on Windows)
 3. One supported agent CLI: Claude Code, Codex, or OpenCode
 4. IDA Pro 9.0+
 5. [ida-pro-mcp](https://github.com/hzqst/ida-pro-mcp)
@@ -16,6 +16,37 @@ Install the Python dependencies after cloning the repository:
 ```bash
 uv sync --locked
 ```
+
+## Windows and Ubuntu self-hosted runners
+
+IDB warmup, PR analysis, and Release builds select `[self-hosted, cross-platform]`.
+Register only prepared Windows x64 or Ubuntu x64 machines with `cross-platform`; the protected
+`win64` Environment continues to supply the existing secrets and variables on both operating systems.
+Each runner needs access to the private S3 endpoint and exact binary submodule, native licensed IDA/Hex-Rays,
+activated idalib, `IDADIR`, a supported Agent CLI, and `uv`. Install `zstd` and the archive tools used by Release (`7z`).
+Git-cache-proxy URL rewrites remain service-account configuration rather than workflow setup.
+
+Expose the IDA installation's Python (`python`, or `python3` on Linux) and `idalib-mcp` on the runner service's PATH,
+outside the workflow dependency environment. They must belong to the same environment; Linux Python symlinks retain
+their venv identity, and entry-point shebangs must name that environment's interpreter.
+Workflows run their portable orchestration and cache actions from the immutable `.ci-tools` checkout;
+PR planning and candidate comparison/build still use trusted base tooling.
+
+For WSL tests against a Windows checkout, keep the Linux environment separate:
+
+```bash
+UV_PROJECT_ENVIRONMENT="$HOME/.cache/gsvibe-linux-venv" uv run --locked python tests/run_test_suite.py all -b
+```
+
+Linux MCP supervisors start in owned process groups. Cleanup sends SIGTERM, waits up to 10 seconds, then escalates
+to SIGKILL for up to 5 seconds, including when the supervisor already exited. Startup failure, cancellation, and
+recovery follow the same cleanup; a remaining process group or occupied port fails cleanup. Only owned groups are stopped.
+For the existing hard aggregate memory tier, the runner service needs suitable cgroup-v2 delegation; otherwise
+the analyzer reports `reservation-only` and keeps its existing RLIMIT_AS/watchdog safeguards.
+
+Before closing the runner migration issue, record real CI evidence for cold warmup, repeat hit, Windows producer
+to Linux consumer, PR analysis, and both Release modes with `publish_release=false`. Local unit tests do not prove
+commercial IDA execution or GitHub runner readiness.
 
 ## Environment variables
 

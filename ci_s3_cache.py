@@ -5,10 +5,11 @@ from __future__ import annotations
 import argparse
 import hashlib
 import os
-from pathlib import Path
 import re
 import shutil
 import stat
+import uuid
+from pathlib import Path
 from urllib.parse import urlsplit
 
 
@@ -68,11 +69,26 @@ def prepare(workspace: Path, repository: str, platform: str) -> dict[str, str]:
     staging.mkdir()
     # hzqst/actions-cache rejects relative patterns ("." / ".."), so publish the
     # absolute staging path that the disposable layout already guarantees.
+    prefix = f"gsvibe-s3-v1-{repository_id}"
     return {
         "cache-path": str(staging),
         "persisted-root": str(staging),
-        "prefix": f"gsvibe-s3-v1-{repository_id}-{platform.lower()}",
+        "prefix": f"{prefix}-shared",
+        "restore-prefixes": "\n".join(
+            f"{prefix}-{os_name}-idb-" for os_name in ("shared", "windows", "linux", "macos")
+        ),
     }
+
+
+def write_outputs(values: dict[str, str], path: str | Path) -> None:
+    """Write scalar and multiline values using the Actions environment-file protocol."""
+    with open(path, "a", encoding="utf-8") as handle:
+        for key, value in values.items():
+            if "\n" in value or "\r" in value:
+                delimiter = f"gsvibe_{uuid.uuid4().hex}"
+                handle.write(f"{key}<<{delimiter}\n{value}\n{delimiter}\n")
+            else:
+                handle.write(f"{key}={value}\n")
 
 
 def main() -> None:
@@ -80,6 +96,8 @@ def main() -> None:
     parser.add_argument("command", choices=("endpoint", "prepare"))
     args = parser.parse_args()
     if args.command == "endpoint":
+        if os.environ.get("CACHE_OPERATION") not in ("restore", "save"):
+            raise ValueError("Invalid cache operation")
         for name in ("S3_ACCESS_KEY_ID", "S3_SECRET_ACCESS_KEY"):
             if not os.environ.get(name, "").strip():
                 raise ValueError(f"{name} is required")
@@ -90,9 +108,7 @@ def main() -> None:
         )
         with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as handle:
             handle.write(f"IDB_CACHE_ROOT={outputs['persisted-root']}\n")
-    with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
-        for key, value in outputs.items():
-            handle.write(f"{key}={value}\n")
+    write_outputs(outputs, os.environ["GITHUB_OUTPUT"])
 
 
 if __name__ == "__main__":

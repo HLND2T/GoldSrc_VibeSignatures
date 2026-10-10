@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -10,6 +11,42 @@ from ida_runtime_probe import IdaRuntimeProbeError, query_ida_kernel_version, va
 
 
 class IdaRuntimeProbeTests(unittest.TestCase):
+    @unittest.skipUnless(os.name == "posix", "POSIX virtualenv entry points")
+    def test_symlinked_python_retains_virtualenv_identity(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            system_python = root / "system" / "python"
+            system_python.parent.mkdir()
+            system_python.write_bytes(b"python")
+            venv = root / "venv" / "bin"
+            venv.mkdir(parents=True)
+            python = venv / "python"
+            python.symlink_to(system_python)
+            mcp = venv / "idalib-mcp"
+            mcp.write_text(f"#!{python}\n", encoding="utf-8")
+            self.assertEqual((system_python, mcp), validate_same_installation(python, mcp))
+            other = root / "other" / "bin"
+            other.mkdir(parents=True)
+            other_python = other / "python"
+            other_python.symlink_to(system_python)
+            with self.assertRaises(IdaRuntimeProbeError):
+                validate_same_installation(other_python, mcp)
+
+    @unittest.skipUnless(os.name == "posix", "POSIX shebang")
+    def test_external_entrypoint_requires_exact_interpreter_shebang(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            python = root / "venv" / "bin" / "python"
+            python.parent.mkdir(parents=True)
+            python.write_bytes(b"python")
+            mcp = root / "idalib-mcp"
+            mcp.write_text(f"#!{python}\n", encoding="utf-8")
+            self.assertEqual((python, mcp), validate_same_installation(python, mcp))
+            for shebang in ("#!/usr/bin/env python", "#!/missing/python", "not a shebang"):
+                mcp.write_text(shebang + "\n", encoding="utf-8")
+                with self.subTest(shebang=shebang), self.assertRaises(IdaRuntimeProbeError):
+                    validate_same_installation(python, mcp)
+
     def test_accepts_idalib_mcp_beside_python_or_in_scripts_directory(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary) / "ida-python"

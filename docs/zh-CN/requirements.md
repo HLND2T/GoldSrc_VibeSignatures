@@ -5,7 +5,7 @@
 ## 必需工具
 
 1. [uv](https://docs.astral.sh/uv/getting-started/installation/)
-2. [DepotDownloader](https://github.com/SteamRE/DepotDownloader)，并确保 `depotdownloader.exe` 位于 `PATH` 中
+2. [DepotDownloader](https://github.com/SteamRE/DepotDownloader)，确保 `DepotDownloader` 位于 `PATH` 中（Windows 使用 `.exe`）
 3. 一个受支持的 Agent CLI：Claude Code、Codex 或 OpenCode
 4. IDA Pro 9.0+
 5. [ida-pro-mcp](https://github.com/hzqst/ida-pro-mcp)
@@ -16,6 +16,34 @@
 ```bash
 uv sync --locked
 ```
+
+## Windows 与 Ubuntu self-hosted runner
+
+IDB 预热、PR 分析和 Release 构建使用 `[self-hosted, cross-platform]`。仅为已准备好的 Windows x64 或
+Ubuntu x64 runner 添加 `cross-platform` 标签；两端继续使用受保护的 `win64` Environment secrets 与 variables。
+runner 需能访问私有 S3 endpoint 和精确 binary submodule，并具有原生 licensed IDA/Hex-Rays、已激活的
+idalib、`IDADIR`、受支持的 Agent CLI 和 `uv`。安装 `zstd` 与 Release 使用的归档工具（`7z`）；
+git-cache-proxy URL rewrite 继续由 runner 服务账号预先配置。
+
+在 runner 服务的 PATH 中暴露 IDA 环境的 Python（`python`，Linux 也可使用 `python3`）及 `idalib-mcp`，
+与 workflow 依赖 venv 分开。两者必须属于同一环境；Linux Python 符号链接保留其 venv 身份，
+entry point 的 shebang 必须指向该环境的解释器。跨平台编排和缓存 action 从 immutable `.ci-tools`
+checkout 执行；PR planner 与 candidate compare/build 继续使用 trusted base tooling。
+
+在 WSL 中测试 Windows checkout 时，使用独立 Linux venv：
+
+```bash
+UV_PROJECT_ENVIRONMENT="$HOME/.cache/gsvibe-linux-venv" uv run --locked python tests/run_test_suite.py all -b
+```
+
+Linux MCP supervisor 使用 owned process group。清理先发送 SIGTERM，最多等待 10 秒，再升级 SIGKILL，
+最多等待 5 秒；supervisor 提前退出仍会回收 worker。启动失败、取消和恢复走同一清理路径，残留进程组
+或未释放端口会使清理失败；只终止本次启动并持有的进程组。已有 aggregate memory hard cap 需要合适的
+cgroup-v2 delegation；未配置时仍报告 `reservation-only` 并使用现有 RLIMIT_AS/watchdog 保护。
+
+关闭 runner 迁移 Issue 前，应记录真实 CI 的 cold warmup、repeat hit、Windows producer → Linux consumer、
+PR 分析，以及设置 `publish_release=false` 的两种 Release 模式。本地测试不能证明商业 IDA 分析通过或
+GitHub runner 已准备就绪。
 
 ## 环境变量
 

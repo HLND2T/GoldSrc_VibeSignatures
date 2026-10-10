@@ -11,6 +11,7 @@ import ipaddress
 import json
 import os
 import re
+import signal
 import socket
 import subprocess
 import sys
@@ -140,6 +141,8 @@ DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 13337
 MCP_STARTUP_TIMEOUT = 1200.0
 MCP_SHUTDOWN_TIMEOUT = 10.0
+MCP_FORCE_KILL_TIMEOUT = 5.0
+MCP_RELEASE_POLL_INTERVAL = 0.05
 OPENED_BINARY_VERIFY_TIMEOUT = 60.0
 OPENED_BINARY_VERIFY_RETRY_INTERVAL = 2.0
 QEXIT_CONNECTION_RESET_MARKER = "[WinError 10054]"
@@ -786,8 +789,44 @@ def _terminate_mcp_process_tree(process) -> None:
         raise RuntimeError(f"taskkill /F /T /PID {pid} failed with exit code {result.returncode}")
 
 
+def _owned_mcp_pgid(process):
+    pgid = getattr(process, "_gsvibe_pgid", None)
+    return pgid if type(pgid) is int and pgid > 0 else None
+
+
+def _stop_posix_mcp_group(process, pgid):
+    """Reclaim the session we spawned even if its leader has already exited."""
+    try:
+        for sig, timeout in ((signal.SIGTERM, MCP_SHUTDOWN_TIMEOUT), (signal.SIGKILL, MCP_FORCE_KILL_TIMEOUT)):
+            try:
+                os.killpg(pgid, sig)
+            except ProcessLookupError:
+                pass
+            deadline = time.monotonic() + timeout
+            while True:
+                process.poll()
+                try:
+                    os.killpg(pgid, 0)
+                except ProcessLookupError:
+                    process.wait(timeout=MCP_FORCE_KILL_TIMEOUT)
+                    process._gsvibe_pgid = None
+                    return
+                if time.monotonic() >= deadline:
+                    break
+                time.sleep(MCP_RELEASE_POLL_INTERVAL)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise McpLifecycleError(f"Unable to reclaim owned MCP process group {pgid}: {exc}") from exc
+    raise McpLifecycleError(f"Owned MCP process group {pgid} remained after SIGKILL")
+
+
 def stop_idalib_mcp_process(process, debug=False):
-    if process is None or process.poll() is not None:
+    if process is None:
+        return
+    pgid = _owned_mcp_pgid(process)
+    if os.name != "nt" and pgid is not None:
+        _stop_posix_mcp_group(process, pgid)
+        return
+    if process.poll() is not None:
         return
     if debug:
         print("  Stopping the current idalib-mcp process...")
@@ -813,9 +852,11 @@ def stop_idalib_mcp_process(process, debug=False):
     if process.poll() is None:
         try:
             process.kill()
-            process.wait(timeout=5.0)
+            process.wait(timeout=MCP_FORCE_KILL_TIMEOUT)
         except (OSError, subprocess.TimeoutExpired):
             pass
+    if process.poll() is None:
+        raise McpLifecycleError("Owned idalib-mcp launcher remained after shutdown")
 
 
 def _ida_database_primary_paths(binary_path):
@@ -874,7 +915,12 @@ def _spawn_idalib_mcp(binary_path, host, port, ida_args="", debug=False, stdout=
         output = stdout if stdout is not None else (None if debug else subprocess.DEVNULL)
         errors = stderr if stderr is not None else (None if debug else subprocess.DEVNULL)
         creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" and not debug else 0
-        return subprocess.Popen(command, stdout=output, stderr=errors, creationflags=creationflags)
+        process = subprocess.Popen(
+            command, stdout=output, stderr=errors, creationflags=creationflags, start_new_session=os.name != "nt"
+        )
+        if os.name != "nt":
+            process._gsvibe_pgid = process.pid
+        return process
     except OSError as exc:
         if debug:
             print(f"  Unable to start idalib-mcp: {exc}")
@@ -883,7 +929,16 @@ def _spawn_idalib_mcp(binary_path, host, port, ida_args="", debug=False, stdout=
 
 def _stop_unready_idalib_mcp(process, host, port, debug=False):
     stop_idalib_mcp_process(process, debug=debug)
-    wait_for_port_release(host, port)
+    if process is not None and not wait_for_port_release(host, port):
+        raise McpLifecycleError(f"MCP port {host}:{port} remained in use after failed startup")
+
+
+def _cleanup_after_failure(cleanup):
+    """Keep the primary exception while making a cleanup failure visible."""
+    try:
+        cleanup()
+    except (OSError, RuntimeError, subprocess.TimeoutExpired) as exc:
+        print(f"MCP cleanup also failed: {exc}", file=sys.stderr)
 
 
 def start_idalib_mcp(
@@ -905,7 +960,7 @@ def start_idalib_mcp(
         # A raised readiness probe must not orphan the already-spawned worker;
         # the lifecycle owner cannot clean it up because its process handle is
         # never assigned when this helper raises.
-        _stop_unready_idalib_mcp(process, host, port, debug=debug)
+        _cleanup_after_failure(lambda: _stop_unready_idalib_mcp(process, host, port, debug=debug))
         raise
     if ready:
         return process
@@ -954,12 +1009,14 @@ def start_dynamic_idalib_mcp(
             process = _spawn_idalib_mcp(binary_path, host, port, ida_args, debug)
             try:
                 bound = process is not None and _wait_dynamic_port_bound(process, host, port)
-            except Exception as exc:
+            except BaseException as exc:  # noqa: BLE001 - cancellation also owns the spawned process.
                 probe_failure = exc
         if probe_failure is not None:
             # Same orphan risk as the fixed-port start: clean the spawned
             # process before letting the probe error escape this helper.
-            _stop_unready_idalib_mcp(process, host, port, debug=debug)
+            _cleanup_after_failure(
+                lambda process=process, port=port: _stop_unready_idalib_mcp(process, host, port, debug=debug)
+            )
             raise probe_failure
         if bound:
             if debug:
@@ -1002,7 +1059,7 @@ async def save_ida_database_via_mcp(host, port, *, expected_binary, auto_started
                 return False
             await session.call_tool("idb_save", {})
             return True
-    except Exception as exc:  # noqa: BLE001 - normalize MCP save failures for the lifecycle owner.
+    except Exception as exc:
         raise McpLifecycleError(f"Unable to save IDB for {expected_binary}: {exc}") from exc
 
 
@@ -1029,50 +1086,59 @@ def save_ida_database(host, port, *, expected_binary, debug=False):
 
 
 async def quit_ida_gracefully_async(process, host, port, *, expected_binary, debug=False):
-    if process is None or process.poll() is not None:
+    if process is None:
         return
+    interrupted = False
     try:
-        await asyncio.wait_for(
-            quit_ida_via_mcp(host, port, expected_binary=expected_binary, auto_started=True),
-            timeout=5.0,
-        )
+        if process.poll() is None:
+            await asyncio.wait_for(
+                quit_ida_via_mcp(host, port, expected_binary=expected_binary, auto_started=True),
+                timeout=5.0,
+            )
     except Exception as exc:  # noqa: BLE001 - local supervisor cleanup must run after any qexit failure.
         if debug:
             print(f"  Graceful IDA worker shutdown failed: {exc}")
-    await asyncio.to_thread(stop_idalib_mcp_process, process, debug=debug)
-    released = await asyncio.to_thread(wait_for_port_release, host, port, MCP_SHUTDOWN_TIMEOUT)
-    if debug and not released:
-        print(f"  MCP port {host}:{port} remained in use after shutdown")
+    except BaseException:
+        interrupted = True
+        raise
+    finally:
+
+        def cleanup():
+            stop_idalib_mcp_process(process, debug=debug)
+            if not wait_for_port_release(host, port, MCP_SHUTDOWN_TIMEOUT):
+                raise McpLifecycleError(f"MCP port {host}:{port} remained in use after shutdown")
+
+        if interrupted:
+            await asyncio.to_thread(_cleanup_after_failure, cleanup)
+        else:
+            await asyncio.to_thread(cleanup)
 
 
 def quit_ida_gracefully(process, host, port, *, expected_binary, debug=False):
-    if process is None or process.poll() is not None:
+    if process is None:
         return
     try:
         asyncio.get_running_loop()
     except RuntimeError:
-        try:
-            run_mcp_operation(
-                quit_ida_gracefully_async(
-                    process,
-                    host,
-                    port,
-                    expected_binary=expected_binary,
-                    debug=debug,
-                )
-            )
-        finally:
-            # Transport cancellation must not bypass the owned process-tree stop.
-            if process.poll() is None:
-                stop_idalib_mcp_process(process, debug=debug)
-        return
-    raise RuntimeError(
-        "quit_ida_gracefully() cannot run inside an active event loop; use await quit_ida_gracefully_async() instead"
-    )
+        pass
+    else:
+        raise RuntimeError(
+            "quit_ida_gracefully() cannot run inside an active event loop; use await quit_ida_gracefully_async() instead"
+        )
+    try:
+        run_mcp_operation(quit_ida_gracefully_async(process, host, port, expected_binary=expected_binary, debug=debug))
+    finally:
+        # Transport cancellation must not bypass the owned process-tree stop.
+        cleanup = lambda: stop_idalib_mcp_process(process, debug=debug)
+        if sys.exc_info()[0] is not None:
+            _cleanup_after_failure(cleanup)
+        else:
+            cleanup()
 
 
 def ensure_mcp_available(process, binary_path, host, port, ida_args, debug, *, recovery_budget):
     if process is not None and process.poll() is not None:
+        quit_ida_gracefully(process, host, port, expected_binary=binary_path, debug=debug)
         process = None
     if process is not None and run_mcp_operation(check_mcp_worker_health(host, port, binary_path), timeout=30.0):
         return process, True
@@ -1234,13 +1300,13 @@ class IdaMcpLifecycle:
             self._force_local_stop = False
             return self
         except McpLifecycleError:
-            self._cleanup()
+            _cleanup_after_failure(self._cleanup)
             raise
         except Exception as exc:
-            self._cleanup()
+            _cleanup_after_failure(self._cleanup)
             raise McpLifecycleError(f"Unable to initialize IDA MCP lifecycle for {self.binary_path}: {exc}") from exc
         except BaseException:
-            self._cleanup()
+            _cleanup_after_failure(self._cleanup)
             raise
 
     def ensure_ready(self):
@@ -1323,7 +1389,8 @@ class IdaMcpLifecycle:
                     expected_binary=self.binary_path,
                     debug=self.debug,
                 )
-            wait_for_port_release(self.host, self.port)
+            if not wait_for_port_release(self.host, self.port):
+                raise McpLifecycleError(f"MCP port {self.host}:{self.port} remained in use after cleanup")
         finally:
             self.process = None
 
@@ -1337,7 +1404,10 @@ class IdaMcpLifecycle:
                     debug=self.debug,
                 )
         finally:
-            self._cleanup()
+            if exc_type is not None or sys.exc_info()[0] is not None:
+                _cleanup_after_failure(self._cleanup)
+            else:
+                self._cleanup()
         return False
 
 
@@ -3341,7 +3411,7 @@ def _run_analysis_batch(args, diagnostics: BatchDiagnostics) -> int:
                         line = raw.decode("utf-8", errors="replace").rstrip()
                         log_file.write(diagnostics.redact(f"{prefix} {line}") + "\n")
                         log_file.flush()
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - drain the pipe even after diagnostic serialization fails.
                 log_errors.append(f"{item.work_item_id}: {type(exc).__name__}")
                 for _raw in iter(process.stdout.readline, b""):
                     pass

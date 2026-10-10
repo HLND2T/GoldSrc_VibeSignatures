@@ -33,16 +33,32 @@ def validate_same_installation(
     python_executable: str | Path,
     idalib_mcp_executable: str | Path,
 ) -> tuple[Path, Path]:
-    """Require idalib-mcp beside Python or in that Python's Scripts directory."""
+    """Keep venv identity and require a paired entry point or explicit POSIX shebang."""
 
     python = _resolved_executable(python_executable, "Python")
     idalib_mcp = _resolved_executable(idalib_mcp_executable, "idalib-mcp")
-    python_directory = python.parent
+    # Resolving the leaf of a POSIX venv Python loses the venv identity: many
+    # distinct environments link to the same system executable.
+    python_directory = Path(python_executable).absolute().parent.resolve()
     allowed_mcp_directories = {
         _path_key(python_directory),
         _path_key(python_directory / "Scripts"),
     }
-    if _path_key(idalib_mcp.parent) not in allowed_mcp_directories:
+    paired = _path_key(idalib_mcp.parent) in allowed_mcp_directories
+    if os.name == "posix":
+        try:
+            with idalib_mcp.open("rb") as handle:
+                shebang = handle.readline(4096).decode("utf-8").strip()
+            if shebang.startswith("#!"):
+                interpreter = Path(shebang[2:]) if shebang.startswith("#!/") else None
+                paired = (
+                    interpreter is not None
+                    and _path_key(interpreter.parent.resolve()) == _path_key(python_directory)
+                    and interpreter.resolve(strict=True) == python
+                )
+        except (OSError, UnicodeError, RuntimeError):
+            paired = False
+    if not paired:
         raise IdaRuntimeProbeError(
             f"Python and idalib-mcp resolve to different installations: python={python} idalib-mcp={idalib_mcp}"
         )

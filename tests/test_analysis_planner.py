@@ -2906,6 +2906,7 @@ class McpLifecycleTests(unittest.TestCase):
             patch("ida_analyze_bin.verify_owned_mcp_with_single_recovery", return_value=(process, runtime)),
             patch("ida_analyze_bin.save_ida_database") as save_database,
             patch("ida_analyze_bin.quit_ida_gracefully") as quit_gracefully,
+            patch("ida_analyze_bin.wait_for_port_release", return_value=True),
             IdaMcpLifecycle(
                 "hw.dll",
                 "windows",
@@ -3036,7 +3037,8 @@ class StopIdalibMcpProcessTests(unittest.TestCase):
         process.poll.return_value = None
         process.wait.side_effect = subprocess.TimeoutExpired(cmd="idalib-mcp", timeout=1.0)
         with patch("ida_analyze_bin._terminate_mcp_process_tree", side_effect=RuntimeError("tree kill failed")):
-            stop_idalib_mcp_process(process, debug=False)
+            with self.assertRaisesRegex(McpLifecycleError, "remained after shutdown"):
+                stop_idalib_mcp_process(process, debug=False)
         self.assertEqual(3, process.wait.call_count)
         process.terminate.assert_called_once_with()
         process.kill.assert_called_once_with()

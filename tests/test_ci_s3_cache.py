@@ -1,8 +1,9 @@
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
 
-from ci_s3_cache import parse_endpoint, prepare
+from ci_s3_cache import parse_endpoint, prepare, write_outputs
 
 
 class EndpointTests(unittest.TestCase):
@@ -36,6 +37,84 @@ class EndpointTests(unittest.TestCase):
 
 
 class StagingTests(unittest.TestCase):
+    def test_windows_snapshot_import_can_restore_exact_generation_and_lease_on_linux_layout(self):
+        from idb_cache import IdbCacheError, publish_generation
+        from idb_cache_leases import new_lease
+        from idb_cache_selection import restore_selection_entries
+        from idb_cache_workflow import SelectedBinaryGroup
+        from tests.test_idb_cache import cache_fixture, pin_document
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            binary_root, persisted, binary, identity = cache_fixture(root)
+            selection = publish_generation(
+                persisted_root=persisted, identity=identity, workspace_root=binary_root, run_id="old-windows", attempt=1
+            )
+            entry = {**selection, "platform": "windows", "binaries": identity["binaries"]}
+            document = {"entries": [entry], "lease": new_lease(repository="owner/repo", run_id="1", attempt=1)}
+            digest = pin_document(persisted, document)
+            checkout = root / "runner" / "checkout"
+            checkout.mkdir(parents=True)
+            windows = prepare(checkout, "owner/repo", "Windows")
+            legacy_key = windows["restore-prefixes"].splitlines()[1] + "1-1"
+            objects = {legacy_key: persisted}
+            linux = prepare(checkout, "owner/repo", "Linux")
+            matched = next(
+                key for prefix in linux["restore-prefixes"].splitlines() for key in objects if key.startswith(prefix)
+            )
+            shutil.copytree(objects[matched], linux["persisted-root"], dirs_exist_ok=True)
+            # A new producer publishes the verified legacy store under the shared
+            # run key, and a consumer on another checkout receives that exact store.
+            shared_key = linux["prefix"] + "-idb-2-1"
+            published = root / "published"
+            shutil.copytree(linux["persisted-root"], published)
+            objects[shared_key] = published
+            consumer_checkout = root / "consumer" / "checkout"
+            consumer_checkout.mkdir(parents=True)
+            consumer = prepare(consumer_checkout, "owner/repo", "Linux")
+            shutil.copytree(objects[shared_key], consumer["persisted-root"], dirs_exist_ok=True)
+            Path(f"{binary}.i64").write_bytes(b"local modifications")
+            restore_selection_entries(
+                entries=[entry],
+                groups=(SelectedBinaryGroup("game-1", "windows", binary_root, tuple(identity["binaries"])),),
+                persisted_root=Path(consumer["persisted-root"]),
+                lease=document["lease"],
+                selection_sha256=digest,
+            )
+            self.assertEqual(b"primary-idb", Path(f"{binary}.i64").read_bytes())
+            with self.assertRaises(IdbCacheError):
+                restore_selection_entries(
+                    entries=[entry],
+                    groups=(SelectedBinaryGroup("game-1", "windows", binary_root, tuple(identity["binaries"])),),
+                    persisted_root=Path(consumer["persisted-root"]),
+                    lease=document["lease"],
+                    selection_sha256=digest,
+                )
+
+    def test_shared_namespace_and_ordered_legacy_discovery(self):
+        with tempfile.TemporaryDirectory() as directory:
+            checkout = Path(directory) / "checkout"
+            checkout.mkdir()
+            layouts = [prepare(checkout, "Owner/Repo", platform) for platform in ("Windows", "Linux", "macOS")]
+            self.assertEqual(layouts[0], layouts[1])
+            self.assertEqual(layouts[0], layouts[2])
+            prefix = layouts[0]["prefix"]
+            self.assertTrue(prefix.endswith("-shared"))
+            base = prefix.removesuffix("shared")
+            self.assertEqual(
+                [f"{base}{platform}-idb-" for platform in ("shared", "windows", "linux", "macos")],
+                layouts[0]["restore-prefixes"].splitlines(),
+            )
+
+    def test_multiline_outputs_use_delimiters(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "output"
+            write_outputs({"prefix": "shared", "restore-prefixes": "shared-idb-\nwindows-idb-"}, output)
+            lines = output.read_text(encoding="utf-8").splitlines()
+            self.assertEqual("prefix=shared", lines[0])
+            delimiter = lines[1].split("<<", 1)[1]
+            self.assertEqual(["shared-idb-", "windows-idb-", delimiter], lines[2:])
+
     def test_fresh_external_staging_and_stable_absolute_path(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

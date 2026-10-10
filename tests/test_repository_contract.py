@@ -298,7 +298,6 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertEqual("false", trusted_checkout["with"]["persist-credentials"])
         self.assertNotIn("uv run", aggregate["run"])
         self_hosted = jobs["analyze-self-hosted"]
-        self.assertEqual(["self-hosted", "windows", "x64"], self_hosted["runs-on"])
         # Analysis concurrency is bounded only by runner capacity: the consumer must
         # not serialize self-hosted analysis across PRs through a job-level group.
         self.assertNotIn("concurrency", self_hosted)
@@ -317,33 +316,8 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertIn("needs.warmup-idb.result == 'success'", self_hosted["if"])
         self.assertNotIn("cold", self_hosted["if"])
         self.assertNotIn("needs.warmup-idb.result == 'skipped'", self_hosted["if"])
-        analyzer = next(
-            step
-            for step in self_hosted["steps"]
-            if step.get("name") == "Analyze selected nodes and build self-consistent candidates"
-        )
-        self.assertNotIn("cache_mode", analyzer["run"])
-        self.assertIn("$env:RUNNER_TEMP 'rebuilt-bin-artifacts'", analyzer["run"])
-        self.assertIn("$plannerCli compare", analyzer["run"])
-        self.assertIn("-artifactdir $artifactRoot", analyzer["run"])
-        self.assertIn("git diff --exit-code -- bin_artifacts", analyzer["run"])
-        # Per-tag materialization and downstream validation run bounded-parallel, with the
-        # cap owned by the win64 environment. A failed tag must not abort its siblings, so
-        # each tag collects its failure and the step rethrows after every tag has run.
-        self.assertEqual(
-            "${{ vars.GSVIBE_TAIL_MAX_CONCURRENCY || '2' }}",
-            self_hosted["env"]["GSVIBE_TAIL_MAX_CONCURRENCY"],
-        )
-        self.assertNotIn("foreach ($action in $plan.tags)", analyzer["run"])
-        self.assertEqual(2, analyzer["run"].count("ForEach-Object -ThrottleLimit $tailConcurrency -Parallel"))
-        for marker in (
-            "GSVIBE_TAIL_MAX_CONCURRENCY must be a decimal integer in 1..32",
-            "$materializeFailures = [System.Collections.Concurrent.ConcurrentQueue[string]]::new()",
-            "$tailFailures = [System.Collections.Concurrent.ConcurrentQueue[string]]::new()",
-            'throw "$($materializeFailures.Count) tag materialization(s) failed"',
-            'throw "$($tailFailures.Count) tag validation pipeline(s) failed"',
-        ):
-            self.assertIn(marker, analyzer["run"])
+        # Portable orchestration behavior is exercised by test_ci_runner, rather
+        # than asserting the spelling of shell scripts in workflow configuration.
         for forbidden in (
             "LLM_FAKE_AS",
             "gamesymbol_candidate.py publish",

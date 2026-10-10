@@ -107,9 +107,16 @@ jobs:
       actions: read
       contents: read
     environment: win64
-    runs-on: [self-hosted, windows, x64]
+    runs-on: [self-hosted, cross-platform]
     timeout-minutes: 1440
     env:
+      CI_KIND: release
+      SOURCE_SHA: ${{ needs.preflight.outputs.source_sha }}
+      SOURCE_ARTIFACT_MODE: ${{ inputs.source_artifact_mode || 'rebuild' }}
+      PRODUCER_SELECTION_SHA256: ${{ needs.warmup-idb.outputs.selection_sha256 }}
+      VERSION: ${{ needs.preflight.outputs.version }}
+      BUILD_ID: ${{ needs.preflight.outputs.build_id }}
+      WORKFLOW_RUN_URL: ${{ needs.preflight.outputs.workflow_run_url }}
       PERSISTED_WORKSPACE: ${{ secrets.PERSISTED_WORKSPACE }}
       GSVIBE_LLM_APIKEY: ${{ secrets.GSVIBE_LLM_APIKEY }}
       GSVIBE_LLM_BASEURL: ${{ secrets.GSVIBE_LLM_BASEURL }}
@@ -139,37 +146,27 @@ jobs:
           S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
           S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
       - run: uv sync --locked
-      - name: Clean binary analysis scratch
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $workspaceRoot = [IO.Path]::GetFullPath($env:GITHUB_WORKSPACE)
-          $binRoot = (Resolve-Path -LiteralPath (Join-Path $workspaceRoot 'bin')).Path
-          if (-not $binRoot.StartsWith($workspaceRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
-            throw "bin submodule escaped the checkout: $binRoot"
-          }
-          git -C $binRoot reset --hard
-          if ($LASTEXITCODE -ne 0) { throw 'failed to reset bin submodule' }
-          git -C $binRoot clean -ffdx
-          if ($LASTEXITCODE -ne 0) { throw 'failed to clean bin submodule' }
-      - name: Download exact warm IDB selection
-        if: inputs.source_artifact_mode != 'tracked'
-        uses: actions/download-artifact@v7
-        with:
-          name: ${{ needs.warmup-idb.outputs.selection_artifact_name }}
-          path: ${{ runner.temp }}/idb-cache-selection
       - name: Checkout cache transport tooling
         uses: actions/checkout@v5
         with:
           ref: ${{ github.workflow_sha }}
           path: .ci-tools
           persist-credentials: false
+      - name: Clean binary analysis scratch
+        uses: ./.ci-tools/.github/actions/ci-command
+        with:
+          command: clean-bin
+      - name: Download exact warm IDB selection
+        if: inputs.source_artifact_mode != 'tracked'
+        uses: actions/download-artifact@v7
+        with:
+          name: ${{ needs.warmup-idb.outputs.selection_artifact_name }}
+          path: ${{ runner.temp }}/idb-cache-selection
       - name: Prepare disposable S3 staging
         id: s3-layout
-        shell: pwsh
-        run: |
-          python .ci-tools/ci_s3_cache.py prepare
-          if ($LASTEXITCODE -ne 0) { throw 'S3 staging preparation failed' }
+        uses: ./.ci-tools/.github/actions/ci-command
+        with:
+          command: cache-prepare
       - name: Restore exact producer IDB snapshot
         if: inputs.source_artifact_mode != 'tracked'
         uses: ./.ci-tools/.github/actions/s3-cache
@@ -182,78 +179,26 @@ jobs:
           path: ${{ steps.s3-layout.outputs.cache-path }}
           required: 'true'
       - name: Resolve IDA runtime identity
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          if ([string]::IsNullOrWhiteSpace($env:IDADIR)) {
-            throw 'IDADIR is required'
-          }
-          $idalibMcp = (Get-Command idalib-mcp -ErrorAction Stop).Source
-          $kernelVersion = (& python ida_runtime_probe.py --idalib-mcp $idalibMcp | Out-String).Trim()
-          if ([string]::IsNullOrWhiteSpace($kernelVersion)) { throw 'failed to resolve IDA kernel version' }
-          $runtimePath = Join-Path $env:RUNNER_TEMP 'ida-runtime.json'
-          uv run python -c "from release_workflow_lib.hashing import write_canonical_json; write_canonical_json(r'$runtimePath', {'kernel_version': r'$kernelVersion', 'idalib_mcp_sha256': __import__('hashlib').sha256(open(r'$idalibMcp','rb').read()).hexdigest()})"
-          if ($LASTEXITCODE -ne 0) { throw 'failed to write IDA runtime evidence' }
-          "IDA_KERNEL_VERSION=$kernelVersion" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
-          "IDA_RUNTIME_PATH=$runtimePath" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+        uses: ./.ci-tools/.github/actions/ci-command
+        with:
+          command: resolve-release-ida
       - name: Verify and restore warm IDBs
         if: inputs.source_artifact_mode != 'tracked'
-        shell: pwsh
+        uses: ./.ci-tools/.github/actions/ci-command
+        with:
+          command: release-restore
         env:
           PRODUCER_SELECTION_SHA256: ${{ needs.warmup-idb.outputs.selection_sha256 }}
-        run: |
-          $ErrorActionPreference = 'Stop'
-          if ([string]::IsNullOrWhiteSpace($env:PRODUCER_SELECTION_SHA256)) {
-            throw 'the producer cache selection digest is required for a rebuild'
-          }
-          $kernelVersion = $env:IDA_KERNEL_VERSION
-          if ([string]::IsNullOrWhiteSpace($kernelVersion)) { throw 'IDA kernel version was not resolved' }
-          $selectionRoot = Join-Path $env:RUNNER_TEMP 'idb-cache-selection'
-          $selectionSha = (Get-Content -Raw -LiteralPath (Join-Path $selectionRoot 'cache-selection.sha256')).Trim()
-          if ($selectionSha -ne $env:PRODUCER_SELECTION_SHA256) { throw 'cache selection digest mismatch' }
-          uv run python idb_cache_release.py verify -repo-root $env:GITHUB_WORKSPACE -bindir bin `
-            -persisted-root $env:IDB_CACHE_ROOT -kernel-version $kernelVersion `
-            -source-sha "${{ needs.preflight.outputs.source_sha }}" `
-            -selection (Join-Path $selectionRoot 'cache-selection.json') `
-            -selection-sha256 (Join-Path $selectionRoot 'cache-selection.sha256')
-          if ($LASTEXITCODE -ne 0) { throw 'warm IDB selection verification failed' }
-          uv run python idb_cache_release.py restore -repo-root $env:GITHUB_WORKSPACE -bindir bin `
-            -persisted-root $env:IDB_CACHE_ROOT -kernel-version $kernelVersion `
-            -source-sha "${{ needs.preflight.outputs.source_sha }}" `
-            -selection (Join-Path $selectionRoot 'cache-selection.json') `
-            -selection-sha256 (Join-Path $selectionRoot 'cache-selection.sha256')
-          if ($LASTEXITCODE -ne 0) { throw 'warm IDB restore failed' }
       - name: Force full analysis in a fresh artifact root
         if: inputs.source_artifact_mode != 'tracked'
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $artifactRoot = Join-Path $env:RUNNER_TEMP 'rebuilt-bin-artifacts'
-          if (Test-Path -LiteralPath $artifactRoot) { Remove-Item -LiteralPath $artifactRoot -Recurse -Force }
-          New-Item -ItemType Directory -Path $artifactRoot | Out-Null
-          uv run python ida_analyze_bin.py -allgamever -force_all -bindir bin -artifactdir $artifactRoot `
-            -debug -process_reporter console `
-            -batch_diagnostics "${{ runner.temp }}/analysis-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}"
-          if ($LASTEXITCODE -ne 0) { throw 'fresh all-gamever analysis failed' }
-          uv run python bin_artifact_contract.py --repo-root $env:GITHUB_WORKSPACE --actual-root $artifactRoot
-          if ($LASTEXITCODE -ne 0) { throw 'rebuilt artifacts differ from Git truth' }
-          git diff --exit-code -- bin_artifacts
-          if ($LASTEXITCODE -ne 0) { throw 'tracked bin_artifacts changed during release rebuild' }
-          # The rebuild only proves reproducibility; the committed artifacts stay the published truth so the
-          # bundle can never carry a payload the checkout does not own. Anchor drift is tolerated above, so the
-          # rebuilt root and the tracked truth are no longer guaranteed byte-identical.
-          "RELEASE_ARTIFACT_ROOT=$(Join-Path $env:GITHUB_WORKSPACE 'bin_artifacts')" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+        uses: ./.ci-tools/.github/actions/ci-command
+        with:
+          command: release-analyze
       - name: Bind tracked source-owned artifacts without rebuilding
         if: inputs.source_artifact_mode == 'tracked'
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $binding = Join-Path $env:RUNNER_TEMP 'tracked-artifact-binding.json'
-          uv run python release_bundle.py bind-tracked --repo-root $env:GITHUB_WORKSPACE `
-            --source-sha "${{ needs.preflight.outputs.source_sha }}" --output $binding
-          if ($LASTEXITCODE -ne 0) { throw 'tracked artifacts differ from immutable Git truth' }
-          "RELEASE_TRACKED_BINDING=$binding" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
-          "RELEASE_ARTIFACT_ROOT=$(Join-Path $env:GITHUB_WORKSPACE 'bin_artifacts')" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+        uses: ./.ci-tools/.github/actions/ci-command
+        with:
+          command: release-bind
       - name: Upload batch analysis diagnostics
         if: always() && inputs.source_artifact_mode != 'tracked'
         uses: actions/upload-artifact@v7
@@ -271,71 +216,13 @@ jobs:
           if-no-files-found: warn
           retention-days: 1
       - name: Build game-symbol snapshots and JSON datasets
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $generatedRoot = Join-Path $env:RUNNER_TEMP 'release-generated'
-          if (Test-Path -LiteralPath $generatedRoot) { Remove-Item -LiteralPath $generatedRoot -Recurse -Force }
-          $gamesymbolsRoot = Join-Path $generatedRoot 'gamesymbols'
-          $gamesymbolsJsonRoot = Join-Path $generatedRoot 'gamesymbols-json'
-          New-Item -ItemType Directory -Path $gamesymbolsRoot,$gamesymbolsJsonRoot -Force | Out-Null
-          $publishTime = (git show -s --format=%cI HEAD | uv run python -c "import sys; from datetime import datetime,timezone; print(datetime.fromisoformat(sys.stdin.read().strip()).astimezone(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'))").Trim()
-          $gamevers = @(uv run python -c "import yaml; print('\n'.join((yaml.safe_load(open('configs/config.yaml', encoding='utf-8')) or {})['gamevers']))")
-          foreach ($gamever in $gamevers) {
-            if ([string]::IsNullOrWhiteSpace($gamever)) { throw 'configs/config.yaml contains an empty game version' }
-            $stage = Join-Path $env:RUNNER_TEMP ("release-candidate-" + $gamever)
-            if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force }
-            New-Item -ItemType Directory -Path $stage -Force | Out-Null
-            $candidate = Join-Path $stage "$gamever.yaml"
-            $symbolSession = Join-Path $stage 'symbol-session.json'
-            $jsonSession = Join-Path $stage 'json-session.json'
-            uv run python gamesymbol_candidate.py build -gamever $gamever -bindir bin `
-              -artifactdir $env:RELEASE_ARTIFACT_ROOT -configyaml "configs/$gamever.yaml" `
-              -output $candidate -session $symbolSession -last-publish-time $publishTime
-            if ($LASTEXITCODE -ne 0) { throw "snapshot candidate failed for $gamever" }
-            uv run python gamesymbols_json.py build -snapshot $candidate `
-              -metadata (Join-Path $stage "$gamever.metadata.yaml") -gamever $gamever `
-              -output-dir $gamesymbolsJsonRoot -session $jsonSession
-            if ($LASTEXITCODE -ne 0) { throw "JSON dataset failed for $gamever" }
-            uv run python gamesymbol_candidate.py mark -candidate $candidate -session $symbolSession `
-              -step json -json-session $jsonSession
-            if ($LASTEXITCODE -ne 0) { throw "candidate guard failed for $gamever" }
-            uv run python gamesymbol_candidate.py publish -candidate $candidate -session $symbolSession `
-              -destination (Join-Path $gamesymbolsRoot "$gamever.yaml")
-            if ($LASTEXITCODE -ne 0) { throw "snapshot publish failed for $gamever" }
-          }
-          "GENERATED_ROOT=$generatedRoot" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+        uses: ./.ci-tools/.github/actions/ci-command
+        with:
+          command: release-datasets
       - name: Build and locally verify release bundle
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $bundleRoot = Join-Path $env:RUNNER_TEMP 'release-bundle'
-          if (Test-Path -LiteralPath $bundleRoot) { Remove-Item -LiteralPath $bundleRoot -Recurse -Force }
-          $sourceBinding = @()
-          $buildSelection = @()
-          $verifySelection = @()
-          if ("${{ inputs.source_artifact_mode }}" -eq 'tracked') {
-            $sourceBinding = @('--tracked-binding', $env:RELEASE_TRACKED_BINDING)
-          } else {
-            $buildSelection = @('--cache-selection', (Join-Path $env:RUNNER_TEMP 'idb-cache-selection\cache-selection.json'))
-            $verifySelection = @('--cache-selection-sha256', "${{ needs.warmup-idb.outputs.selection_sha256 }}")
-          }
-          uv run python release_bundle.py build --repo-root $env:GITHUB_WORKSPACE --bundle-root $bundleRoot `
-            --source-artifact-mode "${{ inputs.source_artifact_mode || 'rebuild' }}" @sourceBinding @buildSelection `
-            --gamesymbols-root (Join-Path $env:GENERATED_ROOT 'gamesymbols') `
-            --gamesymbols-json-root (Join-Path $env:GENERATED_ROOT 'gamesymbols-json') `
-            --ida-runtime $env:IDA_RUNTIME_PATH `
-            --version "${{ needs.preflight.outputs.version }}" --build-id "${{ needs.preflight.outputs.build_id }}" `
-            --workflow-run-url "${{ needs.preflight.outputs.workflow_run_url }}" `
-            --source-sha "${{ needs.preflight.outputs.source_sha }}"
-          if ($LASTEXITCODE -ne 0) { throw 'release bundle build failed' }
-          uv run python release_bundle.py verify --repo-root $env:GITHUB_WORKSPACE --bundle-root $bundleRoot `
-            --source-artifact-mode "${{ inputs.source_artifact_mode || 'rebuild' }}" `
-            --version "${{ needs.preflight.outputs.version }}" `
-            --source-sha "${{ needs.preflight.outputs.source_sha }}" `
-            --build-id "${{ needs.preflight.outputs.build_id }}" `
-            --workflow-run-url "${{ needs.preflight.outputs.workflow_run_url }}" @verifySelection
-          if ($LASTEXITCODE -ne 0) { throw 'local release bundle verification failed' }
+        uses: ./.ci-tools/.github/actions/ci-command
+        with:
+          command: release-bundle
       - name: Upload release bundle transport artifact
         uses: actions/upload-artifact@v7
         with:
@@ -345,30 +232,17 @@ jobs:
           retention-days: 7
       - name: Back up and clean legacy accepted-bin YAML
         if: inputs.cleanup_legacy_yaml
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          if ([string]::IsNullOrWhiteSpace($env:PERSISTED_WORKSPACE)) {
-            throw 'PERSISTED_WORKSPACE is required for legacy YAML cleanup'
-          }
-          $gamevers = @(uv run python -c "import yaml; print('\n'.join((yaml.safe_load(open('configs/config.yaml', encoding='utf-8')) or {})['gamevers']))")
-          foreach ($gamever in $gamevers) {
-            if ([string]::IsNullOrWhiteSpace($gamever)) { throw 'configs/config.yaml contains an empty game version' }
-            uv run python release_workflow.py cleanup-legacy-accepted-yaml `
-              --repo-root $env:GITHUB_WORKSPACE --persisted-root $env:PERSISTED_WORKSPACE `
-              --gamever $gamever --cutover-id bin-artifacts-v1
-            if ($LASTEXITCODE -ne 0) { throw "legacy accepted-bin YAML cleanup failed for $gamever" }
-          }
+        uses: ./.ci-tools/.github/actions/ci-command
+        with:
+          command: legacy-cleanup
       - name: Locate release artifacts for S3
         id: s3-artifacts
         if: always() && steps.s3-layout.outcome == 'success'
-        shell: pwsh
-        run: |
-          $paths = @((Join-Path $env:RUNNER_TEMP 'release-bundle'), (Join-Path $env:RUNNER_TEMP 'rebuilt-bin-artifacts'), (Join-Path $env:RUNNER_TEMP 'analysis-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}'))
-          $available = @($paths | Where-Object { Test-Path -LiteralPath $_ })
-          "available=$($available.Count -gt 0)" | Out-File $env:GITHUB_OUTPUT -Encoding utf8 -Append
+        uses: ./.ci-tools/.github/actions/ci-command
+        with:
+          command: artifacts
       - name: Persist release artifacts to S3
-        if: always() && steps.s3-artifacts.outputs.available == 'True'
+        if: always() && steps.s3-artifacts.outputs.available == 'true'
         uses: ./.ci-tools/.github/actions/s3-cache
         with:
           endpoint-url: ${{ secrets.S3_ENDPOINT_URL }}
@@ -376,19 +250,12 @@ jobs:
           secret-key: ${{ secrets.S3_SECRET_ACCESS_KEY }}
           operation: save
           key: ${{ steps.s3-layout.outputs.prefix }}-artifacts-release-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            ${{ runner.temp }}/release-bundle
-            ${{ runner.temp }}/rebuilt-bin-artifacts
-            ${{ runner.temp }}/analysis-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ steps.s3-artifacts.outputs.paths }}
       - name: Remove generated binary analysis state
         if: always()
-        shell: pwsh
-        run: |
-          $binRoot = (Resolve-Path -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'bin')).Path
-          git -C $binRoot reset --hard
-          if ($LASTEXITCODE -ne 0) { throw 'failed to reset bin submodule' }
-          git -C $binRoot clean -ffdx
-          if ($LASTEXITCODE -ne 0) { throw 'failed to clean bin submodule' }
+        uses: ./.ci-tools/.github/actions/ci-command
+        with:
+          command: cleanup
   verify-release-bundle:
     needs: [preflight, warmup-idb, build-release-bundle]
     if: >-

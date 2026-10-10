@@ -18,28 +18,11 @@ repeated here — this note organizes the operational checklist, normal-operatio
 operator failure semantics.
 
 ## Activation checklist (do not dispatch official workflows until verified)
+Before official analysis, verify a prepared Windows x64 or Ubuntu x64 runner with `cross-platform`, protected `win64` Environment, private S3 access, exact binary submodule access, native licensed IDA/idalib, paired host Python and `idalib-mcp`, and consumer `IDADIR`. Merging YAML does not activate a runner. Official analysis remains a strict warm consumer with no rebuild fallback.
 
-Do not enable or dispatch official analysis until the dedicated Windows runner, protected `win64` Environment,
-checkout-external persisted root, ACL owner, atomic-rename storage, and consumer `IDADIR` are verified. Governance of
-those surfaces is in [[self-hosted-runner-and-governance]]. Merging workflow YAML is not activation. Official analysis
-is always a strict warm consumer — there is no cold bypass and no consumer-side rebuild fallback.
+Cross-runner transport uses immutable S3 snapshots and separate local staging roots, not shared `PERSISTED_WORKSPACE` storage. Verify local atomic rename/process locks and runner account ownership; validate the exact generation/manifest, selection digest and live sealed lease after transport. Discovery uses repository-wide shared, then legacy Windows/Linux/macOS prefixes. Consumers may not use discovery fallbacks.
 
-Cross-runner evidence is additionally required when the producer is split into its own job:
-
-- every eligible runner resolves `PERSISTED_WORKSPACE` to the same controlled storage;
-- a generation published on runner A verifies on runner B;
-- storage supports same-directory atomic rename;
-- all runner accounts share one ACL authority;
-- Windows byte-range locks are mutually exclusive across two independent processes on that storage.
-
-Capture evidence in order: one split-job warm miss that publishes; a later warm hit whose consumer runs on a different
-runner; a run where READY advances between producer and consumer yet the exact restore still succeeds; two release
-versions dispatched together where the second producer queues; a source PR and a release requesting warmup together with
-still only one producer running; a two-worker miss faster than the serial baseline; a worker failure/timeout reaped
-before only its own database files (plus stale `.id0`) are removed while siblings finish; memory-budget rejection and
-finite admission timeout; a corrupt generation or selection failing closed; and a failed build whose workspace cleanup
-leaves persisted generations intact. Record run URL/attempt, runner identity, source and bin SHAs, plan and selection
-SHA-256, cache key, generation, manifest hash, worker counts, and wall times.
+Record real CI evidence: cold warm miss and publication, repeat warm hit, Windows producer → Linux consumer, READY advancing while exact restore succeeds, queued concurrent producers, failed/cancelled MCP workers fully reclaimed, corrupted generation/selection rejected, and PR analysis plus non-publishing Release in both `rebuild` and `tracked` modes. Capture run URL/attempt, runner OS/identity, source/bin SHAs, selection digest, exact key, generations, manifests and timings. Synthetic/local tests do not prove commercial IDA execution, S3 publication or GitHub runner readiness; issue #356 remains open until this evidence exists.
 
 ## Normal operation
 
@@ -60,7 +43,7 @@ Each Prepare creates a schema-3 selection with one singleton entry per binary an
 
 Leases last 36 days, with an extra one-hour pruning clock allowance. All entries must restore successfully before any pins are released. Partial failure, producer cancellation or failed artifact upload retains pins for bounded expiry reclamation. Malformed, unreadable, unknown-version or linked lease metadata blocks pruning before any deletion.
 
-Payloads, READY and leases live in `PERSISTED_WORKSPACE/idb-cache-v3/<tag>/`. Existing `idb-cache/.locks/` coordinates all source revisions. New workflows use only the v3 payload namespace: first use warms each requested binary once, without importing prior combination caches. Older revisions can continue using their own payload directories and cannot prune v3 generations. Never move/delete the shared lock directory during maintenance.
+Official CI payloads, READY and leases live in disposable `IDB_CACHE_ROOT/idb-cache-v3/<tag>/` restored from S3. Direct local maintenance still accepts an explicitly governed persisted root. Existing `idb-cache/.locks/` coordinates all source revisions. New workflows use only the v3 payload namespace: first use warms each requested binary once, without importing prior combination caches. Older revisions can continue using their own payload directories and cannot prune v3 generations. Never move/delete the shared lock directory during maintenance.
 
 A full restore consumes its lease. Re-run the entire workflow, including the producer, after a missing/released/expired pin; retrying only a consumer does not guarantee availability. Active consumers require selection schema 3. Archived release evidence accepts schemas 1/2/3 without live storage or pin lookups.
 
