@@ -80,3 +80,21 @@ comment. Every emitted signature matches exactly one location in its own binary
 Engine module across `cof-5936`, `hl-3248`..`hl-10210`, `svencoop-8948`/`10257`; Linux only
 where the config declares `hw.so` (hl-10210, hl-8684, both Sven). cstrike/czero/czeror have no
 engine module. `S_LoadSound` was already covered and ignored.
+
+## S_PrecacheSound locator (follow-up commit 04496c5a)
+
+- **Symbol**: `S_PrecacheSound`, `func`, engine, producer
+  `ida_preprocessor_scripts/find-S_PrecacheSound.py`; config registers it right after
+  `find-S_LoadSound` with `expected_input` `S_FindName`+`S_LoadSound` artifacts.
+- **Anchor**: no target-owned literal. FindName family = the `S_FindName` artifact entry ∪
+  other guard-literal `"S_FindName: NULL\n"` owners (covers the hl-8684 `constprop` clone that
+  `S_PrecacheSound` itself calls while `VOX_LoadSound` keeps the generic body). Candidates =
+  `S_LoadSound` callers resolved past PLT (shared `callers` walk; svencoop-8948 routes every
+  sound call through `.plt`/`.plt.got`). Predicate: ≥2 `call`/tail-`jmp` transfers into the
+  family AND no `Cmd_`/`Con_` callee (demangle the GNU-v3 `._Z<len><name>` PLT spelling) AND
+  no `.rodata` string-literal reference. The literal clause is what excludes `S_LocalSound`
+  on svencoop-8948, where its `Con_Printf` call is an unnamed `.plt.got` stub reachable only
+  through `[ebx+disp]`. Verified unique on all 15 binary/platform pairs; the three `.symtab`
+  Linux builds match `readelf --syms` exactly (`0x196b10` / `0x1e6050` / `0x1afb30`).
+- **Pitfall**: a `run_walk` body runs in the worker namespace — `import re as _re` must appear
+  inside the body itself; a host-module `import re` is invisible there.
