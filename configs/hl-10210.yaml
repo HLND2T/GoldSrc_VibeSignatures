@@ -771,6 +771,12 @@ modules:
       - name: find-S_LoadSound
         expected_output:
           - S_LoadSound.{platform}.yaml
+      - name: find-S_PrecacheSound
+        expected_input:
+          - S_FindName.{platform}.yaml
+          - S_LoadSound.{platform}.yaml
+        expected_output:
+          - S_PrecacheSound.{platform}.yaml
       - name: find-Mod_LoadModel
         expected_output:
           - Mod_LoadModel.{platform}.yaml
@@ -1841,6 +1847,8 @@ modules:
       - name: S_Say_Reliable
         category: func
       - name: S_FindName
+        category: func
+      - name: S_PrecacheSound
         category: func
       - name: S_StartDynamicSound
         category: func
