@@ -3255,9 +3255,9 @@ if (func is not None and (relative_operand is not None or (size == 6
                     dest = decoded.ops[0]
                     if dest.type == ida_ua.o_reg:
                         changed[address_write_register(dest.reg, True)] = None
-                elif mnemonic in ('movss', 'movd', 'movq', 'movdqa'):
-                    # SIMD copies write only their explicit destination. Memory
-                    # address registers and GPR sources remain unchanged; MOVD
+                elif mnemonic in ('movss', 'movd', 'movq', 'movdqa', 'pxor', 'xorps', 'xorpd'):
+                    # SIMD copies and XOR write only their explicit destination.
+                    # Memory address registers and GPR sources stay unchanged; MOVD
                     # into a GPR must still invalidate that destination.
                     dest = decoded.ops[0]
                     if dest.type == ida_ua.o_reg and dest.reg < 8:
