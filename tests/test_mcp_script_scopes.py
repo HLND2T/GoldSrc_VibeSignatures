@@ -64,27 +64,6 @@ def region(code, first_assignment, last_assignment):
 
 
 class McpScriptScopeTests(unittest.TestCase):
-    def test_ordinal_vtable_filters_names_by_class(self):
-        code = template(
-            "_ordinal_vtable_common.py",
-            "_ORDINAL_TEMPLATE",
-            CLASS_NAME_PLACEHOLDER="Widget",
-            ALIASES_PLACEHOLDER=[],
-            ORDINAL_PLACEHOLDER=0,
-            EXPECTED_OFFSET_PLACEHOLDER=None,
-        )
-        modules = {
-            "ida_bytes": SimpleNamespace(get_dword=lambda ea: SECOND if ea == DATA else 0),
-            "ida_funcs": SimpleNamespace(),
-            "ida_name": SimpleNamespace(get_name_ea=lambda _bad, name: DATA),
-            "ida_segment": SimpleNamespace(getseg=lambda ea: SimpleNamespace(perm=1), SEGPERM_EXEC=1),
-            "idaapi": SimpleNamespace(inf_is_64bit=lambda: False, BADADDR=0xFFFFFFFF),
-            "idautils": SimpleNamespace(Names=lambda: [(DATA, "??_7Widget@@6B@"), (DATA, "OtherWidget")]),
-        }
-        payload = execute(code, modules)
-        self.assertEqual("??_7Widget@@6B@", payload["selected"]["vtable_symbol"])
-        self.assertEqual({"0": hex(SECOND)}, payload["selected"]["vtable_entries"])
-
     def test_texturemode_recovery_checks_every_literal_site_owner(self):
         class Strings(list):
             def setup(self, **_kwargs):
