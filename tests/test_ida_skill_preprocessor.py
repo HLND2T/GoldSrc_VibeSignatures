@@ -3583,15 +3583,24 @@ found_struct_offset: []
         self.assertEqual([], ida_analyze_util._llm_global_targets(detail))
         self.assertEqual(["0x6020"], ida_analyze_util._llm_global_targets(detail, platform="windows"))
 
-    def test_relative_store_inspection_checks_effective_address(self):
-        for base, mapped, clobbered, width, permission, unknown_lea in (
-            (0x8000, True, False, 4, 6, False),
-            (0xA000, True, False, 4, 6, False),
-            (0x8000, False, False, 4, 6, False),
-            (0x8000, True, True, 4, 6, False),
-            (0x8000, True, False, 3, 6, False),
-            (0x8000, True, False, 4, 7, False),
-            (0x8000, True, False, 4, 6, True),
+    def test_relative_memory_inspection_checks_effective_address(self):
+        for base, mapped, clobbered, width, permission, unknown_lea, load in (
+            (0x8000, True, False, 4, 6, False, False),
+            (0xA000, True, False, 4, 6, False, False),
+            (0x8000, False, False, 4, 6, False, False),
+            (0x8000, True, True, 4, 6, False, False),
+            (0x8000, True, False, 3, 6, False, False),
+            (0x8000, True, False, 4, 7, False, False),
+            (0x8000, True, False, 4, 6, True, False),
+            (0x8000, True, False, 4, 6, False, True),
+            (0xA000, True, False, 4, 6, False, True),
+            (0x8000, False, False, 4, 6, False, True),
+            (0x8000, True, True, 4, 6, False, True),
+            (0x8000, True, False, 3, 6, False, True),
+            (0x8000, True, False, 4, 7, False, True),
+            (0x8000, True, False, 4, 6, True, True),
+            (0x8000, True, "simd_load", 4, 6, False, True),
+            (0x8000, True, "simd_store", 4, 6, False, True),
         ):
             with self.subTest(
                 base=base,
@@ -3600,15 +3609,21 @@ found_struct_offset: []
                 width=width,
                 permission=permission,
                 unknown_lea=unknown_lea,
+                load=load,
             ):
                 ea, displacement = 0x1010, 0x2000
                 register = SimpleNamespace(type=1, reg=2, dtype=2, offb=0)
                 source = SimpleNamespace(type=1, reg=0, dtype=2, offb=0)
                 memory = SimpleNamespace(type=4, addr=displacement, offb=2, dtype=2)
                 void = SimpleNamespace(type=0)
-                store = SimpleNamespace(ops=[memory, source, void])
+                store = SimpleNamespace(ops=[source, memory, void] if load else [memory, source, void], size=6)
                 definition = SimpleNamespace(
                     ops=[register, memory if unknown_lea else SimpleNamespace(type=5, value=base), void], size=6
+                )
+                simd_register = SimpleNamespace(type=1, reg=64, dtype=2, offb=0)
+                simd = SimpleNamespace(
+                    ops=[simd_register, memory, void] if clobbered == "simd_load" else [memory, simd_register, void],
+                    size=6,
                 )
                 segment = SimpleNamespace(perm=permission, end_ea=base + displacement + width)
 
@@ -3622,13 +3637,19 @@ found_struct_offset: []
                     "ida_bytes": SimpleNamespace(
                         get_dword=lambda address: displacement,
                         get_bytes=lambda address, size: bytes.fromhex(
-                            "8D 91 00 20 00 00" if address == 0x1000 else "89 82 00 20 00 00"
+                            "8D 91 00 20 00 00"
+                            if address == 0x1000
+                            else "8B 82 00 20 00 00"
+                            if load
+                            else "89 82 00 20 00 00"
                         ),
                     ),
                     "ida_fixup": SimpleNamespace(fixup_data_t=lambda: None, get_fixup=lambda *args: False),
                     "ida_funcs": SimpleNamespace(get_func=lambda address: block),
                     "ida_lines": SimpleNamespace(tag_remove=lambda text: text),
-                    "ida_segment": SimpleNamespace(getseg=getseg, SEGPERM_EXEC=1),
+                    "ida_segment": SimpleNamespace(
+                        getseg=getseg, get_segm_name=lambda segment: ".data", SEGPERM_EXEC=1
+                    ),
                     "idaapi": SimpleNamespace(inf_is_64bit=lambda: False, BADADDR=0xFFFFFFFF),
                     "ida_ua": SimpleNamespace(
                         o_void=0,
@@ -3649,12 +3670,24 @@ found_struct_offset: []
                         DataRefsFrom=lambda address: [base] if address == 0x1000 else [displacement],
                         CodeRefsFrom=lambda *args: [],
                         Heads=lambda *args: [0x1000, 0x1006, ea] if clobbered else [0x1000, ea],
-                        DecodeInstruction=lambda address: definition if address != ea else store,
+                        DecodeInstruction=lambda address: (
+                            simd
+                            if address == 0x1006 and isinstance(clobbered, str)
+                            else definition
+                            if address != ea
+                            else store
+                        ),
                     ),
                     "idc": SimpleNamespace(
-                        generate_disasm_line=lambda *args: "mov [edx+2000h], eax",
+                        generate_disasm_line=lambda *args: "mov eax, [edx+2000h]" if load else "mov [edx+2000h], eax",
                         print_insn_mnem=lambda address: (
-                            "lea" if unknown_lea and address == 0x1000 else "xor" if address == 0x1006 else "mov"
+                            "lea"
+                            if unknown_lea and address == 0x1000
+                            else "movss"
+                            if address == 0x1006 and isinstance(clobbered, str)
+                            else "xor"
+                            if address == 0x1006
+                            else "mov"
                         ),
                     ),
                 }
@@ -3665,7 +3698,13 @@ found_struct_offset: []
                     )
                 detail = json.loads(namespace["result"])
                 self.assertEqual([hex(displacement)], detail["data_refs"])
-                if mapped and not clobbered and width >= 4 and permission == 6 and not unknown_lea:
+                if (
+                    mapped
+                    and (not clobbered or isinstance(clobbered, str))
+                    and width >= 4
+                    and permission == 6
+                    and not unknown_lea
+                ):
                     self.assertEqual([hex(base + displacement)], ida_analyze_util._llm_global_targets(detail))
                     self.assertEqual(hex(base), _gv_resolution_fields(detail, base + displacement, 0)["gv_pic_addend"])
                 else:
@@ -3711,6 +3750,18 @@ found_struct_offset: []
         for mnemonic, intervening_ops, expected in (
             ("fld", [SimpleNamespace(type=4, addr=0, offb=2, dtype=2), void], "0xa000"),
             ("fnstsw", [SimpleNamespace(type=1, reg=0, dtype=2, offb=0), void], None),
+            # R_DrawSequentialPoly uses SIMD copies inside paths that join back
+            # into decal enqueueing. Memory address bases remain unchanged.
+            ("movdqa", [SimpleNamespace(type=1, reg=64), SimpleNamespace(type=4), void], "0xa000"),
+            ("movdqa", [SimpleNamespace(type=4), SimpleNamespace(type=1, reg=64), void], "0xa000"),
+            ("movd", [SimpleNamespace(type=1, reg=64), SimpleNamespace(type=4), void], "0xa000"),
+            ("movq", [SimpleNamespace(type=4), SimpleNamespace(type=1, reg=64), void], "0xa000"),
+            ("movd", [SimpleNamespace(type=1, reg=0, dtype=2), SimpleNamespace(type=1, reg=64), void], "0xa000"),
+            ("movd", [SimpleNamespace(type=1, reg=3, dtype=2), SimpleNamespace(type=1, reg=64), void], None),
+            ("movd", [SimpleNamespace(type=1, reg=64), SimpleNamespace(type=1, reg=3), void], "0xa000"),
+            ("unknown_simd", [SimpleNamespace(type=1, reg=64), SimpleNamespace(type=4), void], None),
+            ("neg", [SimpleNamespace(type=1, reg=0, dtype=2), void], "0xa000"),
+            ("neg", [SimpleNamespace(type=1, reg=3, dtype=2), void], None),
             (
                 "adc",
                 [SimpleNamespace(type=1, reg=2, dtype=2, offb=0), SimpleNamespace(type=5, value=-1), void],
@@ -3859,6 +3910,27 @@ found_struct_offset: []
         # Removing the loop write still resolves the entry constant.
         graph[1]["writes"] = []
         self.assertEqual(0x8000, resolve(graph, 2, 0, 3))
+
+    def test_address_flow_preserves_base_across_intersecting_cycles(self):
+        namespace = {}
+        exec(ida_analyze_util._ADDRESS_FLOW_RESOLVER, namespace)
+        resolve = namespace["resolve_address_flow"]
+        graph = {
+            0: {"preds": [], "writes": [{3: ("constant", 0x8000)}]},
+            1: {"preds": [0, 3], "writes": []},
+            2: {"preds": [1, 4], "writes": [{0: None}]},
+            3: {"preds": [2], "writes": []},
+            4: {"preds": [2], "writes": []},
+            5: {"preds": [3, 4], "writes": [{6: ("got_load", (3, 0x20, {0x8020: 0x9000}))}]},
+        }
+        self.assertEqual(0x9000, resolve(graph, 5, 1, 6))
+        graph[4]["writes"] = [{3: ("offset", 4)}]
+        self.assertIsNone(resolve(graph, 5, 1, 6))
+        graph[4]["writes"] = [{3: None}]
+        self.assertIsNone(resolve(graph, 5, 1, 6))
+        graph[4]["writes"] = []
+        graph[0]["writes"] = []
+        self.assertIsNone(resolve(graph, 5, 1, 6))
 
     def test_address_flow_preserves_pic_base_arithmetic_and_rejects_clobbers(self):
         namespace = {}

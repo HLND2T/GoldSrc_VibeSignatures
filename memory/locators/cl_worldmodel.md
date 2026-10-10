@@ -61,3 +61,12 @@ tags:
 - On SvEngine Linux resolve the PIC addend (`gv_pic_addend`) instead of reading the embedded
   dword as an absolute VA.
 - CoF (`cof-5936`) is Windows-only in this repo.
+
+### Containing client-state base versus world-model field (PR #357, 2026-10-10)
+
+- Trigger: run 38022306420 rebuilt the Sven Linux outputs as containing client-state bases (8948: 0x15ee8a0; 10257: 0x15d7d60), while committed values were only member displacements 0x600cec/0x601cec. Both are wrong world-model addresses.
+- Root cause: requiring effective-address proof exposed an unsupported `neg eax` early in R_NewMap. It incorrectly invalidated the unrelated EBX PIC base, causing correct field reads to fail and LLM retries to select containing-object materialization.
+- Correct approach: NEG invalidates only its explicit GPR destination; never promote a member displacement or containing object to the global field. Keep the real R_NewMap LLM semantic mapping and normal effective-address validation.
+- Evidence: 8948 reads EBP from GOT slot 0x339ce0, pointee 0x15ee8a0, then reads `[ebp+0x600cec]` at 0x1c3826: true address 0x1bef58c. 10257 forms EBP as 0x15d7d60 via LEA, then reads `[ebp+0x601cec]` at 0x177916: true address 0x1bd9a4c. Both feed the cleared world entity's model member.
+- Verification: NEG regression cases fail before the fix and pass afterward, including rejection when NEG writes the base itself. Both real Linux R_NewMap finders pass; independently scanning executable ELF bytes proves unique signatures and encoded operand plus generated PIC addend equals the actual field address.
+- Scope: Sven Linux member-address outputs and shared x86 register-write semantics. The historical availability list above predates Sven 8948 coverage; current configs remain authoritative. Evidence addresses are not locators.

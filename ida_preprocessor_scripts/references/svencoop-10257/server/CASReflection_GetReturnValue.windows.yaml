@@ -1,0 +1,456 @@
+func_name: CASReflection_GetReturnValue
+func_va: '0x100cd900'
+disasm_code: |
+  ; Invoke the newly constructed CASMethod assignment callable after setting returnDestination. Select CASBaseCallable::Call(int, ...), not its constructor, the inline InternalRelease block, or logging.
+  ; Windows PE32: Array Release uses ECX this; the variadic callable uses stack this, fixed int and varargs.
+  .text:100CD900                 push    ebp
+  .text:100CD901                 mov     ebp, esp
+  .text:100CD903                 push    0FFFFFFFFh
+  .text:100CD905                 push    offset SEH_100CD900
+  .text:100CD90A                 mov     eax, large fs:0
+  .text:100CD910                 push    eax
+  .text:100CD911                 sub     esp, 14h
+  .text:100CD914                 push    ebx
+  .text:100CD915                 push    esi
+  .text:100CD916                 push    edi
+  .text:100CD917                 mov     eax, ___security_cookie
+  .text:100CD91C                 xor     eax, ebp
+  .text:100CD91E                 push    eax
+  .text:100CD91F                 lea     eax, [ebp+var_C]
+  .text:100CD922                 mov     large fs:0, eax
+  .text:100CD928                 mov     esi, [ebp+context]
+  .text:100CD92B                 test    esi, esi
+  .text:100CD92D                 jz      loc_100CDAB2
+  .text:100CD933                 cmp     [ebp+module], 0
+  .text:100CD937                 jz      loc_100CDAB2
+  .text:100CD93D                 mov     edi, [ebp+typeId]
+  .text:100CD940                 mov     byte ptr [ebp+context+3], 1
+  .text:100CD944                 test    edi, 40000000h
+  .text:100CD94A                 jz      short loc_100CD96D
+  .text:100CD94C                 mov     eax, [esi]
+  .text:100CD94E                 mov     ecx, esi
+  .text:100CD950                 call    dword ptr [eax+78h]
+  .text:100CD953                 mov     ecx, [ebp+returnDestination]
+  .text:100CD956                 mov     [ecx], eax
+  .text:100CD958                 mov     al, byte ptr [ebp+context+3]
+  .text:100CD95B                 mov     ecx, [ebp+var_C]
+  .text:100CD95E                 mov     large fs:0, ecx
+  .text:100CD965                 pop     ecx
+  .text:100CD966                 pop     edi
+  .text:100CD967                 pop     esi
+  .text:100CD968                 pop     ebx
+  .text:100CD969                 mov     esp, ebp
+  .text:100CD96B                 pop     ebp
+  .text:100CD96C                 retn
+  .text:100CD96D                 test    edi, 1C000000h
+  .text:100CD973                 jz      loc_100CDAC6
+  .text:100CD979                 call    CASServerManager__GetInstance
+  .text:100CD97E                 push    edi
+  .text:100CD97F                 mov     ecx, [eax+0Ch]
+  .text:100CD982                 mov     eax, [ecx]
+  .text:100CD984                 call    dword ptr [eax+0DCh]
+  .text:100CD98A                 mov     ebx, eax
+  .text:100CD98C                 test    ebx, ebx
+  .text:100CD98E                 jz      loc_100CDA9D
+  .text:100CD994                 mov     eax, [esi]
+  .text:100CD996                 mov     ecx, esi
+  .text:100CD998                 call    dword ptr [eax+78h]
+  .text:100CD99B                 mov     [ebp+var_1C], eax
+  .text:100CD99E                 mov     ecx, ebx
+  .text:100CD9A0                 mov     eax, [ebx]
+  .text:100CD9A2                 call    dword ptr [eax+58h]
+  .text:100CD9A5                 xor     esi, esi
+  .text:100CD9A7                 mov     [ebp+var_10], eax
+  .text:100CD9AA                 test    eax, eax
+  .text:100CD9AC                 jz      loc_100CDA63
+  .text:100CD9B2                 lfence
+  .text:100CD9B5                 mov     eax, [ebx]
+  .text:100CD9B7                 mov     ecx, ebx
+  .text:100CD9B9                 push    1
+  .text:100CD9BB                 push    esi
+  .text:100CD9BC                 call    dword ptr [eax+5Ch]
+  .text:100CD9BF                 mov     edi, eax
+  .text:100CD9C1                 mov     ecx, edi
+  .text:100CD9C3                 mov     eax, [edi]
+  .text:100CD9C5                 call    dword ptr [eax+60h]
+  .text:100CD9C8                 cmp     eax, 1
+  .text:100CD9CB                 jnz     short loc_100CD9FB
+  .text:100CD9CD                 mov     eax, [edi]
+  .text:100CD9CF                 lea     ecx, [ebp+var_18]
+  .text:100CD9D2                 push    0
+  .text:100CD9D4                 push    0
+  .text:100CD9D6                 push    ecx
+  .text:100CD9D7                 lea     ecx, [ebp+var_14]
+  .text:100CD9DA                 push    ecx
+  .text:100CD9DB                 push    0
+  .text:100CD9DD                 mov     ecx, edi
+  .text:100CD9DF                 call    dword ptr [eax+64h]
+  .text:100CD9E2                 test    eax, eax
+  .text:100CD9E4                 js      short loc_100CD9FB
+  .text:100CD9E6                 lfence
+  .text:100CD9E9                 mov     eax, [ebx]
+  .text:100CD9EB                 mov     ecx, ebx
+  .text:100CD9ED                 call    dword ptr [eax+30h]
+  .text:100CD9F0                 cmp     [ebp+var_14], eax
+  .text:100CD9F3                 jnz     short loc_100CD9FB
+  .text:100CD9F5                 test    [ebp+var_18], 1
+  .text:100CD9F9                 jnz     short loc_100CDA05
+  .text:100CD9FB                 mov     eax, [ebp+var_10]
+  .text:100CD9FE                 inc     esi
+  .text:100CD9FF                 cmp     esi, eax
+  .text:100CDA01                 jb      short loc_100CD9B5
+  .text:100CDA03                 jmp     short loc_100CDA63
+  .text:100CDA05                 ; Size
+  .text:100CDA05                 push    18h; Size
+  .text:100CDA07                 lfence
+  .text:100CDA0A                 call    ??2@YAPAXI@Z; operator new(uint)
+  .text:100CDA0F                 add     esp, 4
+  .text:100CDA12                 mov     [ebp+Block], eax
+  .text:100CDA15                 mov     [ebp+var_4], 0
+  .text:100CDA1C                 test    eax, eax
+  .text:100CDA1E                 jz      short loc_100CDA32
+  .text:100CDA20                 ; module
+  .text:100CDA20                 push    [ebp+module]; module
+  .text:100CDA23                 ; method
+  .text:100CDA23                 mov     ecx, eax; method
+  .text:100CDA25                 ; function
+  .text:100CDA25                 push    edi; function
+  .text:100CDA26                 lfence
+  .text:100CDA29                 call    CASMethod__CASMethod
+  .text:100CDA2E                 mov     edi, eax
+  .text:100CDA30                 jmp     short loc_100CDA34
+  .text:100CDA32                 xor     edi, edi
+  .text:100CDA34                 push    [ebp+var_1C]
+  .text:100CDA37                 mov     eax, [ebp+returnDestination]
+  .text:100CDA3A                 ; executionFlags
+  .text:100CDA3A                 push    0; executionFlags
+  .text:100CDA3C                 ; callable
+  .text:100CDA3C                 push    edi; callable
+  .text:100CDA3D                 mov     [ebp+var_4], 0FFFFFFFFh
+  .text:100CDA44                 mov     [edi+14h], eax
+    ; CASBaseCallable_Call (func): Invoke the newly constructed CASMethod assignment callable after setting returnDestination. Select CASBaseCallable::Call(int, ...), not its constructor, the inline InternalRelease block, or logging.
+  .text:100CDA47                 call    CASBaseCallable__Call
+  .text:100CDA4C                 ; Inlined CASRefCountedBaseClass::InternalRelease on callable+4, followed by deleting destructor when count reaches zero.
+  .text:100CDA4C                 add     esp, 0Ch; Inlined CASRefCountedBaseClass::InternalRelease on callable+4, followed by deleting destructor when count reaches zero.
+  .text:100CDA4F                 add     dword ptr [edi+4], 0FFFFFFFFh
+  .text:100CDA53                 jnz     short loc_100CDA60
+  .text:100CDA55                 lfence
+  .text:100CDA58                 mov     eax, [edi]
+  .text:100CDA5A                 mov     ecx, edi
+  .text:100CDA5C                 push    1
+  .text:100CDA5E                 call    dword ptr [eax]
+  .text:100CDA60                 mov     eax, [ebp+var_10]
+  .text:100CDA63                 cmp     esi, eax
+  .text:100CDA65                 jnz     loc_100CD958
+  .text:100CDA6B                 mov     byte ptr [ebp+context+3], 0
+  .text:100CDA6F                 call    sub_100AA3F0
+  .text:100CDA74                 mov     edi, eax
+  .text:100CDA76                 mov     ecx, ebx
+  .text:100CDA78                 mov     eax, [ebx]
+  .text:100CDA7A                 call    dword ptr [eax+18h]
+  .text:100CDA7D                 mov     esi, eax
+  .text:100CDA7F                 mov     ecx, ebx
+  .text:100CDA81                 mov     eax, [ebx]
+  .text:100CDA83                 call    dword ptr [eax+1Ch]
+  .text:100CDA86                 push    esi
+  .text:100CDA87                 push    eax
+  .text:100CDA88                 push    offset aCascppreflecti_5; "CASCPPReflection::GetReturnValue: no as"...
+  .text:100CDA8D                 push    0
+  .text:100CDA8F                 push    edi
+  .text:100CDA90                 call    sub_100CAF90
+  .text:100CDA95                 add     esp, 14h
+  .text:100CDA98                 jmp     loc_100CD958
+  .text:100CDA9D                 call    sub_100AA3F0
+  .text:100CDAA2                 push    offset aCascppreflecti_2; "CASCPPReflection::GetReturnValue: faile"...
+  .text:100CDAA7                 push    0
+  .text:100CDAA9                 push    eax
+  .text:100CDAAA                 call    sub_100CAF90
+  .text:100CDAAF                 add     esp, 0Ch
+  .text:100CDAB2                 xor     al, al
+  .text:100CDAB4                 mov     ecx, [ebp+var_C]
+  .text:100CDAB7                 mov     large fs:0, ecx
+  .text:100CDABE                 pop     ecx
+  .text:100CDABF                 pop     edi
+  .text:100CDAC0                 pop     esi
+  .text:100CDAC1                 pop     ebx
+  .text:100CDAC2                 mov     esp, ebp
+  .text:100CDAC4                 pop     ebp
+  .text:100CDAC5                 retn
+  .text:100CDAC6                 test    edi, edi
+  .text:100CDAC8                 jnz     short loc_100CDAE3
+  .text:100CDACA                 call    sub_100AA3F0
+  .text:100CDACF                 push    offset aCascppreflecti_6; "CASCPPReflection::GetReturnValue: type "...
+  .text:100CDAD4                 push    edi
+  .text:100CDAD5                 push    eax
+  .text:100CDAD6                 call    sub_100CAF90
+  .text:100CDADB                 add     esp, 0Ch
+  .text:100CDADE                 jmp     loc_100CD958
+  .text:100CDAE3                 test    byte ptr [ebp+flags], 3
+  .text:100CDAE7                 jz      short loc_100CDAF5
+  .text:100CDAE9                 mov     eax, [esi]
+  .text:100CDAEB                 mov     ecx, esi
+  .text:100CDAED                 call    dword ptr [eax+74h]
+  .text:100CDAF0                 jmp     loc_100CD953
+  .text:100CDAF5                 ; switch 11 cases
+  .text:100CDAF5                 lea     eax, [edi-1]; switch 11 cases
+  .text:100CDAF8                 cmp     eax, 0Ah
+  .text:100CDAFB                 ja      def_100CDB01; jumptable 100CDB01 default case
+  .text:100CDB01                 ; switch jump
+  .text:100CDB01                 jmp     ds:jpt_100CDB01[eax*4]; switch jump
+  .text:100CDB08                 ; jumptable 100CDB01 case 1
+  .text:100CDB08                 mov     eax, [esi]; jumptable 100CDB01 case 1
+  .text:100CDB0A                 mov     ecx, esi
+  .text:100CDB0C                 mov     eax, [eax+5Ch]
+  .text:100CDB0F                 call    eax
+  .text:100CDB11                 test    al, al
+  .text:100CDB13                 mov     eax, [ebp+returnDestination]
+  .text:100CDB16                 setnz   cl
+  .text:100CDB19                 mov     [eax], cl
+  .text:100CDB1B                 jmp     loc_100CD958
+  .text:100CDB20                 ; jumptable 100CDB01 cases 2,6
+  .text:100CDB20                 mov     eax, [esi]; jumptable 100CDB01 cases 2,6
+  .text:100CDB22                 mov     ecx, esi
+  .text:100CDB24                 mov     eax, [eax+5Ch]
+  .text:100CDB27                 call    eax
+  .text:100CDB29                 mov     ecx, [ebp+returnDestination]
+  .text:100CDB2C                 mov     [ecx], al
+  .text:100CDB2E                 jmp     loc_100CD958
+  .text:100CDB33                 ; jumptable 100CDB01 cases 3,7
+  .text:100CDB33                 mov     eax, [esi]; jumptable 100CDB01 cases 3,7
+  .text:100CDB35                 mov     ecx, esi
+  .text:100CDB37                 call    dword ptr [eax+60h]
+  .text:100CDB3A                 mov     ecx, [ebp+returnDestination]
+  .text:100CDB3D                 mov     [ecx], ax
+  .text:100CDB40                 jmp     loc_100CD958
+  .text:100CDB45                 ; jumptable 100CDB01 cases 4,8
+  .text:100CDB45                 mov     eax, [esi]; jumptable 100CDB01 cases 4,8
+  .text:100CDB47                 mov     ecx, esi
+  .text:100CDB49                 call    dword ptr [eax+64h]
+  .text:100CDB4C                 jmp     loc_100CD953
+  .text:100CDB51                 ; jumptable 100CDB01 cases 5,9
+  .text:100CDB51                 mov     eax, [esi]; jumptable 100CDB01 cases 5,9
+  .text:100CDB53                 mov     ecx, esi
+  .text:100CDB55                 mov     eax, [eax+68h]
+  .text:100CDB58                 call    eax
+  .text:100CDB5A                 mov     ecx, [ebp+returnDestination]
+  .text:100CDB5D                 mov     [ecx+4], edx
+  .text:100CDB60                 jmp     loc_100CD956
+  .text:100CDB65                 ; jumptable 100CDB01 case 10
+  .text:100CDB65                 mov     eax, [esi]; jumptable 100CDB01 case 10
+  .text:100CDB67                 mov     ecx, esi
+  .text:100CDB69                 mov     eax, [eax+6Ch]
+  .text:100CDB6C                 call    eax
+  .text:100CDB6E                 mov     eax, [ebp+returnDestination]
+  .text:100CDB71                 fstp    dword ptr [eax]
+  .text:100CDB73                 jmp     loc_100CD958
+  .text:100CDB78                 ; jumptable 100CDB01 case 11
+  .text:100CDB78                 mov     eax, [esi]; jumptable 100CDB01 case 11
+  .text:100CDB7A                 mov     ecx, esi
+  .text:100CDB7C                 mov     eax, [eax+70h]
+  .text:100CDB7F                 call    eax
+  .text:100CDB81                 mov     eax, [ebp+returnDestination]
+  .text:100CDB84                 fstp    qword ptr [eax]
+  .text:100CDB86                 jmp     loc_100CD958
+  .text:100CDB8B                 ; jumptable 100CDB01 default case
+  .text:100CDB8B                 and     edi, 3FFFFFFh; jumptable 100CDB01 default case
+  .text:100CDB91                 push    edi
+  .text:100CDB92                 call    sub_100D0790
+  .text:100CDB97                 add     esp, 4
+  .text:100CDB9A                 test    al, al
+  .text:100CDB9C                 jnz     short loc_100CDB45; jumptable 100CDB01 cases 4,8
+  .text:100CDB9E                 call    sub_100AA3F0
+  .text:100CDBA3                 push    offset aCascppreflecti_4; "CASCPPReflection::GetReturnValue: unkno"...
+  .text:100CDBA8                 jmp     loc_100CDAA7
+  .text:103CE1AF                 push    18h
+  .text:103CE1B1                 mov     eax, [ebp+Block]
+  .text:103CE1B4                 ; Block
+  .text:103CE1B4                 push    eax; Block
+  .text:103CE1B5                 call    sub_1038EE37
+  .text:103CE1BA                 add     esp, 8
+  .text:103CE1BD                 retn
+  .text:103CE1C3                 nop
+  .text:103CE1C4                 nop
+  .text:103CE1C5                 mov     edx, [esp-4+typeId]
+  .text:103CE1C9                 lea     eax, [edx+0Ch]
+  .text:103CE1CC                 mov     ecx, [edx-24h]
+  .text:103CE1CF                 ; StackCookie
+  .text:103CE1CF                 xor     ecx, eax; StackCookie
+  .text:103CE1D1                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:103CE1D6                 mov     eax, offset stru_104CE92C
+  .text:103CE1DB                 jmp     ___CxxFrameHandler3
+procedure: |
+  // Invoke the newly constructed CASMethod assignment callable after setting returnDestination. Select CASBaseCallable::Call(int, ...), not its constructor, the inline InternalRelease block, or logging.
+  // Windows PE32: Array Release uses ECX this; the variadic callable uses stack this, fixed int and varargs.
+  bool __cdecl CASReflection::GetReturnValue(
+          void *returnDestination,
+          int typeId,
+          unsigned int flags,
+          asIScriptContext *context,
+          CASModule *module)
+  {
+    int v6; // eax
+    _DWORD *v7; // ecx
+    CASServerManager *Instance; // eax
+    int v10; // ebx
+    int v11; // eax
+    int v12; // esi
+    asIScriptFunction *v13; // edi
+    int v14; // eax
+    CASMethod *v15; // eax
+    CASMethod *v16; // edi
+    int v18; // edi
+    int v19; // eax
+    int v20; // eax
+    int v21; // edx
+    int v22; // eax
+    int v23; // [esp+14h] [ebp-1Ch]
+    char v24[4]; // [esp+18h] [ebp-18h] BYREF
+    int v25; // [esp+1Ch] [ebp-14h] BYREF
+    unsigned int v26; // [esp+20h] [ebp-10h]
+    int v27; // [esp+2Ch] [ebp-4h]
+    bool context_3; // [esp+47h] [ebp+17h]
+
+    if ( context && module )
+    {
+      context_3 = 1;
+      if ( (typeId & 0x40000000) != 0 )
+      {
+        v6 = (*(int (__thiscall **)(asIScriptContext *))(*(_DWORD *)context + 120))(context);
+        goto LABEL_5;
+      }
+      if ( (typeId & 0x1C000000) != 0 )
+      {
+        Instance = CASServerManager::GetInstance();
+        v10 = (*(int (__thiscall **)(void *, int))(*(_DWORD *)Instance->scriptEngine + 220))(
+                Instance->scriptEngine,
+                typeId);
+        if ( v10 )
+        {
+          v23 = (*(int (__thiscall **)(asIScriptContext *))(*(_DWORD *)context + 120))(context);
+          v11 = (*(int (__thiscall **)(int))(*(_DWORD *)v10 + 88))(v10);
+          v12 = 0;
+          v26 = v11;
+          if ( v11 )
+          {
+            _mm_lfence();
+            while ( 1 )
+            {
+              v13 = (asIScriptFunction *)(*(int (__thiscall **)(int, int, int))(*(_DWORD *)v10 + 92))(v10, v12, 1);
+              if ( (*(int (__thiscall **)(asIScriptFunction *))(*(_DWORD *)v13 + 96))(v13) == 1
+                && (*(int (__thiscall **)(asIScriptFunction *, _DWORD, int *, char *, _DWORD, _DWORD))(*(_DWORD *)v13 + 100))(
+                     v13,
+                     0,
+                     &v25,
+                     v24,
+                     0,
+                     0) >= 0 )
+              {
+                _mm_lfence();
+                v14 = (*(int (__thiscall **)(int))(*(_DWORD *)v10 + 48))(v10);
+                if ( v25 == v14 && (v24[0] & 1) != 0 )
+                  break;
+              }
+              v11 = v26;
+              if ( ++v12 >= v26 )
+                goto LABEL_24;
+            }
+            _mm_lfence();
+            v15 = (CASMethod *)operator new(0x18u);
+            v27 = 0;
+            if ( v15 )
+            {
+              _mm_lfence();
+              v16 = CASMethod::CASMethod(v15, v13, module);
+            }
+            else
+            {
+              v16 = nullptr;
+            }
+            v27 = -1;
+            v16->returnDestination = returnDestination;
+    // CASBaseCallable_Call (func): Invoke the newly constructed CASMethod assignment callable after setting returnDestination. Select CASBaseCallable::Call(int, ...), not its constructor, the inline InternalRelease block, or logging.
+            CASBaseCallable::Call(&v16->base, 0, v23);
+            if ( v16->base.referenceCount-- == 1 )
+            {
+              _mm_lfence();
+              (*(void (__thiscall **)(CASMethod *, int))v16->base.vtable)(v16, 1);
+            }
+            v11 = v26;
+          }
+  LABEL_24:
+          if ( v12 == v11 )
+          {
+            context_3 = 0;
+            v18 = sub_100AA3F0();
+            (*(void (__thiscall **)(int))(*(_DWORD *)v10 + 24))(v10);
+            (*(void (__thiscall **)(int))(*(_DWORD *)v10 + 28))(v10);
+            sub_100CAF90(
+              v18,
+              0,
+              "CASCPPReflection::GetReturnValue: no assignment operator found for type '%s::%s', cannot convert!\n");
+          }
+          return context_3;
+        }
+        v19 = sub_100AA3F0();
+        sub_100CAF90(v19, 0, "CASCPPReflection::GetReturnValue: failed to get object type!\n");
+      }
+      else
+      {
+        if ( !typeId )
+        {
+          v20 = sub_100AA3F0();
+          sub_100CAF90(v20, 0, "CASCPPReflection::GetReturnValue: type is null!\n");
+          return context_3;
+        }
+        if ( (flags & 3) != 0 )
+        {
+          v6 = (*(int (__thiscall **)(asIScriptContext *))(*(_DWORD *)context + 116))(context);
+  LABEL_5:
+          v7 = returnDestination;
+  LABEL_6:
+          *v7 = v6;
+          return context_3;
+        }
+        switch ( typeId )
+        {
+          case 1:
+            *(_BYTE *)returnDestination = (*(unsigned __int8 (__thiscall **)(asIScriptContext *))(*(_DWORD *)context + 92))(context) != 0;
+            return context_3;
+          case 2:
+          case 6:
+            *(_BYTE *)returnDestination = (*(int (__thiscall **)(asIScriptContext *))(*(_DWORD *)context + 92))(context);
+            return context_3;
+          case 3:
+          case 7:
+            *(_WORD *)returnDestination = (*(int (__thiscall **)(asIScriptContext *))(*(_DWORD *)context + 96))(context);
+            return context_3;
+          case 4:
+          case 8:
+            goto LABEL_36;
+          case 5:
+          case 9:
+            v6 = (*(int (__thiscall **)(asIScriptContext *))(*(_DWORD *)context + 104))(context);
+            v7 = returnDestination;
+            *((_DWORD *)returnDestination + 1) = v21;
+            goto LABEL_6;
+          case 10:
+            *(float *)returnDestination = ((double (__thiscall *)(asIScriptContext *))*(_DWORD *)(*(_DWORD *)context + 108))(context);
+            return context_3;
+          case 11:
+            *(double *)returnDestination = ((double (__thiscall *)(asIScriptContext *))*(_DWORD *)(*(_DWORD *)context + 112))(context);
+            return context_3;
+          default:
+            if ( (unsigned __int8)sub_100D0790(typeId & 0x3FFFFFF) )
+            {
+  LABEL_36:
+              v6 = (*(int (__thiscall **)(asIScriptContext *))(*(_DWORD *)context + 100))(context);
+              goto LABEL_5;
+            }
+            v22 = sub_100AA3F0();
+            sub_100CAF90(v22, 0, "CASCPPReflection::GetReturnValue: unknown primitive return type, cannot convert!\n");
+            break;
+        }
+      }
+    }
+    return 0;
+  }

@@ -3933,6 +3933,30 @@ modules:
           - CASBaseManager_OnMapEnd.{platform}.yaml
         expected_output:
           - CASHook_Call.{platform}.yaml
+      - name: find-AS-reference-counted-callable-bodies
+        expected_output:
+          - CASRefCountedBaseClass_InternalRelease.{platform}.yaml
+          - CScriptAny_Release.{platform}.yaml
+          - CASFunction_Create.{platform}.yaml
+      - name: find-AS-callable-predecessors
+        expected_output:
+          - CClassicMode_SetItemMappings.{platform}.yaml
+        expected_output_windows:
+          - CASReflection_GetReturnValue.windows.yaml
+        expected_output_linux:
+          - CASConCommandSystem_VisitClientCommand.linux.yaml
+      - name: find-CClassicMode_SetItemMappings-decompiles
+        expected_input:
+          - CClassicMode_SetItemMappings.{platform}.yaml
+        expected_output:
+          - CScriptArray_Release.{platform}.yaml
+      - name: find-CASBaseCallable_Call-decompiles
+        expected_input_windows:
+          - CASReflection_GetReturnValue.windows.yaml
+        expected_input_linux:
+          - CASConCommandSystem_VisitClientCommand.linux.yaml
+        expected_output:
+          - CASBaseCallable_Call.{platform}.yaml
     symbols:
       - name: CASDirectoryList_CreateDirectory
         category: func
@@ -3978,6 +4002,24 @@ modules:
         category: func
       - name: CASHook_Call
         category: func
+      - name: CASRefCountedBaseClass_InternalRelease
+        category: func
+      - name: CScriptAny_Release
+        category: func
+      - name: CScriptArray_Release
+        category: func
+      - name: CASBaseCallable_Call
+        category: func
+      - name: CASFunction_Create
+        category: func
+      - name: CClassicMode_SetItemMappings
+        category: func
+      - name: CASReflection_GetReturnValue
+        category: func
+        platform: windows
+      - name: CASConCommandSystem_VisitClientCommand
+        category: func
+        platform: linux
   - name: serverbrowser
     module_windows: serverbrowser.dll
     module_linux: serverbrowser_linux.so

@@ -392,9 +392,14 @@ async def preprocess_skill(
         return False
     for item in located["accesses"]:
         signature_owner = item["signature_owner"]
+        # An access at a proved logical entry must produce the same signature
+        # whether IDA defines it as its own function or folds it into a neighbor.
+        entry_access = item["body_end"] is not None and item["site"] == item["owner"]
         function = (
             await inspect_unique_function(session, class_name, int(signature_owner, 0), image_base, debug)
-            if signature_owner is not None and (item["body_end"] is None or signature_owner == item["owner"])
+            if not entry_access
+            and signature_owner is not None
+            and (item["body_end"] is None or signature_owner == item["owner"])
             else None
         )
         if function is not None:

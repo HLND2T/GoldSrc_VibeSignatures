@@ -32,7 +32,7 @@ LLM_DECOMPILE = [
         "instruction_rules": [
             {
                 "regex": "(?i)(?:push\\s+(?:offset\\s+)?\\w+|mov\\s+(?:dword "
-                "ptr\\s+)?\\[esp[^\\]]*\\],\\s+(?:offset\\s+)?\\w+|mov\\s+\\w+,\\s+offset\\s+\\w+|lea\\s+\\w+,\\s+(?:ds:)?(?:\\([^,+\\[\\]]+\\s-\\s[^,\\[\\]]+\\)\\[ebx\\]|\\[ebx[+-][^,\\[\\]]+\\]))",
+                "ptr\\s+)?\\[esp[^\\]]*\\],\\s+(?:offset\\s+)?\\w+|lea\\s+\\w+,\\s+(?:ds:)?(?:\\([^,+\\[\\]]+\\s-\\s[^,\\[\\]]+\\)\\[ebx\\]|\\[ebx[+-][^,\\[\\]]+\\]))",
                 "text": "Select only the instruction preparing this complete matrix's address as a "
                 "call argument: the output pointer of GetFloatv for "
                 "gProjectionMatrix/r_world_matrix, or the input/output pointer of "
@@ -40,7 +40,8 @@ LLM_DECOMPILE = [
                 "object-address LEA feeding that argument. Do not return "
                 "matrix-element/vector loads or stores, indexed loop addresses, or interior "
                 "rows: their operands can encode base+16 instead of the array base. Trace "
-                "the argument role, never a fixed call ordinal.",
+                "the argument role, never a fixed call ordinal. For gWorldToScreen, use "
+                "the InvertMatrix argument, not a MOV of its address into the product-loop register.",
             }
         ],
     },

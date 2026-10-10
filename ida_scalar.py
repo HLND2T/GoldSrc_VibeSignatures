@@ -207,3 +207,83 @@ def recover_masked_index_stride(disasm, *, stack_displacements=None):
     if len(values) != 1 or verified_calls != player_calls:
         raise ValueError("no unique masked frame-ring stride reaches StudioDrawPlayer")
     return values.pop(), evidence
+
+
+def recover_masked_index_load_rule(disasm, evidence):
+    """Select one memory read feeding the independently verified frame index.
+
+    Follow register copies back from each verified AND, within its basic block.
+    A GOT base load is not the index read when a later member load defines it.
+    Prefer the earliest proven read and reject duplicate instruction spellings,
+    since an instruction rule cannot distinguish their addresses.
+    """
+    from ida_llm_decompile import _strip_disasm_comments
+
+    instructions = []
+    for raw in _strip_disasm_comments(disasm).splitlines():
+        match = ADDRESS_LINE.match(raw)
+        if match:
+            instructions.append((int(match[1], 16), match[2].strip()))
+    seeds = {int(item["instructions"][0].split(":", 1)[0], 0) for item in evidence}
+    reads = []
+    for index, (address, line) in enumerate(instructions):
+        if address not in seeds:
+            continue
+        seed = re.fullmatch(r"and\s+(\w+),\s*.+", line, re.I)
+        if seed is None or seed[1].lower() not in REGISTERS:
+            raise ValueError("unrecognized verified frame-index mask")
+        register = seed[1].lower()
+        for read_address, candidate in reversed(instructions[:index]):
+            parts = candidate.lower().split(None, 1)
+            mnemonic = parts[0]
+            operands = [item.strip() for item in parts[1].split(",")] if len(parts) == 2 else []
+            if mnemonic not in {
+                "mov",
+                "lea",
+                "add",
+                "sub",
+                "and",
+                "or",
+                "xor",
+                "inc",
+                "dec",
+                "shl",
+                "shr",
+                "sar",
+                "imul",
+                "cmp",
+                "test",
+                "push",
+                "nop",
+            }:
+                break
+            if mnemonic == "imul" and len(operands) == 1 and register in {"eax", "edx"}:
+                break  # The single-operand form implicitly writes EDX:EAX.
+            if not operands or _parent_register(operands[0]) != register or mnemonic in {"cmp", "test"}:
+                continue
+            if mnemonic != "mov" or len(operands) != 2 or operands[0] != register:
+                break
+            if operands[1] in REGISTERS:
+                register = operands[1]
+                continue
+            if (
+                ("[" in operands[1] or re.match(r"(?:dword ptr )?(?:ds:)?\w+", operands[1]))
+                and not re.search(r"\b(?:esp|ebp|offset)\b", operands[1])
+                and _number(operands[1]) is None
+            ):
+                reads.append((read_address, candidate))
+            break
+        else:
+            raise ValueError("no memory read defines the verified frame index")
+    if not reads:
+        raise ValueError("no memory read defines the verified frame index")
+    _, selected = min(reads)
+    regex = r"(?i)" + r"\s+".join(re.escape(token) for token in selected.split())
+    if sum(re.fullmatch(regex, line) is not None for _, line in instructions) != 1:
+        raise ValueError("ambiguous frame-index memory-read instruction")
+    return {
+        "regex": regex,
+        "text": "Select this exact memory read of the parse counter feeding the earliest independently "
+        "verified masked frame-ring index. Do not select the preceding GOT/client-state base load "
+        "or another access to the same counter: " + selected,
+    }

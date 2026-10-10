@@ -62,3 +62,11 @@ Run both registered finders against their applicable game versions, then reposit
 - `uv run python format_repo_files.py --check`: exit 0.
 - `uv run python tests/run_test_suite.py all -b --durations 30`: 1070 tests, OK (9 skips for POSIX/Linux-only cases, unavailable Redis, and opt-in CLI/IDA checks). Real IDA execution is covered separately by the selected-node batch above.
 - The artifact-inventory contract checks Git-tracked paths as well as on-disk files; stage task-owned generated YAML before this final gate. Merely rerunning `-allgamever -skill` can skip existing outputs, so use the exact selected-node batch for forced revalidation.
+
+### Reproducible gWorldToScreen access (PR #357, 2026-10-10)
+
+- Trigger: hl-3248 CI byte comparison differed only in `gv_inst_offset`: `0x369` versus `0x3ff`, with the same object address and function signature.
+- Root constraint: the MOV of `gWorldToScreen` into the product-loop destination register and the PUSH passing the object to InvertMatrix are functionally equivalent references, but accepting both lets LLM ordering vary the artifact bytes.
+- Correct approach: keep gWorldToScreen's existing InvertMatrix argument policy and exclude register-immediate MOV from its accepted instruction rule. Retain PUSH, stack-argument MOV and PIC LEA. Other matrix specs keep their existing rules.
+- Verification: real hl-3248 matrix finder regenerated offset `0x3ff` (`0x1d4682f: push offset 0x2c20100`); the other three matrix outputs were unchanged. Raw operand resolution and signature uniqueness passed. Existing gWorldToScreen artifacts in all eleven Windows configs use the same accepted PUSH form after this correction.
+- Scope: gWorldToScreen argument selection only; no addresses, call ordinals, or version-specific offsets enter discovery.

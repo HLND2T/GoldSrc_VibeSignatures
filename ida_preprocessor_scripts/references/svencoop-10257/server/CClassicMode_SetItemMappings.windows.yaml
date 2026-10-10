@@ -1,0 +1,144 @@
+func_name: CClassicMode_SetItemMappings
+func_va: '0x10102250'
+disasm_code: |
+  ; Release the previous item-mapping array before clearing it, or release the rejected incoming array after the invalid-type diagnostic. Both calls target CScriptArray::Release() const, not CScriptAny::Release, GetArrayObjectType, or CASLog::Error.
+  ; Windows PE32: Array Release uses ECX this; the variadic callable uses stack this, fixed int and varargs.
+  .text:10102250                 push    ebp
+  .text:10102251                 mov     ebp, esp
+  .text:10102253                 push    0FFFFFFFFh
+  .text:10102255                 push    offset SEH_10102250
+  .text:1010225A                 mov     eax, large fs:0
+  .text:10102260                 push    eax
+  .text:10102261                 push    ebx
+  .text:10102262                 push    esi
+  .text:10102263                 push    edi
+  .text:10102264                 mov     eax, ___security_cookie
+  .text:10102269                 xor     eax, ebp
+  .text:1010226B                 push    eax
+  .text:1010226C                 lea     eax, [ebp+var_C]
+  .text:1010226F                 mov     large fs:0, eax
+  .text:10102275                 mov     ebx, ecx
+  .text:10102277                 ; Block
+  .text:10102277                 mov     ecx, [ebx+8]; Block
+  .text:1010227A                 test    ecx, ecx
+  .text:1010227C                 jz      short loc_10102283
+    ; CScriptArray_Release (func): Release the previous item-mapping array before clearing it, or release the rejected incoming array after the invalid-type diagnostic. Both calls target CScriptArray::Release() const, not CScriptAny::Release, GetArrayObjectType, or CASLog::Error.
+  .text:1010227E                 call    CScriptArray__Release
+  .text:10102283                 mov     edi, [ebp+Block]
+  .text:10102286                 mov     dword ptr [ebx+8], 0
+  .text:1010228D                 test    edi, edi
+  .text:1010228F                 jz      loc_1010231D
+  .text:10102295                 mov     eax, g_CASServerManager_instance
+  .text:1010229A                 test    eax, eax
+  .text:1010229C                 jnz     short loc_101022CD
+  .text:1010229E                 ; Size
+  .text:1010229E                 push    44h ; 'D'; Size
+  .text:101022A0                 call    ??2@YAPAXI@Z; operator new(uint)
+  .text:101022A5                 add     esp, 4
+  .text:101022A8                 mov     [ebp+Block], eax
+  .text:101022AB                 mov     [ebp+var_4], 0
+  .text:101022B2                 test    eax, eax
+  .text:101022B4                 jz      short loc_101022BF
+  .text:101022B6                 mov     ecx, eax
+  .text:101022B8                 call    sub_102B5080
+  .text:101022BD                 jmp     short loc_101022C1
+  .text:101022BF                 xor     eax, eax
+  .text:101022C1                 mov     [ebp+var_4], 0FFFFFFFFh
+  .text:101022C8                 mov     g_CASServerManager_instance, eax
+  .text:101022CD                 mov     ecx, [eax+0Ch]
+  .text:101022D0                 push    offset aArrayItemmappi; "array<ItemMapping@>"
+  .text:101022D5                 mov     eax, [ecx]
+  .text:101022D7                 call    dword ptr [eax+0E4h]
+  .text:101022DD                 mov     ecx, edi
+  .text:101022DF                 mov     esi, eax
+  .text:101022E1                 call    CScriptArray__GetArrayObjectType
+  .text:101022E6                 cmp     esi, eax
+  .text:101022E8                 jz      short loc_1010231A
+  .text:101022EA                 call    sub_100AA3F0
+  .text:101022EF                 push    offset aCclassicmodeSe; "CClassicMode::SetItemMappings: Invalid "...
+  .text:101022F4                 push    0
+  .text:101022F6                 push    eax
+  .text:101022F7                 call    sub_100CAF90
+  .text:101022FC                 add     esp, 0Ch
+  .text:101022FF                 ; Block
+  .text:101022FF                 mov     ecx, edi; Block
+    ; CScriptArray_Release (func): Release the previous item-mapping array before clearing it, or release the rejected incoming array after the invalid-type diagnostic. Both calls target CScriptArray::Release() const, not CScriptAny::Release, GetArrayObjectType, or CASLog::Error.
+  .text:10102301                 call    CScriptArray__Release
+  .text:10102306                 mov     ecx, [ebp+var_C]
+  .text:10102309                 mov     large fs:0, ecx
+  .text:10102310                 pop     ecx
+  .text:10102311                 pop     edi
+  .text:10102312                 pop     esi
+  .text:10102313                 pop     ebx
+  .text:10102314                 mov     esp, ebp
+  .text:10102316                 pop     ebp
+  .text:10102317                 retn    4
+  .text:1010231A                 mov     [ebx+8], edi
+  .text:1010231D                 mov     ecx, [ebp+var_C]
+  .text:10102320                 mov     large fs:0, ecx
+  .text:10102327                 pop     ecx
+  .text:10102328                 pop     edi
+  .text:10102329                 pop     esi
+  .text:1010232A                 pop     ebx
+  .text:1010232B                 mov     esp, ebp
+  .text:1010232D                 pop     ebp
+  .text:1010232E                 retn    4
+  .text:103CF747                 push    44h ; 'D'
+  .text:103CF749                 mov     eax, [ebp+Block]
+  .text:103CF74C                 ; Block
+  .text:103CF74C                 push    eax; Block
+  .text:103CF74D                 call    sub_1038EE37
+  .text:103CF752                 add     esp, 8
+  .text:103CF755                 retn
+  .text:103CF75B                 nop
+  .text:103CF75C                 nop
+  .text:103CF75D                 mov     edx, [esp-4+arg_4]
+  .text:103CF761                 lea     eax, [edx+0Ch]
+  .text:103CF764                 mov     ecx, [edx-10h]
+  .text:103CF767                 ; StackCookie
+  .text:103CF767                 xor     ecx, eax; StackCookie
+  .text:103CF769                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:103CF76E                 mov     eax, offset stru_104CFDB4
+  .text:103CF773                 jmp     ___CxxFrameHandler3
+procedure: |
+  // Release the previous item-mapping array before clearing it, or release the rejected incoming array after the invalid-type diagnostic. Both calls target CScriptArray::Release() const, not CScriptAny::Release, GetArrayObjectType, or CASLog::Error.
+  // Windows PE32: Array Release uses ECX this; the variadic callable uses stack this, fixed int and varargs.
+  void __thiscall CClassicMode::SetItemMappings(CClassicMode *classicMode, CScriptArray *incomingArray)
+  {
+    CScriptArray *itemMappings; // ecx
+    CASServerManager *v4; // eax
+    void *v5; // esi
+    int v6; // eax
+
+    itemMappings = classicMode->itemMappings;
+    if ( itemMappings )
+    // CScriptArray_Release (func): Release the previous item-mapping array before clearing it, or release the rejected incoming array after the invalid-type diagnostic. Both calls target CScriptArray::Release() const, not CScriptAny::Release, GetArrayObjectType, or CASLog::Error.
+      CScriptArray::Release(itemMappings);
+    classicMode->itemMappings = nullptr;
+    if ( incomingArray )
+    {
+      v4 = g_CASServerManager_instance;
+      if ( !g_CASServerManager_instance )
+      {
+        if ( operator new(0x44u) )
+          v4 = (CASServerManager *)sub_102B5080();
+        else
+          v4 = nullptr;
+        g_CASServerManager_instance = v4;
+      }
+      v5 = (void *)(*(int (__thiscall **)(void *, const char *))(*(_DWORD *)v4->scriptEngine + 228))(
+                     v4->scriptEngine,
+                     "array<ItemMapping@>");
+      if ( v5 == CScriptArray::GetArrayObjectType(incomingArray) )
+      {
+        classicMode->itemMappings = incomingArray;
+      }
+      else
+      {
+        v6 = sub_100AA3F0();
+        sub_100CAF90(v6, 0, "CClassicMode::SetItemMappings: Invalid array type passed!\n");
+    // CScriptArray_Release (func): Release the previous item-mapping array before clearing it, or release the rejected incoming array after the invalid-type diagnostic. Both calls target CScriptArray::Release() const, not CScriptAny::Release, GetArrayObjectType, or CASLog::Error.
+        CScriptArray::Release(incomingArray);
+      }
+    }
+  }

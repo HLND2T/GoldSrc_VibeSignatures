@@ -103,7 +103,7 @@ class BoundedBodyTests(unittest.TestCase):
 class SignatureOwnerTests(unittest.IsolatedAsyncioTestCase):
     async def test_embedded_or_missing_owner_uses_verified_access_signature(self):
         finder = importlib.import_module("ida_preprocessor_scripts.find-client-viewport-singleton")
-        for signature_owner in (None, "0x1000"):
+        for signature_owner in (None, "0x1000", "0x1020"):
             with self.subTest(signature_owner=signature_owner):
                 located = {
                     "pointer_size": 4,
@@ -122,7 +122,11 @@ class SignatureOwnerTests(unittest.IsolatedAsyncioTestCase):
                 signature = "B9 ?? ?? ?? ?? E9 ?? ?? ?? ?? 90"
                 with (
                     patch.object(finder, "run_walk", AsyncMock(return_value=located)),
-                    patch.object(finder, "inspect_unique_function", AsyncMock()) as inspect,
+                    patch.object(
+                        finder,
+                        "inspect_unique_function",
+                        AsyncMock(return_value={"func_va": "0x1020", "func_size": "0xa", "func_sig": signature}),
+                    ) as inspect,
                     patch.object(finder, "run_signature", AsyncMock(return_value={"patch_sig": signature})) as generate,
                     patch.object(finder, "write_located_globals", AsyncMock(return_value=True)) as write,
                 ):
