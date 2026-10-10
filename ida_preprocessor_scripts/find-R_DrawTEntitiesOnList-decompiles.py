@@ -18,7 +18,7 @@ from ida_analyze_util import (
     parse_mcp_result,
     preprocess_common_skill,
 )
-from ida_scalar import build_stack_operand_export_py_eval, recover_masked_index_stride
+from ida_scalar import build_stack_operand_export_py_eval, recover_masked_index_load_rule, recover_masked_index_stride
 from scalar_artifact import SCALAR_FIELDS
 
 LLM_DECOMPILE = [
@@ -84,6 +84,12 @@ async def preprocess_skill(
         value, evidence = recover_masked_index_stride(
             exported["disasm_code"], stack_displacements=stack["stack_displacements"]
         )
+        rules = {}
+        # SvEngine Linux loads the client-state pointer through the GOT before
+        # reading its parse counter. Restrict the LLM to the proven member load,
+        # so the pointer materialization cannot be emitted as cl_parsecount.
+        if platform == "linux" and Path(new_binary_dir).parent.name.startswith("svencoop-"):
+            rules["cl_parsecount"] = [recover_masked_index_load_rule(exported["disasm_code"], evidence)]
     except ValueError as exc:
         print(f"size_of_frame: {exc}")
         if debug:
@@ -99,7 +105,11 @@ async def preprocess_skill(
         image_base=image_base,
         gv_names=["cl_parsecount"],
         scalar_names=["size_of_frame"],
-        llm_decompile_specs=select_llm_specs(LLM_DECOMPILE, expected_values={"size_of_frame": value}),
+        llm_decompile_specs=select_llm_specs(
+            LLM_DECOMPILE,
+            expected_values={"size_of_frame": value},
+            instruction_rules=rules,
+        ),
         llm_config=llm_config,
         generate_yaml_desired_fields=[
             ("cl_parsecount", GV_FIELDS),

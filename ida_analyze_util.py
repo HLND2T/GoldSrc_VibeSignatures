@@ -3040,20 +3040,11 @@ def reachable_address_graph(graph, entry):
                     'writes': data['writes']}
             for block, data in graph.items() if block in reachable}
 
-def cycle_writes_register(graph, path, ancestor, register):
-    if ancestor not in path:
-        return True
-    for state in path[path.index(ancestor):]:
-        if any(register in writes for writes in graph[state[0]]['writes'][:state[1]]):
-            return True
-    return False
-
-def resolve_address_flow(graph, block, stop, register, visiting=frozenset(), path=()):
+def resolve_address_flow(graph, block, stop, register, visiting=frozenset()):
     state = (block, stop, register)
     if state in visiting or len(visiting) >= 128 or block not in graph:
         return None
     visiting = visiting | {state}
-    path = path + (state,)
     writes = graph[block]['writes']
     for index in range(stop - 1, -1, -1):
         if register not in writes[index]:
@@ -3065,43 +3056,50 @@ def resolve_address_flow(graph, block, stop, register, visiting=frozenset(), pat
         if kind == 'constant':
             return value
         if kind == 'register':
-            return resolve_address_flow(graph, block, index, value, visiting, path)
+            return resolve_address_flow(graph, block, index, value, visiting)
         if kind == 'offset':
-            base = resolve_address_flow(graph, block, index, register, visiting, path)
+            base = resolve_address_flow(graph, block, index, register, visiting)
             return None if base is None else (base + value) & 0xffffffff
         if kind == 'address':
-            base = resolve_address_flow(graph, block, index, value[0], visiting, path)
+            base = resolve_address_flow(graph, block, index, value[0], visiting)
             return None if base is None else (base + value[1]) & 0xffffffff
         if kind == 'got_load':
-            base = resolve_address_flow(graph, block, index, value[0], visiting, path)
+            base = resolve_address_flow(graph, block, index, value[0], visiting)
             return None if base is None else value[2].get((base + value[1]) & 0xffffffff)
         return None
     predecessors = graph[block]['preds']
     if not predecessors:
         return None
+    # Walk through blocks that never define this register as one region. A
+    # recursive walk through intersecting loops can encounter a cycle-only
+    # subtree before reaching the entry definition and incorrectly lose it.
+    # Every region boundary must supply the same proven value. A write on a
+    # back edge is a boundary too; self-dependent arithmetic still fails closed
+    # through the visiting-state guard above.
     reaching = []
-    for parent in predecessors:
+    pending = list(predecessors)
+    seen = set()
+    while pending:
+        parent = pending.pop()
+        if parent in seen:
+            continue
+        seen.add(parent)
         if parent not in graph:
             return None
-        parent_stop = len(graph[parent]['writes'])
-        ancestor = (parent, parent_stop, register)
-        if ancestor in visiting:
-            # Skipping a cycle is only sound while it never wrote the register
-            # between the ancestor state and here: the value is then the one
-            # reaching the loop header. A write on the cycle (`add reg, 4` per
-            # iteration, or a self-referential operand) makes the value depend on
-            # the iteration count, so fail closed exactly as before.
-            if cycle_writes_register(graph, path, ancestor, register):
+        parent_writes = graph[parent]['writes']
+        definitions = [index for index, write in enumerate(parent_writes) if register in write]
+        if not definitions:
+            if not graph[parent]['preds']:
                 return None
+            pending.extend(graph[parent]['preds'])
             continue
-        value = resolve_address_flow(graph, parent, parent_stop, register, visiting, path)
+        value = resolve_address_flow(graph, parent, definitions[-1] + 1, register, visiting)
         if value is None:
             return None
         reaching.append(value)
     if not reaching:
         return None
     return reaching[0] if len(set(reaching)) == 1 else None
-globals()['cycle_writes_register'] = cycle_writes_register
 globals()['resolve_address_flow'] = resolve_address_flow
 """
 
@@ -3190,7 +3188,7 @@ if pointer_size == 4 and (idc.print_insn_mnem(ea) or '').lower() == 'mov' and in
 relative_store_address = None
 address_operand_source = None
 compare_operand = decode_address_compare(ida_bytes.get_bytes(ea, size)) if pointer_size == 4 else None
-# A MOV store's IDA xref can name only its displacement, even when that
+# A MOV load/store's IDA xref can name only its displacement, even when that
 # displacement happens to be mapped. Resolve the effective address instead.
 store_operand = None
 if (pointer_size == 4 and size == 6 and insn.ops[0].type == ida_ua.o_displ
@@ -3198,7 +3196,13 @@ if (pointer_size == 4 and size == 6 and insn.ops[0].type == ida_ua.o_displ
     raw = ida_bytes.get_bytes(ea, size)
     if raw and raw[0] == 0x89:
         store_operand = decode_address_load(raw)
-relative_operand = store_operand or compare_operand
+load_operand = None
+if (pointer_size == 4 and size == 6 and insn.ops[1].type == ida_ua.o_displ
+        and insn.ops[1].offb == 2 and operand_pic[1] and not got_indirect_targets):
+    raw = ida_bytes.get_bytes(ea, size)
+    if raw and raw[0] == 0x8b:
+        load_operand = decode_address_load(raw)
+relative_operand = store_operand or compare_operand or load_operand
 if relative_operand is not None:
     register_name = ('eax', 'ecx', 'edx', 'ebx', 'esp', 'ebp', 'esi', 'edi')[relative_operand[0]]
     relative_store_address = {
@@ -3297,6 +3301,9 @@ if (func is not None and (relative_operand is not None or (size == 6
                           # not invalidate an address register. `fnstsw ax` and
                           # friends still carry an o_reg operand and stay clobbers.
                           or (mnemonic.startswith('f') and not any(
+                              op.type == ida_ua.o_reg and op.reg < 8 for op in decoded.ops))
+                          # MOVSS writes XMM or memory, never an address register.
+                          or (mnemonic == 'movss' and not any(
                               op.type == ida_ua.o_reg and op.reg < 8 for op in decoded.ops))):
                     changed = {reg: None for reg in range(8)}
                 writes.append(changed)
@@ -3326,7 +3333,7 @@ if (func is not None and (relative_operand is not None or (size == 6
                                 address_operand_source = hex(instruction_addresses[selected[0]][index])
                     else:
                         relative_store_address['issue'] = (
-                            f'Effective store address {hex(base)} + {hex(address_load[1])} = {hex(target)} '
+                            f'Effective address {hex(base)} + {hex(address_load[1])} = {hex(target)} '
                             'does not identify a complete 4-byte range in a data segment.'
                         )
                 elif segment is not None and not (segment.perm & ida_segment.SEGPERM_EXEC):

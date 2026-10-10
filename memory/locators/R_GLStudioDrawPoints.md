@@ -58,3 +58,11 @@ tags:
 - Correct approach: identify the ATI OpenGL capability `GL_PN_TRIANGLES_ATI` (`0x87F0`), select the unique non-ATI branch, and retain the StudioSetupSkin semantic gate. Do not substitute hardcoded addresses or a reversed call-count heuristic.
 - Verification: five regression tests exercise the actual WALK template (including ambiguity and missing-skin rejection). The real hl-3266 Windows finder generated `func_rva=0x90660`, `func_size=0x85A`. A local schema-8 candidate was exported and pruned through Renderer’s consumer manifest; CS3266 then loaded de_dust2, produced a screenshot, changed to de_dust and quit with exit code 0, with all ten installed plugins enabled.
 - Scope: the finder correction is shared; the regenerated artifact and live game verification here cover hl-3266 Windows. Other published snapshots require their own regeneration before claiming corrected addresses. Local validation does not publish the remote catalog.
+
+## Remaining ATI artifacts regenerated (PR #357, 2026-10-10)
+
+- Trigger: shared-helper changes caused the full CI rebuild to compare every engine artifact; five Windows files still published the ATI body even though the finder had already been corrected in PR #333.
+- Root cause: #333 regenerated hl-3266 only. The stale files for hl-3248/3329/3647/4554 and cof-5936 still had the ATI `push 0x87F0` signature.
+- Correct approach: reuse the existing table/unique non-ATI branch finder and regenerate the remaining artifacts; do not change its anchor or weaken byte comparison.
+- Fresh actual finder outputs: hl-3248 `0x1d90680`, hl-3329 `0x1d90540`, hl-3647 `0x1d906b0`, hl-4554 `0x1d9c600`, cof-5936 `0x1dc11e0`. Each run passed the existing StudioSetupSkin gate; each output signature has exactly one match in its raw executable sections.
+- Scope: these five Windows artifacts. No new live-game validation or remote catalog publication is claimed.

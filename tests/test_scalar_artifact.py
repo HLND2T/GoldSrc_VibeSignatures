@@ -1,4 +1,5 @@
 import tempfile
+import re
 import unittest
 from pathlib import Path
 from unittest.mock import Mock
@@ -6,7 +7,7 @@ from unittest.mock import Mock
 import yaml
 
 from scalar_artifact import resolve_scalar, select_scalar_value, validate_scalar_artifact
-from ida_scalar import recover_masked_index_stride
+from ida_scalar import recover_masked_index_load_rule, recover_masked_index_stride
 
 
 class ScalarArtifactTests(unittest.TestCase):
@@ -156,6 +157,54 @@ class FrameStrideTests(unittest.TestCase):
         )
         with self.assertRaises(ValueError):
             recover_masked_index_stride(code, stack_displacements={str(0x401000): 8, str(0x401004): 0})
+
+
+class FrameIndexLoadTests(unittest.TestCase):
+    def rule(self, lines):
+        disasm = "\n".join(f"{0x4000 + index * 8:#x}: {line}" for index, line in enumerate(lines))
+        _, evidence = recover_masked_index_stride(disasm)
+        return recover_masked_index_load_rule(disasm, evidence)
+
+    def code(self, definition, intervening=()):
+        return [
+            "mov esi, ds:(state_ptr - got)[ebx]",
+            definition,
+            *intervening,
+            "and eax, 3Fh",
+            "imul eax, 42B8h",
+            "lea eax, frames[eax]",
+            "push eax",
+            "push 0",
+            "call dword ptr [ebx+8]",
+        ]
+
+    def test_selects_member_read_instead_of_got_base(self):
+        rule = self.rule(self.code("mov eax, dword ptr ds:member[esi]"))
+        self.assertIsNotNone(re.fullmatch(rule["regex"], "mov     eax, dword ptr ds:member[esi]"))
+        self.assertIsNone(re.fullmatch(rule["regex"], "mov esi, ds:(state_ptr - got)[ebx]"))
+
+    def test_register_copy_and_absolute_read(self):
+        rule = self.rule(self.code("mov ecx, counter", ["mov eax, ecx"]))
+        self.assertIsNotNone(re.fullmatch(rule["regex"], "mov ecx, counter"))
+        self.assertIsNone(re.fullmatch(rule["regex"], "mov eax, ecx"))
+
+    def test_earliest_verified_load_is_selected(self):
+        rule = self.rule(self.code("mov eax, counter") + self.code("mov eax, other_counter"))
+        self.assertIsNotNone(re.fullmatch(rule["regex"], "mov eax, counter"))
+        self.assertIsNone(re.fullmatch(rule["regex"], "mov eax, other_counter"))
+
+    def test_unknown_writes_branches_constants_and_duplicates_fail(self):
+        cases = (
+            self.code("mov eax, counter", ["xchg ecx, eax"]),
+            self.code("mov eax, counter", ["imul ecx"]),
+            self.code("mov eax, counter", ["mov al, 1"]),
+            self.code("mov eax, counter", ["jmp loc_400010"]),
+            self.code("mov eax, 42h"),
+            self.code("mov eax, counter") + self.code("mov eax, counter"),
+        )
+        for lines in cases:
+            with self.subTest(lines=lines), self.assertRaises(ValueError):
+                self.rule(lines)
 
 
 class ScalarLlmTests(unittest.IsolatedAsyncioTestCase):
