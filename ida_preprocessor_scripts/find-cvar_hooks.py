@@ -189,11 +189,10 @@ try:
     direct = ida_funcs.get_func(int(CVAR_DIRECTSET_EA))
     if direct is None or int(direct.start_ea) != int(CVAR_DIRECTSET_EA):
         raise RuntimeError('Cvar_DirectSet is not a function start')
-    calls = [
-        int(ea)
-        for ea in idautils.FuncItems(int(owner.start_ea))
-        if direct_call_target(int(ea)) == int(direct.start_ea)
-    ]
+    calls = []
+    for ea in idautils.FuncItems(int(owner.start_ea)):
+        if direct_call_target(int(ea)) == int(direct.start_ea):
+            calls.append(int(ea))
     if len(calls) != 1:
         result = json.dumps({
             'error': 'Cvar_Set direct call to Cvar_DirectSet is not unique',

@@ -25,6 +25,7 @@ jobs:
         run: >-
           uv run --python 3.11 --locked python -m unittest
           tests.test_gl_load_filter_texture_preprocessor
+          tests.test_mcp_script_scopes
           tests.test_gl_buildlightmaps_preprocessor
           tests.test_ida_skill_preprocessor -b
       - name: Repository contract

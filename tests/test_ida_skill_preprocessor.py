@@ -3694,7 +3694,9 @@ found_struct_offset: []
                 namespace = {}
                 with patch.dict("sys.modules", modules):
                     exec(
-                        ida_analyze_util._INSPECT_LLM_INSTRUCTION_PY_EVAL.replace("EA_PLACEHOLDER", str(ea)), namespace
+                        ida_analyze_util._INSPECT_LLM_INSTRUCTION_PY_EVAL.replace("EA_PLACEHOLDER", str(ea)),
+                        {},
+                        namespace,
                     )
                 detail = json.loads(namespace["result"])
                 self.assertEqual([hex(displacement)], detail["data_refs"])
@@ -3864,7 +3866,9 @@ found_struct_offset: []
                 namespace = {}
                 with patch.dict("sys.modules", modules):
                     exec(
-                        ida_analyze_util._INSPECT_LLM_INSTRUCTION_PY_EVAL.replace("EA_PLACEHOLDER", str(ea)), namespace
+                        ida_analyze_util._INSPECT_LLM_INSTRUCTION_PY_EVAL.replace("EA_PLACEHOLDER", str(ea)),
+                        {},
+                        namespace,
                     )
                 detail = json.loads(namespace["result"])
                 self.assertEqual(expected, detail["relative_store_address"]["target"])

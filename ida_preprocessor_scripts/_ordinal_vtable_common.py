@@ -18,7 +18,9 @@ candidates = []
 if pointer_size == 4:
     names = list(aliases)
     if not names:
-        names = [name for _ea, name in idautils.Names() if class_name in name and (name.startswith('??_7') or name.startswith('_ZTI'))]
+        for _ea, name in idautils.Names():
+            if class_name in name and (name.startswith('??_7') or name.startswith('_ZTI')):
+                names.append(name)
     for name in names:
         ea = ida_name.get_name_ea(idaapi.BADADDR, name)
         if ea == idaapi.BADADDR:

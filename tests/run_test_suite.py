@@ -53,6 +53,7 @@ GROUP_FILES = {
         "test_cgame_appactivate_preprocessor.py",
         "test_gl_buildlightmaps_preprocessor.py",
         "test_gl_load_filter_texture_preprocessor.py",
+        "test_mcp_script_scopes.py",
         "test_gl_studio_draw_points_preprocessor.py",
         "test_cof_multiplayer_constructor.py",
         "test_startup_graphic_structmembers.py",

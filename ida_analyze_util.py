@@ -1582,11 +1582,11 @@ candidates.difference_update(excluded)
 required_floats = [float(value) for value in spec.get('xref_floats') or []]
 excluded_floats = [float(value) for value in spec.get('exclude_floats') or []]
 if required_floats or excluded_floats:
-    candidates = {
-        start
-        for start in candidates
-        if _function_matches_float_filters(start, required_floats, excluded_floats)
-    }
+    filtered_candidates = set()
+    for start in candidates:
+        if _function_matches_float_filters(start, required_floats, excluded_floats):
+            filtered_candidates.add(start)
+    candidates = filtered_candidates
 
 items = []
 for start in sorted(candidates):
@@ -3108,6 +3108,8 @@ _INSPECT_LLM_INSTRUCTION_PY_EVAL = (
     _ADDRESS_FLOW_RESOLVER
     + r"""
 import ida_bytes, ida_fixup, ida_funcs, ida_lines, ida_segment, ida_ua, idaapi, idautils, idc, json
+# Nested scopes need both the resolver definitions and these imports in globals.
+globals().update(locals())
 ea = EA_PLACEHOLDER
 pointer_size = 8 if idaapi.inf_is_64bit() else 4
 insn = ida_ua.insn_t()

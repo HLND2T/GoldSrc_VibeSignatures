@@ -515,10 +515,10 @@ try:
 
     accesses = {}
     for name, target in (('gSpriteList', sprite_list), ('gSpriteCount', sprite_count)):
-        candidates = [
-            record for record in shutdown_records
-            if record['target'] == target and record['disp'] > 0 and record['disp'] + 4 <= record['length']
-        ]
+        candidates = []
+        for record in shutdown_records:
+            if record['target'] == target and record['disp'] > 0 and record['disp'] + 4 <= record['length']:
+                candidates.append(record)
         if not candidates:
             raise RuntimeError(f'{name} has no encodable access in SPR_Shutdown')
         accesses[name] = min(candidates, key=lambda record: record['ea'])
