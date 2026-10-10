@@ -3355,6 +3355,11 @@ for value in list(operand_targets) + computed_targets + got_indirect_targets + l
     if (permissions and permissions & ida_segment.SEGPERM_EXEC
             and ida_funcs.get_func(address) is not None):
         code_address_targets.append(hex(address))
+# Keep imported modules in py_eval's local execution scope on Python <=3.11.
+data_refs = []
+for value in idautils.DataRefsFrom(ea):
+    if 0 <= int(value) <= 0xFFFFFFFF and ida_segment.getseg(int(value)) is not None:
+        data_refs.append(hex(int(value)))
 result = json.dumps({
     'pointer_size': pointer_size,
     'size': int(size or 0),
@@ -3365,8 +3370,7 @@ result = json.dumps({
     'code_refs': [hex(int(value)) for value in idautils.CodeRefsFrom(ea, 0)],
     # DataRefsFrom also includes IDA's synthetic type/member IDs. Only mapped
     # x86 addresses can identify runtime data; preserve all genuine candidates.
-    'data_refs': [hex(int(value)) for value in idautils.DataRefsFrom(ea)
-                  if 0 <= int(value) <= 0xFFFFFFFF and ida_segment.getseg(int(value)) is not None],
+    'data_refs': data_refs,
     'operand_targets': [hex(value) for value in operand_targets] + computed_targets,
     'code_address_targets': list(dict.fromkeys(code_address_targets)),
     'displacements': [hex(value) for value in displacements],
