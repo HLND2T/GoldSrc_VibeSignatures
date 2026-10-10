@@ -3750,6 +3750,18 @@ found_struct_offset: []
         for mnemonic, intervening_ops, expected in (
             ("fld", [SimpleNamespace(type=4, addr=0, offb=2, dtype=2), void], "0xa000"),
             ("fnstsw", [SimpleNamespace(type=1, reg=0, dtype=2, offb=0), void], None),
+            # R_DrawSequentialPoly uses SIMD copies inside paths that join back
+            # into decal enqueueing. Memory address bases remain unchanged.
+            ("movdqa", [SimpleNamespace(type=1, reg=64), SimpleNamespace(type=4), void], "0xa000"),
+            ("movdqa", [SimpleNamespace(type=4), SimpleNamespace(type=1, reg=64), void], "0xa000"),
+            ("movd", [SimpleNamespace(type=1, reg=64), SimpleNamespace(type=4), void], "0xa000"),
+            ("movq", [SimpleNamespace(type=4), SimpleNamespace(type=1, reg=64), void], "0xa000"),
+            ("movd", [SimpleNamespace(type=1, reg=0, dtype=2), SimpleNamespace(type=1, reg=64), void], "0xa000"),
+            ("movd", [SimpleNamespace(type=1, reg=3, dtype=2), SimpleNamespace(type=1, reg=64), void], None),
+            ("movd", [SimpleNamespace(type=1, reg=64), SimpleNamespace(type=1, reg=3), void], "0xa000"),
+            ("unknown_simd", [SimpleNamespace(type=1, reg=64), SimpleNamespace(type=4), void], None),
+            ("neg", [SimpleNamespace(type=1, reg=0, dtype=2), void], "0xa000"),
+            ("neg", [SimpleNamespace(type=1, reg=3, dtype=2), void], None),
             (
                 "adc",
                 [SimpleNamespace(type=1, reg=2, dtype=2, offb=0), SimpleNamespace(type=5, value=-1), void],

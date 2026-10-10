@@ -81,3 +81,11 @@ New viewport records pass canonical snapshot/JSON export and the downstream view
 
 - `ida_analyze_bin.py` invokes the registered preprocessor from each target client skill graph.
 - Downstream `Plugins/VGUI2Extension/ClientVGUI.cpp` resolves the object through `GamedataResolvePtr(..., MH_GAMESYMBOL_KIND_GLOBAL)`.
+
+### Stable signatures across exact and merged ownership (PR #357, 2026-10-10)
+
+- Trigger: run 38022306420 generated a shorter CZDS 8684 Windows singleton signature than the committed output, with the same object address and same operand.
+- Root cause: local IDA owns initializer 0x27036ad0 as a separate function, while the CI warm database folds it into 0x27036a50. The former used whole-function signature generation; the latter used the independently verified access signature. Identical bytes therefore followed different signature algorithms.
+- Correct approach: when a proved object operand is at the decoded logical entry and has a proved body end, always generate the unique access signature there. Keep ordinary function signatures for other access forms. Do not repair/split IDA functions.
+- Verification: the existing behavior test now covers missing ownership, enclosing ownership, and exact ownership with the same result. The real CZDS finder produces the CI signature on the local exact-owner IDB. Its raw PE signature has exactly one executable match, and the MOV immediate resolves the same full object 0x2712acd8. The downloaded CI logs identify this as the only logical-entry access across the 17 configured singleton nodes.
+- Scope: signature serialization for logical-entry object accesses; RTTI, complete-object proof, ABI and address discovery remain unchanged. Evidence addresses are not discovery constants.

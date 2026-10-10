@@ -80,3 +80,11 @@ Validated on 2026-09-19:
 ## Callers
 
 `R_DrawSequentialPoly` calls `R_RenderDynamicLightmaps` on the non-HL25-Linux branches; the HL25 Linux predecessor contains its inlined behavior. The standalone HL25 Linux entry remains in the ELF symbol table without IDA xrefs.
+
+### PIC base preservation through SIMD copies (PR #357, 2026-10-10)
+
+- Trigger: CI run 38022306420 stopped at Sven 10257 Linux `find-R_DrawSequentialPoly-private-decompiles`; four later decal-count loads could not prove EBX, exhausting LLM validation retries. The missing fallback skill was secondary; most of the reported 786 failures were aborted or unexecuted nodes.
+- Root cause: the shared effective-address CFG inspector treated `movdqa`, `movd`, and `movq` as unknown instructions that clobbered all GPRs. Real copies at 0x152739/0x152741/0x1527ad/0x1527b2 preserve EBX, including across intersecting branch/loop paths.
+- Correct approach: model the explicit destination of the observed SIMD copy instructions (including existing MOVSS). XMM/memory destinations preserve GPRs; MOVD into a GPR invalidates that destination. Unknown instructions, conflicting definitions and actual base writes remain failures.
+- Verification: regression cases failed before the fix and pass afterward, covering load/store, GPR destination/source and unknown instructions. Current IDA recovers `gDecalSurfCount` 0x79a9840 at 0x1525a4/0x152986/0x1529f6/0x152fb8 and `mtexenabled` 0x38ff650 at 0x152e8d. Real grouped finders pass Sven 8948 and 10257 Linux; their five lightmap/decal artifacts remain byte-identical.
+- Scope: shared x86 effective-address proof; these evidence addresses are not discovery constants. No fallback skill file is created to hide validation failures.

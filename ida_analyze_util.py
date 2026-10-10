@@ -3253,7 +3253,14 @@ if (func is not None and (relative_operand is not None or (size == 6
                     dest = decoded.ops[0]
                     if dest.type == ida_ua.o_reg:
                         changed[address_write_register(dest.reg, True)] = None
-                elif mnemonic in ('mov', 'movzx', 'movsx', 'lea', 'pop', 'add', 'sub', 'adc', 'cvttss2si', 'xor', 'and', 'or', 'inc', 'dec', 'shl', 'shr', 'sar') or (mnemonic == 'imul' and decoded.ops[1].type != ida_ua.o_void):
+                elif mnemonic in ('movss', 'movd', 'movq', 'movdqa'):
+                    # SIMD copies write only their explicit destination. Memory
+                    # address registers and GPR sources remain unchanged; MOVD
+                    # into a GPR must still invalidate that destination.
+                    dest = decoded.ops[0]
+                    if dest.type == ida_ua.o_reg and dest.reg < 8:
+                        changed[address_write_register(dest.reg, dest.dtype == ida_ua.dt_byte)] = None
+                elif mnemonic in ('mov', 'movzx', 'movsx', 'lea', 'pop', 'add', 'sub', 'adc', 'cvttss2si', 'xor', 'and', 'or', 'inc', 'dec', 'neg', 'shl', 'shr', 'sar') or (mnemonic == 'imul' and decoded.ops[1].type != ida_ua.o_void):
                     dest, source = decoded.ops[0], decoded.ops[1]
                     if dest.type == ida_ua.o_reg:
                         destination = address_write_register(dest.reg, dest.dtype == ida_ua.dt_byte)
@@ -3301,9 +3308,6 @@ if (func is not None and (relative_operand is not None or (size == 6
                           # not invalidate an address register. `fnstsw ax` and
                           # friends still carry an o_reg operand and stay clobbers.
                           or (mnemonic.startswith('f') and not any(
-                              op.type == ida_ua.o_reg and op.reg < 8 for op in decoded.ops))
-                          # MOVSS writes XMM or memory, never an address register.
-                          or (mnemonic == 'movss' and not any(
                               op.type == ida_ua.o_reg and op.reg < 8 for op in decoded.ops))):
                     changed = {reg: None for reg in range(8)}
                 writes.append(changed)
