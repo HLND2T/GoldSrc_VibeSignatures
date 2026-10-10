@@ -19,6 +19,14 @@ jobs:
         run: uv run python format_repo_files.py --check
       - name: Unit tests
         run: uv run python tests/run_test_suite.py unit -b --durations 30
+      - name: MCP scope regressions on Python 3.11
+        env:
+          UV_PROJECT_ENVIRONMENT: .venv-py311
+        run: >-
+          uv run --python 3.11 --locked python -m unittest
+          tests.test_gl_load_filter_texture_preprocessor
+          tests.test_gl_buildlightmaps_preprocessor
+          tests.test_ida_skill_preprocessor -b
       - name: Repository contract
         run: uv run python tests/run_test_suite.py repository-contract -b --durations 30
       - name: Full non-commercial suite
