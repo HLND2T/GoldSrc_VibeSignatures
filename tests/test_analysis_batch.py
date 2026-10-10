@@ -14,6 +14,8 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from analysis_batch import (
+    DEFAULT_ADMISSION_TIMEOUT_SECONDS,
+    DEFAULT_WORKER_TIMEOUT_SECONDS,
     PHASE_PARALLEL,
     PHASE_SERIAL,
     BatchPlanError,
@@ -436,7 +438,18 @@ class SchedulerTests(unittest.TestCase):
         self.temp_paths.append(path)
         return process, path
 
-    def _run(self, schedule, launches, *, max_concurrency=2, gate=None, skip_error=False, kill_tree=None):
+    def _run(
+        self,
+        schedule,
+        launches,
+        *,
+        max_concurrency=2,
+        gate=None,
+        skip_error=False,
+        kill_tree=None,
+        admission_timeout_seconds=DEFAULT_ADMISSION_TIMEOUT_SECONDS,
+        worker_timeout_seconds=DEFAULT_WORKER_TIMEOUT_SECONDS,
+    ):
         import json
 
         return run_batch(
@@ -446,6 +459,8 @@ class SchedulerTests(unittest.TestCase):
             max_concurrency=max_concurrency,
             memory_gate=gate,
             skip_error=skip_error,
+            admission_timeout_seconds=admission_timeout_seconds,
+            worker_timeout_seconds=worker_timeout_seconds,
             kill_process_tree=kill_tree,
             poll_interval_seconds=0.1,
             monotonic=lambda: self.clock[0],
@@ -645,6 +660,93 @@ class SchedulerTests(unittest.TestCase):
         outcome = self._run(schedule, launches, max_concurrency=3, gate=gate)
         self.assertTrue(outcome.succeeded, self.logs)
         self.assertEqual(gate.active, 0)
+
+    def _memory_wait_items(self):
+        first = make_item()
+        second = replace(
+            first,
+            work_item_id="parallel-0001",
+            binary=BinaryIdentity(tag="tag-1", module="next", platform="windows", binary_relative_path="next/x.bin"),
+            node_ids=("next:windows:s1",),
+        )
+        return first, second
+
+    def test_memory_wait_for_active_worker_can_exceed_admission_timeout(self):
+        first, second = self._memory_wait_items()
+        launches = {
+            first.work_item_id: self._launch(FakeProcess(polls_until_exit=20), make_result_payload(first)),
+            second.work_item_id: self._launch(FakeProcess(), make_result_payload(second)),
+        }
+        gate = FakeGate(capacity=1)
+        outcome = self._run(
+            BatchSchedule(parallel_items=(first, second), serial_items=()),
+            launches,
+            gate=gate,
+            admission_timeout_seconds=0.5,
+        )
+        self.assertTrue(outcome.succeeded, self.logs)
+        self.assertEqual([first.work_item_id, second.work_item_id], gate.launch_calls)
+        self.assertEqual(0, gate.active)
+        self.assertEqual(1, sum("resource wait:" in message for message in self.logs))
+
+    def test_memory_wait_without_active_workers_remains_bounded(self):
+        first = make_item()
+        gate = FakeGate(capacity=0)
+        outcome = self._run(
+            BatchSchedule(parallel_items=(first,), serial_items=()),
+            {},
+            gate=gate,
+            admission_timeout_seconds=0.5,
+        )
+        self.assertFalse(outcome.succeeded)
+        self.assertEqual("memory_admission_timeout", outcome.failure_reason)
+        self.assertEqual([], gate.launch_calls)
+        self.assertGreaterEqual(self.clock[0], 0.5)
+
+    def test_idle_memory_wait_gets_full_timeout_after_active_worker_retires(self):
+        first, second = self._memory_wait_items()
+        retired_at = []
+        clock = self.clock
+
+        class UnavailableAfterRetirement(FakeGate):
+            def worker_finished(self):
+                super().worker_finished()
+                retired_at.append(clock[0])
+                self.capacity = 0
+
+        gate = UnavailableAfterRetirement(capacity=1)
+        launches = {first.work_item_id: self._launch(FakeProcess(polls_until_exit=20), make_result_payload(first))}
+        outcome = self._run(
+            BatchSchedule(parallel_items=(first, second), serial_items=()),
+            launches,
+            gate=gate,
+            admission_timeout_seconds=0.5,
+        )
+        self.assertEqual("memory_admission_timeout", outcome.failure_reason)
+        self.assertEqual([first.work_item_id], gate.launch_calls)
+        self.assertGreaterEqual(self.clock[0] - retired_at[0], 0.5)
+
+    def test_active_memory_wait_does_not_disable_worker_timeout(self):
+        first, second = self._memory_wait_items()
+        process = FakeProcess(polls_until_exit=None, stubborn=True)
+        launches = {first.work_item_id: self._launch(process, make_result_payload(first))}
+        gate = FakeGate(capacity=1)
+
+        def kill_tree(worker):
+            worker.tree_killed = True
+            worker.remaining_polls = 0
+
+        outcome = self._run(
+            BatchSchedule(parallel_items=(first, second), serial_items=()),
+            launches,
+            gate=gate,
+            admission_timeout_seconds=0.2,
+            worker_timeout_seconds=0.8,
+            kill_tree=kill_tree,
+        )
+        self.assertEqual("worker_timeout", outcome.failure_reason)
+        self.assertTrue(process.tree_killed)
+        self.assertEqual(0, gate.active)
 
     def test_worker_timeout_hard_kills_stubborn_process_tree(self):
         item = make_item()

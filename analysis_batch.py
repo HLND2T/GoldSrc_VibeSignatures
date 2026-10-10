@@ -716,7 +716,9 @@ def run_batch(
     stop_admission = False
     parallel_failed = False
     failure_reason: str | None = None
-    admission_wait_started: dict[str, float] = {}
+    # None means owned workers can still release memory. Their execution
+    # timeout bounds that wait; the admission timeout applies only when idle.
+    admission_wait_started: dict[str, float | None] = {}
 
     def _stop_for_gate_failure(item: WorkItem, reason: str, detail: str) -> None:
         nonlocal stop_admission, parallel_failed, failure_reason
@@ -737,9 +739,15 @@ def run_batch(
                         break
                     if wait_reason is not None:
                         now = monotonic()
-                        started = admission_wait_started.setdefault(item.work_item_id, now)
-                        if now == started:
+                        if item.work_item_id not in admission_wait_started:
                             log(f"{item.log_prefix} resource wait: {wait_reason}")
+                        if active:
+                            admission_wait_started[item.work_item_id] = None
+                            break  # poll owned workers before retrying memory admission
+                        started = admission_wait_started.get(item.work_item_id)
+                        if started is None:
+                            started = now
+                            admission_wait_started[item.work_item_id] = started
                         if now - started >= admission_timeout_seconds:
                             admission_wait_started.pop(item.work_item_id, None)
                             _stop_for_gate_failure(
