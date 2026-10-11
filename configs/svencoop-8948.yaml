@@ -3965,6 +3965,9 @@ modules:
           - CASConCommandSystem_VisitClientCommand.linux.yaml
         expected_output:
           - CASBaseCallable_Call.{platform}.yaml
+      - name: find-asGetActiveContext
+        expected_output:
+          - asGetActiveContext.{platform}.yaml
     symbols:
       - name: CASDirectoryList_CreateDirectory
         category: func
@@ -4028,6 +4031,8 @@ modules:
       - name: CASConCommandSystem_VisitClientCommand
         category: func
         platform: linux
+      - name: asGetActiveContext
+        category: func
   - name: serverbrowser
     module_windows: serverbrowser.dll
     module_linux: serverbrowser_linux.so
