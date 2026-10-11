@@ -20,6 +20,7 @@ GROUP_FILES = {
         "test_ida_runtime_probe.py",
         "test_idb_cache.py",
         "test_ci_s3_cache.py",
+        "test_idb_cache_s3.py",
         "test_ci_runner.py",
         "test_idb_cache_leases.py",
         "test_warmup_concurrency.py",

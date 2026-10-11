@@ -48,21 +48,26 @@ tag 一次，按 binary target 保留最新三个有效 generation，并继续�
 历史 release evidence 的 selection schema 1/2 仍支持离线校验；新流程要求 schema 3。
 
 `win64` environment 需要 `S3_ENDPOINT_URL`、`S3_ACCESS_KEY_ID`、`S3_SECRET_ACCESS_KEY` 三个 secrets。
-共享 action 将 `hzqst/actions-cache/restore` 和 `save` 固定到 commit `7128b4f7`
-（可移植的 S3 object key、zstd 自动发现），bucket 固定为
-`actions-cache-goldsrc-vibesignatures`，关闭 GitHub cache fallback。`http://HZVM:8333` 解析为
-`endpoint=HZVM`、`port=8333`、`insecure=true`；HTTPS 则为 `insecure=false`。
-producer 按仓库级 `shared`、旧 Windows、Linux、macOS 前缀的顺序发现最近快照，旧对象保持不变。
-校验并补齐后按 run ID/attempt 保存 shared 新快照，确认对象存在后
-输出精确 key。consumer 必须命中该 key，再执行 selection、租约和 payload 校验，不能降级恢复其他快照。
-快照包含整个 IDB store；这减少传输层复杂度，但每次上传会包含仍保留的历史 generation。
+`idb_cache_s3.py` 使用 Boto3 访问 `actions-cache-goldsrc-vibesignatures`，启用有界重试、path-style
+寻址，并沿用 endpoint 的 HTTP/HTTPS 协议。服务端须支持 PutObject 和 CompleteMultipartUpload 的
+`If-None-Match: *` 条件写入。诊断 artifacts 继续使用原有 `hzqst/actions-cache` action。
+IDB 使用独立的 `gsvibe-idb-objects-v1/<repository-sha256>/` 命名空间，每个 `generations/` 对象是一个
+generation 的确定性 gzip tar，包含 manifest、binary 和完整数据库文件集。
+producer 只查询本次所需 identity 的 `references/<cache-key>.json` 小索引，下载并校验命中项，预热 miss，
+只上传远端缺失的 generation。索引对应对象已不存在时按 producer miss 处理；权限、网络或完整性错误中止任务。
+全部对象发布后，最后写入 `selections/<selection-sha256>.json` 不可变记录，保存原始 sealed leases。
+现有 schema-3 `cache-selection.json` 即每次 workflow 的小 manifest，其摘要绑定 producer job output。
+consumer 只下载该 manifest 指定的精确 generation，不读取发现索引；原有 identity、lease 和 payload 校验保留。
+归档在原子安装前校验，拒绝越界路径、链接、重复或未声明成员及损坏 payload。首次使用重新预热新命名空间，
+不导入或删除旧快照；accepted-bin 暂存区和未选中的历史 generation 不再上传。
 runner OS 不再区分传输命名空间，entry 仍保留目标 binary 的 platform。producer 与 consumer 各自使用本地
 暂存区，通过 S3 传输；不要求 Windows 与 Linux 共享同一文件系统。
 
 self-hosted 的 selection、重建 artifacts、诊断和 release bundle 按 run ID/attempt 另存 S3。
 GitHub-hosted runner 无法访问内网，因此原 GitHub artifacts 跨 job 传输及发布摘要验证继续保留。
-S3 不继承 GitHub artifact 的 retention-days；bucket 生命周期需由服务端管理，IDB 快照保留期应覆盖租约窗口。
-consumer 释放的租约只影响本地副本，不回写 immutable S3 快照。旧 `PERSISTED_WORKSPACE` secret
+S3 不继承 GitHub artifact 的 retention-days。新 generation 前缀不能简单按对象创建时间过期：旧对象每次命中
+都可能获得新的 36 天租约。本实现不删除远端对象；后续回收必须考虑发现索引和所有有效 selection 的引用，
+发布记录须保留到租约窗口结束。consumer 释放的租约只影响本地副本，不回写 immutable S3 发布记录。旧 `PERSISTED_WORKSPACE` secret
 仅供显式启用 `cleanup_legacy_yaml` 时清理历史 YAML，不会自动迁移或删除旧宿主机缓存。
 
 租约从 Prepare 创建起保留 36 天，清理另加 1 小时时钟容差；整个 selection 恢复成功后立即释放。

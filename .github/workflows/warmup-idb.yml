@@ -24,9 +24,6 @@ on:
         required: false
         type: string
     outputs:
-      cache_key:
-        description: Exact verified S3 IDB snapshot key
-        value: ${{ jobs.warmup.outputs.cache_key }}
       selection_artifact_name:
         description: Artifact carrying cache-selection.json and cache-selection.sha256
         value: ${{ jobs.warmup.outputs.selection_artifact_name }}
@@ -53,7 +50,6 @@ jobs:
       group: idb-warmup-${{ github.repository }}
       cancel-in-progress: false
     outputs:
-      cache_key: ${{ steps.s3-layout.outputs.prefix }}-idb-${{ github.run_id }}-${{ github.run_attempt }}
       selection_artifact_name: ${{ steps.publish.outputs.selection_artifact_name }}
       selection_sha256: ${{ steps.publish.outputs.selection_sha256 }}
       selection_schema_version: ${{ steps.publish.outputs.selection_schema_version }}
@@ -110,16 +106,6 @@ jobs:
         uses: ./.ci-tools/.github/actions/ci-command
         with:
           command: cache-prepare
-      - name: Restore reusable IDB snapshot
-        uses: ./.ci-tools/.github/actions/s3-cache
-        with:
-          endpoint-url: ${{ secrets.S3_ENDPOINT_URL }}
-          access-key: ${{ secrets.S3_ACCESS_KEY_ID }}
-          secret-key: ${{ secrets.S3_SECRET_ACCESS_KEY }}
-          operation: restore
-          key: ${{ steps.s3-layout.outputs.prefix }}-idb-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ steps.s3-layout.outputs.cache-path }}
-          restore-keys: ${{ steps.s3-layout.outputs.restore-prefixes }}
       - name: Materialize accepted bin for every release game version
         if: inputs.scope == 'release-all'
         uses: ./.ci-tools/.github/actions/ci-command
@@ -144,19 +130,22 @@ jobs:
         uses: ./.ci-tools/.github/actions/ci-command
         with:
           command: warm-prepare
+        env:
+          S3_ENDPOINT_URL: ${{ secrets.S3_ENDPOINT_URL }}
+          S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+          S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
       - name: Verify the published cache selection
         uses: ./.ci-tools/.github/actions/ci-command
         with:
           command: warm-verify
-      - name: Publish verified IDB snapshot
-        uses: ./.ci-tools/.github/actions/s3-cache
+      - name: Publish immutable IDB objects and selection receipt
+        uses: ./.ci-tools/.github/actions/ci-command
         with:
-          endpoint-url: ${{ secrets.S3_ENDPOINT_URL }}
-          access-key: ${{ secrets.S3_ACCESS_KEY_ID }}
-          secret-key: ${{ secrets.S3_SECRET_ACCESS_KEY }}
-          operation: save
-          key: ${{ steps.s3-layout.outputs.prefix }}-idb-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ steps.s3-layout.outputs.cache-path }}
+          command: warm-publish
+        env:
+          S3_ENDPOINT_URL: ${{ secrets.S3_ENDPOINT_URL }}
+          S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+          S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
       - name: Publish producer outputs
         id: publish
         uses: ./.ci-tools/.github/actions/ci-command

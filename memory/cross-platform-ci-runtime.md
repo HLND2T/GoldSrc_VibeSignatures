@@ -18,18 +18,19 @@ Issue #356 ports IDB warmup, PR analysis and Release build orchestration to Wind
 ## Responsibilities
 
 - Run shared orchestration from immutable workflow tooling while retaining trusted base PR validation and existing Release authority.
-- Discover compatible S3 snapshots, restore only exact consumer selections, and reclaim only owned POSIX MCP groups.
+- Discover requested S3 generation objects, restore only exact consumer selections, and reclaim only owned POSIX MCP groups.
 
 ## Involved Files & Symbols
 
 - `ci_runner.py`: checked commands, host-tool discovery, bounded PR tail stages, warm selections and Release orchestration.
 - `.github/actions/ci-command/action.yml`, `.github/actions/s3-cache/action.yml`: PowerShell/Bash launchers and verified cache transport.
-- `ci_s3_cache.py`: shared namespace, ordered legacy prefixes and multiline Actions outputs.
+- `ci_s3_cache.py`: disposable staging, diagnostic archive namespace and multiline Actions outputs.
+- `idb_cache_s3.py`: per-generation objects, per-identity producer discovery and exact selection lease receipts.
 - `ida_analyze_bin.py`: owned PGID tracking and cancellation-safe cleanup; `ida_runtime_probe.py`: venv-aware installation validation.
 
 ## Architecture
 
-Three jobs select `[self-hosted, cross-platform]`, retaining `win64`. `.ci-tools` is checked out at `github.workflow_sha`; the Python helper retains exact source/bin identities, trusted base materialization/compare/build, PR stage barriers and failure aggregation. Producer discovery tries shared, Windows, Linux, macOS; after validation a new immutable run/attempt snapshot is published and checked. Consumers receive only the exact producer key and sealed selection/lease. Target binary platform is independent of runner OS. Local staging is external to checkout and is not a cross-host shared filesystem.
+Three jobs select `[self-hosted, cross-platform]`, retaining `win64`. `.ci-tools` is checked out at `github.workflow_sha`; the Python helper retains exact source/bin identities, trusted base materialization/compare/build, PR stage barriers and failure aggregation. Producers discover only requested per-binary identities in the independent S3 object namespace and upload missing generations. Consumers use the producer-bound schema-3 selection manifest and immutable lease receipt to download exact objects; they never consult discovery references. Target binary platform is independent of runner OS. Local staging is external to checkout and is not a cross-host shared filesystem. See [[idb-cache-operations-runbook]] for retention and endpoint requirements.
 
 ## Dependencies
 

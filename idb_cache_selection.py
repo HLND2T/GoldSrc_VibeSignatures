@@ -209,6 +209,7 @@ def prepare_selection_entries(
     worker_timeout_seconds: float,
     producer_memory: ProducerMemoryOwner,
     lease: dict,
+    remote_cache=None,
 ) -> list[dict]:
     """Probe/cache each binary independently; warm misses in bounded platform batches.
 
@@ -254,6 +255,10 @@ def prepare_selection_entries(
         results = {}
         protected = set()
         for group in tag_groups:
+            if remote_cache is not None:
+                with timed_stage(f"prepare_s3_prefetch; tag={group.tag}; platform={group.platform}"):
+                    for key in group_keys(group):
+                        remote_cache.prefetch(persisted, binary_identities[key])
             started = time.monotonic()
             with tag_lock(persisted, group.tag, timeout_seconds=None):
                 print(
