@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ctypes
+import os
 import subprocess
 import sys
 import tempfile
@@ -213,7 +214,8 @@ class WarmGroupSchedulingTests(unittest.TestCase):
         with patch("idb_cache.subprocess.run", return_value=completed) as run:
             self.assertEqual("9.3", idb_cache.probe_ida_kernel_version(sys.executable))
         command = run.call_args.args[0]
-        self.assertEqual(str(Path(sys.executable).resolve()), command[0])
+        # The bound interpreter runs as given: resolving a venv symlink would start the base interpreter.
+        self.assertEqual(str(Path(os.path.abspath(sys.executable))), command[0])
         self.assertEqual(
             str(Path(idb_cache.__file__).with_name("idb_warm_worker.py").resolve()),
             command[1],
@@ -261,7 +263,7 @@ class WarmGroupSchedulingTests(unittest.TestCase):
         self.assertEqual(1, serial_maximum)
         self.assertEqual(2, parallel_maximum)
         self.assertEqual(
-            [Path(sys.executable).resolve()] * 2,
+            [Path(os.path.abspath(sys.executable))] * 2,
             parallel_executables,
         )
 

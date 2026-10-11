@@ -777,6 +777,34 @@ class IdbCacheGenerationTests(unittest.TestCase):
             with self.assertRaises(IdbCacheError):
                 verify_selection(persisted_root=persisted, selection=selection)
 
+    def test_ida_python_symlink_keeps_the_venv_identity(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            target = root / "base-python"
+            target.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+            target.chmod(0o755)
+            link = root / "venv-bin-python"
+            try:
+                os.symlink(target, link)
+            except OSError as exc:
+                self.skipTest(f"Symlink creation is unavailable: {exc}")
+            validated = idb_cache.validate_ida_python_executable(link)
+            self.assertEqual(os.fspath(link), os.fspath(validated))
+            self.assertNotEqual(os.fspath(target), os.fspath(validated))
+
+    def test_ida_python_must_resolve_to_an_existing_file(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            with self.assertRaises(IdbCacheError):
+                idb_cache.validate_ida_python_executable(root / "absent-python")
+            dangling = root / "dangling-python"
+            try:
+                os.symlink(root / "absent-python", dangling)
+            except OSError as exc:
+                self.skipTest(f"Symlink creation is unavailable: {exc}")
+            with self.assertRaises(IdbCacheError):
+                idb_cache.validate_ida_python_executable(dangling)
+
     def test_prune_keeps_ready_latest_three_and_removes_old_incoming(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
