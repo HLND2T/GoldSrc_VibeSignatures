@@ -211,6 +211,7 @@ def prepare_cache_selection(
     output_sha256_path: str | Path,
     producer_memory: ProducerMemoryOwner | None = None,
     repository: str = "local",
+    remote_cache=None,
 ) -> dict:
     root = Path(repo_root).resolve()
     persisted = validate_persisted_workspace(persisted_root, root)
@@ -239,6 +240,7 @@ def prepare_cache_selection(
             worker_timeout_seconds=worker_timeout_seconds,
             producer_memory=producer_memory or producer_memory_owner_from_environment(),
             lease=lease,
+            remote_cache=remote_cache,
         )
         document = _selection_document(plan, entries, lease)
         seal_selection_leases(document=document, persisted_root=persisted)
@@ -338,6 +340,7 @@ def _parser() -> argparse.ArgumentParser:
         default=DEFAULT_WORKER_TIMEOUT_SECONDS,
     )
     prepare.add_argument("--repository", default="local")
+    prepare.add_argument("--s3-cache", action="store_true")
     prepare.add_argument("-run-id", required=True)
     prepare.add_argument("-attempt", type=int, required=True)
     prepare.add_argument("-output", required=True)
@@ -367,6 +370,8 @@ def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
         if args.command == "prepare":
+            from idb_cache_s3 import transport_from_environment
+
             prepare_cache_selection(
                 repo_root=args.repo_root,
                 plan_path=args.plan,
@@ -376,6 +381,7 @@ def main(argv: list[str] | None = None) -> int:
                 kernel_version=args.kernel_version,
                 ida_python_executable=args.ida_python,
                 repository=args.repository,
+                remote_cache=transport_from_environment(args.repository) if args.s3_cache else None,
                 run_id=args.run_id,
                 attempt=args.attempt,
                 max_concurrency=args.max_concurrency,

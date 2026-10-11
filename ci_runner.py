@@ -180,6 +180,7 @@ def warm_selection(operation):
     binding = ["-source-sha", env("SOURCE_SHA")] if release else ["-plan", bundle / "plan.json", "-merge-ref", "HEAD"]
     if operation == "prepare":
         args = [
+            "--s3-cache",
             "--ida-python",
             env("IDA_PYTHON_EXE"),
             "--max-concurrency",
@@ -230,6 +231,24 @@ def warm_outputs():
             "source_sha": env("SOURCE_SHA").lower(),
         }
     )
+
+
+def transfer_idb_selection(*, publish=False, release=False):
+    from idb_cache_s3 import transport_from_environment
+    from idb_cache_selection import read_selection_with_evidence
+
+    bundle = temporary("idb-cache-selection" if publish or release else "gamesymbol-validation")
+    if not publish:
+        verify_producer_digest(bundle)
+    document, _raw, digest = read_selection_with_evidence(
+        selection_path=bundle / "cache-selection.json",
+        selection_sha256_path=bundle / "cache-selection.sha256",
+    )
+    transport = transport_from_environment(env("GITHUB_REPOSITORY"))
+    if publish:
+        transport.publish(Path(env("IDB_CACHE_ROOT")), document)
+    else:
+        transport.restore(Path(env("IDB_CACHE_ROOT")), document, digest)
 
 
 def verify_producer_digest(bundle):
@@ -729,6 +748,9 @@ COMMANDS = {
     "warm-materialize": warm_materialize,
     "warm-prepare": lambda: warm_selection("prepare"),
     "warm-verify": lambda: warm_selection("verify"),
+    "warm-publish": lambda: transfer_idb_selection(publish=True),
+    "pr-cache-fetch": transfer_idb_selection,
+    "release-cache-fetch": lambda: transfer_idb_selection(release=True),
     "warm-outputs": warm_outputs,
     "pr-restore": pr_restore,
     "pr-validate": pr_validate,

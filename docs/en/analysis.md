@@ -34,27 +34,36 @@ CI warmup across jobs uses schema-3 exact selections with one immutable generati
 PR subsets and release builds reuse the same binary cache when its identity, IDA kernel and warm worker agree;
 changing another selected module does not invalidate it. Only misses warm together within bounded platform batches.
 Payloads, READY, and schema-2 lease records live in `IDB_CACHE_ROOT/idb-cache-v3/<tag>/`.
-CI restores private S3 snapshots into disposable staging outside the checkout, cleared for every job;
+CI downloads only selected private S3 generation objects into disposable staging outside the checkout, cleared for every job;
 the host's `PERSISTED_WORKSPACE` is no longer the cache backend. First use performs a cold warmup. Each tag is pruned once per Prepare,
 retaining the newest three valid generations per binary target plus READY, live pins and minimum-age protection.
 `idb-cache/.locks/` coordinates local staging operations; workflow concurrency serializes this repository's producers.
 
 The `win64` environment requires `S3_ENDPOINT_URL`, `S3_ACCESS_KEY_ID`, and `S3_SECRET_ACCESS_KEY` secrets.
-The shared action pins `hzqst/actions-cache/restore` and `save` to commit `7128b4f7`
-(portable S3 object keys, zstd auto-detection) with bucket
-`actions-cache-goldsrc-vibesignatures` and GitHub cache fallback disabled. `http://HZVM:8333` becomes
-`endpoint=HZVM`, `port=8333`, `insecure=true`; HTTPS uses `insecure=false`.
-The producer discovers a previous snapshot under the repository-wide `shared` prefix, followed by legacy
-Windows, Linux, and macOS prefixes in that order. Existing objects remain untouched. It verifies and completes the store,
-then saves a new run ID/attempt key and checks publication. Consumers require that exact key before
-the existing selection, lease, and payload checks. Snapshots contain the whole IDB store, including retained generations.
+`idb_cache_s3.py` uses Boto3 against bucket `actions-cache-goldsrc-vibesignatures`, with bounded retries,
+path-style addressing and the endpoint's HTTP/HTTPS scheme. The server must support conditional writes
+(`If-None-Match: *`) for both PutObject and CompleteMultipartUpload. Diagnostic artifacts still use the pinned
+`hzqst/actions-cache` action; IDB generations no longer use whole-directory snapshots.
+The independent namespace is `gsvibe-idb-objects-v1/<repository-sha256>/`. Each `generations/` object is a
+deterministic gzip tar containing one immutable generation's manifest, binary and database files.
+Producers look up only requested cache identities through small `references/<cache-key>.json` hints,
+download and verify hits, warm misses, and upload only missing generation objects. A missing referenced object
+is a producer miss; authorization, network and integrity failures abort preparation.
+After all objects publish, an immutable `selections/<selection-sha256>.json` receipt records the original sealed leases.
+The existing schema-3 `cache-selection.json` remains the small per-workflow manifest, bound to the producer output digest.
+Consumers require that receipt and fetch only the manifest's exact generations, never discovery hints, then perform
+the existing identity, lease and payload checks. Archives are validated before atomic installation; unsafe paths,
+links, duplicate/undeclared members and damaged payloads are rejected. First use warms the new namespace without
+importing or deleting legacy snapshots. Accepted-bin staging and historical unselected generations are not uploaded.
 Runner OS is not part of the transport namespace; each entry still identifies its target binary platform.
 Producer and consumer use separate local staging roots and do not require a cross-OS shared filesystem.
 
 Self-hosted selections, rebuilt artifacts, diagnostics, and release bundles are also archived in S3 per run/attempt.
 GitHub artifacts remain for transport to hosted runners, which cannot reach the private endpoint, and for publication digest checks.
-S3 retention is controlled by bucket lifecycle, not GitHub artifact retention-days; retain IDB snapshots for the lease window.
-Consumer lease releases affect only the local copy, never the immutable S3 snapshot.
+S3 retention does not inherit GitHub artifact retention-days. Do not apply age-only expiration to the new generation
+prefix: an old object can receive a new 36-day lease on any hit. This implementation does not delete remote objects;
+future remote collection must account for discovery references and all live selections. Receipts must remain available
+through their lease window. Consumer lease releases affect only the local copy, never the immutable S3 receipt.
 The old `PERSISTED_WORKSPACE` secret is used only by explicit `cleanup_legacy_yaml` runs; existing host caches are not migrated or deleted.
 
 Leases last 36 days from Prepare, with an additional one-hour pruning clock allowance, and are released immediately

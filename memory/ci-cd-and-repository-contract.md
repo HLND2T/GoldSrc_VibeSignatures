@@ -21,7 +21,7 @@ forbids tracked `bin/**/*.yaml`, `gamesymbols/`, `gamedata/`, and `release-manif
 only Git YAML truth; `bin/` only provides binary/IDA state.
 
 ## Submodule downloads
-Self-hosted warmup, PR analysis, and Release jobs use `[self-hosted, cross-platform]` on prepared Windows/Ubuntu x64 hosts, retaining `win64`. `ci_runner.py` and `.github/actions/ci-command` centralize orchestration from the immutable `.ci-tools` checkout. Private S3 IDB snapshots use a repository-wide shared prefix with producer-only legacy Windows/Linux/macOS discovery; consumers require the exact producer key and sealed selection/lease. Each runner has local staging outside its checkout, so cross-OS shared filesystem locking is not required. See [[self-hosted-runner-and-governance]] and [[idb-cache-operations-runbook]].
+Self-hosted warmup, PR analysis, and Release jobs use `[self-hosted, cross-platform]` on prepared Windows/Ubuntu x64 hosts, retaining `win64`. `ci_runner.py` and `.github/actions/ci-command` centralize orchestration from the immutable `.ci-tools` checkout. Private S3 IDB transport stores one immutable object per binary generation, with producer-only per-identity discovery references; consumers download only objects named by the exact producer-bound selection and verify its sealed lease receipt. Each runner has local staging outside its checkout, so cross-OS shared filesystem locking is not required. See [[self-hosted-runner-and-governance]] and [[idb-cache-operations-runbook]].
 
 Workflows sync and fetch exact committed submodule revisions without Actions caches for `bin` or `.git/modules`.
 Self-hosted runners use preconfigured Git URL rewrites that read `https://github.com/` through the

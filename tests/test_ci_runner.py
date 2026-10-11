@@ -242,6 +242,21 @@ class CiRunnerTests(unittest.TestCase):
             ci.release_restore()
             tool.assert_not_called()
 
+    def test_object_fetch_checks_actual_selection_digest_before_creating_client(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            bundle = root / "gamesymbol-validation"
+            bundle.mkdir()
+            (bundle / "cache-selection.sha256").write_text("a" * 64)
+            (bundle / "cache-selection.json").write_text("{}")
+            with (
+                patch.dict(os.environ, RUNNER_TEMP=str(root), PRODUCER_SELECTION_SHA256="a" * 64),
+                patch("idb_cache_s3.transport_from_environment") as client,
+                self.assertRaises(ValueError),
+            ):
+                ci.transfer_idb_selection()
+            client.assert_not_called()
+
     def test_host_tools_exclude_workflow_dependency_environment(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

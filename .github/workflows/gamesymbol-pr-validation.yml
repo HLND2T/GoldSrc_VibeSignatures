@@ -262,16 +262,15 @@ jobs:
         uses: ./.ci-tools/.github/actions/ci-command
         with:
           command: cache-prepare
-      - name: Restore exact producer IDB snapshot
-        uses: ./.ci-tools/.github/actions/s3-cache
+      - name: Download only selected immutable IDB objects
+        uses: ./.ci-tools/.github/actions/ci-command
         with:
-          endpoint-url: ${{ secrets.S3_ENDPOINT_URL }}
-          access-key: ${{ secrets.S3_ACCESS_KEY_ID }}
-          secret-key: ${{ secrets.S3_SECRET_ACCESS_KEY }}
-          operation: restore
-          key: ${{ needs.warmup-idb.outputs.cache_key }}
-          path: ${{ steps.s3-layout.outputs.cache-path }}
-          required: 'true'
+          command: pr-cache-fetch
+        env:
+          S3_ENDPOINT_URL: ${{ secrets.S3_ENDPOINT_URL }}
+          S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+          S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+          PRODUCER_SELECTION_SHA256: ${{ needs.warmup-idb.outputs.selection_sha256 }}
       - name: Verify and restore exact warm IDB cache generations
         uses: ./.ci-tools/.github/actions/ci-command
         with:
