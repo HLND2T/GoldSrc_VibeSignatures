@@ -780,11 +780,14 @@ def _invalidate_failed_worker_database(workspace: Path, binary: Path) -> tuple[l
 
 
 def validate_ida_python_executable(value: str | Path) -> Path:
+    executable = Path(os.path.abspath(value))
     try:
-        executable = Path(value).resolve(strict=True)
+        resolved = executable.resolve(strict=True)
     except (OSError, RuntimeError) as exc:
         raise IdbCacheError("IDA Python executable does not resolve to an existing file") from exc
-    return validate_plain_file(executable, context="IDA Python executable")
+    validate_plain_file(resolved, context="IDA Python executable")
+    # A venv interpreter symlinks into the base install; its resolved target would drop the venv's site-packages.
+    return executable
 
 
 def probe_ida_kernel_version(ida_python_executable: str | Path) -> str:
