@@ -1,0 +1,5 @@
+func_name: asGetActiveContext
+func_va: '0x10059670'
+func_rva: '0x59670'
+func_size: '0x1a'
+func_sig: E8 ?? ?? ?? ?? 85 C0 74 ?? 8B 48 ?? 85 C9 74 ?? 8B 00 8B 44 88 ?? C3 33 C0 C3
