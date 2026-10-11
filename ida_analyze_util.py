@@ -3853,7 +3853,15 @@ async def _preprocess_llm_target(
             if detail is None or not _llm_entry_instruction_is_valid(entry, detail, target_ranges, rules):
                 continue
             if category == "func":
-                targets = detail.get("code_refs") if section == "found_call" else detail.get("operand_targets")
+                # ELF32 GOT materializations have no direct address operand.
+                # The decoder validates their executable pointees separately
+                # from the data slot. An explicitly empty/ambiguous code list
+                # must not fall back to a mapped operand that is only data.
+                targets = (
+                    detail.get("code_refs")
+                    if section == "found_call"
+                    else detail.get("code_address_targets", detail.get("operand_targets"))
+                )
                 if not isinstance(targets, list) or len(set(targets)) != 1:
                     continue
                 target_va = _parse_int(targets[0], "function target")
@@ -3876,6 +3884,8 @@ async def _preprocess_llm_target(
                     )
                     used_across_boundary_budget = function is not None
                 if function:
+                    if section == "found_funcptr" and _parse_int(function.get("func_va"), "func_va") != target_va:
+                        continue
                     if used_across_boundary_budget:
                         function["func_sig_allow_across_function_boundary"] = True
                     return function

@@ -4182,6 +4182,99 @@ found_struct_offset: []
             self.assertTrue(result)
             self.assertEqual("Callback", yaml.safe_load(output.read_text(encoding="utf-8"))["func_name"])
 
+    async def test_llm_found_funcptr_uses_verified_code_address_from_got(self):
+        detail = {
+            "func_start": "0x1000",
+            "line": "mov eax, [ebx-0x30]",
+            "operand_targets": [],
+            "data_refs": ["0x8000"],
+            "got_indirect_targets": ["0x3000"],
+            "code_address_targets": ["0x3000"],
+        }
+        function = {"func_name": "Callback", "func_va": "0x3000", "func_sig": "90 C3"}
+        with (
+            patch("ida_analyze_util._inspect_llm_instruction", new=AsyncMock(return_value=detail)),
+            patch("ida_analyze_util._inspect_function_via_mcp", new=AsyncMock(return_value=function)) as inspect,
+        ):
+            candidate = await self._discover_callback_pointer()
+        self.assertEqual(function, candidate)
+        inspect.assert_awaited_once_with(None, 0x3000, 0, "Callback")
+
+    async def test_llm_found_funcptr_rejects_unverified_or_ambiguous_code_addresses(self):
+        for candidates in ([], ["0x3000", "0x4000"], None, "0x3000"):
+            with self.subTest(candidates=candidates):
+                detail = {
+                    "func_start": "0x1000",
+                    "line": "mov eax, [ebx-0x30]",
+                    # A mapped operand/data slot must not be treated as code
+                    # when the decoder found no unique executable pointee.
+                    "operand_targets": ["0x8000"],
+                    "got_indirect_targets": ["0x3000"],
+                    "code_address_targets": candidates,
+                }
+                with (
+                    patch("ida_analyze_util._inspect_llm_instruction", new=AsyncMock(return_value=detail)),
+                    patch("ida_analyze_util._inspect_function_via_mcp", new=AsyncMock()) as inspect,
+                ):
+                    candidate = await self._discover_callback_pointer()
+                self.assertIsNone(candidate)
+                inspect.assert_not_awaited()
+
+    async def test_llm_found_funcptr_preserves_predecessor_boundary_and_function_validation(self):
+        for owner, valid_instruction in (("0x1000", True), ("0x5000", False)):
+            with self.subTest(owner=owner):
+                detail = {
+                    "func_start": owner,
+                    "line": "mov eax, [ebx-0x30]",
+                    "operand_targets": [],
+                    "code_address_targets": ["0x3000"],
+                }
+                with (
+                    patch("ida_analyze_util._inspect_llm_instruction", new=AsyncMock(return_value=detail)),
+                    patch("ida_analyze_util._inspect_function_via_mcp", new=AsyncMock(return_value=None)) as inspect,
+                ):
+                    candidate = await self._discover_callback_pointer()
+                self.assertIsNone(candidate)
+                self.assertEqual(int(valid_instruction), inspect.await_count)
+
+    async def _discover_callback_pointer(self):
+        return await _preprocess_llm_target(
+            session=None,
+            symbol_name="Callback",
+            category="func",
+            spec={"expected_result_sections": ["found_funcptr"]},
+            llm_config=None,
+            new_binary_dir=None,
+            platform="linux",
+            image_base=0,
+            desired_fields=["func_name", "func_va", "func_sig"],
+            llm_result={
+                "found_funcptr": [
+                    {"funcptr_name": "Callback", "insn_va": "0x1010", "insn_disasm": "mov eax, [ebx-0x30]"}
+                ]
+            },
+            target_ranges=[(0x1000, 0x1100)],
+        )
+
+    async def test_llm_found_funcptr_requires_exact_function_entry(self):
+        with (
+            patch(
+                "ida_analyze_util._inspect_llm_instruction",
+                new=AsyncMock(
+                    return_value={
+                        "func_start": "0x1000",
+                        "line": "mov eax, [ebx-0x30]",
+                        "code_address_targets": ["0x3000"],
+                    }
+                ),
+            ),
+            patch(
+                "ida_analyze_util._inspect_function_via_mcp",
+                new=AsyncMock(return_value={"func_name": "Callback", "func_va": "0x2ff0", "func_sig": "90 C3"}),
+            ),
+        ):
+            self.assertIsNone(await self._discover_callback_pointer())
+
     async def test_llm_found_vcall_uses_four_byte_slot(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

@@ -1,0 +1,2848 @@
+func_name: "RegisterScriptDictionary_Native"
+func_va: "0xf205c"
+disasm_code: |-
+  .text:000F205C                 push    ebp
+  .text:000F205D                 push    edi
+  .text:000F205E                 push    esi
+  .text:000F205F                 push    ebx
+  .text:000F2060                 sub     esp, 15Ch
+  .text:000F2066                 call    sub_D3A80
+  .text:000F206B                 add     ebx, (offset qword_B14000 - $)
+  .text:000F2071                 mov     edi, [esp+16Ch+engine]
+  .text:000F2078                 mov     eax, [edi]
+  .text:000F207A                 mov     [esp+16Ch+var_160], 1786h
+  .text:000F2082                 mov     [esp+16Ch+var_164], 0Ch
+  .text:000F208A                 lea     ecx, (aDictionaryvalu - 0B14000h)[ebx]; "dictionaryValue"
+  .text:000F2090                 mov     [esp+16Ch+var_138], ecx
+  .text:000F2094                 mov     [esp+16Ch+var_168], ecx
+  .text:000F2098                 mov     [esp+16Ch+var_16C], edi
+  .text:000F209B                 call    dword ptr [eax+4Ch]
+  .text:000F209E                 mov     edx, [edi]
+  .text:000F20A0                 mov     eax, [edx+58h]
+  .text:000F20A3                 lea     ebp, [esp+16Ch+var_3C]
+  .text:000F20AA                 lea     esi, [esp+16Ch+var_23]
+  .text:000F20B1                 lea     ecx, [esp+16Ch+var_3C+1]
+  .text:000F20B8                 mov     byte ptr [ecx], 0
+  .text:000F20BB                 mov     byte ptr [ecx+1], 0
+  .text:000F20BF                 mov     byte ptr [ecx+2], 0
+  .text:000F20C3                 mov     byte ptr [ecx+3], 0
+  .text:000F20C7                 mov     byte ptr [ecx+4], 0
+  .text:000F20CB                 mov     byte ptr [ecx+5], 0
+  .text:000F20CF                 mov     byte ptr [ecx+6], 0
+  .text:000F20D3                 mov     byte ptr [ecx+7], 0
+  .text:000F20D7                 add     ecx, 8
+  .text:000F20DA                 cmp     esi, ecx
+  .text:000F20DC                 jnz     short loc_F20B8
+  .text:000F20DE                 mov     [esp+16Ch+var_20], 2
+  .text:000F20E6                 lea     edx, (sub_F1344 - 0B14000h)[ebx]
+  .text:000F20EC                 mov     [esp+16Ch+var_3C], edx
+  .text:000F20F3                 mov     [esp+16Ch+var_14C], 0
+  .text:000F20FB                 mov     [esp+16Ch+var_150], 0
+  .text:000F2103                 mov     [esp+16Ch+var_154], 0
+  .text:000F210B                 mov     [esp+16Ch+var_158], 4
+  .text:000F2113                 mov     [esp+16Ch+var_15C], ebp
+  .text:000F2117                 lea     ecx, (aVoidF - 0B14000h)[ebx]; "void f()"
+  .text:000F211D                 mov     [esp+16Ch+var_134], ecx
+  .text:000F2121                 mov     [esp+16Ch+var_160], ecx
+  .text:000F2125                 mov     [esp+16Ch+var_164], 0
+  .text:000F212D                 mov     edx, [esp+16Ch+var_138]
+  .text:000F2131                 mov     [esp+16Ch+var_168], edx
+  .text:000F2135                 mov     [esp+16Ch+var_16C], edi
+  .text:000F2138                 call    eax
+  .text:000F213A                 mov     eax, [edi]
+  .text:000F213C                 mov     ecx, [eax+58h]
+  .text:000F213F                 lea     edx, [ebp+1]
+  .text:000F2142                 mov     byte ptr [edx], 0
+  .text:000F2145                 mov     byte ptr [edx+1], 0
+  .text:000F2149                 mov     byte ptr [edx+2], 0
+  .text:000F214D                 mov     byte ptr [edx+3], 0
+  .text:000F2151                 mov     byte ptr [edx+4], 0
+  .text:000F2155                 mov     byte ptr [edx+5], 0
+  .text:000F2159                 mov     byte ptr [edx+6], 0
+  .text:000F215D                 mov     byte ptr [edx+7], 0
+  .text:000F2161                 add     edx, 8
+  .text:000F2164                 cmp     esi, edx
+  .text:000F2166                 jnz     short loc_F2142
+  .text:000F2168                 mov     [esp+16Ch+var_20], 2
+  .text:000F2170                 lea     eax, (sub_F1560 - 0B14000h)[ebx]
+  .text:000F2176                 mov     [esp+16Ch+var_3C], eax
+  .text:000F217D                 mov     [esp+16Ch+var_14C], 0
+  .text:000F2185                 mov     [esp+16Ch+var_150], 0
+  .text:000F218D                 mov     [esp+16Ch+var_154], 0
+  .text:000F2195                 mov     [esp+16Ch+var_158], 4
+  .text:000F219D                 mov     [esp+16Ch+var_15C], ebp
+  .text:000F21A1                 mov     edx, [esp+16Ch+var_134]
+  .text:000F21A5                 mov     [esp+16Ch+var_160], edx
+  .text:000F21A9                 mov     [esp+16Ch+var_164], 2
+  .text:000F21B1                 mov     eax, [esp+16Ch+var_138]
+  .text:000F21B5                 mov     [esp+16Ch+var_168], eax
+  .text:000F21B9                 mov     [esp+16Ch+var_16C], edi
+  .text:000F21BC                 call    ecx
+  .text:000F21BE                 mov     ecx, [edi]
+  .text:000F21C0                 mov     edx, [ecx+58h]
+  .text:000F21C3                 lea     eax, (sub_F12EE - 0B14000h)[ebx]
+  .text:000F21C9                 mov     [esp+16Ch+var_11C], eax
+  .text:000F21CD                 mov     [esp+16Ch+var_118], 0
+  .text:000F21D5                 lea     ecx, [ebp+1]
+  .text:000F21D8                 mov     byte ptr [ecx], 0
+  .text:000F21DB                 mov     byte ptr [ecx+1], 0
+  .text:000F21DF                 mov     byte ptr [ecx+2], 0
+  .text:000F21E3                 mov     byte ptr [ecx+3], 0
+  .text:000F21E7                 mov     byte ptr [ecx+4], 0
+  .text:000F21EB                 mov     byte ptr [ecx+5], 0
+  .text:000F21EF                 mov     byte ptr [ecx+6], 0
+  .text:000F21F3                 mov     byte ptr [ecx+7], 0
+  .text:000F21F7                 add     ecx, 8
+  .text:000F21FA                 cmp     esi, ecx
+  .text:000F21FC                 jnz     short loc_F21D8
+  .text:000F21FE                 mov     [esp+16Ch+var_20], 3
+  .text:000F2206                 movzx   eax, byte ptr [esp+16Ch+var_11C]
+  .text:000F220B                 mov     byte ptr [esp+16Ch+var_3C], al
+  .text:000F2212                 movzx   ecx, byte ptr [esp+16Ch+var_11C+1]
+  .text:000F2217                 mov     byte ptr [esp+16Ch+var_3C+1], cl
+  .text:000F221E                 movzx   eax, byte ptr [esp+16Ch+var_11C+2]
+  .text:000F2223                 mov     byte ptr [esp+16Ch+var_3C+2], al
+  .text:000F222A                 movzx   ecx, byte ptr [esp+16Ch+var_11C+3]
+  .text:000F222F                 mov     byte ptr [esp+16Ch+var_3C+3], cl
+  .text:000F2236                 movzx   eax, byte ptr [esp+16Ch+var_118]
+  .text:000F223B                 mov     byte ptr [esp+16Ch+var_38], al
+  .text:000F2242                 movzx   ecx, byte ptr [esp+16Ch+var_118+1]
+  .text:000F2247                 mov     byte ptr [esp+16Ch+var_38+1], cl
+  .text:000F224E                 movzx   eax, byte ptr [esp+16Ch+var_118+2]
+  .text:000F2253                 mov     byte ptr [esp+16Ch+var_38+2], al
+  .text:000F225A                 movzx   ecx, byte ptr [esp+16Ch+var_118+3]
+  .text:000F225F                 mov     byte ptr [esp+16Ch+var_38+3], cl
+  .text:000F2266                 mov     [esp+16Ch+var_14C], 0
+  .text:000F226E                 mov     [esp+16Ch+var_150], 0
+  .text:000F2276                 mov     [esp+16Ch+var_154], 0
+  .text:000F227E                 mov     [esp+16Ch+var_158], 3
+  .text:000F2286                 mov     [esp+16Ch+var_15C], ebp
+  .text:000F228A                 lea     eax, (aVoidFIntIn - 0B14000h)[ebx]; "void f(int&in)"
+  .text:000F2290                 mov     [esp+16Ch+var_130], eax
+  .text:000F2294                 mov     [esp+16Ch+var_160], eax
+  .text:000F2298                 mov     [esp+16Ch+var_164], 0Ch
+  .text:000F22A0                 mov     ecx, [esp+16Ch+var_138]
+  .text:000F22A4                 mov     [esp+16Ch+var_168], ecx
+  .text:000F22A8                 mov     [esp+16Ch+var_16C], edi
+  .text:000F22AB                 call    edx
+  .text:000F22AD                 mov     edx, [edi]
+  .text:000F22AF                 mov     ecx, [edx+58h]
+  .text:000F22B2                 lea     eax, (sub_F129E - 0B14000h)[ebx]
+  .text:000F22B8                 mov     [esp+16Ch+var_114], eax
+  .text:000F22BC                 mov     [esp+16Ch+var_110], 0
+  .text:000F22C4                 lea     edx, [ebp+1]
+  .text:000F22C7                 mov     byte ptr [edx], 0
+  .text:000F22CA                 mov     byte ptr [edx+1], 0
+  .text:000F22CE                 mov     byte ptr [edx+2], 0
+  .text:000F22D2                 mov     byte ptr [edx+3], 0
+  .text:000F22D6                 mov     byte ptr [edx+4], 0
+  .text:000F22DA                 mov     byte ptr [edx+5], 0
+  .text:000F22DE                 mov     byte ptr [edx+6], 0
+  .text:000F22E2                 mov     byte ptr [edx+7], 0
+  .text:000F22E6                 add     edx, 8
+  .text:000F22E9                 cmp     esi, edx
+  .text:000F22EB                 jnz     short loc_F22C7
+  .text:000F22ED                 mov     [esp+16Ch+var_20], 3
+  .text:000F22F5                 movzx   eax, byte ptr [esp+16Ch+var_114]
+  .text:000F22FA                 mov     byte ptr [esp+16Ch+var_3C], al
+  .text:000F2301                 movzx   edx, byte ptr [esp+16Ch+var_114+1]
+  .text:000F2306                 mov     byte ptr [esp+16Ch+var_3C+1], dl
+  .text:000F230D                 movzx   eax, byte ptr [esp+16Ch+var_114+2]
+  .text:000F2312                 mov     byte ptr [esp+16Ch+var_3C+2], al
+  .text:000F2319                 movzx   edx, byte ptr [esp+16Ch+var_114+3]
+  .text:000F231E                 mov     byte ptr [esp+16Ch+var_3C+3], dl
+  .text:000F2325                 movzx   eax, byte ptr [esp+16Ch+var_110]
+  .text:000F232A                 mov     byte ptr [esp+16Ch+var_38], al
+  .text:000F2331                 movzx   edx, byte ptr [esp+16Ch+var_110+1]
+  .text:000F2336                 mov     byte ptr [esp+16Ch+var_38+1], dl
+  .text:000F233D                 movzx   eax, byte ptr [esp+16Ch+var_110+2]
+  .text:000F2342                 mov     byte ptr [esp+16Ch+var_38+2], al
+  .text:000F2349                 movzx   edx, byte ptr [esp+16Ch+var_110+3]
+  .text:000F234E                 mov     byte ptr [esp+16Ch+var_38+3], dl
+  .text:000F2355                 mov     [esp+16Ch+var_14C], 0
+  .text:000F235D                 mov     [esp+16Ch+var_150], 0
+  .text:000F2365                 mov     [esp+16Ch+var_154], 0
+  .text:000F236D                 mov     [esp+16Ch+var_158], 3
+  .text:000F2375                 mov     [esp+16Ch+var_15C], ebp
+  .text:000F2379                 mov     eax, [esp+16Ch+var_130]
+  .text:000F237D                 mov     [esp+16Ch+var_160], eax
+  .text:000F2381                 mov     [esp+16Ch+var_164], 0Dh
+  .text:000F2389                 mov     edx, [esp+16Ch+var_138]
+  .text:000F238D                 mov     [esp+16Ch+var_168], edx
+  .text:000F2391                 mov     [esp+16Ch+var_16C], edi
+  .text:000F2394                 call    ecx
+  .text:000F2396                 mov     ecx, [edi]
+  .text:000F2398                 mov     eax, [ecx+54h]
+  .text:000F239B                 lea     edx, [ebp+1]
+  .text:000F239E                 mov     byte ptr [edx], 0
+  .text:000F23A1                 mov     byte ptr [edx+1], 0
+  .text:000F23A5                 mov     byte ptr [edx+2], 0
+  .text:000F23A9                 mov     byte ptr [edx+3], 0
+  .text:000F23AD                 mov     byte ptr [edx+4], 0
+  .text:000F23B1                 mov     byte ptr [edx+5], 0
+  .text:000F23B5                 mov     byte ptr [edx+6], 0
+  .text:000F23B9                 mov     byte ptr [edx+7], 0
+  .text:000F23BD                 add     edx, 8
+  .text:000F23C0                 cmp     esi, edx
+  .text:000F23C2                 jnz     short loc_F239E
+  .text:000F23C4                 mov     [esp+16Ch+var_20], 2
+  .text:000F23CC                 lea     ecx, (sub_F19AE - 0B14000h)[ebx]
+  .text:000F23D2                 mov     [esp+16Ch+var_12C], ecx
+  .text:000F23D6                 mov     [esp+16Ch+var_3C], ecx
+  .text:000F23DD                 mov     [esp+16Ch+var_150], 0
+  .text:000F23E5                 mov     [esp+16Ch+var_154], 0
+  .text:000F23ED                 mov     [esp+16Ch+var_158], 0
+  .text:000F23F5                 mov     [esp+16Ch+var_15C], 4
+  .text:000F23FD                 mov     [esp+16Ch+var_160], ebp
+  .text:000F2401                 lea     edx, (aDictionaryvalu_0 - 0B14000h)[ebx]; "dictionaryValue &opAssign(const diction"...
+  .text:000F2407                 mov     [esp+16Ch+var_164], edx
+  .text:000F240B                 mov     ecx, [esp+16Ch+var_138]
+  .text:000F240F                 mov     [esp+16Ch+var_168], ecx
+  .text:000F2413                 mov     [esp+16Ch+var_16C], edi
+  .text:000F2416                 call    eax
+  .text:000F2418                 mov     eax, [edi]
+  .text:000F241A                 mov     edx, [eax+54h]
+  .text:000F241D                 lea     ecx, [ebp+1]
+  .text:000F2420                 mov     byte ptr [ecx], 0
+  .text:000F2423                 mov     byte ptr [ecx+1], 0
+  .text:000F2427                 mov     byte ptr [ecx+2], 0
+  .text:000F242B                 mov     byte ptr [ecx+3], 0
+  .text:000F242F                 mov     byte ptr [ecx+4], 0
+  .text:000F2433                 mov     byte ptr [ecx+5], 0
+  .text:000F2437                 mov     byte ptr [ecx+6], 0
+  .text:000F243B                 mov     byte ptr [ecx+7], 0
+  .text:000F243F                 add     ecx, 8
+  .text:000F2442                 cmp     esi, ecx
+  .text:000F2444                 jnz     short loc_F2420
+  .text:000F2446                 mov     [esp+16Ch+var_20], 2
+  .text:000F244E                 lea     eax, (sub_F17AC - 0B14000h)[ebx]
+  .text:000F2454                 mov     [esp+16Ch+var_128], eax
+  .text:000F2458                 mov     [esp+16Ch+var_3C], eax
+  .text:000F245F                 mov     [esp+16Ch+var_150], 0
+  .text:000F2467                 mov     [esp+16Ch+var_154], 0
+  .text:000F246F                 mov     [esp+16Ch+var_158], 0
+  .text:000F2477                 mov     [esp+16Ch+var_15C], 4
+  .text:000F247F                 mov     [esp+16Ch+var_160], ebp
+  .text:000F2483                 lea     ecx, (aDictionaryvalu_1 - 0B14000h)[ebx]; "dictionaryValue &opHndlAssign(const ?&i"...
+  .text:000F2489                 mov     [esp+16Ch+var_164], ecx
+  .text:000F248D                 mov     eax, [esp+16Ch+var_138]
+  .text:000F2491                 mov     [esp+16Ch+var_168], eax
+  .text:000F2495                 mov     [esp+16Ch+var_16C], edi
+  .text:000F2498                 call    edx
+  .text:000F249A                 mov     edx, [edi]
+  .text:000F249C                 mov     ecx, [edx+54h]
+  .text:000F249F                 lea     eax, [ebp+1]
+  .text:000F24A2                 mov     byte ptr [eax], 0
+  .text:000F24A5                 mov     byte ptr [eax+1], 0
+  .text:000F24A9                 mov     byte ptr [eax+2], 0
+  .text:000F24AD                 mov     byte ptr [eax+3], 0
+  .text:000F24B1                 mov     byte ptr [eax+4], 0
+  .text:000F24B5                 mov     byte ptr [eax+5], 0
+  .text:000F24B9                 mov     byte ptr [eax+6], 0
+  .text:000F24BD                 mov     byte ptr [eax+7], 0
+  .text:000F24C1                 add     eax, 8
+  .text:000F24C4                 cmp     eax, esi
+  .text:000F24C6                 jnz     short loc_F24A2
+  .text:000F24C8                 mov     [esp+16Ch+var_20], 2
+  .text:000F24D0                 mov     edx, [esp+16Ch+var_12C]
+  .text:000F24D4                 mov     [esp+16Ch+var_3C], edx
+  .text:000F24DB                 mov     [esp+16Ch+var_150], 0
+  .text:000F24E3                 mov     [esp+16Ch+var_154], 0
+  .text:000F24EB                 mov     [esp+16Ch+var_158], 0
+  .text:000F24F3                 mov     [esp+16Ch+var_15C], 4
+  .text:000F24FB                 mov     [esp+16Ch+var_160], ebp
+  .text:000F24FF                 lea     eax, (aDictionaryvalu_2 - 0B14000h)[ebx]; "dictionaryValue &opHndlAssign(const dic"...
+  .text:000F2505                 mov     [esp+16Ch+var_164], eax
+  .text:000F2509                 mov     edx, [esp+16Ch+var_138]
+  .text:000F250D                 mov     [esp+16Ch+var_168], edx
+  .text:000F2511                 mov     [esp+16Ch+var_16C], edi
+  .text:000F2514                 call    ecx
+  .text:000F2516                 mov     ecx, [edi]
+  .text:000F2518                 mov     edx, [ecx+54h]
+  .text:000F251B                 lea     eax, [ebp+1]
+  .text:000F251E                 mov     byte ptr [eax], 0
+  .text:000F2521                 mov     byte ptr [eax+1], 0
+  .text:000F2525                 mov     byte ptr [eax+2], 0
+  .text:000F2529                 mov     byte ptr [eax+3], 0
+  .text:000F252D                 mov     byte ptr [eax+4], 0
+  .text:000F2531                 mov     byte ptr [eax+5], 0
+  .text:000F2535                 mov     byte ptr [eax+6], 0
+  .text:000F2539                 mov     byte ptr [eax+7], 0
+  .text:000F253D                 add     eax, 8
+  .text:000F2540                 cmp     esi, eax
+  .text:000F2542                 jnz     short loc_F251E
+  .text:000F2544                 mov     [esp+16Ch+var_20], 2
+  .text:000F254C                 mov     ecx, [esp+16Ch+var_128]
+  .text:000F2550                 mov     [esp+16Ch+var_3C], ecx
+  .text:000F2557                 mov     [esp+16Ch+var_150], 0
+  .text:000F255F                 mov     [esp+16Ch+var_154], 0
+  .text:000F2567                 mov     [esp+16Ch+var_158], 0
+  .text:000F256F                 mov     [esp+16Ch+var_15C], 4
+  .text:000F2577                 mov     [esp+16Ch+var_160], ebp
+  .text:000F257B                 lea     eax, (aDictionaryvalu_3 - 0B14000h)[ebx]; "dictionaryValue &opAssign(const ?&in)"
+  .text:000F2581                 mov     [esp+16Ch+var_164], eax
+  .text:000F2585                 mov     ecx, [esp+16Ch+var_138]
+  .text:000F2589                 mov     [esp+16Ch+var_168], ecx
+  .text:000F258D                 mov     [esp+16Ch+var_16C], edi
+  .text:000F2590                 call    edx
+  .text:000F2592                 mov     edx, [edi]
+  .text:000F2594                 mov     ecx, [edx+54h]
+  .text:000F2597                 lea     eax, [ebp+1]
+  .text:000F259A                 mov     byte ptr [eax], 0
+  .text:000F259D                 mov     byte ptr [eax+1], 0
+  .text:000F25A1                 mov     byte ptr [eax+2], 0
+  .text:000F25A5                 mov     byte ptr [eax+3], 0
+  .text:000F25A9                 mov     byte ptr [eax+4], 0
+  .text:000F25AD                 mov     byte ptr [eax+5], 0
+  .text:000F25B1                 mov     byte ptr [eax+6], 0
+  .text:000F25B5                 mov     byte ptr [eax+7], 0
+  .text:000F25B9                 add     eax, 8
+  .text:000F25BC                 cmp     esi, eax
+  .text:000F25BE                 jnz     short loc_F259A
+  .text:000F25C0                 mov     [esp+16Ch+var_20], 2
+  .text:000F25C8                 lea     edx, (sub_F1882 - 0B14000h)[ebx]
+  .text:000F25CE                 mov     [esp+16Ch+var_3C], edx
+  .text:000F25D5                 mov     [esp+16Ch+var_150], 0
+  .text:000F25DD                 mov     [esp+16Ch+var_154], 0
+  .text:000F25E5                 mov     [esp+16Ch+var_158], 0
+  .text:000F25ED                 mov     [esp+16Ch+var_15C], 4
+  .text:000F25F5                 mov     [esp+16Ch+var_160], ebp
+  .text:000F25F9                 lea     eax, (aDictionaryvalu_4 - 0B14000h)[ebx]; "dictionaryValue &opAssign(double)"
+  .text:000F25FF                 mov     [esp+16Ch+var_164], eax
+  .text:000F2603                 mov     edx, [esp+16Ch+var_138]
+  .text:000F2607                 mov     [esp+16Ch+var_168], edx
+  .text:000F260B                 mov     [esp+16Ch+var_16C], edi
+  .text:000F260E                 call    ecx
+  .text:000F2610                 mov     ecx, [edi]
+  .text:000F2612                 mov     edx, [ecx+54h]
+  .text:000F2615                 lea     eax, [ebp+1]
+  .text:000F2618                 mov     byte ptr [eax], 0
+  .text:000F261B                 mov     byte ptr [eax+1], 0
+  .text:000F261F                 mov     byte ptr [eax+2], 0
+  .text:000F2623                 mov     byte ptr [eax+3], 0
+  .text:000F2627                 mov     byte ptr [eax+4], 0
+  .text:000F262B                 mov     byte ptr [eax+5], 0
+  .text:000F262F                 mov     byte ptr [eax+6], 0
+  .text:000F2633                 mov     byte ptr [eax+7], 0
+  .text:000F2637                 add     eax, 8
+  .text:000F263A                 cmp     esi, eax
+  .text:000F263C                 jnz     short loc_F2618
+  .text:000F263E                 mov     [esp+16Ch+var_20], 2
+  .text:000F2646                 lea     ecx, (sub_F17F6 - 0B14000h)[ebx]
+  .text:000F264C                 mov     [esp+16Ch+var_3C], ecx
+  .text:000F2653                 mov     [esp+16Ch+var_150], 0
+  .text:000F265B                 mov     [esp+16Ch+var_154], 0
+  .text:000F2663                 mov     [esp+16Ch+var_158], 0
+  .text:000F266B                 mov     [esp+16Ch+var_15C], 4
+  .text:000F2673                 mov     [esp+16Ch+var_160], ebp
+  .text:000F2677                 lea     eax, (aDictionaryvalu_5 - 0B14000h)[ebx]; "dictionaryValue &opAssign(int64)"
+  .text:000F267D                 mov     [esp+16Ch+var_164], eax
+  .text:000F2681                 mov     ecx, [esp+16Ch+var_138]
+  .text:000F2685                 mov     [esp+16Ch+var_168], ecx
+  .text:000F2689                 mov     [esp+16Ch+var_16C], edi
+  .text:000F268C                 call    edx
+  .text:000F268E                 mov     edx, [edi]
+  .text:000F2690                 mov     eax, [edx+54h]
+  .text:000F2693                 lea     ecx, [ebp+1]
+  .text:000F2696                 mov     byte ptr [ecx], 0
+  .text:000F2699                 mov     byte ptr [ecx+1], 0
+  .text:000F269D                 mov     byte ptr [ecx+2], 0
+  .text:000F26A1                 mov     byte ptr [ecx+3], 0
+  .text:000F26A5                 mov     byte ptr [ecx+4], 0
+  .text:000F26A9                 mov     byte ptr [ecx+5], 0
+  .text:000F26AD                 mov     byte ptr [ecx+6], 0
+  .text:000F26B1                 mov     byte ptr [ecx+7], 0
+  .text:000F26B5                 add     ecx, 8
+  .text:000F26B8                 cmp     esi, ecx
+  .text:000F26BA                 jnz     short loc_F2696
+  .text:000F26BC                 mov     [esp+16Ch+var_20], 2
+  .text:000F26C4                 lea     edx, (sub_F1E42 - 0B14000h)[ebx]
+  .text:000F26CA                 mov     [esp+16Ch+var_3C], edx
+  .text:000F26D1                 mov     [esp+16Ch+var_12C], edx
+  .text:000F26D5                 mov     [esp+16Ch+var_150], 0
+  .text:000F26DD                 mov     [esp+16Ch+var_154], 0
+  .text:000F26E5                 mov     [esp+16Ch+var_158], 0
+  .text:000F26ED                 mov     [esp+16Ch+var_15C], 4
+  .text:000F26F5                 mov     [esp+16Ch+var_160], ebp
+  .text:000F26F9                 lea     ecx, (aVoidOpcastOut - 0B14000h)[ebx]; "void opCast(?&out)"
+  .text:000F26FF                 mov     [esp+16Ch+var_164], ecx
+  .text:000F2703                 mov     edx, [esp+16Ch+var_138]
+  .text:000F2707                 mov     [esp+16Ch+var_168], edx
+  .text:000F270B                 mov     [esp+16Ch+var_16C], edi
+  .text:000F270E                 call    eax
+  .text:000F2710                 mov     eax, [edi]
+  .text:000F2712                 mov     ecx, [eax+54h]
+  .text:000F2715                 lea     eax, [ebp+1]
+  .text:000F2718                 mov     edx, [esp+16Ch+var_12C]
+  .text:000F271C                 mov     byte ptr [eax], 0
+  .text:000F271F                 mov     byte ptr [eax+1], 0
+  .text:000F2723                 mov     byte ptr [eax+2], 0
+  .text:000F2727                 mov     byte ptr [eax+3], 0
+  .text:000F272B                 mov     byte ptr [eax+4], 0
+  .text:000F272F                 mov     byte ptr [eax+5], 0
+  .text:000F2733                 mov     byte ptr [eax+6], 0
+  .text:000F2737                 mov     byte ptr [eax+7], 0
+  .text:000F273B                 add     eax, 8
+  .text:000F273E                 cmp     esi, eax
+  .text:000F2740                 jnz     short loc_F271C
+  .text:000F2742                 mov     [esp+16Ch+var_20], 2
+  .text:000F274A                 mov     [esp+16Ch+var_3C], edx
+  .text:000F2751                 mov     [esp+16Ch+var_150], 0
+  .text:000F2759                 mov     [esp+16Ch+var_154], 0
+  .text:000F2761                 mov     [esp+16Ch+var_158], 0
+  .text:000F2769                 mov     [esp+16Ch+var_15C], 4
+  .text:000F2771                 mov     [esp+16Ch+var_160], ebp
+  .text:000F2775                 lea     eax, (aVoidOpconvOut - 0B14000h)[ebx]; "void opConv(?&out)"
+  .text:000F277B                 mov     [esp+16Ch+var_164], eax
+  .text:000F277F                 mov     edx, [esp+16Ch+var_138]
+  .text:000F2783                 mov     [esp+16Ch+var_168], edx
+  .text:000F2787                 mov     [esp+16Ch+var_16C], edi
+  .text:000F278A                 call    ecx
+  .text:000F278C                 mov     ecx, [edi]
+  .text:000F278E                 mov     edx, [ecx+54h]
+  .text:000F2791                 lea     eax, [ebp+1]
+  .text:000F2794                 mov     byte ptr [eax], 0
+  .text:000F2797                 mov     byte ptr [eax+1], 0
+  .text:000F279B                 mov     byte ptr [eax+2], 0
+  .text:000F279F                 mov     byte ptr [eax+3], 0
+  .text:000F27A3                 mov     byte ptr [eax+4], 0
+  .text:000F27A7                 mov     byte ptr [eax+5], 0
+  .text:000F27AB                 mov     byte ptr [eax+6], 0
+  .text:000F27AF                 mov     byte ptr [eax+7], 0
+  .text:000F27B3                 add     eax, 8
+  .text:000F27B6                 cmp     esi, eax
+  .text:000F27B8                 jnz     short loc_F2794
+  .text:000F27BA                 mov     [esp+16Ch+var_20], 2
+  .text:000F27C2                 lea     ecx, (sub_F1EB0 - 0B14000h)[ebx]
+  .text:000F27C8                 mov     [esp+16Ch+var_3C], ecx
+  .text:000F27CF                 mov     [esp+16Ch+var_150], 0
+  .text:000F27D7                 mov     [esp+16Ch+var_154], 0
+  .text:000F27DF                 mov     [esp+16Ch+var_158], 0
+  .text:000F27E7                 mov     [esp+16Ch+var_15C], 4
+  .text:000F27EF                 mov     [esp+16Ch+var_160], ebp
+  .text:000F27F3                 lea     eax, (aInt64Opconv - 0B14000h)[ebx]; "int64 opConv()"
+  .text:000F27F9                 mov     [esp+16Ch+var_164], eax
+  .text:000F27FD                 mov     ecx, [esp+16Ch+var_138]
+  .text:000F2801                 mov     [esp+16Ch+var_168], ecx
+  .text:000F2805                 mov     [esp+16Ch+var_16C], edi
+  .text:000F2808                 call    edx
+  .text:000F280A                 mov     edx, [edi]
+  .text:000F280C                 mov     ecx, [edx+54h]
+  .text:000F280F                 lea     eax, [ebp+1]
+  .text:000F2812                 mov     byte ptr [eax], 0
+  .text:000F2815                 mov     byte ptr [eax+1], 0
+  .text:000F2819                 mov     byte ptr [eax+2], 0
+  .text:000F281D                 mov     byte ptr [eax+3], 0
+  .text:000F2821                 mov     byte ptr [eax+4], 0
+  .text:000F2825                 mov     byte ptr [eax+5], 0
+  .text:000F2829                 mov     byte ptr [eax+6], 0
+  .text:000F282D                 mov     byte ptr [eax+7], 0
+  .text:000F2831                 add     eax, 8
+  .text:000F2834                 cmp     eax, esi
+  .text:000F2836                 jnz     short loc_F2812
+  .text:000F2838                 mov     [esp+16Ch+var_20], 2
+  .text:000F2840                 lea     edx, (sub_F1E88 - 0B14000h)[ebx]
+  .text:000F2846                 mov     [esp+16Ch+var_3C], edx
+  .text:000F284D                 mov     [esp+16Ch+var_150], 0
+  .text:000F2855                 mov     [esp+16Ch+var_154], 0
+  .text:000F285D                 mov     [esp+16Ch+var_158], 0
+  .text:000F2865                 mov     [esp+16Ch+var_15C], 4
+  .text:000F286D                 mov     [esp+16Ch+var_160], ebp
+  .text:000F2871                 lea     eax, (aDoubleOpconv - 0B14000h)[ebx]; "double opConv()"
+  .text:000F2877                 mov     [esp+16Ch+var_164], eax
+  .text:000F287B                 mov     edx, [esp+16Ch+var_138]
+  .text:000F287F                 mov     [esp+16Ch+var_168], edx
+  .text:000F2883                 mov     [esp+16Ch+var_16C], edi
+  .text:000F2886                 call    ecx
+  .text:000F2888                 mov     eax, [edi]
+  .text:000F288A                 mov     [esp+16Ch+var_160], 5
+  .text:000F2892                 mov     [esp+16Ch+var_164], 2Ch ; ','
+  .text:000F289A                 lea     ecx, (aDictionary - 0B14000h)[ebx]; "dictionary"
+  .text:000F28A0                 mov     [esp+16Ch+var_138], ecx
+  .text:000F28A4                 mov     [esp+16Ch+var_168], ecx
+  .text:000F28A8                 mov     [esp+16Ch+var_16C], edi
+  .text:000F28AB                 call    dword ptr [eax+4Ch]
+  .text:000F28AE                 mov     edx, [edi]
+  .text:000F28B0                 mov     ecx, [edx+58h]
+  .text:000F28B3                 lea     eax, [ebp+1]
+  .text:000F28B6                 mov     byte ptr [eax], 0
+  .text:000F28B9                 mov     byte ptr [eax+1], 0
+  .text:000F28BD                 mov     byte ptr [eax+2], 0
+  .text:000F28C1                 mov     byte ptr [eax+3], 0
+  .text:000F28C5                 mov     byte ptr [eax+4], 0
+  .text:000F28C9                 mov     byte ptr [eax+5], 0
+  .text:000F28CD                 mov     byte ptr [eax+6], 0
+  .text:000F28D1                 mov     byte ptr [eax+7], 0
+  .text:000F28D5                 add     eax, 8
+  .text:000F28D8                 cmp     esi, eax
+  .text:000F28DA                 jnz     short loc_F28B6
+  .text:000F28DC                 mov     [esp+16Ch+var_20], 1
+  .text:000F28E4                 lea     edx, (ScriptDictionaryFactory_Generic - 0B14000h)[ebx]; SDK generic factory: engine from GetEngine, store dictionary in GetAddressOfReturnLocation. Windows inlines allocation/construction; Linux calls the independent engine-taking Create. This wrapper is not CScriptDictionary::Create.; found_funcptr ScriptDictionaryFactory_Generic: dictionary factory behaviour 3, convention 6
+  .text:000F28EA                 mov     [esp+16Ch+var_3C], edx
+  .text:000F28F1                 mov     [esp+16Ch+var_14C], 0
+  .text:000F28F9                 mov     [esp+16Ch+var_150], 0
+  .text:000F2901                 mov     [esp+16Ch+var_154], 0
+  .text:000F2909                 mov     [esp+16Ch+var_158], 6
+  .text:000F2911                 mov     [esp+16Ch+var_15C], ebp
+  .text:000F2915                 lea     eax, (aDictionaryF - 0B14000h)[ebx]; "dictionary@ f()"
+  .text:000F291B                 mov     [esp+16Ch+var_160], eax
+  .text:000F291F                 mov     [esp+16Ch+var_164], 3
+  .text:000F2927                 mov     edx, [esp+16Ch+var_138]
+  .text:000F292B                 mov     [esp+16Ch+var_168], edx
+  .text:000F292F                 mov     [esp+16Ch+var_16C], edi
+  .text:000F2932                 call    ecx
+  .text:000F2934                 mov     ecx, [edi]
+  .text:000F2936                 mov     edx, [ecx+58h]
+  .text:000F2939                 lea     eax, [ebp+1]
+  .text:000F293C                 mov     byte ptr [eax], 0
+  .text:000F293F                 mov     byte ptr [eax+1], 0
+  .text:000F2943                 mov     byte ptr [eax+2], 0
+  .text:000F2947                 mov     byte ptr [eax+3], 0
+  .text:000F294B                 mov     byte ptr [eax+4], 0
+  .text:000F294F                 mov     byte ptr [eax+5], 0
+  .text:000F2953                 mov     byte ptr [eax+6], 0
+  .text:000F2957                 mov     byte ptr [eax+7], 0
+  .text:000F295B                 add     eax, 8
+  .text:000F295E                 cmp     esi, eax
+  .text:000F2960                 jnz     short loc_F293C
+  .text:000F2962                 mov     [esp+16Ch+var_20], 1
+  .text:000F296A                 lea     ecx, (sub_F66E4 - 0B14000h)[ebx]
+  .text:000F2970                 mov     [esp+16Ch+var_3C], ecx
+  .text:000F2977                 mov     [esp+16Ch+var_14C], 0
+  .text:000F297F                 mov     [esp+16Ch+var_150], 0
+  .text:000F2987                 mov     [esp+16Ch+var_154], 0
+  .text:000F298F                 mov     [esp+16Ch+var_158], 6
+  .text:000F2997                 mov     [esp+16Ch+var_15C], ebp
+  .text:000F299B                 lea     eax, (aDictionaryFInt - 0B14000h)[ebx]; "dictionary @f(int &in) {repeat {string,"...
+  .text:000F29A1                 mov     [esp+16Ch+var_160], eax
+  .text:000F29A5                 mov     [esp+16Ch+var_164], 4
+  .text:000F29AD                 mov     ecx, [esp+16Ch+var_138]
+  .text:000F29B1                 mov     [esp+16Ch+var_168], ecx
+  .text:000F29B5                 mov     [esp+16Ch+var_16C], edi
+  .text:000F29B8                 call    edx
+  .text:000F29BA                 mov     edx, [edi]
+  .text:000F29BC                 mov     ecx, [edx+58h]
+  .text:000F29BF                 lea     eax, (CScriptDictionary_AddRef - 0B14000h)[ebx]; found_funcptr CScriptDictionary_AddRef: native dictionary member, asCALL_THISCALL=3
+  .text:000F29C5                 mov     [esp+16Ch+var_10C], eax
+  .text:000F29C9                 mov     [esp+16Ch+var_108], 0
+  .text:000F29D1                 lea     edx, [ebp+1]
+  .text:000F29D4                 mov     byte ptr [edx], 0
+  .text:000F29D7                 mov     byte ptr [edx+1], 0
+  .text:000F29DB                 mov     byte ptr [edx+2], 0
+  .text:000F29DF                 mov     byte ptr [edx+3], 0
+  .text:000F29E3                 mov     byte ptr [edx+4], 0
+  .text:000F29E7                 mov     byte ptr [edx+5], 0
+  .text:000F29EB                 mov     byte ptr [edx+6], 0
+  .text:000F29EF                 mov     byte ptr [edx+7], 0
+  .text:000F29F3                 add     edx, 8
+  .text:000F29F6                 cmp     esi, edx
+  .text:000F29F8                 jnz     short loc_F29D4
+  .text:000F29FA                 mov     [esp+16Ch+var_20], 3
+  .text:000F2A02                 movzx   eax, byte ptr [esp+16Ch+var_10C]
+  .text:000F2A07                 mov     byte ptr [esp+16Ch+var_3C], al
+  .text:000F2A0E                 movzx   edx, byte ptr [esp+16Ch+var_10C+1]
+  .text:000F2A13                 mov     byte ptr [esp+16Ch+var_3C+1], dl
+  .text:000F2A1A                 movzx   eax, byte ptr [esp+16Ch+var_10C+2]
+  .text:000F2A1F                 mov     byte ptr [esp+16Ch+var_3C+2], al
+  .text:000F2A26                 movzx   edx, byte ptr [esp+16Ch+var_10C+3]
+  .text:000F2A2B                 mov     byte ptr [esp+16Ch+var_3C+3], dl
+  .text:000F2A32                 movzx   eax, byte ptr [esp+16Ch+var_108]
+  .text:000F2A37                 mov     byte ptr [esp+16Ch+var_38], al
+  .text:000F2A3E                 movzx   edx, byte ptr [esp+16Ch+var_108+1]
+  .text:000F2A43                 mov     byte ptr [esp+16Ch+var_38+1], dl
+  .text:000F2A4A                 movzx   eax, byte ptr [esp+16Ch+var_108+2]
+  .text:000F2A4F                 mov     byte ptr [esp+16Ch+var_38+2], al
+  .text:000F2A56                 movzx   edx, byte ptr [esp+16Ch+var_108+3]
+  .text:000F2A5B                 mov     byte ptr [esp+16Ch+var_38+3], dl
+  .text:000F2A62                 mov     [esp+16Ch+var_14C], 0
+  .text:000F2A6A                 mov     [esp+16Ch+var_150], 0
+  .text:000F2A72                 mov     [esp+16Ch+var_154], 0
+  .text:000F2A7A                 mov     [esp+16Ch+var_158], 3
+  .text:000F2A82                 mov     [esp+16Ch+var_15C], ebp
+  .text:000F2A86                 mov     eax, [esp+16Ch+var_134]
+  .text:000F2A8A                 mov     [esp+16Ch+var_160], eax
+  .text:000F2A8E                 mov     [esp+16Ch+var_164], 5
+  .text:000F2A96                 mov     edx, [esp+16Ch+var_138]
+  .text:000F2A9A                 mov     [esp+16Ch+var_168], edx
+  .text:000F2A9E                 mov     [esp+16Ch+var_16C], edi
+  .text:000F2AA1                 call    ecx
+  .text:000F2AA3                 mov     ecx, [edi]
+  .text:000F2AA5                 mov     edx, [ecx+58h]
+  .text:000F2AA8                 lea     eax, (CScriptDictionary_Release - 0B14000h)[ebx]; found_funcptr CScriptDictionary_Release: native dictionary member, asCALL_THISCALL=3
+  .text:000F2AAE                 mov     [esp+16Ch+var_104], eax
+  .text:000F2AB2                 mov     [esp+16Ch+var_100], 0
+  .text:000F2ABA                 lea     ecx, [ebp+1]
+  .text:000F2ABD                 mov     byte ptr [ecx], 0
+  .text:000F2AC0                 mov     byte ptr [ecx+1], 0
+  .text:000F2AC4                 mov     byte ptr [ecx+2], 0
+  .text:000F2AC8                 mov     byte ptr [ecx+3], 0
+  .text:000F2ACC                 mov     byte ptr [ecx+4], 0
+  .text:000F2AD0                 mov     byte ptr [ecx+5], 0
+  .text:000F2AD4                 mov     byte ptr [ecx+6], 0
+  .text:000F2AD8                 mov     byte ptr [ecx+7], 0
+  .text:000F2ADC                 add     ecx, 8
+  .text:000F2ADF                 cmp     esi, ecx
+  .text:000F2AE1                 jnz     short loc_F2ABD
+  .text:000F2AE3                 mov     [esp+16Ch+var_20], 3
+  .text:000F2AEB                 movzx   eax, byte ptr [esp+16Ch+var_104]
+  .text:000F2AF0                 mov     byte ptr [esp+16Ch+var_3C], al
+  .text:000F2AF7                 movzx   ecx, byte ptr [esp+16Ch+var_104+1]
+  .text:000F2AFC                 mov     byte ptr [esp+16Ch+var_3C+1], cl
+  .text:000F2B03                 movzx   eax, byte ptr [esp+16Ch+var_104+2]
+  .text:000F2B08                 mov     byte ptr [esp+16Ch+var_3C+2], al
+  .text:000F2B0F                 movzx   ecx, byte ptr [esp+16Ch+var_104+3]
+  .text:000F2B14                 mov     byte ptr [esp+16Ch+var_3C+3], cl
+  .text:000F2B1B                 movzx   eax, byte ptr [esp+16Ch+var_100]
+  .text:000F2B20                 mov     byte ptr [esp+16Ch+var_38], al
+  .text:000F2B27                 movzx   ecx, byte ptr [esp+16Ch+var_100+1]
+  .text:000F2B2C                 mov     byte ptr [esp+16Ch+var_38+1], cl
+  .text:000F2B33                 movzx   eax, byte ptr [esp+16Ch+var_100+2]
+  .text:000F2B38                 mov     byte ptr [esp+16Ch+var_38+2], al
+  .text:000F2B3F                 movzx   ecx, byte ptr [esp+16Ch+var_100+3]
+  .text:000F2B44                 mov     byte ptr [esp+16Ch+var_38+3], cl
+  .text:000F2B4B                 mov     [esp+16Ch+var_14C], 0
+  .text:000F2B53                 mov     [esp+16Ch+var_150], 0
+  .text:000F2B5B                 mov     [esp+16Ch+var_154], 0
+  .text:000F2B63                 mov     [esp+16Ch+var_158], 3
+  .text:000F2B6B                 mov     [esp+16Ch+var_15C], ebp
+  .text:000F2B6F                 mov     eax, [esp+16Ch+var_134]
+  .text:000F2B73                 mov     [esp+16Ch+var_160], eax
+  .text:000F2B77                 mov     [esp+16Ch+var_164], 6
+  .text:000F2B7F                 mov     ecx, [esp+16Ch+var_138]
+  .text:000F2B83                 mov     [esp+16Ch+var_168], ecx
+  .text:000F2B87                 mov     [esp+16Ch+var_16C], edi
+  .text:000F2B8A                 call    edx
+  .text:000F2B8C                 mov     edx, [edi]
+  .text:000F2B8E                 mov     ecx, [edx+54h]
+  .text:000F2B91                 lea     eax, (sub_F6202 - 0B14000h)[ebx]
+  .text:000F2B97                 mov     [esp+16Ch+var_FC], eax
+  .text:000F2B9B                 mov     [esp+16Ch+var_F8], 0
+  .text:000F2BA3                 lea     edx, [ebp+1]
+  .text:000F2BA6                 mov     byte ptr [edx], 0
+  .text:000F2BA9                 mov     byte ptr [edx+1], 0
+  .text:000F2BAD                 mov     byte ptr [edx+2], 0
+  .text:000F2BB1                 mov     byte ptr [edx+3], 0
+  .text:000F2BB5                 mov     byte ptr [edx+4], 0
+  .text:000F2BB9                 mov     byte ptr [edx+5], 0
+  .text:000F2BBD                 mov     byte ptr [edx+6], 0
+  .text:000F2BC1                 mov     byte ptr [edx+7], 0
+  .text:000F2BC5                 add     edx, 8
+  .text:000F2BC8                 cmp     esi, edx
+  .text:000F2BCA                 jnz     short loc_F2BA6
+  .text:000F2BCC                 mov     [esp+16Ch+var_20], 3
+  .text:000F2BD4                 movzx   eax, byte ptr [esp+16Ch+var_FC]
+  .text:000F2BD9                 mov     byte ptr [esp+16Ch+var_3C], al
+  .text:000F2BE0                 movzx   edx, byte ptr [esp+16Ch+var_FC+1]
+  .text:000F2BE5                 mov     byte ptr [esp+16Ch+var_3C+1], dl
+  .text:000F2BEC                 movzx   eax, byte ptr [esp+16Ch+var_FC+2]
+  .text:000F2BF1                 mov     byte ptr [esp+16Ch+var_3C+2], al
+  .text:000F2BF8                 movzx   edx, byte ptr [esp+16Ch+var_FC+3]
+  .text:000F2BFD                 mov     byte ptr [esp+16Ch+var_3C+3], dl
+  .text:000F2C04                 movzx   eax, byte ptr [esp+16Ch+var_F8]
+  .text:000F2C09                 mov     byte ptr [esp+16Ch+var_38], al
+  .text:000F2C10                 movzx   edx, byte ptr [esp+16Ch+var_F8+1]
+  .text:000F2C15                 mov     byte ptr [esp+16Ch+var_38+1], dl
+  .text:000F2C1C                 movzx   eax, byte ptr [esp+16Ch+var_F8+2]
+  .text:000F2C21                 mov     byte ptr [esp+16Ch+var_38+2], al
+  .text:000F2C28                 movzx   edx, byte ptr [esp+16Ch+var_F8+3]
+  .text:000F2C2D                 mov     byte ptr [esp+16Ch+var_38+3], dl
+  .text:000F2C34                 mov     [esp+16Ch+var_150], 0
+  .text:000F2C3C                 mov     [esp+16Ch+var_154], 0
+  .text:000F2C44                 mov     [esp+16Ch+var_158], 0
+  .text:000F2C4C                 mov     [esp+16Ch+var_15C], 3
+  .text:000F2C54                 mov     [esp+16Ch+var_160], ebp
+  .text:000F2C58                 lea     eax, (aDictionaryOpas - 0B14000h)[ebx]; "dictionary &opAssign(const dictionary &"...
+  .text:000F2C5E                 mov     [esp+16Ch+var_164], eax
+  .text:000F2C62                 mov     edx, [esp+16Ch+var_138]
+  .text:000F2C66                 mov     [esp+16Ch+var_168], edx
+  .text:000F2C6A                 mov     [esp+16Ch+var_16C], edi
+  .text:000F2C6D                 call    ecx
+  .text:000F2C6F                 mov     ecx, [edi]
+  .text:000F2C71                 mov     edx, [ecx+54h]
+  .text:000F2C74                 lea     eax, (CScriptDictionary_Set - 0B14000h)[ebx]; found_funcptr CScriptDictionary_Set: native dictionary member, asCALL_THISCALL=3
+  .text:000F2C7A                 mov     [esp+16Ch+var_F4], eax
+  .text:000F2C7E                 mov     [esp+16Ch+var_F0], 0
+  .text:000F2C86                 lea     ecx, [ebp+1]
+  .text:000F2C89                 mov     byte ptr [ecx], 0
+  .text:000F2C8C                 mov     byte ptr [ecx+1], 0
+  .text:000F2C90                 mov     byte ptr [ecx+2], 0
+  .text:000F2C94                 mov     byte ptr [ecx+3], 0
+  .text:000F2C98                 mov     byte ptr [ecx+4], 0
+  .text:000F2C9C                 mov     byte ptr [ecx+5], 0
+  .text:000F2CA0                 mov     byte ptr [ecx+6], 0
+  .text:000F2CA4                 mov     byte ptr [ecx+7], 0
+  .text:000F2CA8                 add     ecx, 8
+  .text:000F2CAB                 cmp     esi, ecx
+  .text:000F2CAD                 jnz     short loc_F2C89
+  .text:000F2CAF                 mov     [esp+16Ch+var_20], 3
+  .text:000F2CB7                 movzx   eax, byte ptr [esp+16Ch+var_F4]
+  .text:000F2CBC                 mov     byte ptr [esp+16Ch+var_3C], al
+  .text:000F2CC3                 movzx   ecx, byte ptr [esp+16Ch+var_F4+1]
+  .text:000F2CC8                 mov     byte ptr [esp+16Ch+var_3C+1], cl
+  .text:000F2CCF                 movzx   eax, byte ptr [esp+16Ch+var_F4+2]
+  .text:000F2CD4                 mov     byte ptr [esp+16Ch+var_3C+2], al
+  .text:000F2CDB                 movzx   ecx, byte ptr [esp+16Ch+var_F4+3]
+  .text:000F2CE0                 mov     byte ptr [esp+16Ch+var_3C+3], cl
+  .text:000F2CE7                 movzx   eax, byte ptr [esp+16Ch+var_F0]
+  .text:000F2CEC                 mov     byte ptr [esp+16Ch+var_38], al
+  .text:000F2CF3                 movzx   ecx, byte ptr [esp+16Ch+var_F0+1]
+  .text:000F2CF8                 mov     byte ptr [esp+16Ch+var_38+1], cl
+  .text:000F2CFF                 movzx   eax, byte ptr [esp+16Ch+var_F0+2]
+  .text:000F2D04                 mov     byte ptr [esp+16Ch+var_38+2], al
+  .text:000F2D0B                 movzx   ecx, byte ptr [esp+16Ch+var_F0+3]
+  .text:000F2D10                 mov     byte ptr [esp+16Ch+var_38+3], cl
+  .text:000F2D17                 mov     [esp+16Ch+var_150], 0
+  .text:000F2D1F                 mov     [esp+16Ch+var_154], 0
+  .text:000F2D27                 mov     [esp+16Ch+var_158], 0
+  .text:000F2D2F                 mov     [esp+16Ch+var_15C], 3
+  .text:000F2D37                 mov     [esp+16Ch+var_160], ebp
+  .text:000F2D3B                 lea     eax, (aVoidSetConstSt - 0B14000h)[ebx]; "void set(const string &in, const ?&in)"
+  .text:000F2D41                 mov     [esp+16Ch+var_164], eax
+  .text:000F2D45                 mov     ecx, [esp+16Ch+var_138]
+  .text:000F2D49                 mov     [esp+16Ch+var_168], ecx
+  .text:000F2D4D                 mov     [esp+16Ch+var_16C], edi
+  .text:000F2D50                 call    edx
+  .text:000F2D52                 mov     edx, [edi]
+  .text:000F2D54                 mov     ecx, [edx+54h]
+  .text:000F2D57                 lea     eax, (CScriptDictionary_Get - 0B14000h)[ebx]; found_funcptr CScriptDictionary_Get: native dictionary member, asCALL_THISCALL=3
+  .text:000F2D5D                 mov     [esp+16Ch+var_EC], eax
+  .text:000F2D64                 mov     [esp+16Ch+var_E8], 0
+  .text:000F2D6F                 lea     edx, [ebp+1]
+  .text:000F2D72                 mov     byte ptr [edx], 0
+  .text:000F2D75                 mov     byte ptr [edx+1], 0
+  .text:000F2D79                 mov     byte ptr [edx+2], 0
+  .text:000F2D7D                 mov     byte ptr [edx+3], 0
+  .text:000F2D81                 mov     byte ptr [edx+4], 0
+  .text:000F2D85                 mov     byte ptr [edx+5], 0
+  .text:000F2D89                 mov     byte ptr [edx+6], 0
+  .text:000F2D8D                 mov     byte ptr [edx+7], 0
+  .text:000F2D91                 add     edx, 8
+  .text:000F2D94                 cmp     edx, esi
+  .text:000F2D96                 jnz     short loc_F2D72
+  .text:000F2D98                 mov     [esp+16Ch+var_20], 3
+  .text:000F2DA0                 movzx   eax, byte ptr [esp+16Ch+var_EC]
+  .text:000F2DA8                 mov     byte ptr [esp+16Ch+var_3C], al
+  .text:000F2DAF                 movzx   edx, byte ptr [esp+16Ch+var_EC+1]
+  .text:000F2DB7                 mov     byte ptr [esp+16Ch+var_3C+1], dl
+  .text:000F2DBE                 movzx   eax, byte ptr [esp+16Ch+var_EC+2]
+  .text:000F2DC6                 mov     byte ptr [esp+16Ch+var_3C+2], al
+  .text:000F2DCD                 movzx   edx, byte ptr [esp+16Ch+var_EC+3]
+  .text:000F2DD5                 mov     byte ptr [esp+16Ch+var_3C+3], dl
+  .text:000F2DDC                 movzx   eax, byte ptr [esp+16Ch+var_E8]
+  .text:000F2DE4                 mov     byte ptr [esp+16Ch+var_38], al
+  .text:000F2DEB                 movzx   edx, byte ptr [esp+16Ch+var_E8+1]
+  .text:000F2DF3                 mov     byte ptr [esp+16Ch+var_38+1], dl
+  .text:000F2DFA                 movzx   eax, byte ptr [esp+16Ch+var_E8+2]
+  .text:000F2E02                 mov     byte ptr [esp+16Ch+var_38+2], al
+  .text:000F2E09                 movzx   edx, byte ptr [esp+16Ch+var_E8+3]
+  .text:000F2E11                 mov     byte ptr [esp+16Ch+var_38+3], dl
+  .text:000F2E18                 mov     [esp+16Ch+var_150], 0
+  .text:000F2E20                 mov     [esp+16Ch+var_154], 0
+  .text:000F2E28                 mov     [esp+16Ch+var_158], 0
+  .text:000F2E30                 mov     [esp+16Ch+var_15C], 3
+  .text:000F2E38                 mov     [esp+16Ch+var_160], ebp
+  .text:000F2E3C                 lea     eax, (aBoolGetConstSt - 0B14000h)[ebx]; "bool get(const string &in, ?&out) const"
+  .text:000F2E42                 mov     [esp+16Ch+var_164], eax
+  .text:000F2E46                 mov     edx, [esp+16Ch+var_138]
+  .text:000F2E4A                 mov     [esp+16Ch+var_168], edx
+  .text:000F2E4E                 mov     [esp+16Ch+var_16C], edi
+  .text:000F2E51                 call    ecx
+  .text:000F2E53                 mov     ecx, [edi]
+  .text:000F2E55                 mov     edx, [ecx+54h]
+  .text:000F2E58                 lea     eax, (sub_F62B8 - 0B14000h)[ebx]
+  .text:000F2E5E                 mov     [esp+16Ch+var_E4], eax
+  .text:000F2E65                 mov     [esp+16Ch+var_E0], 0
+  .text:000F2E70                 lea     ecx, [ebp+1]
+  .text:000F2E73                 mov     byte ptr [ecx], 0
+  .text:000F2E76                 mov     byte ptr [ecx+1], 0
+  .text:000F2E7A                 mov     byte ptr [ecx+2], 0
+  .text:000F2E7E                 mov     byte ptr [ecx+3], 0
+  .text:000F2E82                 mov     byte ptr [ecx+4], 0
+  .text:000F2E86                 mov     byte ptr [ecx+5], 0
+  .text:000F2E8A                 mov     byte ptr [ecx+6], 0
+  .text:000F2E8E                 mov     byte ptr [ecx+7], 0
+  .text:000F2E92                 add     ecx, 8
+  .text:000F2E95                 cmp     esi, ecx
+  .text:000F2E97                 jnz     short loc_F2E73
+  .text:000F2E99                 mov     [esp+16Ch+var_20], 3
+  .text:000F2EA1                 movzx   eax, byte ptr [esp+16Ch+var_E4]
+  .text:000F2EA9                 mov     byte ptr [esp+16Ch+var_3C], al
+  .text:000F2EB0                 movzx   ecx, byte ptr [esp+16Ch+var_E4+1]
+  .text:000F2EB8                 mov     byte ptr [esp+16Ch+var_3C+1], cl
+  .text:000F2EBF                 movzx   eax, byte ptr [esp+16Ch+var_E4+2]
+  .text:000F2EC7                 mov     byte ptr [esp+16Ch+var_3C+2], al
+  .text:000F2ECE                 movzx   ecx, byte ptr [esp+16Ch+var_E4+3]
+  .text:000F2ED6                 mov     byte ptr [esp+16Ch+var_3C+3], cl
+  .text:000F2EDD                 movzx   eax, byte ptr [esp+16Ch+var_E0]
+  .text:000F2EE5                 mov     byte ptr [esp+16Ch+var_38], al
+  .text:000F2EEC                 movzx   ecx, byte ptr [esp+16Ch+var_E0+1]
+  .text:000F2EF4                 mov     byte ptr [esp+16Ch+var_38+1], cl
+  .text:000F2EFB                 movzx   eax, byte ptr [esp+16Ch+var_E0+2]
+  .text:000F2F03                 mov     byte ptr [esp+16Ch+var_38+2], al
+  .text:000F2F0A                 movzx   ecx, byte ptr [esp+16Ch+var_E0+3]
+  .text:000F2F12                 mov     byte ptr [esp+16Ch+var_38+3], cl
+  .text:000F2F19                 mov     [esp+16Ch+var_150], 0
+  .text:000F2F21                 mov     [esp+16Ch+var_154], 0
+  .text:000F2F29                 mov     [esp+16Ch+var_158], 0
+  .text:000F2F31                 mov     [esp+16Ch+var_15C], 3
+  .text:000F2F39                 mov     [esp+16Ch+var_160], ebp
+  .text:000F2F3D                 lea     eax, (aVoidSetConstSt_0 - 0B14000h)[ebx]; "void set(const string &in, const int64&"...
+  .text:000F2F43                 mov     [esp+16Ch+var_164], eax
+  .text:000F2F47                 mov     ecx, [esp+16Ch+var_138]
+  .text:000F2F4B                 mov     [esp+16Ch+var_168], ecx
+  .text:000F2F4F                 mov     [esp+16Ch+var_16C], edi
+  .text:000F2F52                 call    edx
+  .text:000F2F54                 mov     edx, [edi]
+  .text:000F2F56                 mov     ecx, [edx+54h]
+  .text:000F2F59                 lea     eax, (sub_F5C3E - 0B14000h)[ebx]
+  .text:000F2F5F                 mov     [esp+16Ch+var_DC], eax
+  .text:000F2F66                 mov     [esp+16Ch+var_D8], 0
+  .text:000F2F71                 lea     edx, [ebp+1]
+  .text:000F2F74                 mov     byte ptr [edx], 0
+  .text:000F2F77                 mov     byte ptr [edx+1], 0
+  .text:000F2F7B                 mov     byte ptr [edx+2], 0
+  .text:000F2F7F                 mov     byte ptr [edx+3], 0
+  .text:000F2F83                 mov     byte ptr [edx+4], 0
+  .text:000F2F87                 mov     byte ptr [edx+5], 0
+  .text:000F2F8B                 mov     byte ptr [edx+6], 0
+  .text:000F2F8F                 mov     byte ptr [edx+7], 0
+  .text:000F2F93                 add     edx, 8
+  .text:000F2F96                 cmp     esi, edx
+  .text:000F2F98                 jnz     short loc_F2F74
+  .text:000F2F9A                 mov     [esp+16Ch+var_20], 3
+  .text:000F2FA2                 movzx   eax, byte ptr [esp+16Ch+var_DC]
+  .text:000F2FAA                 mov     byte ptr [esp+16Ch+var_3C], al
+  .text:000F2FB1                 movzx   edx, byte ptr [esp+16Ch+var_DC+1]
+  .text:000F2FB9                 mov     byte ptr [esp+16Ch+var_3C+1], dl
+  .text:000F2FC0                 movzx   eax, byte ptr [esp+16Ch+var_DC+2]
+  .text:000F2FC8                 mov     byte ptr [esp+16Ch+var_3C+2], al
+  .text:000F2FCF                 movzx   edx, byte ptr [esp+16Ch+var_DC+3]
+  .text:000F2FD7                 mov     byte ptr [esp+16Ch+var_3C+3], dl
+  .text:000F2FDE                 movzx   eax, byte ptr [esp+16Ch+var_D8]
+  .text:000F2FE6                 mov     byte ptr [esp+16Ch+var_38], al
+  .text:000F2FED                 movzx   edx, byte ptr [esp+16Ch+var_D8+1]
+  .text:000F2FF5                 mov     byte ptr [esp+16Ch+var_38+1], dl
+  .text:000F2FFC                 movzx   eax, byte ptr [esp+16Ch+var_D8+2]
+  .text:000F3004                 mov     byte ptr [esp+16Ch+var_38+2], al
+  .text:000F300B                 movzx   edx, byte ptr [esp+16Ch+var_D8+3]
+  .text:000F3013                 mov     byte ptr [esp+16Ch+var_38+3], dl
+  .text:000F301A                 mov     [esp+16Ch+var_150], 0
+  .text:000F3022                 mov     [esp+16Ch+var_154], 0
+  .text:000F302A                 mov     [esp+16Ch+var_158], 0
+  .text:000F3032                 mov     [esp+16Ch+var_15C], 3
+  .text:000F303A                 mov     [esp+16Ch+var_160], ebp
+  .text:000F303E                 lea     eax, (aBoolGetConstSt_0 - 0B14000h)[ebx]; "bool get(const string &in, int64&out) c"...
+  .text:000F3044                 mov     [esp+16Ch+var_164], eax
+  .text:000F3048                 mov     edx, [esp+16Ch+var_138]
+  .text:000F304C                 mov     [esp+16Ch+var_168], edx
+  .text:000F3050                 mov     [esp+16Ch+var_16C], edi
+  .text:000F3053                 call    ecx
+  .text:000F3055                 mov     ecx, [edi]
+  .text:000F3057                 mov     edx, [ecx+54h]
+  .text:000F305A                 lea     eax, (sub_F633C - 0B14000h)[ebx]
+  .text:000F3060                 mov     [esp+16Ch+var_D4], eax
+  .text:000F3067                 mov     [esp+16Ch+var_D0], 0
+  .text:000F3072                 lea     ecx, [ebp+1]
+  .text:000F3075                 mov     byte ptr [ecx], 0
+  .text:000F3078                 mov     byte ptr [ecx+1], 0
+  .text:000F307C                 mov     byte ptr [ecx+2], 0
+  .text:000F3080                 mov     byte ptr [ecx+3], 0
+  .text:000F3084                 mov     byte ptr [ecx+4], 0
+  .text:000F3088                 mov     byte ptr [ecx+5], 0
+  .text:000F308C                 mov     byte ptr [ecx+6], 0
+  .text:000F3090                 mov     byte ptr [ecx+7], 0
+  .text:000F3094                 add     ecx, 8
+  .text:000F3097                 cmp     esi, ecx
+  .text:000F3099                 jnz     short loc_F3075
+  .text:000F309B                 mov     [esp+16Ch+var_20], 3
+  .text:000F30A3                 movzx   eax, byte ptr [esp+16Ch+var_D4]
+  .text:000F30AB                 mov     byte ptr [esp+16Ch+var_3C], al
+  .text:000F30B2                 movzx   ecx, byte ptr [esp+16Ch+var_D4+1]
+  .text:000F30BA                 mov     byte ptr [esp+16Ch+var_3C+1], cl
+  .text:000F30C1                 movzx   eax, byte ptr [esp+16Ch+var_D4+2]
+  .text:000F30C9                 mov     byte ptr [esp+16Ch+var_3C+2], al
+  .text:000F30D0                 movzx   ecx, byte ptr [esp+16Ch+var_D4+3]
+  .text:000F30D8                 mov     byte ptr [esp+16Ch+var_3C+3], cl
+  .text:000F30DF                 movzx   eax, byte ptr [esp+16Ch+var_D0]
+  .text:000F30E7                 mov     byte ptr [esp+16Ch+var_38], al
+  .text:000F30EE                 movzx   ecx, byte ptr [esp+16Ch+var_D0+1]
+  .text:000F30F6                 mov     byte ptr [esp+16Ch+var_38+1], cl
+  .text:000F30FD                 movzx   eax, byte ptr [esp+16Ch+var_D0+2]
+  .text:000F3105                 mov     byte ptr [esp+16Ch+var_38+2], al
+  .text:000F310C                 movzx   ecx, byte ptr [esp+16Ch+var_D0+3]
+  .text:000F3114                 mov     byte ptr [esp+16Ch+var_38+3], cl
+  .text:000F311B                 mov     [esp+16Ch+var_150], 0
+  .text:000F3123                 mov     [esp+16Ch+var_154], 0
+  .text:000F312B                 mov     [esp+16Ch+var_158], 0
+  .text:000F3133                 mov     [esp+16Ch+var_15C], 3
+  .text:000F313B                 mov     [esp+16Ch+var_160], ebp
+  .text:000F313F                 lea     eax, (aVoidSetConstSt_1 - 0B14000h)[ebx]; "void set(const string &in, const double"...
+  .text:000F3145                 mov     [esp+16Ch+var_164], eax
+  .text:000F3149                 mov     ecx, [esp+16Ch+var_138]
+  .text:000F314D                 mov     [esp+16Ch+var_168], ecx
+  .text:000F3151                 mov     [esp+16Ch+var_16C], edi
+  .text:000F3154                 call    edx
+  .text:000F3156                 mov     edx, [edi]
+  .text:000F3158                 mov     ecx, [edx+54h]
+  .text:000F315B                 lea     eax, (sub_F5CD0 - 0B14000h)[ebx]
+  .text:000F3161                 mov     [esp+16Ch+var_CC], eax
+  .text:000F3168                 mov     [esp+16Ch+var_C8], 0
+  .text:000F3173                 lea     edx, [ebp+1]
+  .text:000F3176                 mov     byte ptr [edx], 0
+  .text:000F3179                 mov     byte ptr [edx+1], 0
+  .text:000F317D                 mov     byte ptr [edx+2], 0
+  .text:000F3181                 mov     byte ptr [edx+3], 0
+  .text:000F3185                 mov     byte ptr [edx+4], 0
+  .text:000F3189                 mov     byte ptr [edx+5], 0
+  .text:000F318D                 mov     byte ptr [edx+6], 0
+  .text:000F3191                 mov     byte ptr [edx+7], 0
+  .text:000F3195                 add     edx, 8
+  .text:000F3198                 cmp     esi, edx
+  .text:000F319A                 jnz     short loc_F3176
+  .text:000F319C                 mov     [esp+16Ch+var_20], 3
+  .text:000F31A4                 movzx   eax, byte ptr [esp+16Ch+var_CC]
+  .text:000F31AC                 mov     byte ptr [esp+16Ch+var_3C], al
+  .text:000F31B3                 movzx   edx, byte ptr [esp+16Ch+var_CC+1]
+  .text:000F31BB                 mov     byte ptr [esp+16Ch+var_3C+1], dl
+  .text:000F31C2                 movzx   eax, byte ptr [esp+16Ch+var_CC+2]
+  .text:000F31CA                 mov     byte ptr [esp+16Ch+var_3C+2], al
+  .text:000F31D1                 movzx   edx, byte ptr [esp+16Ch+var_CC+3]
+  .text:000F31D9                 mov     byte ptr [esp+16Ch+var_3C+3], dl
+  .text:000F31E0                 movzx   eax, byte ptr [esp+16Ch+var_C8]
+  .text:000F31E8                 mov     byte ptr [esp+16Ch+var_38], al
+  .text:000F31EF                 movzx   edx, byte ptr [esp+16Ch+var_C8+1]
+  .text:000F31F7                 mov     byte ptr [esp+16Ch+var_38+1], dl
+  .text:000F31FE                 movzx   eax, byte ptr [esp+16Ch+var_C8+2]
+  .text:000F3206                 mov     byte ptr [esp+16Ch+var_38+2], al
+  .text:000F320D                 movzx   edx, byte ptr [esp+16Ch+var_C8+3]
+  .text:000F3215                 mov     byte ptr [esp+16Ch+var_38+3], dl
+  .text:000F321C                 mov     [esp+16Ch+var_150], 0
+  .text:000F3224                 mov     [esp+16Ch+var_154], 0
+  .text:000F322C                 mov     [esp+16Ch+var_158], 0
+  .text:000F3234                 mov     [esp+16Ch+var_15C], 3
+  .text:000F323C                 mov     [esp+16Ch+var_160], ebp
+  .text:000F3240                 lea     eax, (aBoolGetConstSt_1 - 0B14000h)[ebx]; "bool get(const string &in, double&out) "...
+  .text:000F3246                 mov     [esp+16Ch+var_164], eax
+  .text:000F324A                 mov     edx, [esp+16Ch+var_138]
+  .text:000F324E                 mov     [esp+16Ch+var_168], edx
+  .text:000F3252                 mov     [esp+16Ch+var_16C], edi
+  .text:000F3255                 call    ecx
+  .text:000F3257                 mov     ecx, [edi]
+  .text:000F3259                 mov     edx, [ecx+54h]
+  .text:000F325C                 lea     eax, (CScriptDictionary_Exists - 0B14000h)[ebx]; found_funcptr CScriptDictionary_Exists: native dictionary member, asCALL_THISCALL=3
+  .text:000F3262                 mov     [esp+16Ch+var_C4], eax
+  .text:000F3269                 mov     [esp+16Ch+var_C0], 0
+  .text:000F3274                 lea     ecx, [ebp+1]
+  .text:000F3277                 mov     byte ptr [ecx], 0
+  .text:000F327A                 mov     byte ptr [ecx+1], 0
+  .text:000F327E                 mov     byte ptr [ecx+2], 0
+  .text:000F3282                 mov     byte ptr [ecx+3], 0
+  .text:000F3286                 mov     byte ptr [ecx+4], 0
+  .text:000F328A                 mov     byte ptr [ecx+5], 0
+  .text:000F328E                 mov     byte ptr [ecx+6], 0
+  .text:000F3292                 mov     byte ptr [ecx+7], 0
+  .text:000F3296                 add     ecx, 8
+  .text:000F3299                 cmp     esi, ecx
+  .text:000F329B                 jnz     short loc_F3277
+  .text:000F329D                 mov     [esp+16Ch+var_20], 3
+  .text:000F32A5                 movzx   eax, byte ptr [esp+16Ch+var_C4]
+  .text:000F32AD                 mov     byte ptr [esp+16Ch+var_3C], al
+  .text:000F32B4                 movzx   ecx, byte ptr [esp+16Ch+var_C4+1]
+  .text:000F32BC                 mov     byte ptr [esp+16Ch+var_3C+1], cl
+  .text:000F32C3                 movzx   eax, byte ptr [esp+16Ch+var_C4+2]
+  .text:000F32CB                 mov     byte ptr [esp+16Ch+var_3C+2], al
+  .text:000F32D2                 movzx   ecx, byte ptr [esp+16Ch+var_C4+3]
+  .text:000F32DA                 mov     byte ptr [esp+16Ch+var_3C+3], cl
+  .text:000F32E1                 movzx   eax, byte ptr [esp+16Ch+var_C0]
+  .text:000F32E9                 mov     byte ptr [esp+16Ch+var_38], al
+  .text:000F32F0                 movzx   ecx, byte ptr [esp+16Ch+var_C0+1]
+  .text:000F32F8                 mov     byte ptr [esp+16Ch+var_38+1], cl
+  .text:000F32FF                 movzx   eax, byte ptr [esp+16Ch+var_C0+2]
+  .text:000F3307                 mov     byte ptr [esp+16Ch+var_38+2], al
+  .text:000F330E                 movzx   ecx, byte ptr [esp+16Ch+var_C0+3]
+  .text:000F3316                 mov     byte ptr [esp+16Ch+var_38+3], cl
+  .text:000F331D                 mov     [esp+16Ch+var_150], 0
+  .text:000F3325                 mov     [esp+16Ch+var_154], 0
+  .text:000F332D                 mov     [esp+16Ch+var_158], 0
+  .text:000F3335                 mov     [esp+16Ch+var_15C], 3
+  .text:000F333D                 mov     [esp+16Ch+var_160], ebp
+  .text:000F3341                 lea     eax, (aBoolExistsCons - 0B14000h)[ebx]; "bool exists(const string &in) const"
+  .text:000F3347                 mov     [esp+16Ch+var_164], eax
+  .text:000F334B                 mov     ecx, [esp+16Ch+var_138]
+  .text:000F334F                 mov     [esp+16Ch+var_168], ecx
+  .text:000F3353                 mov     [esp+16Ch+var_16C], edi
+  .text:000F3356                 call    edx
+  .text:000F3358                 mov     edx, [edi]
+  .text:000F335A                 mov     ecx, [edx+54h]
+  .text:000F335D                 lea     eax, (CScriptDictionary_IsEmpty - 0B14000h)[ebx]; found_funcptr CScriptDictionary_IsEmpty: native dictionary member, asCALL_THISCALL=3
+  .text:000F3363                 mov     [esp+16Ch+var_124], eax
+  .text:000F3367                 mov     [esp+16Ch+var_BC], eax
+  .text:000F336E                 mov     [esp+16Ch+var_B8], 0
+  .text:000F3379                 lea     edx, [ebp+1]
+  .text:000F337C                 mov     byte ptr [edx], 0
+  .text:000F337F                 mov     byte ptr [edx+1], 0
+  .text:000F3383                 mov     byte ptr [edx+2], 0
+  .text:000F3387                 mov     byte ptr [edx+3], 0
+  .text:000F338B                 mov     byte ptr [edx+4], 0
+  .text:000F338F                 mov     byte ptr [edx+5], 0
+  .text:000F3393                 mov     byte ptr [edx+6], 0
+  .text:000F3397                 mov     byte ptr [edx+7], 0
+  .text:000F339B                 add     edx, 8
+  .text:000F339E                 cmp     esi, edx
+  .text:000F33A0                 jnz     short loc_F337C
+  .text:000F33A2                 mov     [esp+16Ch+var_20], 3
+  .text:000F33AA                 movzx   eax, byte ptr [esp+16Ch+var_BC]
+  .text:000F33B2                 mov     byte ptr [esp+16Ch+var_3C], al
+  .text:000F33B9                 movzx   edx, byte ptr [esp+16Ch+var_BC+1]
+  .text:000F33C1                 mov     byte ptr [esp+16Ch+var_3C+1], dl
+  .text:000F33C8                 movzx   eax, byte ptr [esp+16Ch+var_BC+2]
+  .text:000F33D0                 mov     byte ptr [esp+16Ch+var_3C+2], al
+  .text:000F33D7                 movzx   edx, byte ptr [esp+16Ch+var_BC+3]
+  .text:000F33DF                 mov     byte ptr [esp+16Ch+var_3C+3], dl
+  .text:000F33E6                 movzx   eax, byte ptr [esp+16Ch+var_B8]
+  .text:000F33EE                 mov     byte ptr [esp+16Ch+var_38], al
+  .text:000F33F5                 movzx   edx, byte ptr [esp+16Ch+var_B8+1]
+  .text:000F33FD                 mov     byte ptr [esp+16Ch+var_38+1], dl
+  .text:000F3404                 movzx   eax, byte ptr [esp+16Ch+var_B8+2]
+  .text:000F340C                 mov     byte ptr [esp+16Ch+var_38+2], al
+  .text:000F3413                 movzx   edx, byte ptr [esp+16Ch+var_B8+3]
+  .text:000F341B                 mov     byte ptr [esp+16Ch+var_38+3], dl
+  .text:000F3422                 mov     [esp+16Ch+var_150], 0
+  .text:000F342A                 mov     [esp+16Ch+var_154], 0
+  .text:000F3432                 mov     [esp+16Ch+var_158], 0
+  .text:000F343A                 mov     [esp+16Ch+var_15C], 3
+  .text:000F3442                 mov     [esp+16Ch+var_160], ebp
+  .text:000F3446                 lea     eax, (aBoolIsemptyCon - 0B14000h)[ebx]; "bool isEmpty() const"
+  .text:000F344C                 mov     [esp+16Ch+var_164], eax
+  .text:000F3450                 mov     edx, [esp+16Ch+var_138]
+  .text:000F3454                 mov     [esp+16Ch+var_168], edx
+  .text:000F3458                 mov     [esp+16Ch+var_16C], edi
+  .text:000F345B                 call    ecx
+  .text:000F345D                 mov     ecx, [edi]
+  .text:000F345F                 mov     edx, [ecx+54h]
+  .text:000F3462                 lea     eax, (CScriptDictionary_GetSize - 0B14000h)[ebx]; found_funcptr CScriptDictionary_GetSize: native dictionary member, asCALL_THISCALL=3
+  .text:000F3468                 mov     [esp+16Ch+var_120], eax
+  .text:000F346C                 mov     [esp+16Ch+var_B4], eax
+  .text:000F3473                 mov     [esp+16Ch+var_B0], 0
+  .text:000F347E                 lea     ecx, [ebp+1]
+  .text:000F3481                 mov     byte ptr [ecx], 0
+  .text:000F3484                 mov     byte ptr [ecx+1], 0
+  .text:000F3488                 mov     byte ptr [ecx+2], 0
+  .text:000F348C                 mov     byte ptr [ecx+3], 0
+  .text:000F3490                 mov     byte ptr [ecx+4], 0
+  .text:000F3494                 mov     byte ptr [ecx+5], 0
+  .text:000F3498                 mov     byte ptr [ecx+6], 0
+  .text:000F349C                 mov     byte ptr [ecx+7], 0
+  .text:000F34A0                 add     ecx, 8
+  .text:000F34A3                 cmp     ecx, esi
+  .text:000F34A5                 jnz     short loc_F3481
+  .text:000F34A7                 mov     [esp+16Ch+var_20], 3
+  .text:000F34AF                 movzx   eax, byte ptr [esp+16Ch+var_B4]
+  .text:000F34B7                 mov     byte ptr [esp+16Ch+var_3C], al
+  .text:000F34BE                 movzx   ecx, byte ptr [esp+16Ch+var_B4+1]
+  .text:000F34C6                 mov     byte ptr [esp+16Ch+var_3C+1], cl
+  .text:000F34CD                 movzx   eax, byte ptr [esp+16Ch+var_B4+2]
+  .text:000F34D5                 mov     byte ptr [esp+16Ch+var_3C+2], al
+  .text:000F34DC                 movzx   ecx, byte ptr [esp+16Ch+var_B4+3]
+  .text:000F34E4                 mov     byte ptr [esp+16Ch+var_3C+3], cl
+  .text:000F34EB                 movzx   eax, byte ptr [esp+16Ch+var_B0]
+  .text:000F34F3                 mov     byte ptr [esp+16Ch+var_38], al
+  .text:000F34FA                 movzx   ecx, byte ptr [esp+16Ch+var_B0+1]
+  .text:000F3502                 mov     byte ptr [esp+16Ch+var_38+1], cl
+  .text:000F3509                 movzx   eax, byte ptr [esp+16Ch+var_B0+2]
+  .text:000F3511                 mov     byte ptr [esp+16Ch+var_38+2], al
+  .text:000F3518                 movzx   ecx, byte ptr [esp+16Ch+var_B0+3]
+  .text:000F3520                 mov     byte ptr [esp+16Ch+var_38+3], cl
+  .text:000F3527                 mov     [esp+16Ch+var_150], 0
+  .text:000F352F                 mov     [esp+16Ch+var_154], 0
+  .text:000F3537                 mov     [esp+16Ch+var_158], 0
+  .text:000F353F                 mov     [esp+16Ch+var_15C], 3
+  .text:000F3547                 mov     [esp+16Ch+var_160], ebp
+  .text:000F354B                 lea     eax, (aUintGetsizeCon - 0B14000h)[ebx]; "uint getSize() const"
+  .text:000F3551                 mov     [esp+16Ch+var_164], eax
+  .text:000F3555                 mov     ecx, [esp+16Ch+var_138]
+  .text:000F3559                 mov     [esp+16Ch+var_168], ecx
+  .text:000F355D                 mov     [esp+16Ch+var_16C], edi
+  .text:000F3560                 call    edx
+  .text:000F3562                 mov     edx, [edi]
+  .text:000F3564                 mov     ecx, [edx+54h]
+  .text:000F3567                 lea     eax, (CScriptDictionary_Delete - 0B14000h)[ebx]; found_funcptr CScriptDictionary_Delete: native dictionary member, asCALL_THISCALL=3
+  .text:000F356D                 mov     [esp+16Ch+var_12C], eax
+  .text:000F3571                 mov     [esp+16Ch+var_AC], eax
+  .text:000F3578                 mov     [esp+16Ch+var_A8], 0
+  .text:000F3583                 lea     edx, [ebp+1]
+  .text:000F3586                 mov     byte ptr [edx], 0
+  .text:000F3589                 mov     byte ptr [edx+1], 0
+  .text:000F358D                 mov     byte ptr [edx+2], 0
+  .text:000F3591                 mov     byte ptr [edx+3], 0
+  .text:000F3595                 mov     byte ptr [edx+4], 0
+  .text:000F3599                 mov     byte ptr [edx+5], 0
+  .text:000F359D                 mov     byte ptr [edx+6], 0
+  .text:000F35A1                 mov     byte ptr [edx+7], 0
+  .text:000F35A5                 add     edx, 8
+  .text:000F35A8                 cmp     edx, esi
+  .text:000F35AA                 jnz     short loc_F3586
+  .text:000F35AC                 mov     [esp+16Ch+var_20], 3
+  .text:000F35B4                 movzx   eax, byte ptr [esp+16Ch+var_AC]
+  .text:000F35BC                 mov     byte ptr [esp+16Ch+var_3C], al
+  .text:000F35C3                 movzx   edx, byte ptr [esp+16Ch+var_AC+1]
+  .text:000F35CB                 mov     byte ptr [esp+16Ch+var_3C+1], dl
+  .text:000F35D2                 movzx   eax, byte ptr [esp+16Ch+var_AC+2]
+  .text:000F35DA                 mov     byte ptr [esp+16Ch+var_3C+2], al
+  .text:000F35E1                 movzx   edx, byte ptr [esp+16Ch+var_AC+3]
+  .text:000F35E9                 mov     byte ptr [esp+16Ch+var_3C+3], dl
+  .text:000F35F0                 movzx   eax, byte ptr [esp+16Ch+var_A8]
+  .text:000F35F8                 mov     byte ptr [esp+16Ch+var_38], al
+  .text:000F35FF                 movzx   edx, byte ptr [esp+16Ch+var_A8+1]
+  .text:000F3607                 mov     byte ptr [esp+16Ch+var_38+1], dl
+  .text:000F360E                 movzx   eax, byte ptr [esp+16Ch+var_A8+2]
+  .text:000F3616                 mov     byte ptr [esp+16Ch+var_38+2], al
+  .text:000F361D                 movzx   edx, byte ptr [esp+16Ch+var_A8+3]
+  .text:000F3625                 mov     byte ptr [esp+16Ch+var_38+3], dl
+  .text:000F362C                 mov     [esp+16Ch+var_150], 0
+  .text:000F3634                 mov     [esp+16Ch+var_154], 0
+  .text:000F363C                 mov     [esp+16Ch+var_158], 0
+  .text:000F3644                 mov     [esp+16Ch+var_15C], 3
+  .text:000F364C                 mov     [esp+16Ch+var_160], ebp
+  .text:000F3650                 lea     eax, (aBoolDeleteCons - 0B14000h)[ebx]; "bool delete(const string &in)"
+  .text:000F3656                 mov     [esp+16Ch+var_164], eax
+  .text:000F365A                 mov     edx, [esp+16Ch+var_138]
+  .text:000F365E                 mov     [esp+16Ch+var_168], edx
+  .text:000F3662                 mov     [esp+16Ch+var_16C], edi
+  .text:000F3665                 call    ecx
+  .text:000F3667                 mov     ecx, [edi]
+  .text:000F3669                 mov     edx, [ecx+54h]
+  .text:000F366C                 lea     eax, (CScriptDictionary_DeleteAll - 0B14000h)[ebx]; found_funcptr CScriptDictionary_DeleteAll: native dictionary member, asCALL_THISCALL=3
+  .text:000F3672                 mov     [esp+16Ch+var_128], eax
+  .text:000F3676                 mov     [esp+16Ch+var_A4], eax
+  .text:000F367D                 mov     [esp+16Ch+var_A0], 0
+  .text:000F3688                 lea     ecx, [ebp+1]
+  .text:000F368B                 mov     byte ptr [ecx], 0
+  .text:000F368E                 mov     byte ptr [ecx+1], 0
+  .text:000F3692                 mov     byte ptr [ecx+2], 0
+  .text:000F3696                 mov     byte ptr [ecx+3], 0
+  .text:000F369A                 mov     byte ptr [ecx+4], 0
+  .text:000F369E                 mov     byte ptr [ecx+5], 0
+  .text:000F36A2                 mov     byte ptr [ecx+6], 0
+  .text:000F36A6                 mov     byte ptr [ecx+7], 0
+  .text:000F36AA                 add     ecx, 8
+  .text:000F36AD                 cmp     ecx, esi
+  .text:000F36AF                 jnz     short loc_F368B
+  .text:000F36B1                 mov     [esp+16Ch+var_20], 3
+  .text:000F36B9                 movzx   eax, byte ptr [esp+16Ch+var_A4]
+  .text:000F36C1                 mov     byte ptr [esp+16Ch+var_3C], al
+  .text:000F36C8                 movzx   ecx, byte ptr [esp+16Ch+var_A4+1]
+  .text:000F36D0                 mov     byte ptr [esp+16Ch+var_3C+1], cl
+  .text:000F36D7                 movzx   eax, byte ptr [esp+16Ch+var_A4+2]
+  .text:000F36DF                 mov     byte ptr [esp+16Ch+var_3C+2], al
+  .text:000F36E6                 movzx   ecx, byte ptr [esp+16Ch+var_A4+3]
+  .text:000F36EE                 mov     byte ptr [esp+16Ch+var_3C+3], cl
+  .text:000F36F5                 movzx   eax, byte ptr [esp+16Ch+var_A0]
+  .text:000F36FD                 mov     byte ptr [esp+16Ch+var_38], al
+  .text:000F3704                 movzx   ecx, byte ptr [esp+16Ch+var_A0+1]
+  .text:000F370C                 mov     byte ptr [esp+16Ch+var_38+1], cl
+  .text:000F3713                 movzx   eax, byte ptr [esp+16Ch+var_A0+2]
+  .text:000F371B                 mov     byte ptr [esp+16Ch+var_38+2], al
+  .text:000F3722                 movzx   ecx, byte ptr [esp+16Ch+var_A0+3]
+  .text:000F372A                 mov     byte ptr [esp+16Ch+var_38+3], cl
+  .text:000F3731                 mov     [esp+16Ch+var_150], 0
+  .text:000F3739                 mov     [esp+16Ch+var_154], 0
+  .text:000F3741                 mov     [esp+16Ch+var_158], 0
+  .text:000F3749                 mov     [esp+16Ch+var_15C], 3
+  .text:000F3751                 mov     [esp+16Ch+var_160], ebp
+  .text:000F3755                 lea     eax, (aVoidDeleteall - 0B14000h)[ebx]; "void deleteAll()"
+  .text:000F375B                 mov     [esp+16Ch+var_164], eax
+  .text:000F375F                 mov     ecx, [esp+16Ch+var_138]
+  .text:000F3763                 mov     [esp+16Ch+var_168], ecx
+  .text:000F3767                 mov     [esp+16Ch+var_16C], edi
+  .text:000F376A                 call    edx
+  .text:000F376C                 mov     edx, [edi]
+  .text:000F376E                 mov     ecx, [edx+54h]
+  .text:000F3771                 lea     eax, (sub_F142E - 0B14000h)[ebx]
+  .text:000F3777                 mov     [esp+16Ch+var_9C], eax
+  .text:000F377E                 mov     [esp+16Ch+var_98], 0
+  .text:000F3789                 lea     edx, [ebp+1]
+  .text:000F378C                 mov     byte ptr [edx], 0
+  .text:000F378F                 mov     byte ptr [edx+1], 0
+  .text:000F3793                 mov     byte ptr [edx+2], 0
+  .text:000F3797                 mov     byte ptr [edx+3], 0
+  .text:000F379B                 mov     byte ptr [edx+4], 0
+  .text:000F379F                 mov     byte ptr [edx+5], 0
+  .text:000F37A3                 mov     byte ptr [edx+6], 0
+  .text:000F37A7                 mov     byte ptr [edx+7], 0
+  .text:000F37AB                 add     edx, 8
+  .text:000F37AE                 cmp     esi, edx
+  .text:000F37B0                 jnz     short loc_F378C
+  .text:000F37B2                 mov     [esp+16Ch+var_20], 3
+  .text:000F37BA                 movzx   eax, byte ptr [esp+16Ch+var_9C]
+  .text:000F37C2                 mov     byte ptr [esp+16Ch+var_3C], al
+  .text:000F37C9                 movzx   edx, byte ptr [esp+16Ch+var_9C+1]
+  .text:000F37D1                 mov     byte ptr [esp+16Ch+var_3C+1], dl
+  .text:000F37D8                 movzx   eax, byte ptr [esp+16Ch+var_9C+2]
+  .text:000F37E0                 mov     byte ptr [esp+16Ch+var_3C+2], al
+  .text:000F37E7                 movzx   edx, byte ptr [esp+16Ch+var_9C+3]
+  .text:000F37EF                 mov     byte ptr [esp+16Ch+var_3C+3], dl
+  .text:000F37F6                 movzx   eax, byte ptr [esp+16Ch+var_98]
+  .text:000F37FE                 mov     byte ptr [esp+16Ch+var_38], al
+  .text:000F3805                 movzx   edx, byte ptr [esp+16Ch+var_98+1]
+  .text:000F380D                 mov     byte ptr [esp+16Ch+var_38+1], dl
+  .text:000F3814                 movzx   eax, byte ptr [esp+16Ch+var_98+2]
+  .text:000F381C                 mov     byte ptr [esp+16Ch+var_38+2], al
+  .text:000F3823                 movzx   edx, byte ptr [esp+16Ch+var_98+3]
+  .text:000F382B                 mov     byte ptr [esp+16Ch+var_38+3], dl
+  .text:000F3832                 mov     [esp+16Ch+var_150], 0
+  .text:000F383A                 mov     [esp+16Ch+var_154], 0
+  .text:000F3842                 mov     [esp+16Ch+var_158], 0
+  .text:000F384A                 mov     [esp+16Ch+var_15C], 3
+  .text:000F3852                 mov     [esp+16Ch+var_160], ebp
+  .text:000F3856                 lea     eax, (aArrayStringGet - 0B14000h)[ebx]; "array<string> @getKeys() const"
+  .text:000F385C                 mov     [esp+16Ch+var_164], eax
+  .text:000F3860                 mov     edx, [esp+16Ch+var_138]
+  .text:000F3864                 mov     [esp+16Ch+var_168], edx
+  .text:000F3868                 mov     [esp+16Ch+var_16C], edi
+  .text:000F386B                 call    ecx
+  .text:000F386D                 mov     ecx, [edi]
+  .text:000F386F                 mov     edx, [ecx+54h]
+  .text:000F3872                 lea     eax, (sub_F6066 - 0B14000h)[ebx]
+  .text:000F3878                 mov     [esp+16Ch+var_94], eax
+  .text:000F387F                 mov     [esp+16Ch+var_90], 0
+  .text:000F388A                 lea     ecx, [ebp+1]
+  .text:000F388D                 mov     byte ptr [ecx], 0
+  .text:000F3890                 mov     byte ptr [ecx+1], 0
+  .text:000F3894                 mov     byte ptr [ecx+2], 0
+  .text:000F3898                 mov     byte ptr [ecx+3], 0
+  .text:000F389C                 mov     byte ptr [ecx+4], 0
+  .text:000F38A0                 mov     byte ptr [ecx+5], 0
+  .text:000F38A4                 mov     byte ptr [ecx+6], 0
+  .text:000F38A8                 mov     byte ptr [ecx+7], 0
+  .text:000F38AC                 add     ecx, 8
+  .text:000F38AF                 cmp     ecx, esi
+  .text:000F38B1                 jnz     short loc_F388D
+  .text:000F38B3                 mov     [esp+16Ch+var_20], 3
+  .text:000F38BB                 movzx   eax, byte ptr [esp+16Ch+var_94]
+  .text:000F38C3                 mov     byte ptr [esp+16Ch+var_3C], al
+  .text:000F38CA                 movzx   ecx, byte ptr [esp+16Ch+var_94+1]
+  .text:000F38D2                 mov     byte ptr [esp+16Ch+var_3C+1], cl
+  .text:000F38D9                 movzx   eax, byte ptr [esp+16Ch+var_94+2]
+  .text:000F38E1                 mov     byte ptr [esp+16Ch+var_3C+2], al
+  .text:000F38E8                 movzx   ecx, byte ptr [esp+16Ch+var_94+3]
+  .text:000F38F0                 mov     byte ptr [esp+16Ch+var_3C+3], cl
+  .text:000F38F7                 movzx   eax, byte ptr [esp+16Ch+var_90]
+  .text:000F38FF                 mov     byte ptr [esp+16Ch+var_38], al
+  .text:000F3906                 movzx   ecx, byte ptr [esp+16Ch+var_90+1]
+  .text:000F390E                 mov     byte ptr [esp+16Ch+var_38+1], cl
+  .text:000F3915                 movzx   eax, byte ptr [esp+16Ch+var_90+2]
+  .text:000F391D                 mov     byte ptr [esp+16Ch+var_38+2], al
+  .text:000F3924                 movzx   ecx, byte ptr [esp+16Ch+var_90+3]
+  .text:000F392C                 mov     byte ptr [esp+16Ch+var_38+3], cl
+  .text:000F3933                 mov     [esp+16Ch+var_150], 0
+  .text:000F393B                 mov     [esp+16Ch+var_154], 0
+  .text:000F3943                 mov     [esp+16Ch+var_158], 0
+  .text:000F394B                 mov     [esp+16Ch+var_15C], 3
+  .text:000F3953                 mov     [esp+16Ch+var_160], ebp
+  .text:000F3957                 lea     eax, (aDictionaryvalu_6 - 0B14000h)[ebx]; "dictionaryValue &opIndex(const string &"...
+  .text:000F395D                 mov     [esp+16Ch+var_164], eax
+  .text:000F3961                 mov     ecx, [esp+16Ch+var_138]
+  .text:000F3965                 mov     [esp+16Ch+var_168], ecx
+  .text:000F3969                 mov     [esp+16Ch+var_16C], edi
+  .text:000F396C                 call    edx
+  .text:000F396E                 mov     edx, [edi]
+  .text:000F3970                 mov     ecx, [edx+54h]
+  .text:000F3973                 lea     eax, (sub_F5B24 - 0B14000h)[ebx]
+  .text:000F3979                 mov     [esp+16Ch+var_8C], eax
+  .text:000F3980                 mov     [esp+16Ch+var_88], 0
+  .text:000F398B                 lea     edx, [ebp+1]
+  .text:000F398E                 mov     byte ptr [edx], 0
+  .text:000F3991                 mov     byte ptr [edx+1], 0
+  .text:000F3995                 mov     byte ptr [edx+2], 0
+  .text:000F3999                 mov     byte ptr [edx+3], 0
+  .text:000F399D                 mov     byte ptr [edx+4], 0
+  .text:000F39A1                 mov     byte ptr [edx+5], 0
+  .text:000F39A5                 mov     byte ptr [edx+6], 0
+  .text:000F39A9                 mov     byte ptr [edx+7], 0
+  .text:000F39AD                 add     edx, 8
+  .text:000F39B0                 cmp     edx, esi
+  .text:000F39B2                 jnz     short loc_F398E
+  .text:000F39B4                 mov     [esp+16Ch+var_20], 3
+  .text:000F39BC                 movzx   eax, byte ptr [esp+16Ch+var_8C]
+  .text:000F39C4                 mov     byte ptr [esp+16Ch+var_3C], al
+  .text:000F39CB                 movzx   edx, byte ptr [esp+16Ch+var_8C+1]
+  .text:000F39D3                 mov     byte ptr [esp+16Ch+var_3C+1], dl
+  .text:000F39DA                 movzx   eax, byte ptr [esp+16Ch+var_8C+2]
+  .text:000F39E2                 mov     byte ptr [esp+16Ch+var_3C+2], al
+  .text:000F39E9                 movzx   edx, byte ptr [esp+16Ch+var_8C+3]
+  .text:000F39F1                 mov     byte ptr [esp+16Ch+var_3C+3], dl
+  .text:000F39F8                 movzx   eax, byte ptr [esp+16Ch+var_88]
+  .text:000F3A00                 mov     byte ptr [esp+16Ch+var_38], al
+  .text:000F3A07                 movzx   edx, byte ptr [esp+16Ch+var_88+1]
+  .text:000F3A0F                 mov     byte ptr [esp+16Ch+var_38+1], dl
+  .text:000F3A16                 movzx   eax, byte ptr [esp+16Ch+var_88+2]
+  .text:000F3A1E                 mov     byte ptr [esp+16Ch+var_38+2], al
+  .text:000F3A25                 movzx   edx, byte ptr [esp+16Ch+var_88+3]
+  .text:000F3A2D                 mov     byte ptr [esp+16Ch+var_38+3], dl
+  .text:000F3A34                 mov     [esp+16Ch+var_150], 0
+  .text:000F3A3C                 mov     [esp+16Ch+var_154], 0
+  .text:000F3A44                 mov     [esp+16Ch+var_158], 0
+  .text:000F3A4C                 mov     [esp+16Ch+var_15C], 3
+  .text:000F3A54                 mov     [esp+16Ch+var_160], ebp
+  .text:000F3A58                 lea     eax, (aConstDictionar - 0B14000h)[ebx]; "const dictionaryValue &opIndex(const st"...
+  .text:000F3A5E                 mov     [esp+16Ch+var_164], eax
+  .text:000F3A62                 mov     edx, [esp+16Ch+var_138]
+  .text:000F3A66                 mov     [esp+16Ch+var_168], edx
+  .text:000F3A6A                 mov     [esp+16Ch+var_16C], edi
+  .text:000F3A6D                 call    ecx
+  .text:000F3A6F                 mov     ecx, [edi]
+  .text:000F3A71                 mov     edx, [ecx+58h]
+  .text:000F3A74                 lea     eax, (sub_F10F0 - 0B14000h)[ebx]
+  .text:000F3A7A                 mov     [esp+16Ch+var_84], eax
+  .text:000F3A81                 mov     [esp+16Ch+var_80], 0
+  .text:000F3A8C                 lea     ecx, [ebp+1]
+  .text:000F3A8F                 mov     byte ptr [ecx], 0
+  .text:000F3A92                 mov     byte ptr [ecx+1], 0
+  .text:000F3A96                 mov     byte ptr [ecx+2], 0
+  .text:000F3A9A                 mov     byte ptr [ecx+3], 0
+  .text:000F3A9E                 mov     byte ptr [ecx+4], 0
+  .text:000F3AA2                 mov     byte ptr [ecx+5], 0
+  .text:000F3AA6                 mov     byte ptr [ecx+6], 0
+  .text:000F3AAA                 mov     byte ptr [ecx+7], 0
+  .text:000F3AAE                 add     ecx, 8
+  .text:000F3AB1                 cmp     ecx, esi
+  .text:000F3AB3                 jnz     short loc_F3A8F
+  .text:000F3AB5                 mov     [esp+16Ch+var_20], 3
+  .text:000F3ABD                 movzx   eax, byte ptr [esp+16Ch+var_84]
+  .text:000F3AC5                 mov     byte ptr [esp+16Ch+var_3C], al
+  .text:000F3ACC                 movzx   ecx, byte ptr [esp+16Ch+var_84+1]
+  .text:000F3AD4                 mov     byte ptr [esp+16Ch+var_3C+1], cl
+  .text:000F3ADB                 movzx   eax, byte ptr [esp+16Ch+var_84+2]
+  .text:000F3AE3                 mov     byte ptr [esp+16Ch+var_3C+2], al
+  .text:000F3AEA                 movzx   ecx, byte ptr [esp+16Ch+var_84+3]
+  .text:000F3AF2                 mov     byte ptr [esp+16Ch+var_3C+3], cl
+  .text:000F3AF9                 movzx   eax, byte ptr [esp+16Ch+var_80]
+  .text:000F3B01                 mov     byte ptr [esp+16Ch+var_38], al
+  .text:000F3B08                 movzx   ecx, byte ptr [esp+16Ch+var_80+1]
+  .text:000F3B10                 mov     byte ptr [esp+16Ch+var_38+1], cl
+  .text:000F3B17                 movzx   eax, byte ptr [esp+16Ch+var_80+2]
+  .text:000F3B1F                 mov     byte ptr [esp+16Ch+var_38+2], al
+  .text:000F3B26                 movzx   ecx, byte ptr [esp+16Ch+var_80+3]
+  .text:000F3B2E                 mov     byte ptr [esp+16Ch+var_38+3], cl
+  .text:000F3B35                 mov     [esp+16Ch+var_14C], 0
+  .text:000F3B3D                 mov     [esp+16Ch+var_150], 0
+  .text:000F3B45                 mov     [esp+16Ch+var_154], 0
+  .text:000F3B4D                 mov     [esp+16Ch+var_158], 3
+  .text:000F3B55                 mov     [esp+16Ch+var_15C], ebp
+  .text:000F3B59                 lea     eax, (aIntF - 0B14000h)[ebx]; "int f()"
+  .text:000F3B5F                 mov     [esp+16Ch+var_160], eax
+  .text:000F3B63                 mov     [esp+16Ch+var_164], 9
+  .text:000F3B6B                 mov     ecx, [esp+16Ch+var_138]
+  .text:000F3B6F                 mov     [esp+16Ch+var_168], ecx
+  .text:000F3B73                 mov     [esp+16Ch+var_16C], edi
+  .text:000F3B76                 call    edx
+  .text:000F3B78                 mov     edx, [edi]
+  .text:000F3B7A                 mov     ecx, [edx+58h]
+  .text:000F3B7D                 lea     eax, (sub_F10F8 - 0B14000h)[ebx]
+  .text:000F3B83                 mov     [esp+16Ch+var_7C], eax
+  .text:000F3B8A                 mov     [esp+16Ch+var_78], 0
+  .text:000F3B95                 lea     edx, [ebp+1]
+  .text:000F3B98                 mov     byte ptr [edx], 0
+  .text:000F3B9B                 mov     byte ptr [edx+1], 0
+  .text:000F3B9F                 mov     byte ptr [edx+2], 0
+  .text:000F3BA3                 mov     byte ptr [edx+3], 0
+  .text:000F3BA7                 mov     byte ptr [edx+4], 0
+  .text:000F3BAB                 mov     byte ptr [edx+5], 0
+  .text:000F3BAF                 mov     byte ptr [edx+6], 0
+  .text:000F3BB3                 mov     byte ptr [edx+7], 0
+  .text:000F3BB7                 add     edx, 8
+  .text:000F3BBA                 cmp     esi, edx
+  .text:000F3BBC                 jnz     short loc_F3B98
+  .text:000F3BBE                 mov     [esp+16Ch+var_20], 3
+  .text:000F3BC6                 movzx   eax, byte ptr [esp+16Ch+var_7C]
+  .text:000F3BCE                 mov     byte ptr [esp+16Ch+var_3C], al
+  .text:000F3BD5                 movzx   edx, byte ptr [esp+16Ch+var_7C+1]
+  .text:000F3BDD                 mov     byte ptr [esp+16Ch+var_3C+1], dl
+  .text:000F3BE4                 movzx   eax, byte ptr [esp+16Ch+var_7C+2]
+  .text:000F3BEC                 mov     byte ptr [esp+16Ch+var_3C+2], al
+  .text:000F3BF3                 movzx   edx, byte ptr [esp+16Ch+var_7C+3]
+  .text:000F3BFB                 mov     byte ptr [esp+16Ch+var_3C+3], dl
+  .text:000F3C02                 movzx   eax, byte ptr [esp+16Ch+var_78]
+  .text:000F3C0A                 mov     byte ptr [esp+16Ch+var_38], al
+  .text:000F3C11                 movzx   edx, byte ptr [esp+16Ch+var_78+1]
+  .text:000F3C19                 mov     byte ptr [esp+16Ch+var_38+1], dl
+  .text:000F3C20                 movzx   eax, byte ptr [esp+16Ch+var_78+2]
+  .text:000F3C28                 mov     byte ptr [esp+16Ch+var_38+2], al
+  .text:000F3C2F                 movzx   edx, byte ptr [esp+16Ch+var_78+3]
+  .text:000F3C37                 mov     byte ptr [esp+16Ch+var_38+3], dl
+  .text:000F3C3E                 mov     [esp+16Ch+var_14C], 0
+  .text:000F3C46                 mov     [esp+16Ch+var_150], 0
+  .text:000F3C4E                 mov     [esp+16Ch+var_154], 0
+  .text:000F3C56                 mov     [esp+16Ch+var_158], 3
+  .text:000F3C5E                 mov     [esp+16Ch+var_15C], ebp
+  .text:000F3C62                 mov     eax, [esp+16Ch+var_134]
+  .text:000F3C66                 mov     [esp+16Ch+var_160], eax
+  .text:000F3C6A                 mov     [esp+16Ch+var_164], 0Ah
+  .text:000F3C72                 mov     edx, [esp+16Ch+var_138]
+  .text:000F3C76                 mov     [esp+16Ch+var_168], edx
+  .text:000F3C7A                 mov     [esp+16Ch+var_16C], edi
+  .text:000F3C7D                 call    ecx
+  .text:000F3C7F                 mov     ecx, [edi]
+  .text:000F3C81                 mov     edx, [ecx+58h]
+  .text:000F3C84                 lea     eax, (sub_F1102 - 0B14000h)[ebx]
+  .text:000F3C8A                 mov     [esp+16Ch+var_74], eax
+  .text:000F3C91                 mov     [esp+16Ch+var_70], 0
+  .text:000F3C9C                 lea     ecx, [ebp+1]
+  .text:000F3C9F                 mov     byte ptr [ecx], 0
+  .text:000F3CA2                 mov     byte ptr [ecx+1], 0
+  .text:000F3CA6                 mov     byte ptr [ecx+2], 0
+  .text:000F3CAA                 mov     byte ptr [ecx+3], 0
+  .text:000F3CAE                 mov     byte ptr [ecx+4], 0
+  .text:000F3CB2                 mov     byte ptr [ecx+5], 0
+  .text:000F3CB6                 mov     byte ptr [ecx+6], 0
+  .text:000F3CBA                 mov     byte ptr [ecx+7], 0
+  .text:000F3CBE                 add     ecx, 8
+  .text:000F3CC1                 cmp     ecx, esi
+  .text:000F3CC3                 jnz     short loc_F3C9F
+  .text:000F3CC5                 mov     [esp+16Ch+var_20], 3
+  .text:000F3CCD                 movzx   eax, byte ptr [esp+16Ch+var_74]
+  .text:000F3CD5                 mov     byte ptr [esp+16Ch+var_3C], al
+  .text:000F3CDC                 movzx   ecx, byte ptr [esp+16Ch+var_74+1]
+  .text:000F3CE4                 mov     byte ptr [esp+16Ch+var_3C+1], cl
+  .text:000F3CEB                 movzx   eax, byte ptr [esp+16Ch+var_74+2]
+  .text:000F3CF3                 mov     byte ptr [esp+16Ch+var_3C+2], al
+  .text:000F3CFA                 movzx   ecx, byte ptr [esp+16Ch+var_74+3]
+  .text:000F3D02                 mov     byte ptr [esp+16Ch+var_3C+3], cl
+  .text:000F3D09                 movzx   eax, byte ptr [esp+16Ch+var_70]
+  .text:000F3D11                 mov     byte ptr [esp+16Ch+var_38], al
+  .text:000F3D18                 movzx   ecx, byte ptr [esp+16Ch+var_70+1]
+  .text:000F3D20                 mov     byte ptr [esp+16Ch+var_38+1], cl
+  .text:000F3D27                 movzx   eax, byte ptr [esp+16Ch+var_70+2]
+  .text:000F3D2F                 mov     byte ptr [esp+16Ch+var_38+2], al
+  .text:000F3D36                 movzx   ecx, byte ptr [esp+16Ch+var_70+3]
+  .text:000F3D3E                 mov     byte ptr [esp+16Ch+var_38+3], cl
+  .text:000F3D45                 mov     [esp+16Ch+var_14C], 0
+  .text:000F3D4D                 mov     [esp+16Ch+var_150], 0
+  .text:000F3D55                 mov     [esp+16Ch+var_154], 0
+  .text:000F3D5D                 mov     [esp+16Ch+var_158], 3
+  .text:000F3D65                 mov     [esp+16Ch+var_15C], ebp
+  .text:000F3D69                 lea     eax, (aBoolF - 0B14000h)[ebx]; "bool f()"
+  .text:000F3D6F                 mov     [esp+16Ch+var_160], eax
+  .text:000F3D73                 mov     [esp+16Ch+var_164], 0Bh
+  .text:000F3D7B                 mov     ecx, [esp+16Ch+var_138]
+  .text:000F3D7F                 mov     [esp+16Ch+var_168], ecx
+  .text:000F3D83                 mov     [esp+16Ch+var_16C], edi
+  .text:000F3D86                 call    edx
+  .text:000F3D88                 mov     edx, [edi]
+  .text:000F3D8A                 mov     ecx, [edx+58h]
+  .text:000F3D8D                 lea     eax, (sub_F110C - 0B14000h)[ebx]
+  .text:000F3D93                 mov     [esp+16Ch+var_6C], eax
+  .text:000F3D9A                 mov     [esp+16Ch+var_68], 0
+  .text:000F3DA5                 lea     edx, [ebp+1]
+  .text:000F3DA8                 mov     byte ptr [edx], 0
+  .text:000F3DAB                 mov     byte ptr [edx+1], 0
+  .text:000F3DAF                 mov     byte ptr [edx+2], 0
+  .text:000F3DB3                 mov     byte ptr [edx+3], 0
+  .text:000F3DB7                 mov     byte ptr [edx+4], 0
+  .text:000F3DBB                 mov     byte ptr [edx+5], 0
+  .text:000F3DBF                 mov     byte ptr [edx+6], 0
+  .text:000F3DC3                 mov     byte ptr [edx+7], 0
+  .text:000F3DC7                 add     edx, 8
+  .text:000F3DCA                 cmp     edx, esi
+  .text:000F3DCC                 jnz     short loc_F3DA8
+  .text:000F3DCE                 mov     [esp+16Ch+var_20], 3
+  .text:000F3DD6                 movzx   eax, byte ptr [esp+16Ch+var_6C]
+  .text:000F3DDE                 mov     byte ptr [esp+16Ch+var_3C], al
+  .text:000F3DE5                 movzx   edx, byte ptr [esp+16Ch+var_6C+1]
+  .text:000F3DED                 mov     byte ptr [esp+16Ch+var_3C+1], dl
+  .text:000F3DF4                 movzx   eax, byte ptr [esp+16Ch+var_6C+2]
+  .text:000F3DFC                 mov     byte ptr [esp+16Ch+var_3C+2], al
+  .text:000F3E03                 movzx   edx, byte ptr [esp+16Ch+var_6C+3]
+  .text:000F3E0B                 mov     byte ptr [esp+16Ch+var_3C+3], dl
+  .text:000F3E12                 movzx   eax, byte ptr [esp+16Ch+var_68]
+  .text:000F3E1A                 mov     byte ptr [esp+16Ch+var_38], al
+  .text:000F3E21                 movzx   edx, byte ptr [esp+16Ch+var_68+1]
+  .text:000F3E29                 mov     byte ptr [esp+16Ch+var_38+1], dl
+  .text:000F3E30                 movzx   eax, byte ptr [esp+16Ch+var_68+2]
+  .text:000F3E38                 mov     byte ptr [esp+16Ch+var_38+2], al
+  .text:000F3E3F                 movzx   edx, byte ptr [esp+16Ch+var_68+3]
+  .text:000F3E47                 mov     byte ptr [esp+16Ch+var_38+3], dl
+  .text:000F3E4E                 mov     [esp+16Ch+var_14C], 0
+  .text:000F3E56                 mov     [esp+16Ch+var_150], 0
+  .text:000F3E5E                 mov     [esp+16Ch+var_154], 0
+  .text:000F3E66                 mov     [esp+16Ch+var_158], 3
+  .text:000F3E6E                 mov     [esp+16Ch+var_15C], ebp
+  .text:000F3E72                 mov     eax, [esp+16Ch+var_130]
+  .text:000F3E76                 mov     [esp+16Ch+var_160], eax
+  .text:000F3E7A                 mov     [esp+16Ch+var_164], 0Ch
+  .text:000F3E82                 mov     edx, [esp+16Ch+var_138]
+  .text:000F3E86                 mov     [esp+16Ch+var_168], edx
+  .text:000F3E8A                 mov     [esp+16Ch+var_16C], edi
+  .text:000F3E8D                 call    ecx
+  .text:000F3E8F                 mov     ecx, [edi]
+  .text:000F3E91                 mov     edx, [ecx+58h]
+  .text:000F3E94                 lea     eax, (sub_F5986 - 0B14000h)[ebx]
+  .text:000F3E9A                 mov     [esp+16Ch+var_64], eax
+  .text:000F3EA1                 mov     [esp+16Ch+var_60], 0
+  .text:000F3EAC                 lea     ecx, [ebp+1]
+  .text:000F3EAF                 mov     byte ptr [ecx], 0
+  .text:000F3EB2                 mov     byte ptr [ecx+1], 0
+  .text:000F3EB6                 mov     byte ptr [ecx+2], 0
+  .text:000F3EBA                 mov     byte ptr [ecx+3], 0
+  .text:000F3EBE                 mov     byte ptr [ecx+4], 0
+  .text:000F3EC2                 mov     byte ptr [ecx+5], 0
+  .text:000F3EC6                 mov     byte ptr [ecx+6], 0
+  .text:000F3ECA                 mov     byte ptr [ecx+7], 0
+  .text:000F3ECE                 add     ecx, 8
+  .text:000F3ED1                 cmp     ecx, esi
+  .text:000F3ED3                 jnz     short loc_F3EAF
+  .text:000F3ED5                 mov     [esp+16Ch+var_20], 3
+  .text:000F3EDD                 movzx   eax, byte ptr [esp+16Ch+var_64]
+  .text:000F3EE5                 mov     byte ptr [esp+16Ch+var_3C], al
+  .text:000F3EEC                 movzx   ecx, byte ptr [esp+16Ch+var_64+1]
+  .text:000F3EF4                 mov     byte ptr [esp+16Ch+var_3C+1], cl
+  .text:000F3EFB                 movzx   eax, byte ptr [esp+16Ch+var_64+2]
+  .text:000F3F03                 mov     byte ptr [esp+16Ch+var_3C+2], al
+  .text:000F3F0A                 movzx   ecx, byte ptr [esp+16Ch+var_64+3]
+  .text:000F3F12                 mov     byte ptr [esp+16Ch+var_3C+3], cl
+  .text:000F3F19                 movzx   eax, byte ptr [esp+16Ch+var_60]
+  .text:000F3F21                 mov     byte ptr [esp+16Ch+var_38], al
+  .text:000F3F28                 movzx   ecx, byte ptr [esp+16Ch+var_60+1]
+  .text:000F3F30                 mov     byte ptr [esp+16Ch+var_38+1], cl
+  .text:000F3F37                 movzx   eax, byte ptr [esp+16Ch+var_60+2]
+  .text:000F3F3F                 mov     byte ptr [esp+16Ch+var_38+2], al
+  .text:000F3F46                 movzx   ecx, byte ptr [esp+16Ch+var_60+3]
+  .text:000F3F4E                 mov     byte ptr [esp+16Ch+var_38+3], cl
+  .text:000F3F55                 mov     [esp+16Ch+var_14C], 0
+  .text:000F3F5D                 mov     [esp+16Ch+var_150], 0
+  .text:000F3F65                 mov     [esp+16Ch+var_154], 0
+  .text:000F3F6D                 mov     [esp+16Ch+var_158], 3
+  .text:000F3F75                 mov     [esp+16Ch+var_15C], ebp
+  .text:000F3F79                 mov     eax, [esp+16Ch+var_130]
+  .text:000F3F7D                 mov     [esp+16Ch+var_160], eax
+  .text:000F3F81                 mov     [esp+16Ch+var_164], 0Dh
+  .text:000F3F89                 mov     ecx, [esp+16Ch+var_138]
+  .text:000F3F8D                 mov     [esp+16Ch+var_168], ecx
+  .text:000F3F91                 mov     [esp+16Ch+var_16C], edi
+  .text:000F3F94                 call    edx
+  .text:000F3F96                 mov     edx, [edi]
+  .text:000F3F98                 mov     eax, [edx+54h]
+  .text:000F3F9B                 mov     ecx, [esp+16Ch+var_124]
+  .text:000F3F9F                 mov     [esp+16Ch+var_5C], ecx
+  .text:000F3FA6                 mov     [esp+16Ch+var_58], 0
+  .text:000F3FB1                 lea     edx, [ebp+1]
+  .text:000F3FB4                 mov     byte ptr [edx], 0
+  .text:000F3FB7                 mov     byte ptr [edx+1], 0
+  .text:000F3FBB                 mov     byte ptr [edx+2], 0
+  .text:000F3FBF                 mov     byte ptr [edx+3], 0
+  .text:000F3FC3                 mov     byte ptr [edx+4], 0
+  .text:000F3FC7                 mov     byte ptr [edx+5], 0
+  .text:000F3FCB                 mov     byte ptr [edx+6], 0
+  .text:000F3FCF                 mov     byte ptr [edx+7], 0
+  .text:000F3FD3                 add     edx, 8
+  .text:000F3FD6                 cmp     edx, esi
+  .text:000F3FD8                 jnz     short loc_F3FB4
+  .text:000F3FDA                 mov     [esp+16Ch+var_20], 3
+  .text:000F3FE2                 movzx   ecx, byte ptr [esp+16Ch+var_5C]
+  .text:000F3FEA                 mov     byte ptr [esp+16Ch+var_3C], cl
+  .text:000F3FF1                 movzx   edx, byte ptr [esp+16Ch+var_5C+1]
+  .text:000F3FF9                 mov     byte ptr [esp+16Ch+var_3C+1], dl
+  .text:000F4000                 movzx   ecx, byte ptr [esp+16Ch+var_5C+2]
+  .text:000F4008                 mov     byte ptr [esp+16Ch+var_3C+2], cl
+  .text:000F400F                 movzx   edx, byte ptr [esp+16Ch+var_5C+3]
+  .text:000F4017                 mov     byte ptr [esp+16Ch+var_3C+3], dl
+  .text:000F401E                 movzx   ecx, byte ptr [esp+16Ch+var_58]
+  .text:000F4026                 mov     byte ptr [esp+16Ch+var_38], cl
+  .text:000F402D                 movzx   edx, byte ptr [esp+16Ch+var_58+1]
+  .text:000F4035                 mov     byte ptr [esp+16Ch+var_38+1], dl
+  .text:000F403C                 movzx   ecx, byte ptr [esp+16Ch+var_58+2]
+  .text:000F4044                 mov     byte ptr [esp+16Ch+var_38+2], cl
+  .text:000F404B                 movzx   edx, byte ptr [esp+16Ch+var_58+3]
+  .text:000F4053                 mov     byte ptr [esp+16Ch+var_38+3], dl
+  .text:000F405A                 mov     [esp+16Ch+var_150], 0
+  .text:000F4062                 mov     [esp+16Ch+var_154], 0
+  .text:000F406A                 mov     [esp+16Ch+var_158], 0
+  .text:000F4072                 mov     [esp+16Ch+var_15C], 3
+  .text:000F407A                 mov     [esp+16Ch+var_160], ebp
+  .text:000F407E                 lea     ecx, (aBoolEmptyConst - 0B14000h)[ebx]; "bool empty() const"
+  .text:000F4084                 mov     [esp+16Ch+var_164], ecx
+  .text:000F4088                 mov     edx, [esp+16Ch+var_138]
+  .text:000F408C                 mov     [esp+16Ch+var_168], edx
+  .text:000F4090                 mov     [esp+16Ch+var_16C], edi
+  .text:000F4093                 call    eax
+  .text:000F4095                 mov     eax, [edi]
+  .text:000F4097                 mov     eax, [eax+54h]
+  .text:000F409A                 mov     ecx, [esp+16Ch+var_120]
+  .text:000F409E                 mov     [esp+16Ch+var_54], ecx
+  .text:000F40A5                 mov     [esp+16Ch+var_50], 0
+  .text:000F40B0                 lea     edx, [ebp+1]
+  .text:000F40B3                 mov     byte ptr [edx], 0
+  .text:000F40B6                 mov     byte ptr [edx+1], 0
+  .text:000F40BA                 mov     byte ptr [edx+2], 0
+  .text:000F40BE                 mov     byte ptr [edx+3], 0
+  .text:000F40C2                 mov     byte ptr [edx+4], 0
+  .text:000F40C6                 mov     byte ptr [edx+5], 0
+  .text:000F40CA                 mov     byte ptr [edx+6], 0
+  .text:000F40CE                 mov     byte ptr [edx+7], 0
+  .text:000F40D2                 add     edx, 8
+  .text:000F40D5                 cmp     edx, esi
+  .text:000F40D7                 jnz     short loc_F40B3
+  .text:000F40D9                 mov     [esp+16Ch+var_20], 3
+  .text:000F40E1                 movzx   ecx, byte ptr [esp+16Ch+var_54]
+  .text:000F40E9                 mov     byte ptr [esp+16Ch+var_3C], cl
+  .text:000F40F0                 movzx   edx, byte ptr [esp+16Ch+var_54+1]
+  .text:000F40F8                 mov     byte ptr [esp+16Ch+var_3C+1], dl
+  .text:000F40FF                 movzx   ecx, byte ptr [esp+16Ch+var_54+2]
+  .text:000F4107                 mov     byte ptr [esp+16Ch+var_3C+2], cl
+  .text:000F410E                 movzx   edx, byte ptr [esp+16Ch+var_54+3]
+  .text:000F4116                 mov     byte ptr [esp+16Ch+var_3C+3], dl
+  .text:000F411D                 movzx   ecx, byte ptr [esp+16Ch+var_50]
+  .text:000F4125                 mov     byte ptr [esp+16Ch+var_38], cl
+  .text:000F412C                 movzx   edx, byte ptr [esp+16Ch+var_50+1]
+  .text:000F4134                 mov     byte ptr [esp+16Ch+var_38+1], dl
+  .text:000F413B                 movzx   ecx, byte ptr [esp+16Ch+var_50+2]
+  .text:000F4143                 mov     byte ptr [esp+16Ch+var_38+2], cl
+  .text:000F414A                 movzx   edx, byte ptr [esp+16Ch+var_50+3]
+  .text:000F4152                 mov     byte ptr [esp+16Ch+var_38+3], dl
+  .text:000F4159                 mov     [esp+16Ch+var_150], 0
+  .text:000F4161                 mov     [esp+16Ch+var_154], 0
+  .text:000F4169                 mov     [esp+16Ch+var_158], 0
+  .text:000F4171                 mov     [esp+16Ch+var_15C], 3
+  .text:000F4179                 mov     [esp+16Ch+var_160], ebp
+  .text:000F417D                 lea     ecx, (aUintSizeConst - 0B14000h)[ebx]; "uint size() const"
+  .text:000F4183                 mov     [esp+16Ch+var_164], ecx
+  .text:000F4187                 mov     edx, [esp+16Ch+var_138]
+  .text:000F418B                 mov     [esp+16Ch+var_168], edx
+  .text:000F418F                 mov     [esp+16Ch+var_16C], edi
+  .text:000F4192                 call    eax
+  .text:000F4194                 mov     eax, [edi]
+  .text:000F4196                 mov     eax, [eax+54h]
+  .text:000F4199                 mov     ecx, [esp+16Ch+var_12C]
+  .text:000F419D                 mov     [esp+16Ch+var_4C], ecx
+  .text:000F41A4                 mov     [esp+16Ch+var_48], 0
+  .text:000F41AF                 lea     edx, [ebp+1]
+  .text:000F41B2                 mov     byte ptr [edx], 0
+  .text:000F41B5                 mov     byte ptr [edx+1], 0
+  .text:000F41B9                 mov     byte ptr [edx+2], 0
+  .text:000F41BD                 mov     byte ptr [edx+3], 0
+  .text:000F41C1                 mov     byte ptr [edx+4], 0
+  .text:000F41C5                 mov     byte ptr [edx+5], 0
+  .text:000F41C9                 mov     byte ptr [edx+6], 0
+  .text:000F41CD                 mov     byte ptr [edx+7], 0
+  .text:000F41D1                 add     edx, 8
+  .text:000F41D4                 cmp     edx, esi
+  .text:000F41D6                 jnz     short loc_F41B2
+  .text:000F41D8                 mov     [esp+16Ch+var_20], 3
+  .text:000F41E0                 movzx   ecx, byte ptr [esp+16Ch+var_4C]
+  .text:000F41E8                 mov     byte ptr [esp+16Ch+var_3C], cl
+  .text:000F41EF                 movzx   edx, byte ptr [esp+16Ch+var_4C+1]
+  .text:000F41F7                 mov     byte ptr [esp+16Ch+var_3C+1], dl
+  .text:000F41FE                 movzx   ecx, byte ptr [esp+16Ch+var_4C+2]
+  .text:000F4206                 mov     byte ptr [esp+16Ch+var_3C+2], cl
+  .text:000F420D                 movzx   edx, byte ptr [esp+16Ch+var_4C+3]
+  .text:000F4215                 mov     byte ptr [esp+16Ch+var_3C+3], dl
+  .text:000F421C                 movzx   ecx, byte ptr [esp+16Ch+var_48]
+  .text:000F4224                 mov     byte ptr [esp+16Ch+var_38], cl
+  .text:000F422B                 movzx   edx, byte ptr [esp+16Ch+var_48+1]
+  .text:000F4233                 mov     byte ptr [esp+16Ch+var_38+1], dl
+  .text:000F423A                 movzx   ecx, byte ptr [esp+16Ch+var_48+2]
+  .text:000F4242                 mov     byte ptr [esp+16Ch+var_38+2], cl
+  .text:000F4249                 movzx   edx, byte ptr [esp+16Ch+var_48+3]
+  .text:000F4251                 mov     byte ptr [esp+16Ch+var_38+3], dl
+  .text:000F4258                 mov     [esp+16Ch+var_150], 0
+  .text:000F4260                 mov     [esp+16Ch+var_154], 0
+  .text:000F4268                 mov     [esp+16Ch+var_158], 0
+  .text:000F4270                 mov     [esp+16Ch+var_15C], 3
+  .text:000F4278                 mov     [esp+16Ch+var_160], ebp
+  .text:000F427C                 lea     ecx, (aVoidEraseConst - 0B14000h)[ebx]; "void erase(const string &in)"
+  .text:000F4282                 mov     [esp+16Ch+var_164], ecx
+  .text:000F4286                 mov     edx, [esp+16Ch+var_138]
+  .text:000F428A                 mov     [esp+16Ch+var_168], edx
+  .text:000F428E                 mov     [esp+16Ch+var_16C], edi
+  .text:000F4291                 call    eax
+  .text:000F4293                 mov     eax, [edi]
+  .text:000F4295                 mov     eax, [eax+54h]
+  .text:000F4298                 mov     ecx, [esp+16Ch+var_128]
+  .text:000F429C                 mov     [esp+16Ch+var_44], ecx
+  .text:000F42A3                 mov     [esp+16Ch+var_40], 0
+  .text:000F42AE                 lea     edx, [ebp+1]
+  .text:000F42B1                 mov     byte ptr [edx], 0
+  .text:000F42B4                 mov     byte ptr [edx+1], 0
+  .text:000F42B8                 mov     byte ptr [edx+2], 0
+  .text:000F42BC                 mov     byte ptr [edx+3], 0
+  .text:000F42C0                 mov     byte ptr [edx+4], 0
+  .text:000F42C4                 mov     byte ptr [edx+5], 0
+  .text:000F42C8                 mov     byte ptr [edx+6], 0
+  .text:000F42CC                 mov     byte ptr [edx+7], 0
+  .text:000F42D0                 add     edx, 8
+  .text:000F42D3                 cmp     esi, edx
+  .text:000F42D5                 jnz     short loc_F42B1
+  .text:000F42D7                 mov     [esp+16Ch+var_20], 3
+  .text:000F42DF                 movzx   ecx, byte ptr [esp+16Ch+var_44]
+  .text:000F42E7                 mov     byte ptr [esp+16Ch+var_3C], cl
+  .text:000F42EE                 movzx   edx, byte ptr [esp+16Ch+var_44+1]
+  .text:000F42F6                 mov     byte ptr [esp+16Ch+var_3C+1], dl
+  .text:000F42FD                 movzx   ecx, byte ptr [esp+16Ch+var_44+2]
+  .text:000F4305                 mov     byte ptr [esp+16Ch+var_3C+2], cl
+  .text:000F430C                 movzx   edx, byte ptr [esp+16Ch+var_44+3]
+  .text:000F4314                 mov     byte ptr [esp+16Ch+var_3C+3], dl
+  .text:000F431B                 movzx   ecx, byte ptr [esp+16Ch+var_40]
+  .text:000F4323                 mov     byte ptr [esp+16Ch+var_38], cl
+  .text:000F432A                 movzx   edx, byte ptr [esp+16Ch+var_40+1]
+  .text:000F4332                 mov     byte ptr [esp+16Ch+var_38+1], dl
+  .text:000F4339                 movzx   ecx, byte ptr [esp+16Ch+var_40+2]
+  .text:000F4341                 mov     byte ptr [esp+16Ch+var_38+2], cl
+  .text:000F4348                 movzx   edx, byte ptr [esp+16Ch+var_40+3]
+  .text:000F4350                 mov     byte ptr [esp+16Ch+var_38+3], dl
+  .text:000F4357                 mov     [esp+16Ch+var_150], 0
+  .text:000F435F                 mov     [esp+16Ch+var_154], 0
+  .text:000F4367                 mov     [esp+16Ch+var_158], 0
+  .text:000F436F                 mov     [esp+16Ch+var_15C], 3
+  .text:000F4377                 mov     [esp+16Ch+var_160], ebp
+  .text:000F437B                 lea     ebp, (aVoidClear - 0B14000h)[ebx]; "void clear()"
+  .text:000F4381                 mov     [esp+16Ch+var_164], ebp
+  .text:000F4385                 mov     esi, [esp+16Ch+var_138]
+  .text:000F4389                 mov     [esp+16Ch+var_168], esi
+  .text:000F438D                 mov     [esp+16Ch+var_16C], edi
+  .text:000F4390                 call    eax
+  .text:000F4392                 mov     eax, [edi]
+  .text:000F4394                 mov     [esp+16Ch+var_168], 3EBh
+  .text:000F439C                 mov     [esp+16Ch+var_16C], edi
+  .text:000F439F                 call    dword ptr [eax+144h]
+  .text:000F43A5                 test    eax, eax
+  .text:000F43A7                 jz      loc_F43B8
+  .text:000F43AD                 add     esp, 15Ch
+  .text:000F43B3                 pop     ebx
+  .text:000F43B4                 pop     esi
+  .text:000F43B5                 pop     edi
+  .text:000F43B6                 pop     ebp
+  .text:000F43B7                 retn
+  .text:000F43B8                 ; unsigned int
+  .text:000F43B8                 mov     [esp+16Ch+var_16C], 0Ch; unsigned int
+  .text:000F43BF                 call    __Znwj; operator new(uint)
+  .text:000F43C4                 mov     ebp, eax
+  .text:000F43C6                 mov     esi, [edi]
+  .text:000F43C8                 mov     [esp+16Ch+var_164], 3EBh
+  .text:000F43D0                 mov     [esp+16Ch+var_168], eax
+  .text:000F43D4                 mov     [esp+16Ch+var_16C], edi
+  .text:000F43D7                 call    dword ptr [esi+140h]
+  .text:000F43DD                 mov     ecx, [edi]
+  .text:000F43DF                 mov     [esp+16Ch+var_164], 3EBh
+  .text:000F43E7                 lea     edx, (sub_F67E0 - 0B14000h)[ebx]
+  .text:000F43ED                 mov     [esp+16Ch+var_168], edx
+  .text:000F43F1                 mov     [esp+16Ch+var_16C], edi
+  .text:000F43F4                 call    dword ptr [ecx+148h]
+  .text:000F43FA                 mov     eax, [edi]
+  .text:000F43FC                 mov     esi, [esp+16Ch+var_138]
+  .text:000F4400                 mov     [esp+16Ch+var_168], esi
+  .text:000F4404                 mov     [esp+16Ch+var_16C], edi
+  .text:000F4407                 call    dword ptr [eax+0E0h]
+  .text:000F440D                 mov     [ebp+0], eax
+  .text:000F4410                 mov     eax, [edi]
+  .text:000F4412                 lea     ecx, (aArrayString - 0B14000h)[ebx]; "array<string>"
+  .text:000F4418                 mov     [esp+16Ch+var_168], ecx
+  .text:000F441C                 mov     [esp+16Ch+var_16C], edi
+  .text:000F441F                 call    dword ptr [eax+0E4h]
+  .text:000F4425                 mov     [ebp+4], eax
+  .text:000F4428                 mov     esi, [edi]
+  .text:000F442A                 lea     ebx, (aExpectedString+9 - 0B14000h)[ebx]; "string"
+  .text:000F4430                 mov     [esp+16Ch+var_168], ebx
+  .text:000F4434                 mov     [esp+16Ch+var_16C], edi
+  .text:000F4437                 call    dword ptr [esi+0E4h]
+  .text:000F443D                 mov     [ebp+8], eax
+  .text:000F4440                 add     esp, 15Ch
+  .text:000F4446                 pop     ebx
+  .text:000F4447                 pop     esi
+  .text:000F4448                 pop     edi
+  .text:000F4449                 pop     ebp
+  .text:000F444A                 retn
+procedure: |-
+  // Current binary evidence: dictionary@ f() intersect void erase(const string &in) selects this registration. Select dictionary native methods with asCALL_THISCALL, not generic wrappers. Windows merges native/generic bodies; Linux retains native registration. The SDK source is a reference revision; unknown non-target callbacks and slots remain neutral. No usable DWARF was supplied.
+  void __cdecl RegisterScriptDictionary_Native(asIScriptEngine *engine)
+  {
+    int (__cdecl *RegisterObjectBehaviour)(asIScriptEngine *, const char *, DictionaryBehaviour, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // eax
+    char *v2; // ecx
+    int (__cdecl *v3)(asIScriptEngine *, const char *, DictionaryBehaviour, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v4; // edx
+    int (__cdecl *v5)(asIScriptEngine *, const char *, DictionaryBehaviour, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v6; // ecx
+    int (__cdecl *v7)(asIScriptEngine *, const char *, DictionaryBehaviour, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v8; // edx
+    int (__cdecl *RegisterObjectMethod)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // eax
+    char *v10; // edx
+    int (__cdecl *v11)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v12; // ecx
+    int (__cdecl *v13)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v14; // eax
+    int (__cdecl *v15)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v16; // eax
+    int (__cdecl *v17)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v18; // eax
+    int (__cdecl *v19)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v20; // eax
+    int (__cdecl *v21)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // eax
+    char *v22; // ecx
+    int (__cdecl *v23)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v24; // eax
+    int (__cdecl *v25)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v26; // eax
+    int (__cdecl *v27)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v28; // eax
+    int (__cdecl *v29)(asIScriptEngine *, const char *, DictionaryBehaviour, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v30; // eax
+    int (__cdecl *v31)(asIScriptEngine *, const char *, DictionaryBehaviour, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v32; // eax
+    int (__cdecl *v33)(asIScriptEngine *, const char *, DictionaryBehaviour, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v34; // edx
+    int (__cdecl *v35)(asIScriptEngine *, const char *, DictionaryBehaviour, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v36; // ecx
+    int (__cdecl *v37)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v38; // edx
+    int (__cdecl *v39)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v40; // ecx
+    int (__cdecl *v41)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v42; // edx
+    int (__cdecl *v43)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v44; // ecx
+    int (__cdecl *v45)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v46; // edx
+    int (__cdecl *v47)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v48; // ecx
+    int (__cdecl *v49)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v50; // edx
+    int (__cdecl *v51)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v52; // ecx
+    int (__cdecl *v53)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v54; // edx
+    int (__cdecl *v55)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v56; // ecx
+    int (__cdecl *v57)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v58; // edx
+    int (__cdecl *v59)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v60; // ecx
+    int (__cdecl *v61)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v62; // edx
+    int (__cdecl *v63)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v64; // ecx
+    int (__cdecl *v65)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v66; // edx
+    int (__cdecl *v67)(asIScriptEngine *, const char *, DictionaryBehaviour, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v68; // ecx
+    int (__cdecl *v69)(asIScriptEngine *, const char *, DictionaryBehaviour, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v70; // edx
+    int (__cdecl *v71)(asIScriptEngine *, const char *, DictionaryBehaviour, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v72; // ecx
+    int (__cdecl *v73)(asIScriptEngine *, const char *, DictionaryBehaviour, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v74; // edx
+    int (__cdecl *v75)(asIScriptEngine *, const char *, DictionaryBehaviour, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v76; // ecx
+    int (__cdecl *v77)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // eax
+    char *v78; // edx
+    int (__cdecl *v79)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // eax
+    char *v80; // edx
+    int (__cdecl *v81)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // eax
+    char *v82; // edx
+    int (__cdecl *v83)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // eax
+    char *v84; // edx
+    _DWORD *v85; // ebp
+    int (__cdecl *v86)(int); // [esp+130h] [ebp-3Ch] BYREF
+    int v87; // [esp+134h] [ebp-38h]
+    _BYTE v88[3]; // [esp+149h] [ebp-23h] BYREF
+    char v89; // [esp+14Ch] [ebp-20h]
+
+    engine->vtable->RegisterObjectType(engine, "dictionaryValue", 12, 6022u);
+    RegisterObjectBehaviour = engine->vtable->RegisterObjectBehaviour;
+    v2 = (char *)&v86 + 1;
+    do
+    {
+      *v2 = 0;
+      v2[1] = 0;
+      v2[2] = 0;
+      v2[3] = 0;
+      v2[4] = 0;
+      v2[5] = 0;
+      v2[6] = 0;
+      v2[7] = 0;
+      v2 += 8;
+    }
+    while ( v88 != v2 );
+    v89 = 2;
+    v86 = (int (__cdecl *)(int))sub_F1344;
+    RegisterObjectBehaviour(
+      engine,
+      "dictionaryValue",
+      asBEHAVE_CONSTRUCT,
+      "void f()",
+      (const asSFuncPtr *)&v86,
+      asCALL_CDECL_OBJLAST,
+      nullptr,
+      0,
+      0);
+    v3 = engine->vtable->RegisterObjectBehaviour;
+    v4 = (char *)&v86 + 1;
+    do
+    {
+      *v4 = 0;
+      v4[1] = 0;
+      v4[2] = 0;
+      v4[3] = 0;
+      v4[4] = 0;
+      v4[5] = 0;
+      v4[6] = 0;
+      v4[7] = 0;
+      v4 += 8;
+    }
+    while ( v88 != v4 );
+    v89 = 2;
+    v86 = (int (__cdecl *)(int))sub_F1560;
+    v3(
+      engine,
+      "dictionaryValue",
+      asBEHAVE_DESTRUCT,
+      "void f()",
+      (const asSFuncPtr *)&v86,
+      asCALL_CDECL_OBJLAST,
+      nullptr,
+      0,
+      0);
+    v5 = engine->vtable->RegisterObjectBehaviour;
+    v6 = (char *)&v86 + 1;
+    do
+    {
+      *v6 = 0;
+      v6[1] = 0;
+      v6[2] = 0;
+      v6[3] = 0;
+      v6[4] = 0;
+      v6[5] = 0;
+      v6[6] = 0;
+      v6[7] = 0;
+      v6 += 8;
+    }
+    while ( v88 != v6 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int))sub_F12EE;
+    v87 = 0;
+    v5(
+      engine,
+      "dictionaryValue",
+      asBEHAVE_ENUMREFS,
+      "void f(int&in)",
+      (const asSFuncPtr *)&v86,
+      asCALL_THISCALL,
+      nullptr,
+      0,
+      0);
+    v7 = engine->vtable->RegisterObjectBehaviour;
+    v8 = (char *)&v86 + 1;
+    do
+    {
+      *v8 = 0;
+      v8[1] = 0;
+      v8[2] = 0;
+      v8[3] = 0;
+      v8[4] = 0;
+      v8[5] = 0;
+      v8[6] = 0;
+      v8[7] = 0;
+      v8 += 8;
+    }
+    while ( v88 != v8 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int))sub_F129E;
+    v87 = 0;
+    v7(
+      engine,
+      "dictionaryValue",
+      asBEHAVE_RELEASEREFS,
+      "void f(int&in)",
+      (const asSFuncPtr *)&v86,
+      asCALL_THISCALL,
+      nullptr,
+      0,
+      0);
+    RegisterObjectMethod = engine->vtable->RegisterObjectMethod;
+    v10 = (char *)&v86 + 1;
+    do
+    {
+      *v10 = 0;
+      v10[1] = 0;
+      v10[2] = 0;
+      v10[3] = 0;
+      v10[4] = 0;
+      v10[5] = 0;
+      v10[6] = 0;
+      v10[7] = 0;
+      v10 += 8;
+    }
+    while ( v88 != v10 );
+    v89 = 2;
+    v86 = (int (__cdecl *)(int))sub_F19AE;
+    RegisterObjectMethod(
+      engine,
+      "dictionaryValue",
+      "dictionaryValue &opAssign(const dictionaryValue &in)",
+      (const asSFuncPtr *)&v86,
+      asCALL_CDECL_OBJLAST,
+      nullptr,
+      0,
+      0);
+    v11 = engine->vtable->RegisterObjectMethod;
+    v12 = (char *)&v86 + 1;
+    do
+    {
+      *v12 = 0;
+      v12[1] = 0;
+      v12[2] = 0;
+      v12[3] = 0;
+      v12[4] = 0;
+      v12[5] = 0;
+      v12[6] = 0;
+      v12[7] = 0;
+      v12 += 8;
+    }
+    while ( v88 != v12 );
+    v89 = 2;
+    v86 = (int (__cdecl *)(int))sub_F17AC;
+    v11(
+      engine,
+      "dictionaryValue",
+      "dictionaryValue &opHndlAssign(const ?&in)",
+      (const asSFuncPtr *)&v86,
+      asCALL_CDECL_OBJLAST,
+      nullptr,
+      0,
+      0);
+    v13 = engine->vtable->RegisterObjectMethod;
+    v14 = (char *)&v86 + 1;
+    do
+    {
+      *v14 = 0;
+      v14[1] = 0;
+      v14[2] = 0;
+      v14[3] = 0;
+      v14[4] = 0;
+      v14[5] = 0;
+      v14[6] = 0;
+      v14[7] = 0;
+      v14 += 8;
+    }
+    while ( v14 != v88 );
+    v89 = 2;
+    v86 = (int (__cdecl *)(int))sub_F19AE;
+    v13(
+      engine,
+      "dictionaryValue",
+      "dictionaryValue &opHndlAssign(const dictionaryValue &in)",
+      (const asSFuncPtr *)&v86,
+      asCALL_CDECL_OBJLAST,
+      nullptr,
+      0,
+      0);
+    v15 = engine->vtable->RegisterObjectMethod;
+    v16 = (char *)&v86 + 1;
+    do
+    {
+      *v16 = 0;
+      v16[1] = 0;
+      v16[2] = 0;
+      v16[3] = 0;
+      v16[4] = 0;
+      v16[5] = 0;
+      v16[6] = 0;
+      v16[7] = 0;
+      v16 += 8;
+    }
+    while ( v88 != v16 );
+    v89 = 2;
+    v86 = (int (__cdecl *)(int))sub_F17AC;
+    v15(
+      engine,
+      "dictionaryValue",
+      "dictionaryValue &opAssign(const ?&in)",
+      (const asSFuncPtr *)&v86,
+      asCALL_CDECL_OBJLAST,
+      nullptr,
+      0,
+      0);
+    v17 = engine->vtable->RegisterObjectMethod;
+    v18 = (char *)&v86 + 1;
+    do
+    {
+      *v18 = 0;
+      v18[1] = 0;
+      v18[2] = 0;
+      v18[3] = 0;
+      v18[4] = 0;
+      v18[5] = 0;
+      v18[6] = 0;
+      v18[7] = 0;
+      v18 += 8;
+    }
+    while ( v88 != v18 );
+    v89 = 2;
+    v86 = (int (__cdecl *)(int))sub_F1882;
+    v17(
+      engine,
+      "dictionaryValue",
+      "dictionaryValue &opAssign(double)",
+      (const asSFuncPtr *)&v86,
+      asCALL_CDECL_OBJLAST,
+      nullptr,
+      0,
+      0);
+    v19 = engine->vtable->RegisterObjectMethod;
+    v20 = (char *)&v86 + 1;
+    do
+    {
+      *v20 = 0;
+      v20[1] = 0;
+      v20[2] = 0;
+      v20[3] = 0;
+      v20[4] = 0;
+      v20[5] = 0;
+      v20[6] = 0;
+      v20[7] = 0;
+      v20 += 8;
+    }
+    while ( v88 != v20 );
+    v89 = 2;
+    v86 = (int (__cdecl *)(int))sub_F17F6;
+    v19(
+      engine,
+      "dictionaryValue",
+      "dictionaryValue &opAssign(int64)",
+      (const asSFuncPtr *)&v86,
+      asCALL_CDECL_OBJLAST,
+      nullptr,
+      0,
+      0);
+    v21 = engine->vtable->RegisterObjectMethod;
+    v22 = (char *)&v86 + 1;
+    do
+    {
+      *v22 = 0;
+      v22[1] = 0;
+      v22[2] = 0;
+      v22[3] = 0;
+      v22[4] = 0;
+      v22[5] = 0;
+      v22[6] = 0;
+      v22[7] = 0;
+      v22 += 8;
+    }
+    while ( v88 != v22 );
+    v89 = 2;
+    v86 = (int (__cdecl *)(int))sub_F1E42;
+    v21(engine, "dictionaryValue", "void opCast(?&out)", (const asSFuncPtr *)&v86, asCALL_CDECL_OBJLAST, nullptr, 0, 0);
+    v23 = engine->vtable->RegisterObjectMethod;
+    v24 = (char *)&v86 + 1;
+    do
+    {
+      *v24 = 0;
+      v24[1] = 0;
+      v24[2] = 0;
+      v24[3] = 0;
+      v24[4] = 0;
+      v24[5] = 0;
+      v24[6] = 0;
+      v24[7] = 0;
+      v24 += 8;
+    }
+    while ( v88 != v24 );
+    v89 = 2;
+    v86 = (int (__cdecl *)(int))sub_F1E42;
+    v23(engine, "dictionaryValue", "void opConv(?&out)", (const asSFuncPtr *)&v86, asCALL_CDECL_OBJLAST, nullptr, 0, 0);
+    v25 = engine->vtable->RegisterObjectMethod;
+    v26 = (char *)&v86 + 1;
+    do
+    {
+      *v26 = 0;
+      v26[1] = 0;
+      v26[2] = 0;
+      v26[3] = 0;
+      v26[4] = 0;
+      v26[5] = 0;
+      v26[6] = 0;
+      v26[7] = 0;
+      v26 += 8;
+    }
+    while ( v88 != v26 );
+    v89 = 2;
+    v86 = (int (__cdecl *)(int))sub_F1EB0;
+    v25(engine, "dictionaryValue", "int64 opConv()", (const asSFuncPtr *)&v86, asCALL_CDECL_OBJLAST, nullptr, 0, 0);
+    v27 = engine->vtable->RegisterObjectMethod;
+    v28 = (char *)&v86 + 1;
+    do
+    {
+      *v28 = 0;
+      v28[1] = 0;
+      v28[2] = 0;
+      v28[3] = 0;
+      v28[4] = 0;
+      v28[5] = 0;
+      v28[6] = 0;
+      v28[7] = 0;
+      v28 += 8;
+    }
+    while ( v28 != v88 );
+    v89 = 2;
+    v86 = (int (__cdecl *)(int))sub_F1E88;
+    v27(engine, "dictionaryValue", "double opConv()", (const asSFuncPtr *)&v86, asCALL_CDECL_OBJLAST, nullptr, 0, 0);
+    engine->vtable->RegisterObjectType(engine, "dictionary", 44, 5u);
+    v29 = engine->vtable->RegisterObjectBehaviour;
+    v30 = (char *)&v86 + 1;
+    do
+    {
+      *v30 = 0;
+      v30[1] = 0;
+      v30[2] = 0;
+      v30[3] = 0;
+      v30[4] = 0;
+      v30[5] = 0;
+      v30[6] = 0;
+      v30[7] = 0;
+      v30 += 8;
+    }
+    while ( v88 != v30 );
+    v89 = 1;
+    v86 = (int (__cdecl *)(int))ScriptDictionaryFactory_Generic; // found_funcptr ScriptDictionaryFactory_Generic: dictionary@ f(), asBEHAVE_FACTORY, asCALL_GENERIC
+    v29(
+      engine,
+      "dictionary",
+      asBEHAVE_FACTORY,
+      "dictionary@ f()",
+      (const asSFuncPtr *)&v86,
+      asCALL_GENERIC,
+      nullptr,
+      0,
+      0);
+    v31 = engine->vtable->RegisterObjectBehaviour;
+    v32 = (char *)&v86 + 1;
+    do
+    {
+      *v32 = 0;
+      v32[1] = 0;
+      v32[2] = 0;
+      v32[3] = 0;
+      v32[4] = 0;
+      v32[5] = 0;
+      v32[6] = 0;
+      v32[7] = 0;
+      v32 += 8;
+    }
+    while ( v88 != v32 );
+    v89 = 1;
+    v86 = sub_F66E4;
+    v31(
+      engine,
+      "dictionary",
+      asBEHAVE_LIST_FACTORY,
+      "dictionary @f(int &in) {repeat {string, ?}}",
+      (const asSFuncPtr *)&v86,
+      asCALL_GENERIC,
+      nullptr,
+      0,
+      0);
+    v33 = engine->vtable->RegisterObjectBehaviour;
+    v34 = (char *)&v86 + 1;
+    do
+    {
+      *v34 = 0;
+      v34[1] = 0;
+      v34[2] = 0;
+      v34[3] = 0;
+      v34[4] = 0;
+      v34[5] = 0;
+      v34[6] = 0;
+      v34[7] = 0;
+      v34 += 8;
+    }
+    while ( v88 != v34 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int))CScriptDictionary_AddRef; // found_funcptr CScriptDictionary_AddRef: native dictionary member for asBEHAVE_ADDREF
+    v87 = 0;
+    v33(engine, "dictionary", asBEHAVE_ADDREF, "void f()", (const asSFuncPtr *)&v86, asCALL_THISCALL, nullptr, 0, 0);
+    v35 = engine->vtable->RegisterObjectBehaviour;
+    v36 = (char *)&v86 + 1;
+    do
+    {
+      *v36 = 0;
+      v36[1] = 0;
+      v36[2] = 0;
+      v36[3] = 0;
+      v36[4] = 0;
+      v36[5] = 0;
+      v36[6] = 0;
+      v36[7] = 0;
+      v36 += 8;
+    }
+    while ( v88 != v36 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int))CScriptDictionary_Release; // found_funcptr CScriptDictionary_Release: native dictionary member for asBEHAVE_RELEASE
+    v87 = 0;
+    v35(engine, "dictionary", asBEHAVE_RELEASE, "void f()", (const asSFuncPtr *)&v86, asCALL_THISCALL, nullptr, 0, 0);
+    v37 = engine->vtable->RegisterObjectMethod;
+    v38 = (char *)&v86 + 1;
+    do
+    {
+      *v38 = 0;
+      v38[1] = 0;
+      v38[2] = 0;
+      v38[3] = 0;
+      v38[4] = 0;
+      v38[5] = 0;
+      v38[6] = 0;
+      v38[7] = 0;
+      v38 += 8;
+    }
+    while ( v88 != v38 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int))sub_F6202;
+    v87 = 0;
+    v37(
+      engine,
+      "dictionary",
+      "dictionary &opAssign(const dictionary &in)",
+      (const asSFuncPtr *)&v86,
+      asCALL_THISCALL,
+      nullptr,
+      0,
+      0);
+    v39 = engine->vtable->RegisterObjectMethod;
+    v40 = (char *)&v86 + 1;
+    do
+    {
+      *v40 = 0;
+      v40[1] = 0;
+      v40[2] = 0;
+      v40[3] = 0;
+      v40[4] = 0;
+      v40[5] = 0;
+      v40[6] = 0;
+      v40[7] = 0;
+      v40 += 8;
+    }
+    while ( v88 != v40 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int))CScriptDictionary_Set; // found_funcptr CScriptDictionary_Set: native dictionary member for "void set(const string &in, const ?&in)"
+    v87 = 0;
+    v39(
+      engine,
+      "dictionary",
+      "void set(const string &in, const ?&in)",
+      (const asSFuncPtr *)&v86,
+      asCALL_THISCALL,
+      nullptr,
+      0,
+      0);
+    v41 = engine->vtable->RegisterObjectMethod;
+    v42 = (char *)&v86 + 1;
+    do
+    {
+      *v42 = 0;
+      v42[1] = 0;
+      v42[2] = 0;
+      v42[3] = 0;
+      v42[4] = 0;
+      v42[5] = 0;
+      v42[6] = 0;
+      v42[7] = 0;
+      v42 += 8;
+    }
+    while ( v42 != v88 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int))CScriptDictionary_Get; // found_funcptr CScriptDictionary_Get: native dictionary member for "bool get(const string &in, ?&out) const"
+    v87 = 0;
+    v41(
+      engine,
+      "dictionary",
+      "bool get(const string &in, ?&out) const",
+      (const asSFuncPtr *)&v86,
+      asCALL_THISCALL,
+      nullptr,
+      0,
+      0);
+    v43 = engine->vtable->RegisterObjectMethod;
+    v44 = (char *)&v86 + 1;
+    do
+    {
+      *v44 = 0;
+      v44[1] = 0;
+      v44[2] = 0;
+      v44[3] = 0;
+      v44[4] = 0;
+      v44[5] = 0;
+      v44[6] = 0;
+      v44[7] = 0;
+      v44 += 8;
+    }
+    while ( v88 != v44 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int))sub_F62B8;
+    v87 = 0;
+    v43(
+      engine,
+      "dictionary",
+      "void set(const string &in, const int64&in)",
+      (const asSFuncPtr *)&v86,
+      asCALL_THISCALL,
+      nullptr,
+      0,
+      0);
+    v45 = engine->vtable->RegisterObjectMethod;
+    v46 = (char *)&v86 + 1;
+    do
+    {
+      *v46 = 0;
+      v46[1] = 0;
+      v46[2] = 0;
+      v46[3] = 0;
+      v46[4] = 0;
+      v46[5] = 0;
+      v46[6] = 0;
+      v46[7] = 0;
+      v46 += 8;
+    }
+    while ( v88 != v46 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int))sub_F5C3E;
+    v87 = 0;
+    v45(
+      engine,
+      "dictionary",
+      "bool get(const string &in, int64&out) const",
+      (const asSFuncPtr *)&v86,
+      asCALL_THISCALL,
+      nullptr,
+      0,
+      0);
+    v47 = engine->vtable->RegisterObjectMethod;
+    v48 = (char *)&v86 + 1;
+    do
+    {
+      *v48 = 0;
+      v48[1] = 0;
+      v48[2] = 0;
+      v48[3] = 0;
+      v48[4] = 0;
+      v48[5] = 0;
+      v48[6] = 0;
+      v48[7] = 0;
+      v48 += 8;
+    }
+    while ( v88 != v48 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int))sub_F633C;
+    v87 = 0;
+    v47(
+      engine,
+      "dictionary",
+      "void set(const string &in, const double&in)",
+      (const asSFuncPtr *)&v86,
+      asCALL_THISCALL,
+      nullptr,
+      0,
+      0);
+    v49 = engine->vtable->RegisterObjectMethod;
+    v50 = (char *)&v86 + 1;
+    do
+    {
+      *v50 = 0;
+      v50[1] = 0;
+      v50[2] = 0;
+      v50[3] = 0;
+      v50[4] = 0;
+      v50[5] = 0;
+      v50[6] = 0;
+      v50[7] = 0;
+      v50 += 8;
+    }
+    while ( v88 != v50 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int))sub_F5CD0;
+    v87 = 0;
+    v49(
+      engine,
+      "dictionary",
+      "bool get(const string &in, double&out) const",
+      (const asSFuncPtr *)&v86,
+      asCALL_THISCALL,
+      nullptr,
+      0,
+      0);
+    v51 = engine->vtable->RegisterObjectMethod;
+    v52 = (char *)&v86 + 1;
+    do
+    {
+      *v52 = 0;
+      v52[1] = 0;
+      v52[2] = 0;
+      v52[3] = 0;
+      v52[4] = 0;
+      v52[5] = 0;
+      v52[6] = 0;
+      v52[7] = 0;
+      v52 += 8;
+    }
+    while ( v88 != v52 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int))CScriptDictionary_Exists; // found_funcptr CScriptDictionary_Exists: native dictionary member for "bool exists(const string &in) const"
+    v87 = 0;
+    v51(
+      engine,
+      "dictionary",
+      "bool exists(const string &in) const",
+      (const asSFuncPtr *)&v86,
+      asCALL_THISCALL,
+      nullptr,
+      0,
+      0);
+    v53 = engine->vtable->RegisterObjectMethod;
+    v54 = (char *)&v86 + 1;
+    do
+    {
+      *v54 = 0;
+      v54[1] = 0;
+      v54[2] = 0;
+      v54[3] = 0;
+      v54[4] = 0;
+      v54[5] = 0;
+      v54[6] = 0;
+      v54[7] = 0;
+      v54 += 8;
+    }
+    while ( v88 != v54 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int))CScriptDictionary_IsEmpty; // found_funcptr CScriptDictionary_IsEmpty: native dictionary member for "bool isEmpty() const"
+    v87 = 0;
+    v53(engine, "dictionary", "bool isEmpty() const", (const asSFuncPtr *)&v86, asCALL_THISCALL, nullptr, 0, 0);
+    v55 = engine->vtable->RegisterObjectMethod;
+    v56 = (char *)&v86 + 1;
+    do
+    {
+      *v56 = 0;
+      v56[1] = 0;
+      v56[2] = 0;
+      v56[3] = 0;
+      v56[4] = 0;
+      v56[5] = 0;
+      v56[6] = 0;
+      v56[7] = 0;
+      v56 += 8;
+    }
+    while ( v56 != v88 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int))CScriptDictionary_GetSize; // found_funcptr CScriptDictionary_GetSize: native dictionary member for "uint getSize() const"
+    v87 = 0;
+    v55(engine, "dictionary", "uint getSize() const", (const asSFuncPtr *)&v86, asCALL_THISCALL, nullptr, 0, 0);
+    v57 = engine->vtable->RegisterObjectMethod;
+    v58 = (char *)&v86 + 1;
+    do
+    {
+      *v58 = 0;
+      v58[1] = 0;
+      v58[2] = 0;
+      v58[3] = 0;
+      v58[4] = 0;
+      v58[5] = 0;
+      v58[6] = 0;
+      v58[7] = 0;
+      v58 += 8;
+    }
+    while ( v58 != v88 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int))CScriptDictionary_Delete; // found_funcptr CScriptDictionary_Delete: native dictionary member for "bool delete(const string &in)"
+    v87 = 0;
+    v57(engine, "dictionary", "bool delete(const string &in)", (const asSFuncPtr *)&v86, asCALL_THISCALL, nullptr, 0, 0);
+    v59 = engine->vtable->RegisterObjectMethod;
+    v60 = (char *)&v86 + 1;
+    do
+    {
+      *v60 = 0;
+      v60[1] = 0;
+      v60[2] = 0;
+      v60[3] = 0;
+      v60[4] = 0;
+      v60[5] = 0;
+      v60[6] = 0;
+      v60[7] = 0;
+      v60 += 8;
+    }
+    while ( v60 != v88 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int))CScriptDictionary_DeleteAll; // found_funcptr CScriptDictionary_DeleteAll: native dictionary member for "void deleteAll()"
+    v87 = 0;
+    v59(engine, "dictionary", "void deleteAll()", (const asSFuncPtr *)&v86, asCALL_THISCALL, nullptr, 0, 0);
+    v61 = engine->vtable->RegisterObjectMethod;
+    v62 = (char *)&v86 + 1;
+    do
+    {
+      *v62 = 0;
+      v62[1] = 0;
+      v62[2] = 0;
+      v62[3] = 0;
+      v62[4] = 0;
+      v62[5] = 0;
+      v62[6] = 0;
+      v62[7] = 0;
+      v62 += 8;
+    }
+    while ( v88 != v62 );
+    v89 = 3;
+    v86 = sub_F142E;
+    v87 = 0;
+    v61(engine, "dictionary", "array<string> @getKeys() const", (const asSFuncPtr *)&v86, asCALL_THISCALL, nullptr, 0, 0);
+    v63 = engine->vtable->RegisterObjectMethod;
+    v64 = (char *)&v86 + 1;
+    do
+    {
+      *v64 = 0;
+      v64[1] = 0;
+      v64[2] = 0;
+      v64[3] = 0;
+      v64[4] = 0;
+      v64[5] = 0;
+      v64[6] = 0;
+      v64[7] = 0;
+      v64 += 8;
+    }
+    while ( v64 != v88 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int))sub_F6066;
+    v87 = 0;
+    v63(
+      engine,
+      "dictionary",
+      "dictionaryValue &opIndex(const string &in)",
+      (const asSFuncPtr *)&v86,
+      asCALL_THISCALL,
+      nullptr,
+      0,
+      0);
+    v65 = engine->vtable->RegisterObjectMethod;
+    v66 = (char *)&v86 + 1;
+    do
+    {
+      *v66 = 0;
+      v66[1] = 0;
+      v66[2] = 0;
+      v66[3] = 0;
+      v66[4] = 0;
+      v66[5] = 0;
+      v66[6] = 0;
+      v66[7] = 0;
+      v66 += 8;
+    }
+    while ( v66 != v88 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int))sub_F5B24;
+    v87 = 0;
+    v65(
+      engine,
+      "dictionary",
+      "const dictionaryValue &opIndex(const string &in) const",
+      (const asSFuncPtr *)&v86,
+      asCALL_THISCALL,
+      nullptr,
+      0,
+      0);
+    v67 = engine->vtable->RegisterObjectBehaviour;
+    v68 = (char *)&v86 + 1;
+    do
+    {
+      *v68 = 0;
+      v68[1] = 0;
+      v68[2] = 0;
+      v68[3] = 0;
+      v68[4] = 0;
+      v68[5] = 0;
+      v68[6] = 0;
+      v68[7] = 0;
+      v68 += 8;
+    }
+    while ( v68 != v88 );
+    v89 = 3;
+    v86 = sub_F10F0;
+    v87 = 0;
+    v67(engine, "dictionary", asBEHAVE_GETREFCOUNT, "int f()", (const asSFuncPtr *)&v86, asCALL_THISCALL, nullptr, 0, 0);
+    v69 = engine->vtable->RegisterObjectBehaviour;
+    v70 = (char *)&v86 + 1;
+    do
+    {
+      *v70 = 0;
+      v70[1] = 0;
+      v70[2] = 0;
+      v70[3] = 0;
+      v70[4] = 0;
+      v70[5] = 0;
+      v70[6] = 0;
+      v70[7] = 0;
+      v70 += 8;
+    }
+    while ( v88 != v70 );
+    v89 = 3;
+    v86 = sub_F10F8;
+    v87 = 0;
+    v69(engine, "dictionary", asBEHAVE_SETGCFLAG, "void f()", (const asSFuncPtr *)&v86, asCALL_THISCALL, nullptr, 0, 0);
+    v71 = engine->vtable->RegisterObjectBehaviour;
+    v72 = (char *)&v86 + 1;
+    do
+    {
+      *v72 = 0;
+      v72[1] = 0;
+      v72[2] = 0;
+      v72[3] = 0;
+      v72[4] = 0;
+      v72[5] = 0;
+      v72[6] = 0;
+      v72[7] = 0;
+      v72 += 8;
+    }
+    while ( v72 != v88 );
+    v89 = 3;
+    v86 = sub_F1102;
+    v87 = 0;
+    v71(engine, "dictionary", asBEHAVE_GETGCFLAG, "bool f()", (const asSFuncPtr *)&v86, asCALL_THISCALL, nullptr, 0, 0);
+    v73 = engine->vtable->RegisterObjectBehaviour;
+    v74 = (char *)&v86 + 1;
+    do
+    {
+      *v74 = 0;
+      v74[1] = 0;
+      v74[2] = 0;
+      v74[3] = 0;
+      v74[4] = 0;
+      v74[5] = 0;
+      v74[6] = 0;
+      v74[7] = 0;
+      v74 += 8;
+    }
+    while ( v74 != v88 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int))sub_F110C;
+    v87 = 0;
+    v73(
+      engine,
+      "dictionary",
+      asBEHAVE_ENUMREFS,
+      "void f(int&in)",
+      (const asSFuncPtr *)&v86,
+      asCALL_THISCALL,
+      nullptr,
+      0,
+      0);
+    v75 = engine->vtable->RegisterObjectBehaviour;
+    v76 = (char *)&v86 + 1;
+    do
+    {
+      *v76 = 0;
+      v76[1] = 0;
+      v76[2] = 0;
+      v76[3] = 0;
+      v76[4] = 0;
+      v76[5] = 0;
+      v76[6] = 0;
+      v76[7] = 0;
+      v76 += 8;
+    }
+    while ( v76 != v88 );
+    v89 = 3;
+    v86 = sub_F5986;
+    v87 = 0;
+    v75(
+      engine,
+      "dictionary",
+      asBEHAVE_RELEASEREFS,
+      "void f(int&in)",
+      (const asSFuncPtr *)&v86,
+      asCALL_THISCALL,
+      nullptr,
+      0,
+      0);
+    v77 = engine->vtable->RegisterObjectMethod;
+    v78 = (char *)&v86 + 1;
+    do
+    {
+      *v78 = 0;
+      v78[1] = 0;
+      v78[2] = 0;
+      v78[3] = 0;
+      v78[4] = 0;
+      v78[5] = 0;
+      v78[6] = 0;
+      v78[7] = 0;
+      v78 += 8;
+    }
+    while ( v78 != v88 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int))CScriptDictionary_IsEmpty;
+    v87 = 0;
+    v77(engine, "dictionary", "bool empty() const", (const asSFuncPtr *)&v86, asCALL_THISCALL, nullptr, 0, 0);
+    v79 = engine->vtable->RegisterObjectMethod;
+    v80 = (char *)&v86 + 1;
+    do
+    {
+      *v80 = 0;
+      v80[1] = 0;
+      v80[2] = 0;
+      v80[3] = 0;
+      v80[4] = 0;
+      v80[5] = 0;
+      v80[6] = 0;
+      v80[7] = 0;
+      v80 += 8;
+    }
+    while ( v80 != v88 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int))CScriptDictionary_GetSize;
+    v87 = 0;
+    v79(engine, "dictionary", "uint size() const", (const asSFuncPtr *)&v86, asCALL_THISCALL, nullptr, 0, 0);
+    v81 = engine->vtable->RegisterObjectMethod;
+    v82 = (char *)&v86 + 1;
+    do
+    {
+      *v82 = 0;
+      v82[1] = 0;
+      v82[2] = 0;
+      v82[3] = 0;
+      v82[4] = 0;
+      v82[5] = 0;
+      v82[6] = 0;
+      v82[7] = 0;
+      v82 += 8;
+    }
+    while ( v82 != v88 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int))CScriptDictionary_Delete;
+    v87 = 0;
+    v81(engine, "dictionary", "void erase(const string &in)", (const asSFuncPtr *)&v86, asCALL_THISCALL, nullptr, 0, 0);
+    v83 = engine->vtable->RegisterObjectMethod;
+    v84 = (char *)&v86 + 1;
+    do
+    {
+      *v84 = 0;
+      v84[1] = 0;
+      v84[2] = 0;
+      v84[3] = 0;
+      v84[4] = 0;
+      v84[5] = 0;
+      v84[6] = 0;
+      v84[7] = 0;
+      v84 += 8;
+    }
+    while ( v88 != v84 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int))CScriptDictionary_DeleteAll;
+    v87 = 0;
+    v83(engine, "dictionary", "void clear()", (const asSFuncPtr *)&v86, asCALL_THISCALL, nullptr, 0, 0);
+    if ( !engine->vtable->GetUserData(engine, 1003) )
+    {
+      v85 = (_DWORD *)operator new(0xCu);
+      engine->vtable->SetUserData(engine, v85, 1003u);
+      engine->vtable->SetEngineUserDataCleanupCallback(engine, sub_F67E0, 1003u);
+      *v85 = ((int (__cdecl *)(asIScriptEngine *, const char *))engine->vtable->unknown_23_to_73[33])(
+               engine,
+               "dictionary");
+      v85[1] = ((int (__cdecl *)(asIScriptEngine *, const char *))engine->vtable->unknown_23_to_73[34])(
+                 engine,
+                 "array<string>");
+      v85[2] = ((int (__cdecl *)(asIScriptEngine *, char *))engine->vtable->unknown_23_to_73[34])(engine, "string");
+    }
+  }

@@ -1,0 +1,2920 @@
+func_name: "RegisterScriptDictionary_Native"
+func_va: "0x1afcae"
+disasm_code: |-
+  .text:001AFCAE                 push    ebp
+  .text:001AFCAF                 push    edi
+  .text:001AFCB0                 push    esi
+  .text:001AFCB1                 push    ebx
+  .text:001AFCB2                 sub     esp, 12Ch
+  .text:001AFCB8                 call    __x86_get_pc_thunk_bx
+  .text:001AFCBD                 add     ebx, (offset _GLOBAL_OFFSET_TABLE_ - $)
+  .text:001AFCC3                 mov     edi, [esp+13Ch+engine]
+  .text:001AFCCA                 mov     eax, [edi]
+  .text:001AFCCC                 push    1786h
+  .text:001AFCD1                 push    0Ch
+  .text:001AFCD3                 lea     ecx, (aDictionaryvalu - 8B0000h)[ebx]; "dictionaryValue"
+  .text:001AFCD9                 mov     [esp+144h+var_138], ecx
+  .text:001AFCDD                 push    ecx
+  .text:001AFCDE                 push    edi
+  .text:001AFCDF                 call    dword ptr [eax+4Ch]
+  .text:001AFCE2                 mov     edx, [edi]
+  .text:001AFCE4                 mov     eax, [edx+58h]
+  .text:001AFCE7                 lea     ebp, [esp+14Ch+var_3C]
+  .text:001AFCEE                 lea     esi, [esp+14Ch+var_23]
+  .text:001AFCF5                 add     esp, 10h
+  .text:001AFCF8                 lea     ecx, [esp+13Ch+var_3C+1]
+  .text:001AFCFF                 mov     byte ptr [ecx], 0
+  .text:001AFD02                 mov     byte ptr [ecx+1], 0
+  .text:001AFD06                 mov     byte ptr [ecx+2], 0
+  .text:001AFD0A                 mov     byte ptr [ecx+3], 0
+  .text:001AFD0E                 mov     byte ptr [ecx+4], 0
+  .text:001AFD12                 mov     byte ptr [ecx+5], 0
+  .text:001AFD16                 mov     byte ptr [ecx+6], 0
+  .text:001AFD1A                 mov     byte ptr [ecx+7], 0
+  .text:001AFD1E                 add     ecx, 8
+  .text:001AFD21                 cmp     esi, ecx
+  .text:001AFD23                 jnz     short loc_1AFCFF
+  .text:001AFD25                 mov     [esp+13Ch+var_20], 2
+  .text:001AFD2D                 lea     edx, (_ZL26CScriptDictValue_ConstructPv - 8B0000h)[ebx]; CScriptDictValue_Construct(void *)
+  .text:001AFD33                 mov     [esp+13Ch+var_3C], edx
+  .text:001AFD3A                 sub     esp, 0Ch
+  .text:001AFD3D                 push    0
+  .text:001AFD3F                 push    0
+  .text:001AFD41                 push    0
+  .text:001AFD43                 push    4
+  .text:001AFD45                 push    ebp
+  .text:001AFD46                 lea     ecx, (aVoidF - 8B0000h)[ebx]; "void f()"
+  .text:001AFD4C                 mov     [esp+15Ch+var_134], ecx
+  .text:001AFD50                 push    ecx
+  .text:001AFD51                 push    0
+  .text:001AFD53                 mov     edx, [esp+164h+var_138]
+  .text:001AFD57                 push    edx
+  .text:001AFD58                 push    edi
+  .text:001AFD59                 call    eax
+  .text:001AFD5B                 mov     eax, [edi]
+  .text:001AFD5D                 mov     ecx, [eax+58h]
+  .text:001AFD60                 add     esp, 30h
+  .text:001AFD63                 lea     edx, [ebp+1]
+  .text:001AFD66                 mov     byte ptr [edx], 0
+  .text:001AFD69                 mov     byte ptr [edx+1], 0
+  .text:001AFD6D                 mov     byte ptr [edx+2], 0
+  .text:001AFD71                 mov     byte ptr [edx+3], 0
+  .text:001AFD75                 mov     byte ptr [edx+4], 0
+  .text:001AFD79                 mov     byte ptr [edx+5], 0
+  .text:001AFD7D                 mov     byte ptr [edx+6], 0
+  .text:001AFD81                 mov     byte ptr [edx+7], 0
+  .text:001AFD85                 add     edx, 8
+  .text:001AFD88                 cmp     esi, edx
+  .text:001AFD8A                 jnz     short loc_1AFD66
+  .text:001AFD8C                 mov     [esp+13Ch+var_20], 2
+  .text:001AFD94                 lea     eax, (_ZL25CScriptDictValue_DestructP16CScriptDictValue - 8B0000h)[ebx]; CScriptDictValue_Destruct(CScriptDictValue *)
+  .text:001AFD9A                 mov     [esp+13Ch+var_3C], eax
+  .text:001AFDA1                 sub     esp, 0Ch
+  .text:001AFDA4                 push    0
+  .text:001AFDA6                 push    0
+  .text:001AFDA8                 push    0
+  .text:001AFDAA                 push    4
+  .text:001AFDAC                 push    ebp
+  .text:001AFDAD                 mov     edx, [esp+15Ch+var_134]
+  .text:001AFDB1                 push    edx
+  .text:001AFDB2                 push    2
+  .text:001AFDB4                 mov     eax, [esp+164h+var_138]
+  .text:001AFDB8                 push    eax
+  .text:001AFDB9                 push    edi
+  .text:001AFDBA                 call    ecx
+  .text:001AFDBC                 mov     ecx, [edi]
+  .text:001AFDBE                 mov     edx, [ecx+58h]
+  .text:001AFDC1                 mov     eax, ds:(_ZN16CScriptDictValue14EnumReferencesEP15asIScriptEngine_ptr - 8B0000h)[ebx]
+  .text:001AFDC7                 mov     [esp+16Ch+var_11C], eax
+  .text:001AFDCB                 mov     [esp+16Ch+var_118], 0
+  .text:001AFDD3                 add     esp, 30h
+  .text:001AFDD6                 lea     ecx, [ebp+1]
+  .text:001AFDD9                 mov     byte ptr [ecx], 0
+  .text:001AFDDC                 mov     byte ptr [ecx+1], 0
+  .text:001AFDE0                 mov     byte ptr [ecx+2], 0
+  .text:001AFDE4                 mov     byte ptr [ecx+3], 0
+  .text:001AFDE8                 mov     byte ptr [ecx+4], 0
+  .text:001AFDEC                 mov     byte ptr [ecx+5], 0
+  .text:001AFDF0                 mov     byte ptr [ecx+6], 0
+  .text:001AFDF4                 mov     byte ptr [ecx+7], 0
+  .text:001AFDF8                 add     ecx, 8
+  .text:001AFDFB                 cmp     esi, ecx
+  .text:001AFDFD                 jnz     short loc_1AFDD9
+  .text:001AFDFF                 mov     [esp+13Ch+var_20], 3
+  .text:001AFE07                 mov     al, byte ptr [esp+13Ch+var_11C]
+  .text:001AFE0B                 mov     byte ptr [esp+13Ch+var_3C], al
+  .text:001AFE12                 mov     cl, byte ptr [esp+13Ch+var_11C+1]
+  .text:001AFE16                 mov     byte ptr [esp+13Ch+var_3C+1], cl
+  .text:001AFE1D                 mov     al, byte ptr [esp+13Ch+var_11C+2]
+  .text:001AFE21                 mov     byte ptr [esp+13Ch+var_3C+2], al
+  .text:001AFE28                 mov     cl, byte ptr [esp+13Ch+var_11C+3]
+  .text:001AFE2C                 mov     byte ptr [esp+13Ch+var_3C+3], cl
+  .text:001AFE33                 mov     al, byte ptr [esp+13Ch+var_118]
+  .text:001AFE37                 mov     byte ptr [esp+13Ch+var_38], al
+  .text:001AFE3E                 mov     cl, byte ptr [esp+13Ch+var_118+1]
+  .text:001AFE42                 mov     byte ptr [esp+13Ch+var_38+1], cl
+  .text:001AFE49                 mov     al, byte ptr [esp+13Ch+var_118+2]
+  .text:001AFE4D                 mov     byte ptr [esp+13Ch+var_38+2], al
+  .text:001AFE54                 mov     cl, byte ptr [esp+13Ch+var_118+3]
+  .text:001AFE58                 mov     byte ptr [esp+13Ch+var_38+3], cl
+  .text:001AFE5F                 sub     esp, 0Ch
+  .text:001AFE62                 push    0
+  .text:001AFE64                 push    0
+  .text:001AFE66                 push    0
+  .text:001AFE68                 push    3
+  .text:001AFE6A                 push    ebp
+  .text:001AFE6B                 lea     eax, (aVoidFIntIn - 8B0000h)[ebx]; "void f(int&in)"
+  .text:001AFE71                 mov     [esp+15Ch+var_130], eax
+  .text:001AFE75                 push    eax
+  .text:001AFE76                 push    0Ch
+  .text:001AFE78                 mov     ecx, [esp+164h+var_138]
+  .text:001AFE7C                 push    ecx
+  .text:001AFE7D                 push    edi
+  .text:001AFE7E                 call    edx
+  .text:001AFE80                 mov     edx, [edi]
+  .text:001AFE82                 mov     edx, [edx+58h]
+  .text:001AFE85                 mov     eax, ds:(_ZN16CScriptDictValue9FreeValueEP15asIScriptEngine_ptr - 8B0000h)[ebx]
+  .text:001AFE8B                 mov     [esp+16Ch+var_114], eax
+  .text:001AFE8F                 mov     [esp+16Ch+var_110], 0
+  .text:001AFE97                 add     esp, 30h
+  .text:001AFE9A                 lea     ecx, [ebp+1]
+  .text:001AFE9D                 mov     byte ptr [ecx], 0
+  .text:001AFEA0                 mov     byte ptr [ecx+1], 0
+  .text:001AFEA4                 mov     byte ptr [ecx+2], 0
+  .text:001AFEA8                 mov     byte ptr [ecx+3], 0
+  .text:001AFEAC                 mov     byte ptr [ecx+4], 0
+  .text:001AFEB0                 mov     byte ptr [ecx+5], 0
+  .text:001AFEB4                 mov     byte ptr [ecx+6], 0
+  .text:001AFEB8                 mov     byte ptr [ecx+7], 0
+  .text:001AFEBC                 add     ecx, 8
+  .text:001AFEBF                 cmp     esi, ecx
+  .text:001AFEC1                 jnz     short loc_1AFE9D
+  .text:001AFEC3                 mov     [esp+13Ch+var_20], 3
+  .text:001AFECB                 mov     al, byte ptr [esp+13Ch+var_114]
+  .text:001AFECF                 mov     byte ptr [esp+13Ch+var_3C], al
+  .text:001AFED6                 mov     cl, byte ptr [esp+13Ch+var_114+1]
+  .text:001AFEDA                 mov     byte ptr [esp+13Ch+var_3C+1], cl
+  .text:001AFEE1                 mov     al, byte ptr [esp+13Ch+var_114+2]
+  .text:001AFEE5                 mov     byte ptr [esp+13Ch+var_3C+2], al
+  .text:001AFEEC                 mov     cl, byte ptr [esp+13Ch+var_114+3]
+  .text:001AFEF0                 mov     byte ptr [esp+13Ch+var_3C+3], cl
+  .text:001AFEF7                 mov     al, byte ptr [esp+13Ch+var_110]
+  .text:001AFEFB                 mov     byte ptr [esp+13Ch+var_38], al
+  .text:001AFF02                 mov     cl, byte ptr [esp+13Ch+var_110+1]
+  .text:001AFF06                 mov     byte ptr [esp+13Ch+var_38+1], cl
+  .text:001AFF0D                 mov     al, byte ptr [esp+13Ch+var_110+2]
+  .text:001AFF11                 mov     byte ptr [esp+13Ch+var_38+2], al
+  .text:001AFF18                 mov     cl, byte ptr [esp+13Ch+var_110+3]
+  .text:001AFF1C                 mov     byte ptr [esp+13Ch+var_38+3], cl
+  .text:001AFF23                 sub     esp, 0Ch
+  .text:001AFF26                 push    0
+  .text:001AFF28                 push    0
+  .text:001AFF2A                 push    0
+  .text:001AFF2C                 push    3
+  .text:001AFF2E                 push    ebp
+  .text:001AFF2F                 mov     eax, [esp+15Ch+var_130]
+  .text:001AFF33                 push    eax
+  .text:001AFF34                 push    0Dh
+  .text:001AFF36                 mov     ecx, [esp+164h+var_138]
+  .text:001AFF3A                 push    ecx
+  .text:001AFF3B                 push    edi
+  .text:001AFF3C                 call    edx
+  .text:001AFF3E                 mov     edx, [edi]
+  .text:001AFF40                 mov     eax, [edx+54h]
+  .text:001AFF43                 add     esp, 30h
+  .text:001AFF46                 lea     ecx, [ebp+1]
+  .text:001AFF49                 mov     byte ptr [ecx], 0
+  .text:001AFF4C                 mov     byte ptr [ecx+1], 0
+  .text:001AFF50                 mov     byte ptr [ecx+2], 0
+  .text:001AFF54                 mov     byte ptr [ecx+3], 0
+  .text:001AFF58                 mov     byte ptr [ecx+4], 0
+  .text:001AFF5C                 mov     byte ptr [ecx+5], 0
+  .text:001AFF60                 mov     byte ptr [ecx+6], 0
+  .text:001AFF64                 mov     byte ptr [ecx+7], 0
+  .text:001AFF68                 add     ecx, 8
+  .text:001AFF6B                 cmp     esi, ecx
+  .text:001AFF6D                 jnz     short loc_1AFF49
+  .text:001AFF6F                 mov     [esp+13Ch+var_20], 2
+  .text:001AFF77                 lea     edx, (_ZL25CScriptDictValue_opAssignRK16CScriptDictValuePS_ - 8B0000h)[ebx]; CScriptDictValue_opAssign(CScriptDictValue const&,CScriptDictValue*)
+  .text:001AFF7D                 mov     [esp+13Ch+var_12C], edx
+  .text:001AFF81                 mov     [esp+13Ch+var_3C], edx
+  .text:001AFF88                 push    0
+  .text:001AFF8A                 push    0
+  .text:001AFF8C                 push    0
+  .text:001AFF8E                 push    4
+  .text:001AFF90                 push    ebp
+  .text:001AFF91                 lea     ecx, (aDictionaryvalu_0 - 8B0000h)[ebx]; "dictionaryValue &opAssign(const diction"...
+  .text:001AFF97                 push    ecx
+  .text:001AFF98                 mov     edx, [esp+154h+var_138]
+  .text:001AFF9C                 push    edx
+  .text:001AFF9D                 push    edi
+  .text:001AFF9E                 call    eax
+  .text:001AFFA0                 mov     eax, [edi]
+  .text:001AFFA2                 mov     ecx, [eax+54h]
+  .text:001AFFA5                 add     esp, 20h
+  .text:001AFFA8                 lea     edx, [ebp+1]
+  .text:001AFFAB                 mov     byte ptr [edx], 0
+  .text:001AFFAE                 mov     byte ptr [edx+1], 0
+  .text:001AFFB2                 mov     byte ptr [edx+2], 0
+  .text:001AFFB6                 mov     byte ptr [edx+3], 0
+  .text:001AFFBA                 mov     byte ptr [edx+4], 0
+  .text:001AFFBE                 mov     byte ptr [edx+5], 0
+  .text:001AFFC2                 mov     byte ptr [edx+6], 0
+  .text:001AFFC6                 mov     byte ptr [edx+7], 0
+  .text:001AFFCA                 add     edx, 8
+  .text:001AFFCD                 cmp     esi, edx
+  .text:001AFFCF                 jnz     short loc_1AFFAB
+  .text:001AFFD1                 mov     [esp+13Ch+var_20], 2
+  .text:001AFFD9                 lea     eax, (_ZL25CScriptDictValue_opAssignPviP16CScriptDictValue - 8B0000h)[ebx]; CScriptDictValue_opAssign(void *,int,CScriptDictValue *)
+  .text:001AFFDF                 mov     [esp+13Ch+var_128], eax
+  .text:001AFFE3                 mov     [esp+13Ch+var_3C], eax
+  .text:001AFFEA                 push    0
+  .text:001AFFEC                 push    0
+  .text:001AFFEE                 push    0
+  .text:001AFFF0                 push    4
+  .text:001AFFF2                 push    ebp
+  .text:001AFFF3                 lea     edx, (aDictionaryvalu_1 - 8B0000h)[ebx]; "dictionaryValue &opHndlAssign(const ?&i"...
+  .text:001AFFF9                 push    edx
+  .text:001AFFFA                 mov     eax, [esp+154h+var_138]
+  .text:001AFFFE                 push    eax
+  .text:001AFFFF                 push    edi
+  .text:001B0000                 call    ecx
+  .text:001B0002                 mov     ecx, [edi]
+  .text:001B0004                 mov     edx, [ecx+54h]
+  .text:001B0007                 add     esp, 20h
+  .text:001B000A                 lea     eax, [ebp+1]
+  .text:001B000D                 mov     byte ptr [eax], 0
+  .text:001B0010                 mov     byte ptr [eax+1], 0
+  .text:001B0014                 mov     byte ptr [eax+2], 0
+  .text:001B0018                 mov     byte ptr [eax+3], 0
+  .text:001B001C                 mov     byte ptr [eax+4], 0
+  .text:001B0020                 mov     byte ptr [eax+5], 0
+  .text:001B0024                 mov     byte ptr [eax+6], 0
+  .text:001B0028                 mov     byte ptr [eax+7], 0
+  .text:001B002C                 add     eax, 8
+  .text:001B002F                 cmp     eax, esi
+  .text:001B0031                 jnz     short loc_1B000D
+  .text:001B0033                 mov     [esp+13Ch+var_20], 2
+  .text:001B003B                 mov     ecx, [esp+13Ch+var_12C]
+  .text:001B003F                 mov     [esp+13Ch+var_3C], ecx
+  .text:001B0046                 push    0
+  .text:001B0048                 push    0
+  .text:001B004A                 push    0
+  .text:001B004C                 push    4
+  .text:001B004E                 push    ebp
+  .text:001B004F                 lea     eax, (aDictionaryvalu_2 - 8B0000h)[ebx]; "dictionaryValue &opHndlAssign(const dic"...
+  .text:001B0055                 push    eax
+  .text:001B0056                 mov     ecx, [esp+154h+var_138]
+  .text:001B005A                 push    ecx
+  .text:001B005B                 push    edi
+  .text:001B005C                 call    edx
+  .text:001B005E                 mov     edx, [edi]
+  .text:001B0060                 mov     ecx, [edx+54h]
+  .text:001B0063                 add     esp, 20h
+  .text:001B0066                 lea     eax, [ebp+1]
+  .text:001B0069                 mov     byte ptr [eax], 0
+  .text:001B006C                 mov     byte ptr [eax+1], 0
+  .text:001B0070                 mov     byte ptr [eax+2], 0
+  .text:001B0074                 mov     byte ptr [eax+3], 0
+  .text:001B0078                 mov     byte ptr [eax+4], 0
+  .text:001B007C                 mov     byte ptr [eax+5], 0
+  .text:001B0080                 mov     byte ptr [eax+6], 0
+  .text:001B0084                 mov     byte ptr [eax+7], 0
+  .text:001B0088                 add     eax, 8
+  .text:001B008B                 cmp     esi, eax
+  .text:001B008D                 jnz     short loc_1B0069
+  .text:001B008F                 mov     [esp+13Ch+var_20], 2
+  .text:001B0097                 mov     edx, [esp+13Ch+var_128]
+  .text:001B009B                 mov     [esp+13Ch+var_3C], edx
+  .text:001B00A2                 push    0
+  .text:001B00A4                 push    0
+  .text:001B00A6                 push    0
+  .text:001B00A8                 push    4
+  .text:001B00AA                 push    ebp
+  .text:001B00AB                 lea     eax, (aDictionaryvalu_3 - 8B0000h)[ebx]; "dictionaryValue &opAssign(const ?&in)"
+  .text:001B00B1                 push    eax
+  .text:001B00B2                 mov     edx, [esp+154h+var_138]
+  .text:001B00B6                 push    edx
+  .text:001B00B7                 push    edi
+  .text:001B00B8                 call    ecx
+  .text:001B00BA                 mov     ecx, [edi]
+  .text:001B00BC                 mov     edx, [ecx+54h]
+  .text:001B00BF                 add     esp, 20h
+  .text:001B00C2                 lea     eax, [ebp+1]
+  .text:001B00C5                 mov     byte ptr [eax], 0
+  .text:001B00C8                 mov     byte ptr [eax+1], 0
+  .text:001B00CC                 mov     byte ptr [eax+2], 0
+  .text:001B00D0                 mov     byte ptr [eax+3], 0
+  .text:001B00D4                 mov     byte ptr [eax+4], 0
+  .text:001B00D8                 mov     byte ptr [eax+5], 0
+  .text:001B00DC                 mov     byte ptr [eax+6], 0
+  .text:001B00E0                 mov     byte ptr [eax+7], 0
+  .text:001B00E4                 add     eax, 8
+  .text:001B00E7                 cmp     esi, eax
+  .text:001B00E9                 jnz     short loc_1B00C5
+  .text:001B00EB                 mov     [esp+13Ch+var_20], 2
+  .text:001B00F3                 lea     ecx, (_ZL25CScriptDictValue_opAssigndP16CScriptDictValue - 8B0000h)[ebx]; CScriptDictValue_opAssign(double,CScriptDictValue *)
+  .text:001B00F9                 mov     [esp+13Ch+var_3C], ecx
+  .text:001B0100                 push    0
+  .text:001B0102                 push    0
+  .text:001B0104                 push    0
+  .text:001B0106                 push    4
+  .text:001B0108                 push    ebp
+  .text:001B0109                 lea     eax, (aDictionaryvalu_4 - 8B0000h)[ebx]; "dictionaryValue &opAssign(double)"
+  .text:001B010F                 push    eax
+  .text:001B0110                 mov     ecx, [esp+154h+var_138]
+  .text:001B0114                 push    ecx
+  .text:001B0115                 push    edi
+  .text:001B0116                 call    edx
+  .text:001B0118                 mov     edx, [edi]
+  .text:001B011A                 mov     edx, [edx+54h]
+  .text:001B011D                 add     esp, 20h
+  .text:001B0120                 lea     eax, [ebp+1]
+  .text:001B0123                 mov     byte ptr [eax], 0
+  .text:001B0126                 mov     byte ptr [eax+1], 0
+  .text:001B012A                 mov     byte ptr [eax+2], 0
+  .text:001B012E                 mov     byte ptr [eax+3], 0
+  .text:001B0132                 mov     byte ptr [eax+4], 0
+  .text:001B0136                 mov     byte ptr [eax+5], 0
+  .text:001B013A                 mov     byte ptr [eax+6], 0
+  .text:001B013E                 mov     byte ptr [eax+7], 0
+  .text:001B0142                 add     eax, 8
+  .text:001B0145                 cmp     esi, eax
+  .text:001B0147                 jnz     short loc_1B0123
+  .text:001B0149                 mov     [esp+13Ch+var_20], 2
+  .text:001B0151                 lea     ecx, (_ZL25CScriptDictValue_opAssignxP16CScriptDictValue - 8B0000h)[ebx]; CScriptDictValue_opAssign(long long,CScriptDictValue *)
+  .text:001B0157                 mov     [esp+13Ch+var_3C], ecx
+  .text:001B015E                 push    0
+  .text:001B0160                 push    0
+  .text:001B0162                 push    0
+  .text:001B0164                 push    4
+  .text:001B0166                 push    ebp
+  .text:001B0167                 lea     eax, (aDictionaryvalu_5 - 8B0000h)[ebx]; "dictionaryValue &opAssign(int64)"
+  .text:001B016D                 push    eax
+  .text:001B016E                 mov     ecx, [esp+154h+var_138]
+  .text:001B0172                 push    ecx
+  .text:001B0173                 push    edi
+  .text:001B0174                 call    edx
+  .text:001B0176                 mov     edx, [edi]
+  .text:001B0178                 mov     eax, [edx+54h]
+  .text:001B017B                 add     esp, 20h
+  .text:001B017E                 lea     ecx, [ebp+1]
+  .text:001B0181                 mov     byte ptr [ecx], 0
+  .text:001B0184                 mov     byte ptr [ecx+1], 0
+  .text:001B0188                 mov     byte ptr [ecx+2], 0
+  .text:001B018C                 mov     byte ptr [ecx+3], 0
+  .text:001B0190                 mov     byte ptr [ecx+4], 0
+  .text:001B0194                 mov     byte ptr [ecx+5], 0
+  .text:001B0198                 mov     byte ptr [ecx+6], 0
+  .text:001B019C                 mov     byte ptr [ecx+7], 0
+  .text:001B01A0                 add     ecx, 8
+  .text:001B01A3                 cmp     esi, ecx
+  .text:001B01A5                 jnz     short loc_1B0181
+  .text:001B01A7                 mov     [esp+13Ch+var_20], 2
+  .text:001B01AF                 lea     edx, (_ZL23CScriptDictValue_opCastPviP16CScriptDictValue - 8B0000h)[ebx]; CScriptDictValue_opCast(void *,int,CScriptDictValue *)
+  .text:001B01B5                 mov     [esp+13Ch+var_3C], edx
+  .text:001B01BC                 mov     [esp+13Ch+var_12C], edx
+  .text:001B01C0                 push    0
+  .text:001B01C2                 push    0
+  .text:001B01C4                 push    0
+  .text:001B01C6                 push    4
+  .text:001B01C8                 push    ebp
+  .text:001B01C9                 lea     ecx, (aVoidOpcastOut - 8B0000h)[ebx]; "void opCast(?&out)"
+  .text:001B01CF                 push    ecx
+  .text:001B01D0                 mov     edx, [esp+154h+var_138]
+  .text:001B01D4                 push    edx
+  .text:001B01D5                 push    edi
+  .text:001B01D6                 call    eax
+  .text:001B01D8                 mov     eax, [edi]
+  .text:001B01DA                 mov     ecx, [eax+54h]
+  .text:001B01DD                 add     esp, 20h
+  .text:001B01E0                 lea     eax, [ebp+1]
+  .text:001B01E3                 mov     edx, [esp+13Ch+var_12C]
+  .text:001B01E7                 mov     byte ptr [eax], 0
+  .text:001B01EA                 mov     byte ptr [eax+1], 0
+  .text:001B01EE                 mov     byte ptr [eax+2], 0
+  .text:001B01F2                 mov     byte ptr [eax+3], 0
+  .text:001B01F6                 mov     byte ptr [eax+4], 0
+  .text:001B01FA                 mov     byte ptr [eax+5], 0
+  .text:001B01FE                 mov     byte ptr [eax+6], 0
+  .text:001B0202                 mov     byte ptr [eax+7], 0
+  .text:001B0206                 add     eax, 8
+  .text:001B0209                 cmp     esi, eax
+  .text:001B020B                 jnz     short loc_1B01E7
+  .text:001B020D                 mov     [esp+13Ch+var_20], 2
+  .text:001B0215                 mov     [esp+13Ch+var_3C], edx
+  .text:001B021C                 push    0
+  .text:001B021E                 push    0
+  .text:001B0220                 push    0
+  .text:001B0222                 push    4
+  .text:001B0224                 push    ebp
+  .text:001B0225                 lea     eax, (aVoidOpconvOut - 8B0000h)[ebx]; "void opConv(?&out)"
+  .text:001B022B                 push    eax
+  .text:001B022C                 mov     edx, [esp+154h+var_138]
+  .text:001B0230                 push    edx
+  .text:001B0231                 push    edi
+  .text:001B0232                 call    ecx
+  .text:001B0234                 mov     ecx, [edi]
+  .text:001B0236                 mov     edx, [ecx+54h]
+  .text:001B0239                 add     esp, 20h
+  .text:001B023C                 lea     eax, [ebp+1]
+  .text:001B023F                 mov     byte ptr [eax], 0
+  .text:001B0242                 mov     byte ptr [eax+1], 0
+  .text:001B0246                 mov     byte ptr [eax+2], 0
+  .text:001B024A                 mov     byte ptr [eax+3], 0
+  .text:001B024E                 mov     byte ptr [eax+4], 0
+  .text:001B0252                 mov     byte ptr [eax+5], 0
+  .text:001B0256                 mov     byte ptr [eax+6], 0
+  .text:001B025A                 mov     byte ptr [eax+7], 0
+  .text:001B025E                 add     eax, 8
+  .text:001B0261                 cmp     esi, eax
+  .text:001B0263                 jnz     short loc_1B023F
+  .text:001B0265                 mov     [esp+13Ch+var_20], 2
+  .text:001B026D                 lea     ecx, (_ZL26CScriptDictValue_opConvIntP16CScriptDictValue - 8B0000h)[ebx]; CScriptDictValue_opConvInt(CScriptDictValue *)
+  .text:001B0273                 mov     [esp+13Ch+var_3C], ecx
+  .text:001B027A                 push    0
+  .text:001B027C                 push    0
+  .text:001B027E                 push    0
+  .text:001B0280                 push    4
+  .text:001B0282                 push    ebp
+  .text:001B0283                 lea     eax, (aInt64Opconv - 8B0000h)[ebx]; "int64 opConv()"
+  .text:001B0289                 push    eax
+  .text:001B028A                 mov     ecx, [esp+154h+var_138]
+  .text:001B028E                 push    ecx
+  .text:001B028F                 push    edi
+  .text:001B0290                 call    edx
+  .text:001B0292                 mov     edx, [edi]
+  .text:001B0294                 mov     ecx, [edx+54h]
+  .text:001B0297                 add     esp, 20h
+  .text:001B029A                 lea     eax, [ebp+1]
+  .text:001B029D                 mov     byte ptr [eax], 0
+  .text:001B02A0                 mov     byte ptr [eax+1], 0
+  .text:001B02A4                 mov     byte ptr [eax+2], 0
+  .text:001B02A8                 mov     byte ptr [eax+3], 0
+  .text:001B02AC                 mov     byte ptr [eax+4], 0
+  .text:001B02B0                 mov     byte ptr [eax+5], 0
+  .text:001B02B4                 mov     byte ptr [eax+6], 0
+  .text:001B02B8                 mov     byte ptr [eax+7], 0
+  .text:001B02BC                 add     eax, 8
+  .text:001B02BF                 cmp     eax, esi
+  .text:001B02C1                 jnz     short loc_1B029D
+  .text:001B02C3                 mov     [esp+13Ch+var_20], 2
+  .text:001B02CB                 lea     edx, (_ZL29CScriptDictValue_opConvDoubleP16CScriptDictValue - 8B0000h)[ebx]; CScriptDictValue_opConvDouble(CScriptDictValue *)
+  .text:001B02D1                 mov     [esp+13Ch+var_3C], edx
+  .text:001B02D8                 push    0
+  .text:001B02DA                 push    0
+  .text:001B02DC                 push    0
+  .text:001B02DE                 push    4
+  .text:001B02E0                 push    ebp
+  .text:001B02E1                 lea     eax, (aDoubleOpconv - 8B0000h)[ebx]; "double opConv()"
+  .text:001B02E7                 push    eax
+  .text:001B02E8                 mov     edx, [esp+154h+var_138]
+  .text:001B02EC                 push    edx
+  .text:001B02ED                 push    edi
+  .text:001B02EE                 call    ecx
+  .text:001B02F0                 add     esp, 20h
+  .text:001B02F3                 mov     eax, [edi]
+  .text:001B02F5                 push    5
+  .text:001B02F7                 push    2Ch ; ','
+  .text:001B02F9                 lea     ecx, (aDictionary - 8B0000h)[ebx]; "dictionary"
+  .text:001B02FF                 mov     [esp+144h+var_138], ecx
+  .text:001B0303                 push    ecx
+  .text:001B0304                 push    edi
+  .text:001B0305                 call    dword ptr [eax+4Ch]
+  .text:001B0308                 mov     edx, [edi]
+  .text:001B030A                 mov     edx, [edx+58h]
+  .text:001B030D                 add     esp, 10h
+  .text:001B0310                 lea     eax, [ebp+1]
+  .text:001B0313                 mov     byte ptr [eax], 0
+  .text:001B0316                 mov     byte ptr [eax+1], 0
+  .text:001B031A                 mov     byte ptr [eax+2], 0
+  .text:001B031E                 mov     byte ptr [eax+3], 0
+  .text:001B0322                 mov     byte ptr [eax+4], 0
+  .text:001B0326                 mov     byte ptr [eax+5], 0
+  .text:001B032A                 mov     byte ptr [eax+6], 0
+  .text:001B032E                 mov     byte ptr [eax+7], 0
+  .text:001B0332                 add     eax, 8
+  .text:001B0335                 cmp     esi, eax
+  .text:001B0337                 jnz     short loc_1B0313
+  .text:001B0339                 mov     [esp+13Ch+var_20], 1
+  .text:001B0341                 mov     ecx, ds:(_Z31ScriptDictionaryFactory_GenericP16asIScriptGeneric_ptr - 8B0000h)[ebx]; found_funcptr ScriptDictionaryFactory_Generic: dictionary factory behaviour 3, convention 6
+  .text:001B0347                 mov     [esp+13Ch+var_3C], ecx
+  .text:001B034E                 sub     esp, 0Ch
+  .text:001B0351                 push    0
+  .text:001B0353                 push    0
+  .text:001B0355                 push    0
+  .text:001B0357                 push    6
+  .text:001B0359                 push    ebp
+  .text:001B035A                 lea     eax, (aDictionaryF - 8B0000h)[ebx]; "dictionary@ f()"
+  .text:001B0360                 push    eax
+  .text:001B0361                 push    3
+  .text:001B0363                 mov     ecx, [esp+164h+var_138]
+  .text:001B0367                 push    ecx
+  .text:001B0368                 push    edi
+  .text:001B0369                 call    edx
+  .text:001B036B                 mov     edx, [edi]
+  .text:001B036D                 mov     ecx, [edx+58h]
+  .text:001B0370                 add     esp, 30h
+  .text:001B0373                 lea     eax, [ebp+1]
+  .text:001B0376                 mov     byte ptr [eax], 0
+  .text:001B0379                 mov     byte ptr [eax+1], 0
+  .text:001B037D                 mov     byte ptr [eax+2], 0
+  .text:001B0381                 mov     byte ptr [eax+3], 0
+  .text:001B0385                 mov     byte ptr [eax+4], 0
+  .text:001B0389                 mov     byte ptr [eax+5], 0
+  .text:001B038D                 mov     byte ptr [eax+6], 0
+  .text:001B0391                 mov     byte ptr [eax+7], 0
+  .text:001B0395                 add     eax, 8
+  .text:001B0398                 cmp     esi, eax
+  .text:001B039A                 jnz     short loc_1B0376
+  .text:001B039C                 mov     [esp+13Ch+var_20], 1
+  .text:001B03A4                 mov     edx, ds:(_Z35ScriptDictionaryListFactory_GenericP16asIScriptGeneric_ptr - 8B0000h)[ebx]
+  .text:001B03AA                 mov     [esp+13Ch+var_3C], edx
+  .text:001B03B1                 sub     esp, 0Ch
+  .text:001B03B4                 push    0
+  .text:001B03B6                 push    0
+  .text:001B03B8                 push    0
+  .text:001B03BA                 push    6
+  .text:001B03BC                 push    ebp
+  .text:001B03BD                 lea     eax, (aDictionaryFInt - 8B0000h)[ebx]; "dictionary @f(int &in) {repeat {string,"...
+  .text:001B03C3                 push    eax
+  .text:001B03C4                 push    4
+  .text:001B03C6                 mov     edx, [esp+164h+var_138]
+  .text:001B03CA                 push    edx
+  .text:001B03CB                 push    edi
+  .text:001B03CC                 call    ecx
+  .text:001B03CE                 mov     ecx, [edi]
+  .text:001B03D0                 mov     edx, [ecx+58h]
+  .text:001B03D3                 mov     eax, ds:(_ZNK17CScriptDictionary6AddRefEv_ptr - 8B0000h)[ebx]; found_funcptr CScriptDictionary_AddRef: native dictionary member, asCALL_THISCALL=3
+  .text:001B03D9                 mov     [esp+16Ch+var_10C], eax
+  .text:001B03DD                 mov     [esp+16Ch+var_108], 0
+  .text:001B03E5                 add     esp, 30h
+  .text:001B03E8                 lea     ecx, [ebp+1]
+  .text:001B03EB                 mov     byte ptr [ecx], 0
+  .text:001B03EE                 mov     byte ptr [ecx+1], 0
+  .text:001B03F2                 mov     byte ptr [ecx+2], 0
+  .text:001B03F6                 mov     byte ptr [ecx+3], 0
+  .text:001B03FA                 mov     byte ptr [ecx+4], 0
+  .text:001B03FE                 mov     byte ptr [ecx+5], 0
+  .text:001B0402                 mov     byte ptr [ecx+6], 0
+  .text:001B0406                 mov     byte ptr [ecx+7], 0
+  .text:001B040A                 add     ecx, 8
+  .text:001B040D                 cmp     esi, ecx
+  .text:001B040F                 jnz     short loc_1B03EB
+  .text:001B0411                 mov     [esp+13Ch+var_20], 3
+  .text:001B0419                 mov     al, byte ptr [esp+13Ch+var_10C]
+  .text:001B041D                 mov     byte ptr [esp+13Ch+var_3C], al
+  .text:001B0424                 mov     cl, byte ptr [esp+13Ch+var_10C+1]
+  .text:001B0428                 mov     byte ptr [esp+13Ch+var_3C+1], cl
+  .text:001B042F                 mov     al, byte ptr [esp+13Ch+var_10C+2]
+  .text:001B0433                 mov     byte ptr [esp+13Ch+var_3C+2], al
+  .text:001B043A                 mov     cl, byte ptr [esp+13Ch+var_10C+3]
+  .text:001B043E                 mov     byte ptr [esp+13Ch+var_3C+3], cl
+  .text:001B0445                 mov     al, byte ptr [esp+13Ch+var_108]
+  .text:001B0449                 mov     byte ptr [esp+13Ch+var_38], al
+  .text:001B0450                 mov     cl, byte ptr [esp+13Ch+var_108+1]
+  .text:001B0454                 mov     byte ptr [esp+13Ch+var_38+1], cl
+  .text:001B045B                 mov     al, byte ptr [esp+13Ch+var_108+2]
+  .text:001B045F                 mov     byte ptr [esp+13Ch+var_38+2], al
+  .text:001B0466                 mov     cl, byte ptr [esp+13Ch+var_108+3]
+  .text:001B046A                 mov     byte ptr [esp+13Ch+var_38+3], cl
+  .text:001B0471                 sub     esp, 0Ch
+  .text:001B0474                 push    0
+  .text:001B0476                 push    0
+  .text:001B0478                 push    0
+  .text:001B047A                 push    3
+  .text:001B047C                 push    ebp
+  .text:001B047D                 mov     eax, [esp+15Ch+var_134]
+  .text:001B0481                 push    eax
+  .text:001B0482                 push    5
+  .text:001B0484                 mov     ecx, [esp+164h+var_138]
+  .text:001B0488                 push    ecx
+  .text:001B0489                 push    edi
+  .text:001B048A                 call    edx
+  .text:001B048C                 mov     edx, [edi]
+  .text:001B048E                 mov     ecx, [edx+58h]
+  .text:001B0491                 mov     eax, ds:(_ZNK17CScriptDictionary7ReleaseEv_ptr - 8B0000h)[ebx]; found_funcptr CScriptDictionary_Release: native dictionary member, asCALL_THISCALL=3
+  .text:001B0497                 mov     [esp+16Ch+var_104], eax
+  .text:001B049B                 mov     [esp+16Ch+var_100], 0
+  .text:001B04A3                 add     esp, 30h
+  .text:001B04A6                 lea     edx, [ebp+1]
+  .text:001B04A9                 mov     byte ptr [edx], 0
+  .text:001B04AC                 mov     byte ptr [edx+1], 0
+  .text:001B04B0                 mov     byte ptr [edx+2], 0
+  .text:001B04B4                 mov     byte ptr [edx+3], 0
+  .text:001B04B8                 mov     byte ptr [edx+4], 0
+  .text:001B04BC                 mov     byte ptr [edx+5], 0
+  .text:001B04C0                 mov     byte ptr [edx+6], 0
+  .text:001B04C4                 mov     byte ptr [edx+7], 0
+  .text:001B04C8                 add     edx, 8
+  .text:001B04CB                 cmp     esi, edx
+  .text:001B04CD                 jnz     short loc_1B04A9
+  .text:001B04CF                 mov     [esp+13Ch+var_20], 3
+  .text:001B04D7                 mov     al, byte ptr [esp+13Ch+var_104]
+  .text:001B04DB                 mov     byte ptr [esp+13Ch+var_3C], al
+  .text:001B04E2                 mov     dl, byte ptr [esp+13Ch+var_104+1]
+  .text:001B04E6                 mov     byte ptr [esp+13Ch+var_3C+1], dl
+  .text:001B04ED                 mov     al, byte ptr [esp+13Ch+var_104+2]
+  .text:001B04F1                 mov     byte ptr [esp+13Ch+var_3C+2], al
+  .text:001B04F8                 mov     dl, byte ptr [esp+13Ch+var_104+3]
+  .text:001B04FC                 mov     byte ptr [esp+13Ch+var_3C+3], dl
+  .text:001B0503                 mov     al, byte ptr [esp+13Ch+var_100]
+  .text:001B0507                 mov     byte ptr [esp+13Ch+var_38], al
+  .text:001B050E                 mov     dl, byte ptr [esp+13Ch+var_100+1]
+  .text:001B0512                 mov     byte ptr [esp+13Ch+var_38+1], dl
+  .text:001B0519                 mov     al, byte ptr [esp+13Ch+var_100+2]
+  .text:001B051D                 mov     byte ptr [esp+13Ch+var_38+2], al
+  .text:001B0524                 mov     dl, byte ptr [esp+13Ch+var_100+3]
+  .text:001B0528                 mov     byte ptr [esp+13Ch+var_38+3], dl
+  .text:001B052F                 sub     esp, 0Ch
+  .text:001B0532                 push    0
+  .text:001B0534                 push    0
+  .text:001B0536                 push    0
+  .text:001B0538                 push    3
+  .text:001B053A                 push    ebp
+  .text:001B053B                 mov     eax, [esp+15Ch+var_134]
+  .text:001B053F                 push    eax
+  .text:001B0540                 push    6
+  .text:001B0542                 mov     edx, [esp+164h+var_138]
+  .text:001B0546                 push    edx
+  .text:001B0547                 push    edi
+  .text:001B0548                 call    ecx
+  .text:001B054A                 mov     ecx, [edi]
+  .text:001B054C                 mov     edx, [ecx+54h]
+  .text:001B054F                 mov     eax, ds:(_ZN17CScriptDictionaryaSERKS__ptr - 8B0000h)[ebx]
+  .text:001B0555                 mov     [esp+16Ch+var_FC], eax
+  .text:001B0559                 mov     [esp+16Ch+var_F8], 0
+  .text:001B0561                 add     esp, 30h
+  .text:001B0564                 lea     ecx, [ebp+1]
+  .text:001B0567                 mov     byte ptr [ecx], 0
+  .text:001B056A                 mov     byte ptr [ecx+1], 0
+  .text:001B056E                 mov     byte ptr [ecx+2], 0
+  .text:001B0572                 mov     byte ptr [ecx+3], 0
+  .text:001B0576                 mov     byte ptr [ecx+4], 0
+  .text:001B057A                 mov     byte ptr [ecx+5], 0
+  .text:001B057E                 mov     byte ptr [ecx+6], 0
+  .text:001B0582                 mov     byte ptr [ecx+7], 0
+  .text:001B0586                 add     ecx, 8
+  .text:001B0589                 cmp     esi, ecx
+  .text:001B058B                 jnz     short loc_1B0567
+  .text:001B058D                 mov     [esp+13Ch+var_20], 3
+  .text:001B0595                 mov     al, byte ptr [esp+13Ch+var_FC]
+  .text:001B0599                 mov     byte ptr [esp+13Ch+var_3C], al
+  .text:001B05A0                 mov     cl, byte ptr [esp+13Ch+var_FC+1]
+  .text:001B05A4                 mov     byte ptr [esp+13Ch+var_3C+1], cl
+  .text:001B05AB                 mov     al, byte ptr [esp+13Ch+var_FC+2]
+  .text:001B05AF                 mov     byte ptr [esp+13Ch+var_3C+2], al
+  .text:001B05B6                 mov     cl, byte ptr [esp+13Ch+var_FC+3]
+  .text:001B05BA                 mov     byte ptr [esp+13Ch+var_3C+3], cl
+  .text:001B05C1                 mov     al, byte ptr [esp+13Ch+var_F8]
+  .text:001B05C5                 mov     byte ptr [esp+13Ch+var_38], al
+  .text:001B05CC                 mov     cl, byte ptr [esp+13Ch+var_F8+1]
+  .text:001B05D0                 mov     byte ptr [esp+13Ch+var_38+1], cl
+  .text:001B05D7                 mov     al, byte ptr [esp+13Ch+var_F8+2]
+  .text:001B05DB                 mov     byte ptr [esp+13Ch+var_38+2], al
+  .text:001B05E2                 mov     cl, byte ptr [esp+13Ch+var_F8+3]
+  .text:001B05E6                 mov     byte ptr [esp+13Ch+var_38+3], cl
+  .text:001B05ED                 push    0
+  .text:001B05EF                 push    0
+  .text:001B05F1                 push    0
+  .text:001B05F3                 push    3
+  .text:001B05F5                 push    ebp
+  .text:001B05F6                 lea     eax, (aDictionaryOpas - 8B0000h)[ebx]; "dictionary &opAssign(const dictionary &"...
+  .text:001B05FC                 push    eax
+  .text:001B05FD                 mov     ecx, [esp+154h+var_138]
+  .text:001B0601                 push    ecx
+  .text:001B0602                 push    edi
+  .text:001B0603                 call    edx
+  .text:001B0605                 mov     edx, [edi]
+  .text:001B0607                 mov     edx, [edx+54h]
+  .text:001B060A                 mov     eax, ds:(_ZN17CScriptDictionary3SetERK7CStringPvi_ptr - 8B0000h)[ebx]; found_funcptr CScriptDictionary_Set: native dictionary member, asCALL_THISCALL=3
+  .text:001B0610                 mov     [esp+15Ch+var_F4], eax
+  .text:001B0614                 mov     [esp+15Ch+var_F0], 0
+  .text:001B061C                 add     esp, 20h
+  .text:001B061F                 lea     ecx, [ebp+1]
+  .text:001B0622                 mov     byte ptr [ecx], 0
+  .text:001B0625                 mov     byte ptr [ecx+1], 0
+  .text:001B0629                 mov     byte ptr [ecx+2], 0
+  .text:001B062D                 mov     byte ptr [ecx+3], 0
+  .text:001B0631                 mov     byte ptr [ecx+4], 0
+  .text:001B0635                 mov     byte ptr [ecx+5], 0
+  .text:001B0639                 mov     byte ptr [ecx+6], 0
+  .text:001B063D                 mov     byte ptr [ecx+7], 0
+  .text:001B0641                 add     ecx, 8
+  .text:001B0644                 cmp     esi, ecx
+  .text:001B0646                 jnz     short loc_1B0622
+  .text:001B0648                 mov     [esp+13Ch+var_20], 3
+  .text:001B0650                 mov     al, byte ptr [esp+13Ch+var_F4]
+  .text:001B0654                 mov     byte ptr [esp+13Ch+var_3C], al
+  .text:001B065B                 mov     cl, byte ptr [esp+13Ch+var_F4+1]
+  .text:001B065F                 mov     byte ptr [esp+13Ch+var_3C+1], cl
+  .text:001B0666                 mov     al, byte ptr [esp+13Ch+var_F4+2]
+  .text:001B066A                 mov     byte ptr [esp+13Ch+var_3C+2], al
+  .text:001B0671                 mov     cl, byte ptr [esp+13Ch+var_F4+3]
+  .text:001B0675                 mov     byte ptr [esp+13Ch+var_3C+3], cl
+  .text:001B067C                 mov     al, byte ptr [esp+13Ch+var_F0]
+  .text:001B0680                 mov     byte ptr [esp+13Ch+var_38], al
+  .text:001B0687                 mov     cl, byte ptr [esp+13Ch+var_F0+1]
+  .text:001B068B                 mov     byte ptr [esp+13Ch+var_38+1], cl
+  .text:001B0692                 mov     al, byte ptr [esp+13Ch+var_F0+2]
+  .text:001B0696                 mov     byte ptr [esp+13Ch+var_38+2], al
+  .text:001B069D                 mov     cl, byte ptr [esp+13Ch+var_F0+3]
+  .text:001B06A1                 mov     byte ptr [esp+13Ch+var_38+3], cl
+  .text:001B06A8                 push    0
+  .text:001B06AA                 push    0
+  .text:001B06AC                 push    0
+  .text:001B06AE                 push    3
+  .text:001B06B0                 push    ebp
+  .text:001B06B1                 lea     eax, (aVoidSetConstSt - 8B0000h)[ebx]; "void set(const string &in, const ?&in)"
+  .text:001B06B7                 push    eax
+  .text:001B06B8                 mov     ecx, [esp+154h+var_138]
+  .text:001B06BC                 push    ecx
+  .text:001B06BD                 push    edi
+  .text:001B06BE                 call    edx
+  .text:001B06C0                 mov     edx, [edi]
+  .text:001B06C2                 mov     ecx, [edx+54h]
+  .text:001B06C5                 mov     eax, ds:(_ZNK17CScriptDictionary3GetERK7CStringPvi_ptr - 8B0000h)[ebx]; found_funcptr CScriptDictionary_Get: native dictionary member, asCALL_THISCALL=3
+  .text:001B06CB                 mov     [esp+15Ch+var_EC], eax
+  .text:001B06CF                 mov     [esp+15Ch+var_E8], 0
+  .text:001B06D7                 add     esp, 20h
+  .text:001B06DA                 lea     edx, [ebp+1]
+  .text:001B06DD                 mov     byte ptr [edx], 0
+  .text:001B06E0                 mov     byte ptr [edx+1], 0
+  .text:001B06E4                 mov     byte ptr [edx+2], 0
+  .text:001B06E8                 mov     byte ptr [edx+3], 0
+  .text:001B06EC                 mov     byte ptr [edx+4], 0
+  .text:001B06F0                 mov     byte ptr [edx+5], 0
+  .text:001B06F4                 mov     byte ptr [edx+6], 0
+  .text:001B06F8                 mov     byte ptr [edx+7], 0
+  .text:001B06FC                 add     edx, 8
+  .text:001B06FF                 cmp     edx, esi
+  .text:001B0701                 jnz     short loc_1B06DD
+  .text:001B0703                 mov     [esp+13Ch+var_20], 3
+  .text:001B070B                 mov     al, byte ptr [esp+13Ch+var_EC]
+  .text:001B070F                 mov     byte ptr [esp+13Ch+var_3C], al
+  .text:001B0716                 mov     dl, byte ptr [esp+13Ch+var_EC+1]
+  .text:001B071A                 mov     byte ptr [esp+13Ch+var_3C+1], dl
+  .text:001B0721                 mov     al, byte ptr [esp+13Ch+var_EC+2]
+  .text:001B0725                 mov     byte ptr [esp+13Ch+var_3C+2], al
+  .text:001B072C                 mov     dl, byte ptr [esp+13Ch+var_EC+3]
+  .text:001B0730                 mov     byte ptr [esp+13Ch+var_3C+3], dl
+  .text:001B0737                 mov     al, byte ptr [esp+13Ch+var_E8]
+  .text:001B073B                 mov     byte ptr [esp+13Ch+var_38], al
+  .text:001B0742                 mov     dl, byte ptr [esp+13Ch+var_E8+1]
+  .text:001B0746                 mov     byte ptr [esp+13Ch+var_38+1], dl
+  .text:001B074D                 mov     al, byte ptr [esp+13Ch+var_E8+2]
+  .text:001B0751                 mov     byte ptr [esp+13Ch+var_38+2], al
+  .text:001B0758                 mov     dl, byte ptr [esp+13Ch+var_E8+3]
+  .text:001B075C                 mov     byte ptr [esp+13Ch+var_38+3], dl
+  .text:001B0763                 push    0
+  .text:001B0765                 push    0
+  .text:001B0767                 push    0
+  .text:001B0769                 push    3
+  .text:001B076B                 push    ebp
+  .text:001B076C                 lea     eax, (aBoolGetConstSt - 8B0000h)[ebx]; "bool get(const string &in, ?&out) const"
+  .text:001B0772                 push    eax
+  .text:001B0773                 mov     edx, [esp+154h+var_138]
+  .text:001B0777                 push    edx
+  .text:001B0778                 push    edi
+  .text:001B0779                 call    ecx
+  .text:001B077B                 mov     ecx, [edi]
+  .text:001B077D                 mov     edx, [ecx+54h]
+  .text:001B0780                 mov     eax, ds:(_ZN17CScriptDictionary3SetERK7CStringRKx_ptr - 8B0000h)[ebx]
+  .text:001B0786                 mov     [esp+15Ch+var_E4], eax
+  .text:001B078A                 mov     [esp+15Ch+var_E0], 0
+  .text:001B0792                 add     esp, 20h
+  .text:001B0795                 lea     ecx, [ebp+1]
+  .text:001B0798                 mov     byte ptr [ecx], 0
+  .text:001B079B                 mov     byte ptr [ecx+1], 0
+  .text:001B079F                 mov     byte ptr [ecx+2], 0
+  .text:001B07A3                 mov     byte ptr [ecx+3], 0
+  .text:001B07A7                 mov     byte ptr [ecx+4], 0
+  .text:001B07AB                 mov     byte ptr [ecx+5], 0
+  .text:001B07AF                 mov     byte ptr [ecx+6], 0
+  .text:001B07B3                 mov     byte ptr [ecx+7], 0
+  .text:001B07B7                 add     ecx, 8
+  .text:001B07BA                 cmp     esi, ecx
+  .text:001B07BC                 jnz     short loc_1B0798
+  .text:001B07BE                 mov     [esp+13Ch+var_20], 3
+  .text:001B07C6                 mov     al, byte ptr [esp+13Ch+var_E4]
+  .text:001B07CA                 mov     byte ptr [esp+13Ch+var_3C], al
+  .text:001B07D1                 mov     cl, byte ptr [esp+13Ch+var_E4+1]
+  .text:001B07D5                 mov     byte ptr [esp+13Ch+var_3C+1], cl
+  .text:001B07DC                 mov     al, byte ptr [esp+13Ch+var_E4+2]
+  .text:001B07E0                 mov     byte ptr [esp+13Ch+var_3C+2], al
+  .text:001B07E7                 mov     cl, byte ptr [esp+13Ch+var_E4+3]
+  .text:001B07EB                 mov     byte ptr [esp+13Ch+var_3C+3], cl
+  .text:001B07F2                 mov     al, byte ptr [esp+13Ch+var_E0]
+  .text:001B07F6                 mov     byte ptr [esp+13Ch+var_38], al
+  .text:001B07FD                 mov     cl, byte ptr [esp+13Ch+var_E0+1]
+  .text:001B0801                 mov     byte ptr [esp+13Ch+var_38+1], cl
+  .text:001B0808                 mov     al, byte ptr [esp+13Ch+var_E0+2]
+  .text:001B080C                 mov     byte ptr [esp+13Ch+var_38+2], al
+  .text:001B0813                 mov     cl, byte ptr [esp+13Ch+var_E0+3]
+  .text:001B0817                 mov     byte ptr [esp+13Ch+var_38+3], cl
+  .text:001B081E                 push    0
+  .text:001B0820                 push    0
+  .text:001B0822                 push    0
+  .text:001B0824                 push    3
+  .text:001B0826                 push    ebp
+  .text:001B0827                 lea     eax, (aVoidSetConstSt_0 - 8B0000h)[ebx]; "void set(const string &in, const int64&"...
+  .text:001B082D                 push    eax
+  .text:001B082E                 mov     ecx, [esp+154h+var_138]
+  .text:001B0832                 push    ecx
+  .text:001B0833                 push    edi
+  .text:001B0834                 call    edx
+  .text:001B0836                 mov     edx, [edi]
+  .text:001B0838                 mov     ecx, [edx+54h]
+  .text:001B083B                 mov     eax, ds:(_ZNK17CScriptDictionary3GetERK7CStringRx_ptr - 8B0000h)[ebx]
+  .text:001B0841                 mov     [esp+15Ch+var_DC], eax
+  .text:001B0848                 mov     [esp+15Ch+var_D8], 0
+  .text:001B0853                 add     esp, 20h
+  .text:001B0856                 lea     edx, [ebp+1]
+  .text:001B0859                 mov     byte ptr [edx], 0
+  .text:001B085C                 mov     byte ptr [edx+1], 0
+  .text:001B0860                 mov     byte ptr [edx+2], 0
+  .text:001B0864                 mov     byte ptr [edx+3], 0
+  .text:001B0868                 mov     byte ptr [edx+4], 0
+  .text:001B086C                 mov     byte ptr [edx+5], 0
+  .text:001B0870                 mov     byte ptr [edx+6], 0
+  .text:001B0874                 mov     byte ptr [edx+7], 0
+  .text:001B0878                 add     edx, 8
+  .text:001B087B                 cmp     esi, edx
+  .text:001B087D                 jnz     short loc_1B0859
+  .text:001B087F                 mov     [esp+13Ch+var_20], 3
+  .text:001B0887                 mov     al, byte ptr [esp+13Ch+var_DC]
+  .text:001B088B                 mov     byte ptr [esp+13Ch+var_3C], al
+  .text:001B0892                 mov     dl, byte ptr [esp+13Ch+var_DC+1]
+  .text:001B0896                 mov     byte ptr [esp+13Ch+var_3C+1], dl
+  .text:001B089D                 mov     al, byte ptr [esp+13Ch+var_DC+2]
+  .text:001B08A1                 mov     byte ptr [esp+13Ch+var_3C+2], al
+  .text:001B08A8                 mov     dl, byte ptr [esp+13Ch+var_DC+3]
+  .text:001B08AC                 mov     byte ptr [esp+13Ch+var_3C+3], dl
+  .text:001B08B3                 mov     al, byte ptr [esp+13Ch+var_D8]
+  .text:001B08B7                 mov     byte ptr [esp+13Ch+var_38], al
+  .text:001B08BE                 mov     dl, byte ptr [esp+13Ch+var_D8+1]
+  .text:001B08C2                 mov     byte ptr [esp+13Ch+var_38+1], dl
+  .text:001B08C9                 mov     al, byte ptr [esp+13Ch+var_D8+2]
+  .text:001B08CD                 mov     byte ptr [esp+13Ch+var_38+2], al
+  .text:001B08D4                 mov     dl, byte ptr [esp+13Ch+var_D8+3]
+  .text:001B08D8                 mov     byte ptr [esp+13Ch+var_38+3], dl
+  .text:001B08DF                 push    0
+  .text:001B08E1                 push    0
+  .text:001B08E3                 push    0
+  .text:001B08E5                 push    3
+  .text:001B08E7                 push    ebp
+  .text:001B08E8                 lea     eax, (aBoolGetConstSt_0 - 8B0000h)[ebx]; "bool get(const string &in, int64&out) c"...
+  .text:001B08EE                 push    eax
+  .text:001B08EF                 mov     edx, [esp+154h+var_138]
+  .text:001B08F3                 push    edx
+  .text:001B08F4                 push    edi
+  .text:001B08F5                 call    ecx
+  .text:001B08F7                 mov     ecx, [edi]
+  .text:001B08F9                 mov     edx, [ecx+54h]
+  .text:001B08FC                 mov     eax, ds:(_ZN17CScriptDictionary3SetERK7CStringRKd_ptr - 8B0000h)[ebx]
+  .text:001B0902                 mov     [esp+15Ch+var_D4], eax
+  .text:001B0909                 mov     [esp+15Ch+var_D0], 0
+  .text:001B0914                 add     esp, 20h
+  .text:001B0917                 lea     ecx, [ebp+1]
+  .text:001B091A                 mov     byte ptr [ecx], 0
+  .text:001B091D                 mov     byte ptr [ecx+1], 0
+  .text:001B0921                 mov     byte ptr [ecx+2], 0
+  .text:001B0925                 mov     byte ptr [ecx+3], 0
+  .text:001B0929                 mov     byte ptr [ecx+4], 0
+  .text:001B092D                 mov     byte ptr [ecx+5], 0
+  .text:001B0931                 mov     byte ptr [ecx+6], 0
+  .text:001B0935                 mov     byte ptr [ecx+7], 0
+  .text:001B0939                 add     ecx, 8
+  .text:001B093C                 cmp     esi, ecx
+  .text:001B093E                 jnz     short loc_1B091A
+  .text:001B0940                 mov     [esp+13Ch+var_20], 3
+  .text:001B0948                 mov     al, byte ptr [esp+13Ch+var_D4]
+  .text:001B094C                 mov     byte ptr [esp+13Ch+var_3C], al
+  .text:001B0953                 mov     cl, byte ptr [esp+13Ch+var_D4+1]
+  .text:001B0957                 mov     byte ptr [esp+13Ch+var_3C+1], cl
+  .text:001B095E                 mov     al, byte ptr [esp+13Ch+var_D4+2]
+  .text:001B0962                 mov     byte ptr [esp+13Ch+var_3C+2], al
+  .text:001B0969                 mov     cl, byte ptr [esp+13Ch+var_D4+3]
+  .text:001B096D                 mov     byte ptr [esp+13Ch+var_3C+3], cl
+  .text:001B0974                 mov     al, byte ptr [esp+13Ch+var_D0]
+  .text:001B0978                 mov     byte ptr [esp+13Ch+var_38], al
+  .text:001B097F                 mov     cl, byte ptr [esp+13Ch+var_D0+1]
+  .text:001B0983                 mov     byte ptr [esp+13Ch+var_38+1], cl
+  .text:001B098A                 mov     al, byte ptr [esp+13Ch+var_D0+2]
+  .text:001B098E                 mov     byte ptr [esp+13Ch+var_38+2], al
+  .text:001B0995                 mov     cl, byte ptr [esp+13Ch+var_D0+3]
+  .text:001B0999                 mov     byte ptr [esp+13Ch+var_38+3], cl
+  .text:001B09A0                 push    0
+  .text:001B09A2                 push    0
+  .text:001B09A4                 push    0
+  .text:001B09A6                 push    3
+  .text:001B09A8                 push    ebp
+  .text:001B09A9                 lea     eax, (aVoidSetConstSt_1 - 8B0000h)[ebx]; "void set(const string &in, const double"...
+  .text:001B09AF                 push    eax
+  .text:001B09B0                 mov     ecx, [esp+154h+var_138]
+  .text:001B09B4                 push    ecx
+  .text:001B09B5                 push    edi
+  .text:001B09B6                 call    edx
+  .text:001B09B8                 mov     edx, [edi]
+  .text:001B09BA                 mov     ecx, [edx+54h]
+  .text:001B09BD                 mov     eax, ds:(_ZNK17CScriptDictionary3GetERK7CStringRd_ptr - 8B0000h)[ebx]
+  .text:001B09C3                 mov     [esp+15Ch+var_CC], eax
+  .text:001B09CA                 mov     [esp+15Ch+var_C8], 0
+  .text:001B09D5                 add     esp, 20h
+  .text:001B09D8                 lea     edx, [ebp+1]
+  .text:001B09DB                 mov     byte ptr [edx], 0
+  .text:001B09DE                 mov     byte ptr [edx+1], 0
+  .text:001B09E2                 mov     byte ptr [edx+2], 0
+  .text:001B09E6                 mov     byte ptr [edx+3], 0
+  .text:001B09EA                 mov     byte ptr [edx+4], 0
+  .text:001B09EE                 mov     byte ptr [edx+5], 0
+  .text:001B09F2                 mov     byte ptr [edx+6], 0
+  .text:001B09F6                 mov     byte ptr [edx+7], 0
+  .text:001B09FA                 add     edx, 8
+  .text:001B09FD                 cmp     esi, edx
+  .text:001B09FF                 jnz     short loc_1B09DB
+  .text:001B0A01                 mov     [esp+13Ch+var_20], 3
+  .text:001B0A09                 mov     al, byte ptr [esp+13Ch+var_CC]
+  .text:001B0A0D                 mov     byte ptr [esp+13Ch+var_3C], al
+  .text:001B0A14                 mov     dl, byte ptr [esp+13Ch+var_CC+1]
+  .text:001B0A18                 mov     byte ptr [esp+13Ch+var_3C+1], dl
+  .text:001B0A1F                 mov     al, byte ptr [esp+13Ch+var_CC+2]
+  .text:001B0A23                 mov     byte ptr [esp+13Ch+var_3C+2], al
+  .text:001B0A2A                 mov     dl, byte ptr [esp+13Ch+var_CC+3]
+  .text:001B0A2E                 mov     byte ptr [esp+13Ch+var_3C+3], dl
+  .text:001B0A35                 mov     al, byte ptr [esp+13Ch+var_C8]
+  .text:001B0A39                 mov     byte ptr [esp+13Ch+var_38], al
+  .text:001B0A40                 mov     dl, byte ptr [esp+13Ch+var_C8+1]
+  .text:001B0A44                 mov     byte ptr [esp+13Ch+var_38+1], dl
+  .text:001B0A4B                 mov     al, byte ptr [esp+13Ch+var_C8+2]
+  .text:001B0A4F                 mov     byte ptr [esp+13Ch+var_38+2], al
+  .text:001B0A56                 mov     dl, byte ptr [esp+13Ch+var_C8+3]
+  .text:001B0A5A                 mov     byte ptr [esp+13Ch+var_38+3], dl
+  .text:001B0A61                 push    0
+  .text:001B0A63                 push    0
+  .text:001B0A65                 push    0
+  .text:001B0A67                 push    3
+  .text:001B0A69                 push    ebp
+  .text:001B0A6A                 lea     eax, (aBoolGetConstSt_1 - 8B0000h)[ebx]; "bool get(const string &in, double&out) "...
+  .text:001B0A70                 push    eax
+  .text:001B0A71                 mov     edx, [esp+154h+var_138]
+  .text:001B0A75                 push    edx
+  .text:001B0A76                 push    edi
+  .text:001B0A77                 call    ecx
+  .text:001B0A79                 mov     ecx, [edi]
+  .text:001B0A7B                 mov     edx, [ecx+54h]
+  .text:001B0A7E                 mov     eax, ds:(_ZNK17CScriptDictionary6ExistsERK7CString_ptr - 8B0000h)[ebx]; found_funcptr CScriptDictionary_Exists: native dictionary member, asCALL_THISCALL=3
+  .text:001B0A84                 mov     [esp+15Ch+var_C4], eax
+  .text:001B0A8B                 mov     [esp+15Ch+var_C0], 0
+  .text:001B0A96                 add     esp, 20h
+  .text:001B0A99                 lea     ecx, [ebp+1]
+  .text:001B0A9C                 mov     byte ptr [ecx], 0
+  .text:001B0A9F                 mov     byte ptr [ecx+1], 0
+  .text:001B0AA3                 mov     byte ptr [ecx+2], 0
+  .text:001B0AA7                 mov     byte ptr [ecx+3], 0
+  .text:001B0AAB                 mov     byte ptr [ecx+4], 0
+  .text:001B0AAF                 mov     byte ptr [ecx+5], 0
+  .text:001B0AB3                 mov     byte ptr [ecx+6], 0
+  .text:001B0AB7                 mov     byte ptr [ecx+7], 0
+  .text:001B0ABB                 add     ecx, 8
+  .text:001B0ABE                 cmp     esi, ecx
+  .text:001B0AC0                 jnz     short loc_1B0A9C
+  .text:001B0AC2                 mov     [esp+13Ch+var_20], 3
+  .text:001B0ACA                 mov     al, byte ptr [esp+13Ch+var_C4]
+  .text:001B0ACE                 mov     byte ptr [esp+13Ch+var_3C], al
+  .text:001B0AD5                 mov     cl, byte ptr [esp+13Ch+var_C4+1]
+  .text:001B0AD9                 mov     byte ptr [esp+13Ch+var_3C+1], cl
+  .text:001B0AE0                 mov     al, byte ptr [esp+13Ch+var_C4+2]
+  .text:001B0AE4                 mov     byte ptr [esp+13Ch+var_3C+2], al
+  .text:001B0AEB                 mov     cl, byte ptr [esp+13Ch+var_C4+3]
+  .text:001B0AEF                 mov     byte ptr [esp+13Ch+var_3C+3], cl
+  .text:001B0AF6                 mov     al, byte ptr [esp+13Ch+var_C0]
+  .text:001B0AFA                 mov     byte ptr [esp+13Ch+var_38], al
+  .text:001B0B01                 mov     cl, byte ptr [esp+13Ch+var_C0+1]
+  .text:001B0B05                 mov     byte ptr [esp+13Ch+var_38+1], cl
+  .text:001B0B0C                 mov     al, byte ptr [esp+13Ch+var_C0+2]
+  .text:001B0B10                 mov     byte ptr [esp+13Ch+var_38+2], al
+  .text:001B0B17                 mov     cl, byte ptr [esp+13Ch+var_C0+3]
+  .text:001B0B1B                 mov     byte ptr [esp+13Ch+var_38+3], cl
+  .text:001B0B22                 push    0
+  .text:001B0B24                 push    0
+  .text:001B0B26                 push    0
+  .text:001B0B28                 push    3
+  .text:001B0B2A                 push    ebp
+  .text:001B0B2B                 lea     eax, (aBoolExistsCons - 8B0000h)[ebx]; "bool exists(const string &in) const"
+  .text:001B0B31                 push    eax
+  .text:001B0B32                 mov     ecx, [esp+154h+var_138]
+  .text:001B0B36                 push    ecx
+  .text:001B0B37                 push    edi
+  .text:001B0B38                 call    edx
+  .text:001B0B3A                 mov     edx, [edi]
+  .text:001B0B3C                 mov     edx, [edx+54h]
+  .text:001B0B3F                 mov     eax, ds:(_ZNK17CScriptDictionary7IsEmptyEv_ptr - 8B0000h)[ebx]; found_funcptr CScriptDictionary_IsEmpty: native dictionary member, asCALL_THISCALL=3
+  .text:001B0B45                 mov     [esp+15Ch+var_120], eax
+  .text:001B0B49                 mov     [esp+15Ch+var_BC], eax
+  .text:001B0B50                 mov     [esp+15Ch+var_B8], 0
+  .text:001B0B5B                 add     esp, 20h
+  .text:001B0B5E                 lea     ecx, [ebp+1]
+  .text:001B0B61                 mov     byte ptr [ecx], 0
+  .text:001B0B64                 mov     byte ptr [ecx+1], 0
+  .text:001B0B68                 mov     byte ptr [ecx+2], 0
+  .text:001B0B6C                 mov     byte ptr [ecx+3], 0
+  .text:001B0B70                 mov     byte ptr [ecx+4], 0
+  .text:001B0B74                 mov     byte ptr [ecx+5], 0
+  .text:001B0B78                 mov     byte ptr [ecx+6], 0
+  .text:001B0B7C                 mov     byte ptr [ecx+7], 0
+  .text:001B0B80                 add     ecx, 8
+  .text:001B0B83                 cmp     esi, ecx
+  .text:001B0B85                 jnz     short loc_1B0B61
+  .text:001B0B87                 mov     [esp+13Ch+var_20], 3
+  .text:001B0B8F                 mov     al, byte ptr [esp+13Ch+var_BC]
+  .text:001B0B96                 mov     byte ptr [esp+13Ch+var_3C], al
+  .text:001B0B9D                 mov     cl, byte ptr [esp+13Ch+var_BC+1]
+  .text:001B0BA4                 mov     byte ptr [esp+13Ch+var_3C+1], cl
+  .text:001B0BAB                 mov     al, byte ptr [esp+13Ch+var_BC+2]
+  .text:001B0BB2                 mov     byte ptr [esp+13Ch+var_3C+2], al
+  .text:001B0BB9                 mov     cl, byte ptr [esp+13Ch+var_BC+3]
+  .text:001B0BC0                 mov     byte ptr [esp+13Ch+var_3C+3], cl
+  .text:001B0BC7                 mov     al, byte ptr [esp+13Ch+var_B8]
+  .text:001B0BCE                 mov     byte ptr [esp+13Ch+var_38], al
+  .text:001B0BD5                 mov     cl, byte ptr [esp+13Ch+var_B8+1]
+  .text:001B0BDC                 mov     byte ptr [esp+13Ch+var_38+1], cl
+  .text:001B0BE3                 mov     al, byte ptr [esp+13Ch+var_B8+2]
+  .text:001B0BEA                 mov     byte ptr [esp+13Ch+var_38+2], al
+  .text:001B0BF1                 mov     cl, byte ptr [esp+13Ch+var_B8+3]
+  .text:001B0BF8                 mov     byte ptr [esp+13Ch+var_38+3], cl
+  .text:001B0BFF                 push    0
+  .text:001B0C01                 push    0
+  .text:001B0C03                 push    0
+  .text:001B0C05                 push    3
+  .text:001B0C07                 push    ebp
+  .text:001B0C08                 lea     eax, (aBoolIsemptyCon - 8B0000h)[ebx]; "bool isEmpty() const"
+  .text:001B0C0E                 push    eax
+  .text:001B0C0F                 mov     ecx, [esp+154h+var_138]
+  .text:001B0C13                 push    ecx
+  .text:001B0C14                 push    edi
+  .text:001B0C15                 call    edx
+  .text:001B0C17                 mov     edx, [edi]
+  .text:001B0C19                 mov     ecx, [edx+54h]
+  .text:001B0C1C                 mov     eax, ds:(_ZNK17CScriptDictionary7GetSizeEv_ptr - 8B0000h)[ebx]; found_funcptr CScriptDictionary_GetSize: native dictionary member, asCALL_THISCALL=3
+  .text:001B0C22                 mov     [esp+15Ch+var_128], eax
+  .text:001B0C26                 mov     [esp+15Ch+var_B4], eax
+  .text:001B0C2D                 mov     [esp+15Ch+var_B0], 0
+  .text:001B0C38                 add     esp, 20h
+  .text:001B0C3B                 lea     edx, [ebp+1]
+  .text:001B0C3E                 mov     byte ptr [edx], 0
+  .text:001B0C41                 mov     byte ptr [edx+1], 0
+  .text:001B0C45                 mov     byte ptr [edx+2], 0
+  .text:001B0C49                 mov     byte ptr [edx+3], 0
+  .text:001B0C4D                 mov     byte ptr [edx+4], 0
+  .text:001B0C51                 mov     byte ptr [edx+5], 0
+  .text:001B0C55                 mov     byte ptr [edx+6], 0
+  .text:001B0C59                 mov     byte ptr [edx+7], 0
+  .text:001B0C5D                 add     edx, 8
+  .text:001B0C60                 cmp     edx, esi
+  .text:001B0C62                 jnz     short loc_1B0C3E
+  .text:001B0C64                 mov     [esp+13Ch+var_20], 3
+  .text:001B0C6C                 mov     al, byte ptr [esp+13Ch+var_B4]
+  .text:001B0C73                 mov     byte ptr [esp+13Ch+var_3C], al
+  .text:001B0C7A                 mov     dl, byte ptr [esp+13Ch+var_B4+1]
+  .text:001B0C81                 mov     byte ptr [esp+13Ch+var_3C+1], dl
+  .text:001B0C88                 mov     al, byte ptr [esp+13Ch+var_B4+2]
+  .text:001B0C8F                 mov     byte ptr [esp+13Ch+var_3C+2], al
+  .text:001B0C96                 mov     dl, byte ptr [esp+13Ch+var_B4+3]
+  .text:001B0C9D                 mov     byte ptr [esp+13Ch+var_3C+3], dl
+  .text:001B0CA4                 mov     al, byte ptr [esp+13Ch+var_B0]
+  .text:001B0CAB                 mov     byte ptr [esp+13Ch+var_38], al
+  .text:001B0CB2                 mov     dl, byte ptr [esp+13Ch+var_B0+1]
+  .text:001B0CB9                 mov     byte ptr [esp+13Ch+var_38+1], dl
+  .text:001B0CC0                 mov     al, byte ptr [esp+13Ch+var_B0+2]
+  .text:001B0CC7                 mov     byte ptr [esp+13Ch+var_38+2], al
+  .text:001B0CCE                 mov     dl, byte ptr [esp+13Ch+var_B0+3]
+  .text:001B0CD5                 mov     byte ptr [esp+13Ch+var_38+3], dl
+  .text:001B0CDC                 push    0
+  .text:001B0CDE                 push    0
+  .text:001B0CE0                 push    0
+  .text:001B0CE2                 push    3
+  .text:001B0CE4                 push    ebp
+  .text:001B0CE5                 lea     eax, (aUintGetsizeCon - 8B0000h)[ebx]; "uint getSize() const"
+  .text:001B0CEB                 push    eax
+  .text:001B0CEC                 mov     edx, [esp+154h+var_138]
+  .text:001B0CF0                 push    edx
+  .text:001B0CF1                 push    edi
+  .text:001B0CF2                 call    ecx
+  .text:001B0CF4                 mov     ecx, [edi]
+  .text:001B0CF6                 mov     edx, [ecx+54h]
+  .text:001B0CF9                 mov     eax, ds:(_ZN17CScriptDictionary6DeleteERK7CString_ptr - 8B0000h)[ebx]; found_funcptr CScriptDictionary_Delete: native dictionary member, asCALL_THISCALL=3
+  .text:001B0CFF                 mov     [esp+15Ch+var_12C], eax
+  .text:001B0D03                 mov     [esp+15Ch+var_AC], eax
+  .text:001B0D0A                 mov     [esp+15Ch+var_A8], 0
+  .text:001B0D15                 add     esp, 20h
+  .text:001B0D18                 lea     ecx, [ebp+1]
+  .text:001B0D1B                 mov     byte ptr [ecx], 0
+  .text:001B0D1E                 mov     byte ptr [ecx+1], 0
+  .text:001B0D22                 mov     byte ptr [ecx+2], 0
+  .text:001B0D26                 mov     byte ptr [ecx+3], 0
+  .text:001B0D2A                 mov     byte ptr [ecx+4], 0
+  .text:001B0D2E                 mov     byte ptr [ecx+5], 0
+  .text:001B0D32                 mov     byte ptr [ecx+6], 0
+  .text:001B0D36                 mov     byte ptr [ecx+7], 0
+  .text:001B0D3A                 add     ecx, 8
+  .text:001B0D3D                 cmp     ecx, esi
+  .text:001B0D3F                 jnz     short loc_1B0D1B
+  .text:001B0D41                 mov     [esp+13Ch+var_20], 3
+  .text:001B0D49                 mov     al, byte ptr [esp+13Ch+var_AC]
+  .text:001B0D50                 mov     byte ptr [esp+13Ch+var_3C], al
+  .text:001B0D57                 mov     cl, byte ptr [esp+13Ch+var_AC+1]
+  .text:001B0D5E                 mov     byte ptr [esp+13Ch+var_3C+1], cl
+  .text:001B0D65                 mov     al, byte ptr [esp+13Ch+var_AC+2]
+  .text:001B0D6C                 mov     byte ptr [esp+13Ch+var_3C+2], al
+  .text:001B0D73                 mov     cl, byte ptr [esp+13Ch+var_AC+3]
+  .text:001B0D7A                 mov     byte ptr [esp+13Ch+var_3C+3], cl
+  .text:001B0D81                 mov     al, byte ptr [esp+13Ch+var_A8]
+  .text:001B0D88                 mov     byte ptr [esp+13Ch+var_38], al
+  .text:001B0D8F                 mov     cl, byte ptr [esp+13Ch+var_A8+1]
+  .text:001B0D96                 mov     byte ptr [esp+13Ch+var_38+1], cl
+  .text:001B0D9D                 mov     al, byte ptr [esp+13Ch+var_A8+2]
+  .text:001B0DA4                 mov     byte ptr [esp+13Ch+var_38+2], al
+  .text:001B0DAB                 mov     cl, byte ptr [esp+13Ch+var_A8+3]
+  .text:001B0DB2                 mov     byte ptr [esp+13Ch+var_38+3], cl
+  .text:001B0DB9                 push    0
+  .text:001B0DBB                 push    0
+  .text:001B0DBD                 push    0
+  .text:001B0DBF                 push    3
+  .text:001B0DC1                 push    ebp
+  .text:001B0DC2                 lea     eax, (aBoolDeleteCons - 8B0000h)[ebx]; "bool delete(const string &in)"
+  .text:001B0DC8                 push    eax
+  .text:001B0DC9                 mov     ecx, [esp+154h+var_138]
+  .text:001B0DCD                 push    ecx
+  .text:001B0DCE                 push    edi
+  .text:001B0DCF                 call    edx
+  .text:001B0DD1                 mov     edx, [edi]
+  .text:001B0DD3                 mov     ecx, [edx+54h]
+  .text:001B0DD6                 mov     eax, ds:(_ZN17CScriptDictionary9DeleteAllEv_ptr - 8B0000h)[ebx]; found_funcptr CScriptDictionary_DeleteAll: native dictionary member, asCALL_THISCALL=3
+  .text:001B0DDC                 mov     [esp+15Ch+var_124], eax
+  .text:001B0DE0                 mov     [esp+15Ch+var_A4], eax
+  .text:001B0DE7                 mov     [esp+15Ch+var_A0], 0
+  .text:001B0DF2                 add     esp, 20h
+  .text:001B0DF5                 lea     edx, [ebp+1]
+  .text:001B0DF8                 mov     byte ptr [edx], 0
+  .text:001B0DFB                 mov     byte ptr [edx+1], 0
+  .text:001B0DFF                 mov     byte ptr [edx+2], 0
+  .text:001B0E03                 mov     byte ptr [edx+3], 0
+  .text:001B0E07                 mov     byte ptr [edx+4], 0
+  .text:001B0E0B                 mov     byte ptr [edx+5], 0
+  .text:001B0E0F                 mov     byte ptr [edx+6], 0
+  .text:001B0E13                 mov     byte ptr [edx+7], 0
+  .text:001B0E17                 add     edx, 8
+  .text:001B0E1A                 cmp     edx, esi
+  .text:001B0E1C                 jnz     short loc_1B0DF8
+  .text:001B0E1E                 mov     [esp+13Ch+var_20], 3
+  .text:001B0E26                 mov     al, byte ptr [esp+13Ch+var_A4]
+  .text:001B0E2D                 mov     byte ptr [esp+13Ch+var_3C], al
+  .text:001B0E34                 mov     dl, byte ptr [esp+13Ch+var_A4+1]
+  .text:001B0E3B                 mov     byte ptr [esp+13Ch+var_3C+1], dl
+  .text:001B0E42                 mov     al, byte ptr [esp+13Ch+var_A4+2]
+  .text:001B0E49                 mov     byte ptr [esp+13Ch+var_3C+2], al
+  .text:001B0E50                 mov     dl, byte ptr [esp+13Ch+var_A4+3]
+  .text:001B0E57                 mov     byte ptr [esp+13Ch+var_3C+3], dl
+  .text:001B0E5E                 mov     al, byte ptr [esp+13Ch+var_A0]
+  .text:001B0E65                 mov     byte ptr [esp+13Ch+var_38], al
+  .text:001B0E6C                 mov     dl, byte ptr [esp+13Ch+var_A0+1]
+  .text:001B0E73                 mov     byte ptr [esp+13Ch+var_38+1], dl
+  .text:001B0E7A                 mov     al, byte ptr [esp+13Ch+var_A0+2]
+  .text:001B0E81                 mov     byte ptr [esp+13Ch+var_38+2], al
+  .text:001B0E88                 mov     dl, byte ptr [esp+13Ch+var_A0+3]
+  .text:001B0E8F                 mov     byte ptr [esp+13Ch+var_38+3], dl
+  .text:001B0E96                 push    0
+  .text:001B0E98                 push    0
+  .text:001B0E9A                 push    0
+  .text:001B0E9C                 push    3
+  .text:001B0E9E                 push    ebp
+  .text:001B0E9F                 lea     eax, (aVoidDeleteall - 8B0000h)[ebx]; "void deleteAll()"
+  .text:001B0EA5                 push    eax
+  .text:001B0EA6                 mov     edx, [esp+154h+var_138]
+  .text:001B0EAA                 push    edx
+  .text:001B0EAB                 push    edi
+  .text:001B0EAC                 call    ecx
+  .text:001B0EAE                 mov     ecx, [edi]
+  .text:001B0EB0                 mov     edx, [ecx+54h]
+  .text:001B0EB3                 mov     eax, ds:(_ZNK17CScriptDictionary7GetKeysEv_ptr - 8B0000h)[ebx]
+  .text:001B0EB9                 mov     [esp+15Ch+var_9C], eax
+  .text:001B0EC0                 mov     [esp+15Ch+var_98], 0
+  .text:001B0ECB                 add     esp, 20h
+  .text:001B0ECE                 lea     ecx, [ebp+1]
+  .text:001B0ED1                 mov     byte ptr [ecx], 0
+  .text:001B0ED4                 mov     byte ptr [ecx+1], 0
+  .text:001B0ED8                 mov     byte ptr [ecx+2], 0
+  .text:001B0EDC                 mov     byte ptr [ecx+3], 0
+  .text:001B0EE0                 mov     byte ptr [ecx+4], 0
+  .text:001B0EE4                 mov     byte ptr [ecx+5], 0
+  .text:001B0EE8                 mov     byte ptr [ecx+6], 0
+  .text:001B0EEC                 mov     byte ptr [ecx+7], 0
+  .text:001B0EF0                 add     ecx, 8
+  .text:001B0EF3                 cmp     esi, ecx
+  .text:001B0EF5                 jnz     short loc_1B0ED1
+  .text:001B0EF7                 mov     [esp+13Ch+var_20], 3
+  .text:001B0EFF                 mov     al, byte ptr [esp+13Ch+var_9C]
+  .text:001B0F06                 mov     byte ptr [esp+13Ch+var_3C], al
+  .text:001B0F0D                 mov     cl, byte ptr [esp+13Ch+var_9C+1]
+  .text:001B0F14                 mov     byte ptr [esp+13Ch+var_3C+1], cl
+  .text:001B0F1B                 mov     al, byte ptr [esp+13Ch+var_9C+2]
+  .text:001B0F22                 mov     byte ptr [esp+13Ch+var_3C+2], al
+  .text:001B0F29                 mov     cl, byte ptr [esp+13Ch+var_9C+3]
+  .text:001B0F30                 mov     byte ptr [esp+13Ch+var_3C+3], cl
+  .text:001B0F37                 mov     al, byte ptr [esp+13Ch+var_98]
+  .text:001B0F3E                 mov     byte ptr [esp+13Ch+var_38], al
+  .text:001B0F45                 mov     cl, byte ptr [esp+13Ch+var_98+1]
+  .text:001B0F4C                 mov     byte ptr [esp+13Ch+var_38+1], cl
+  .text:001B0F53                 mov     al, byte ptr [esp+13Ch+var_98+2]
+  .text:001B0F5A                 mov     byte ptr [esp+13Ch+var_38+2], al
+  .text:001B0F61                 mov     cl, byte ptr [esp+13Ch+var_98+3]
+  .text:001B0F68                 mov     byte ptr [esp+13Ch+var_38+3], cl
+  .text:001B0F6F                 push    0
+  .text:001B0F71                 push    0
+  .text:001B0F73                 push    0
+  .text:001B0F75                 push    3
+  .text:001B0F77                 push    ebp
+  .text:001B0F78                 lea     eax, (aArrayStringGet - 8B0000h)[ebx]; "array<string> @getKeys() const"
+  .text:001B0F7E                 push    eax
+  .text:001B0F7F                 mov     ecx, [esp+154h+var_138]
+  .text:001B0F83                 push    ecx
+  .text:001B0F84                 push    edi
+  .text:001B0F85                 call    edx
+  .text:001B0F87                 mov     edx, [edi]
+  .text:001B0F89                 mov     ecx, [edx+54h]
+  .text:001B0F8C                 mov     eax, ds:(_ZN17CScriptDictionaryixERK7CString_ptr - 8B0000h)[ebx]
+  .text:001B0F92                 mov     [esp+15Ch+var_94], eax
+  .text:001B0F99                 mov     [esp+15Ch+var_90], 0
+  .text:001B0FA4                 add     esp, 20h
+  .text:001B0FA7                 lea     edx, [ebp+1]
+  .text:001B0FAA                 mov     byte ptr [edx], 0
+  .text:001B0FAD                 mov     byte ptr [edx+1], 0
+  .text:001B0FB1                 mov     byte ptr [edx+2], 0
+  .text:001B0FB5                 mov     byte ptr [edx+3], 0
+  .text:001B0FB9                 mov     byte ptr [edx+4], 0
+  .text:001B0FBD                 mov     byte ptr [edx+5], 0
+  .text:001B0FC1                 mov     byte ptr [edx+6], 0
+  .text:001B0FC5                 mov     byte ptr [edx+7], 0
+  .text:001B0FC9                 add     edx, 8
+  .text:001B0FCC                 cmp     edx, esi
+  .text:001B0FCE                 jnz     short loc_1B0FAA
+  .text:001B0FD0                 mov     [esp+13Ch+var_20], 3
+  .text:001B0FD8                 mov     al, byte ptr [esp+13Ch+var_94]
+  .text:001B0FDF                 mov     byte ptr [esp+13Ch+var_3C], al
+  .text:001B0FE6                 mov     dl, byte ptr [esp+13Ch+var_94+1]
+  .text:001B0FED                 mov     byte ptr [esp+13Ch+var_3C+1], dl
+  .text:001B0FF4                 mov     al, byte ptr [esp+13Ch+var_94+2]
+  .text:001B0FFB                 mov     byte ptr [esp+13Ch+var_3C+2], al
+  .text:001B1002                 mov     dl, byte ptr [esp+13Ch+var_94+3]
+  .text:001B1009                 mov     byte ptr [esp+13Ch+var_3C+3], dl
+  .text:001B1010                 mov     al, byte ptr [esp+13Ch+var_90]
+  .text:001B1017                 mov     byte ptr [esp+13Ch+var_38], al
+  .text:001B101E                 mov     dl, byte ptr [esp+13Ch+var_90+1]
+  .text:001B1025                 mov     byte ptr [esp+13Ch+var_38+1], dl
+  .text:001B102C                 mov     al, byte ptr [esp+13Ch+var_90+2]
+  .text:001B1033                 mov     byte ptr [esp+13Ch+var_38+2], al
+  .text:001B103A                 mov     dl, byte ptr [esp+13Ch+var_90+3]
+  .text:001B1041                 mov     byte ptr [esp+13Ch+var_38+3], dl
+  .text:001B1048                 push    0
+  .text:001B104A                 push    0
+  .text:001B104C                 push    0
+  .text:001B104E                 push    3
+  .text:001B1050                 push    ebp
+  .text:001B1051                 lea     eax, (aDictionaryvalu_6 - 8B0000h)[ebx]; "dictionaryValue &opIndex(const string &"...
+  .text:001B1057                 push    eax
+  .text:001B1058                 mov     edx, [esp+154h+var_138]
+  .text:001B105C                 push    edx
+  .text:001B105D                 push    edi
+  .text:001B105E                 call    ecx
+  .text:001B1060                 mov     ecx, [edi]
+  .text:001B1062                 mov     edx, [ecx+54h]
+  .text:001B1065                 mov     eax, ds:(_ZNK17CScriptDictionaryixERK7CString_ptr - 8B0000h)[ebx]
+  .text:001B106B                 mov     [esp+15Ch+var_8C], eax
+  .text:001B1072                 mov     [esp+15Ch+var_88], 0
+  .text:001B107D                 add     esp, 20h
+  .text:001B1080                 lea     ecx, [ebp+1]
+  .text:001B1083                 mov     byte ptr [ecx], 0
+  .text:001B1086                 mov     byte ptr [ecx+1], 0
+  .text:001B108A                 mov     byte ptr [ecx+2], 0
+  .text:001B108E                 mov     byte ptr [ecx+3], 0
+  .text:001B1092                 mov     byte ptr [ecx+4], 0
+  .text:001B1096                 mov     byte ptr [ecx+5], 0
+  .text:001B109A                 mov     byte ptr [ecx+6], 0
+  .text:001B109E                 mov     byte ptr [ecx+7], 0
+  .text:001B10A2                 add     ecx, 8
+  .text:001B10A5                 cmp     ecx, esi
+  .text:001B10A7                 jnz     short loc_1B1083
+  .text:001B10A9                 mov     [esp+13Ch+var_20], 3
+  .text:001B10B1                 mov     al, byte ptr [esp+13Ch+var_8C]
+  .text:001B10B8                 mov     byte ptr [esp+13Ch+var_3C], al
+  .text:001B10BF                 mov     cl, byte ptr [esp+13Ch+var_8C+1]
+  .text:001B10C6                 mov     byte ptr [esp+13Ch+var_3C+1], cl
+  .text:001B10CD                 mov     al, byte ptr [esp+13Ch+var_8C+2]
+  .text:001B10D4                 mov     byte ptr [esp+13Ch+var_3C+2], al
+  .text:001B10DB                 mov     cl, byte ptr [esp+13Ch+var_8C+3]
+  .text:001B10E2                 mov     byte ptr [esp+13Ch+var_3C+3], cl
+  .text:001B10E9                 mov     al, byte ptr [esp+13Ch+var_88]
+  .text:001B10F0                 mov     byte ptr [esp+13Ch+var_38], al
+  .text:001B10F7                 mov     cl, byte ptr [esp+13Ch+var_88+1]
+  .text:001B10FE                 mov     byte ptr [esp+13Ch+var_38+1], cl
+  .text:001B1105                 mov     al, byte ptr [esp+13Ch+var_88+2]
+  .text:001B110C                 mov     byte ptr [esp+13Ch+var_38+2], al
+  .text:001B1113                 mov     cl, byte ptr [esp+13Ch+var_88+3]
+  .text:001B111A                 mov     byte ptr [esp+13Ch+var_38+3], cl
+  .text:001B1121                 push    0
+  .text:001B1123                 push    0
+  .text:001B1125                 push    0
+  .text:001B1127                 push    3
+  .text:001B1129                 push    ebp
+  .text:001B112A                 lea     eax, (aConstDictionar - 8B0000h)[ebx]; "const dictionaryValue &opIndex(const st"...
+  .text:001B1130                 push    eax
+  .text:001B1131                 mov     ecx, [esp+154h+var_138]
+  .text:001B1135                 push    ecx
+  .text:001B1136                 push    edi
+  .text:001B1137                 call    edx
+  .text:001B1139                 mov     edx, [edi]
+  .text:001B113B                 mov     edx, [edx+58h]
+  .text:001B113E                 mov     eax, ds:(_ZN17CScriptDictionary11GetRefCountEv_ptr - 8B0000h)[ebx]
+  .text:001B1144                 mov     [esp+15Ch+var_84], eax
+  .text:001B114B                 mov     [esp+15Ch+var_80], 0
+  .text:001B1156                 add     esp, 20h
+  .text:001B1159                 lea     ecx, [ebp+1]
+  .text:001B115C                 mov     byte ptr [ecx], 0
+  .text:001B115F                 mov     byte ptr [ecx+1], 0
+  .text:001B1163                 mov     byte ptr [ecx+2], 0
+  .text:001B1167                 mov     byte ptr [ecx+3], 0
+  .text:001B116B                 mov     byte ptr [ecx+4], 0
+  .text:001B116F                 mov     byte ptr [ecx+5], 0
+  .text:001B1173                 mov     byte ptr [ecx+6], 0
+  .text:001B1177                 mov     byte ptr [ecx+7], 0
+  .text:001B117B                 add     ecx, 8
+  .text:001B117E                 cmp     ecx, esi
+  .text:001B1180                 jnz     short loc_1B115C
+  .text:001B1182                 mov     [esp+13Ch+var_20], 3
+  .text:001B118A                 mov     al, byte ptr [esp+13Ch+var_84]
+  .text:001B1191                 mov     byte ptr [esp+13Ch+var_3C], al
+  .text:001B1198                 mov     cl, byte ptr [esp+13Ch+var_84+1]
+  .text:001B119F                 mov     byte ptr [esp+13Ch+var_3C+1], cl
+  .text:001B11A6                 mov     al, byte ptr [esp+13Ch+var_84+2]
+  .text:001B11AD                 mov     byte ptr [esp+13Ch+var_3C+2], al
+  .text:001B11B4                 mov     cl, byte ptr [esp+13Ch+var_84+3]
+  .text:001B11BB                 mov     byte ptr [esp+13Ch+var_3C+3], cl
+  .text:001B11C2                 mov     al, byte ptr [esp+13Ch+var_80]
+  .text:001B11C9                 mov     byte ptr [esp+13Ch+var_38], al
+  .text:001B11D0                 mov     cl, byte ptr [esp+13Ch+var_80+1]
+  .text:001B11D7                 mov     byte ptr [esp+13Ch+var_38+1], cl
+  .text:001B11DE                 mov     al, byte ptr [esp+13Ch+var_80+2]
+  .text:001B11E5                 mov     byte ptr [esp+13Ch+var_38+2], al
+  .text:001B11EC                 mov     cl, byte ptr [esp+13Ch+var_80+3]
+  .text:001B11F3                 mov     byte ptr [esp+13Ch+var_38+3], cl
+  .text:001B11FA                 sub     esp, 0Ch
+  .text:001B11FD                 push    0
+  .text:001B11FF                 push    0
+  .text:001B1201                 push    0
+  .text:001B1203                 push    3
+  .text:001B1205                 push    ebp
+  .text:001B1206                 lea     eax, (aIntF - 8B0000h)[ebx]; "int f()"
+  .text:001B120C                 push    eax
+  .text:001B120D                 push    9
+  .text:001B120F                 mov     ecx, [esp+164h+var_138]
+  .text:001B1213                 push    ecx
+  .text:001B1214                 push    edi
+  .text:001B1215                 call    edx
+  .text:001B1217                 mov     edx, [edi]
+  .text:001B1219                 mov     ecx, [edx+58h]
+  .text:001B121C                 mov     eax, ds:(_ZN17CScriptDictionary9SetGCFlagEv_ptr - 8B0000h)[ebx]
+  .text:001B1222                 mov     [esp+16Ch+var_7C], eax
+  .text:001B1229                 mov     [esp+16Ch+var_78], 0
+  .text:001B1234                 add     esp, 30h
+  .text:001B1237                 lea     edx, [ebp+1]
+  .text:001B123A                 mov     byte ptr [edx], 0
+  .text:001B123D                 mov     byte ptr [edx+1], 0
+  .text:001B1241                 mov     byte ptr [edx+2], 0
+  .text:001B1245                 mov     byte ptr [edx+3], 0
+  .text:001B1249                 mov     byte ptr [edx+4], 0
+  .text:001B124D                 mov     byte ptr [edx+5], 0
+  .text:001B1251                 mov     byte ptr [edx+6], 0
+  .text:001B1255                 mov     byte ptr [edx+7], 0
+  .text:001B1259                 add     edx, 8
+  .text:001B125C                 cmp     esi, edx
+  .text:001B125E                 jnz     short loc_1B123A
+  .text:001B1260                 mov     [esp+13Ch+var_20], 3
+  .text:001B1268                 mov     al, byte ptr [esp+13Ch+var_7C]
+  .text:001B126F                 mov     byte ptr [esp+13Ch+var_3C], al
+  .text:001B1276                 mov     dl, byte ptr [esp+13Ch+var_7C+1]
+  .text:001B127D                 mov     byte ptr [esp+13Ch+var_3C+1], dl
+  .text:001B1284                 mov     al, byte ptr [esp+13Ch+var_7C+2]
+  .text:001B128B                 mov     byte ptr [esp+13Ch+var_3C+2], al
+  .text:001B1292                 mov     dl, byte ptr [esp+13Ch+var_7C+3]
+  .text:001B1299                 mov     byte ptr [esp+13Ch+var_3C+3], dl
+  .text:001B12A0                 mov     al, byte ptr [esp+13Ch+var_78]
+  .text:001B12A7                 mov     byte ptr [esp+13Ch+var_38], al
+  .text:001B12AE                 mov     dl, byte ptr [esp+13Ch+var_78+1]
+  .text:001B12B5                 mov     byte ptr [esp+13Ch+var_38+1], dl
+  .text:001B12BC                 mov     al, byte ptr [esp+13Ch+var_78+2]
+  .text:001B12C3                 mov     byte ptr [esp+13Ch+var_38+2], al
+  .text:001B12CA                 mov     dl, byte ptr [esp+13Ch+var_78+3]
+  .text:001B12D1                 mov     byte ptr [esp+13Ch+var_38+3], dl
+  .text:001B12D8                 sub     esp, 0Ch
+  .text:001B12DB                 push    0
+  .text:001B12DD                 push    0
+  .text:001B12DF                 push    0
+  .text:001B12E1                 push    3
+  .text:001B12E3                 push    ebp
+  .text:001B12E4                 mov     eax, [esp+15Ch+var_134]
+  .text:001B12E8                 push    eax
+  .text:001B12E9                 push    0Ah
+  .text:001B12EB                 mov     edx, [esp+164h+var_138]
+  .text:001B12EF                 push    edx
+  .text:001B12F0                 push    edi
+  .text:001B12F1                 call    ecx
+  .text:001B12F3                 mov     ecx, [edi]
+  .text:001B12F5                 mov     edx, [ecx+58h]
+  .text:001B12F8                 mov     eax, ds:(_ZN17CScriptDictionary9GetGCFlagEv_ptr - 8B0000h)[ebx]
+  .text:001B12FE                 mov     [esp+16Ch+var_74], eax
+  .text:001B1305                 mov     [esp+16Ch+var_70], 0
+  .text:001B1310                 add     esp, 30h
+  .text:001B1313                 lea     ecx, [ebp+1]
+  .text:001B1316                 mov     byte ptr [ecx], 0
+  .text:001B1319                 mov     byte ptr [ecx+1], 0
+  .text:001B131D                 mov     byte ptr [ecx+2], 0
+  .text:001B1321                 mov     byte ptr [ecx+3], 0
+  .text:001B1325                 mov     byte ptr [ecx+4], 0
+  .text:001B1329                 mov     byte ptr [ecx+5], 0
+  .text:001B132D                 mov     byte ptr [ecx+6], 0
+  .text:001B1331                 mov     byte ptr [ecx+7], 0
+  .text:001B1335                 add     ecx, 8
+  .text:001B1338                 cmp     ecx, esi
+  .text:001B133A                 jnz     short loc_1B1316
+  .text:001B133C                 mov     [esp+13Ch+var_20], 3
+  .text:001B1344                 mov     al, byte ptr [esp+13Ch+var_74]
+  .text:001B134B                 mov     byte ptr [esp+13Ch+var_3C], al
+  .text:001B1352                 mov     cl, byte ptr [esp+13Ch+var_74+1]
+  .text:001B1359                 mov     byte ptr [esp+13Ch+var_3C+1], cl
+  .text:001B1360                 mov     al, byte ptr [esp+13Ch+var_74+2]
+  .text:001B1367                 mov     byte ptr [esp+13Ch+var_3C+2], al
+  .text:001B136E                 mov     cl, byte ptr [esp+13Ch+var_74+3]
+  .text:001B1375                 mov     byte ptr [esp+13Ch+var_3C+3], cl
+  .text:001B137C                 mov     al, byte ptr [esp+13Ch+var_70]
+  .text:001B1383                 mov     byte ptr [esp+13Ch+var_38], al
+  .text:001B138A                 mov     cl, byte ptr [esp+13Ch+var_70+1]
+  .text:001B1391                 mov     byte ptr [esp+13Ch+var_38+1], cl
+  .text:001B1398                 mov     al, byte ptr [esp+13Ch+var_70+2]
+  .text:001B139F                 mov     byte ptr [esp+13Ch+var_38+2], al
+  .text:001B13A6                 mov     cl, byte ptr [esp+13Ch+var_70+3]
+  .text:001B13AD                 mov     byte ptr [esp+13Ch+var_38+3], cl
+  .text:001B13B4                 sub     esp, 0Ch
+  .text:001B13B7                 push    0
+  .text:001B13B9                 push    0
+  .text:001B13BB                 push    0
+  .text:001B13BD                 push    3
+  .text:001B13BF                 push    ebp
+  .text:001B13C0                 lea     eax, (aBoolF - 8B0000h)[ebx]; "bool f()"
+  .text:001B13C6                 push    eax
+  .text:001B13C7                 push    0Bh
+  .text:001B13C9                 mov     ecx, [esp+164h+var_138]
+  .text:001B13CD                 push    ecx
+  .text:001B13CE                 push    edi
+  .text:001B13CF                 call    edx
+  .text:001B13D1                 mov     edx, [edi]
+  .text:001B13D3                 mov     ecx, [edx+58h]
+  .text:001B13D6                 mov     eax, ds:(_ZN17CScriptDictionary14EnumReferencesEP15asIScriptEngine_ptr - 8B0000h)[ebx]
+  .text:001B13DC                 mov     [esp+16Ch+var_6C], eax
+  .text:001B13E3                 mov     [esp+16Ch+var_68], 0
+  .text:001B13EE                 add     esp, 30h
+  .text:001B13F1                 lea     edx, [ebp+1]
+  .text:001B13F4                 mov     byte ptr [edx], 0
+  .text:001B13F7                 mov     byte ptr [edx+1], 0
+  .text:001B13FB                 mov     byte ptr [edx+2], 0
+  .text:001B13FF                 mov     byte ptr [edx+3], 0
+  .text:001B1403                 mov     byte ptr [edx+4], 0
+  .text:001B1407                 mov     byte ptr [edx+5], 0
+  .text:001B140B                 mov     byte ptr [edx+6], 0
+  .text:001B140F                 mov     byte ptr [edx+7], 0
+  .text:001B1413                 add     edx, 8
+  .text:001B1416                 cmp     edx, esi
+  .text:001B1418                 jnz     short loc_1B13F4
+  .text:001B141A                 mov     [esp+13Ch+var_20], 3
+  .text:001B1422                 mov     al, byte ptr [esp+13Ch+var_6C]
+  .text:001B1429                 mov     byte ptr [esp+13Ch+var_3C], al
+  .text:001B1430                 mov     dl, byte ptr [esp+13Ch+var_6C+1]
+  .text:001B1437                 mov     byte ptr [esp+13Ch+var_3C+1], dl
+  .text:001B143E                 mov     al, byte ptr [esp+13Ch+var_6C+2]
+  .text:001B1445                 mov     byte ptr [esp+13Ch+var_3C+2], al
+  .text:001B144C                 mov     dl, byte ptr [esp+13Ch+var_6C+3]
+  .text:001B1453                 mov     byte ptr [esp+13Ch+var_3C+3], dl
+  .text:001B145A                 mov     al, byte ptr [esp+13Ch+var_68]
+  .text:001B1461                 mov     byte ptr [esp+13Ch+var_38], al
+  .text:001B1468                 mov     dl, byte ptr [esp+13Ch+var_68+1]
+  .text:001B146F                 mov     byte ptr [esp+13Ch+var_38+1], dl
+  .text:001B1476                 mov     al, byte ptr [esp+13Ch+var_68+2]
+  .text:001B147D                 mov     byte ptr [esp+13Ch+var_38+2], al
+  .text:001B1484                 mov     dl, byte ptr [esp+13Ch+var_68+3]
+  .text:001B148B                 mov     byte ptr [esp+13Ch+var_38+3], dl
+  .text:001B1492                 sub     esp, 0Ch
+  .text:001B1495                 push    0
+  .text:001B1497                 push    0
+  .text:001B1499                 push    0
+  .text:001B149B                 push    3
+  .text:001B149D                 push    ebp
+  .text:001B149E                 mov     eax, [esp+15Ch+var_130]
+  .text:001B14A2                 push    eax
+  .text:001B14A3                 push    0Ch
+  .text:001B14A5                 mov     edx, [esp+164h+var_138]
+  .text:001B14A9                 push    edx
+  .text:001B14AA                 push    edi
+  .text:001B14AB                 call    ecx
+  .text:001B14AD                 mov     ecx, [edi]
+  .text:001B14AF                 mov     edx, [ecx+58h]
+  .text:001B14B2                 mov     eax, ds:(_ZN17CScriptDictionary20ReleaseAllReferencesEP15asIScriptEngine_ptr - 8B0000h)[ebx]
+  .text:001B14B8                 mov     [esp+16Ch+var_64], eax
+  .text:001B14BF                 mov     [esp+16Ch+var_60], 0
+  .text:001B14CA                 add     esp, 30h
+  .text:001B14CD                 lea     ecx, [ebp+1]
+  .text:001B14D0                 mov     byte ptr [ecx], 0
+  .text:001B14D3                 mov     byte ptr [ecx+1], 0
+  .text:001B14D7                 mov     byte ptr [ecx+2], 0
+  .text:001B14DB                 mov     byte ptr [ecx+3], 0
+  .text:001B14DF                 mov     byte ptr [ecx+4], 0
+  .text:001B14E3                 mov     byte ptr [ecx+5], 0
+  .text:001B14E7                 mov     byte ptr [ecx+6], 0
+  .text:001B14EB                 mov     byte ptr [ecx+7], 0
+  .text:001B14EF                 add     ecx, 8
+  .text:001B14F2                 cmp     ecx, esi
+  .text:001B14F4                 jnz     short loc_1B14D0
+  .text:001B14F6                 mov     [esp+13Ch+var_20], 3
+  .text:001B14FE                 mov     al, byte ptr [esp+13Ch+var_64]
+  .text:001B1505                 mov     byte ptr [esp+13Ch+var_3C], al
+  .text:001B150C                 mov     cl, byte ptr [esp+13Ch+var_64+1]
+  .text:001B1513                 mov     byte ptr [esp+13Ch+var_3C+1], cl
+  .text:001B151A                 mov     al, byte ptr [esp+13Ch+var_64+2]
+  .text:001B1521                 mov     byte ptr [esp+13Ch+var_3C+2], al
+  .text:001B1528                 mov     cl, byte ptr [esp+13Ch+var_64+3]
+  .text:001B152F                 mov     byte ptr [esp+13Ch+var_3C+3], cl
+  .text:001B1536                 mov     al, byte ptr [esp+13Ch+var_60]
+  .text:001B153D                 mov     byte ptr [esp+13Ch+var_38], al
+  .text:001B1544                 mov     cl, byte ptr [esp+13Ch+var_60+1]
+  .text:001B154B                 mov     byte ptr [esp+13Ch+var_38+1], cl
+  .text:001B1552                 mov     al, byte ptr [esp+13Ch+var_60+2]
+  .text:001B1559                 mov     byte ptr [esp+13Ch+var_38+2], al
+  .text:001B1560                 mov     cl, byte ptr [esp+13Ch+var_60+3]
+  .text:001B1567                 mov     byte ptr [esp+13Ch+var_38+3], cl
+  .text:001B156E                 sub     esp, 0Ch
+  .text:001B1571                 push    0
+  .text:001B1573                 push    0
+  .text:001B1575                 push    0
+  .text:001B1577                 push    3
+  .text:001B1579                 push    ebp
+  .text:001B157A                 mov     eax, [esp+15Ch+var_130]
+  .text:001B157E                 push    eax
+  .text:001B157F                 push    0Dh
+  .text:001B1581                 mov     ecx, [esp+164h+var_138]
+  .text:001B1585                 push    ecx
+  .text:001B1586                 push    edi
+  .text:001B1587                 call    edx
+  .text:001B1589                 mov     edx, [edi]
+  .text:001B158B                 mov     eax, [edx+54h]
+  .text:001B158E                 mov     ecx, [esp+16Ch+var_120]
+  .text:001B1592                 mov     [esp+16Ch+var_5C], ecx
+  .text:001B1599                 mov     [esp+16Ch+var_58], 0
+  .text:001B15A4                 add     esp, 30h
+  .text:001B15A7                 lea     edx, [ebp+1]
+  .text:001B15AA                 mov     byte ptr [edx], 0
+  .text:001B15AD                 mov     byte ptr [edx+1], 0
+  .text:001B15B1                 mov     byte ptr [edx+2], 0
+  .text:001B15B5                 mov     byte ptr [edx+3], 0
+  .text:001B15B9                 mov     byte ptr [edx+4], 0
+  .text:001B15BD                 mov     byte ptr [edx+5], 0
+  .text:001B15C1                 mov     byte ptr [edx+6], 0
+  .text:001B15C5                 mov     byte ptr [edx+7], 0
+  .text:001B15C9                 add     edx, 8
+  .text:001B15CC                 cmp     edx, esi
+  .text:001B15CE                 jnz     short loc_1B15AA
+  .text:001B15D0                 mov     [esp+13Ch+var_20], 3
+  .text:001B15D8                 mov     cl, byte ptr [esp+13Ch+var_5C]
+  .text:001B15DF                 mov     byte ptr [esp+13Ch+var_3C], cl
+  .text:001B15E6                 mov     dl, byte ptr [esp+13Ch+var_5C+1]
+  .text:001B15ED                 mov     byte ptr [esp+13Ch+var_3C+1], dl
+  .text:001B15F4                 mov     cl, byte ptr [esp+13Ch+var_5C+2]
+  .text:001B15FB                 mov     byte ptr [esp+13Ch+var_3C+2], cl
+  .text:001B1602                 mov     dl, byte ptr [esp+13Ch+var_5C+3]
+  .text:001B1609                 mov     byte ptr [esp+13Ch+var_3C+3], dl
+  .text:001B1610                 mov     cl, byte ptr [esp+13Ch+var_58]
+  .text:001B1617                 mov     byte ptr [esp+13Ch+var_38], cl
+  .text:001B161E                 mov     dl, byte ptr [esp+13Ch+var_58+1]
+  .text:001B1625                 mov     byte ptr [esp+13Ch+var_38+1], dl
+  .text:001B162C                 mov     cl, byte ptr [esp+13Ch+var_58+2]
+  .text:001B1633                 mov     byte ptr [esp+13Ch+var_38+2], cl
+  .text:001B163A                 mov     dl, byte ptr [esp+13Ch+var_58+3]
+  .text:001B1641                 mov     byte ptr [esp+13Ch+var_38+3], dl
+  .text:001B1648                 push    0
+  .text:001B164A                 push    0
+  .text:001B164C                 push    0
+  .text:001B164E                 push    3
+  .text:001B1650                 push    ebp
+  .text:001B1651                 lea     ecx, (aBoolEmptyConst - 8B0000h)[ebx]; "bool empty() const"
+  .text:001B1657                 push    ecx
+  .text:001B1658                 mov     edx, [esp+154h+var_138]
+  .text:001B165C                 push    edx
+  .text:001B165D                 push    edi
+  .text:001B165E                 call    eax
+  .text:001B1660                 mov     eax, [edi]
+  .text:001B1662                 mov     eax, [eax+54h]
+  .text:001B1665                 mov     ecx, [esp+15Ch+var_128]
+  .text:001B1669                 mov     [esp+15Ch+var_54], ecx
+  .text:001B1670                 mov     [esp+15Ch+var_50], 0
+  .text:001B167B                 add     esp, 20h
+  .text:001B167E                 lea     edx, [ebp+1]
+  .text:001B1681                 mov     byte ptr [edx], 0
+  .text:001B1684                 mov     byte ptr [edx+1], 0
+  .text:001B1688                 mov     byte ptr [edx+2], 0
+  .text:001B168C                 mov     byte ptr [edx+3], 0
+  .text:001B1690                 mov     byte ptr [edx+4], 0
+  .text:001B1694                 mov     byte ptr [edx+5], 0
+  .text:001B1698                 mov     byte ptr [edx+6], 0
+  .text:001B169C                 mov     byte ptr [edx+7], 0
+  .text:001B16A0                 add     edx, 8
+  .text:001B16A3                 cmp     edx, esi
+  .text:001B16A5                 jnz     short loc_1B1681
+  .text:001B16A7                 mov     [esp+13Ch+var_20], 3
+  .text:001B16AF                 mov     cl, byte ptr [esp+13Ch+var_54]
+  .text:001B16B6                 mov     byte ptr [esp+13Ch+var_3C], cl
+  .text:001B16BD                 mov     dl, byte ptr [esp+13Ch+var_54+1]
+  .text:001B16C4                 mov     byte ptr [esp+13Ch+var_3C+1], dl
+  .text:001B16CB                 mov     cl, byte ptr [esp+13Ch+var_54+2]
+  .text:001B16D2                 mov     byte ptr [esp+13Ch+var_3C+2], cl
+  .text:001B16D9                 mov     dl, byte ptr [esp+13Ch+var_54+3]
+  .text:001B16E0                 mov     byte ptr [esp+13Ch+var_3C+3], dl
+  .text:001B16E7                 mov     cl, byte ptr [esp+13Ch+var_50]
+  .text:001B16EE                 mov     byte ptr [esp+13Ch+var_38], cl
+  .text:001B16F5                 mov     dl, byte ptr [esp+13Ch+var_50+1]
+  .text:001B16FC                 mov     byte ptr [esp+13Ch+var_38+1], dl
+  .text:001B1703                 mov     cl, byte ptr [esp+13Ch+var_50+2]
+  .text:001B170A                 mov     byte ptr [esp+13Ch+var_38+2], cl
+  .text:001B1711                 mov     dl, byte ptr [esp+13Ch+var_50+3]
+  .text:001B1718                 mov     byte ptr [esp+13Ch+var_38+3], dl
+  .text:001B171F                 push    0
+  .text:001B1721                 push    0
+  .text:001B1723                 push    0
+  .text:001B1725                 push    3
+  .text:001B1727                 push    ebp
+  .text:001B1728                 lea     ecx, (aUintSizeConst - 8B0000h)[ebx]; "uint size() const"
+  .text:001B172E                 push    ecx
+  .text:001B172F                 mov     edx, [esp+154h+var_138]
+  .text:001B1733                 push    edx
+  .text:001B1734                 push    edi
+  .text:001B1735                 call    eax
+  .text:001B1737                 mov     eax, [edi]
+  .text:001B1739                 mov     eax, [eax+54h]
+  .text:001B173C                 mov     ecx, [esp+15Ch+var_12C]
+  .text:001B1740                 mov     [esp+15Ch+var_4C], ecx
+  .text:001B1747                 mov     [esp+15Ch+var_48], 0
+  .text:001B1752                 add     esp, 20h
+  .text:001B1755                 lea     edx, [ebp+1]
+  .text:001B1758                 mov     byte ptr [edx], 0
+  .text:001B175B                 mov     byte ptr [edx+1], 0
+  .text:001B175F                 mov     byte ptr [edx+2], 0
+  .text:001B1763                 mov     byte ptr [edx+3], 0
+  .text:001B1767                 mov     byte ptr [edx+4], 0
+  .text:001B176B                 mov     byte ptr [edx+5], 0
+  .text:001B176F                 mov     byte ptr [edx+6], 0
+  .text:001B1773                 mov     byte ptr [edx+7], 0
+  .text:001B1777                 add     edx, 8
+  .text:001B177A                 cmp     edx, esi
+  .text:001B177C                 jnz     short loc_1B1758
+  .text:001B177E                 mov     [esp+13Ch+var_20], 3
+  .text:001B1786                 mov     cl, byte ptr [esp+13Ch+var_4C]
+  .text:001B178D                 mov     byte ptr [esp+13Ch+var_3C], cl
+  .text:001B1794                 mov     dl, byte ptr [esp+13Ch+var_4C+1]
+  .text:001B179B                 mov     byte ptr [esp+13Ch+var_3C+1], dl
+  .text:001B17A2                 mov     cl, byte ptr [esp+13Ch+var_4C+2]
+  .text:001B17A9                 mov     byte ptr [esp+13Ch+var_3C+2], cl
+  .text:001B17B0                 mov     dl, byte ptr [esp+13Ch+var_4C+3]
+  .text:001B17B7                 mov     byte ptr [esp+13Ch+var_3C+3], dl
+  .text:001B17BE                 mov     cl, byte ptr [esp+13Ch+var_48]
+  .text:001B17C5                 mov     byte ptr [esp+13Ch+var_38], cl
+  .text:001B17CC                 mov     dl, byte ptr [esp+13Ch+var_48+1]
+  .text:001B17D3                 mov     byte ptr [esp+13Ch+var_38+1], dl
+  .text:001B17DA                 mov     cl, byte ptr [esp+13Ch+var_48+2]
+  .text:001B17E1                 mov     byte ptr [esp+13Ch+var_38+2], cl
+  .text:001B17E8                 mov     dl, byte ptr [esp+13Ch+var_48+3]
+  .text:001B17EF                 mov     byte ptr [esp+13Ch+var_38+3], dl
+  .text:001B17F6                 push    0
+  .text:001B17F8                 push    0
+  .text:001B17FA                 push    0
+  .text:001B17FC                 push    3
+  .text:001B17FE                 push    ebp
+  .text:001B17FF                 lea     ecx, (aVoidEraseConst - 8B0000h)[ebx]; "void erase(const string &in)"
+  .text:001B1805                 push    ecx
+  .text:001B1806                 mov     edx, [esp+154h+var_138]
+  .text:001B180A                 push    edx
+  .text:001B180B                 push    edi
+  .text:001B180C                 call    eax
+  .text:001B180E                 mov     eax, [edi]
+  .text:001B1810                 mov     eax, [eax+54h]
+  .text:001B1813                 mov     ecx, [esp+15Ch+var_124]
+  .text:001B1817                 mov     [esp+15Ch+var_44], ecx
+  .text:001B181E                 mov     [esp+15Ch+var_40], 0
+  .text:001B1829                 add     esp, 20h
+  .text:001B182C                 lea     edx, [ebp+1]
+  .text:001B182F                 mov     byte ptr [edx], 0
+  .text:001B1832                 mov     byte ptr [edx+1], 0
+  .text:001B1836                 mov     byte ptr [edx+2], 0
+  .text:001B183A                 mov     byte ptr [edx+3], 0
+  .text:001B183E                 mov     byte ptr [edx+4], 0
+  .text:001B1842                 mov     byte ptr [edx+5], 0
+  .text:001B1846                 mov     byte ptr [edx+6], 0
+  .text:001B184A                 mov     byte ptr [edx+7], 0
+  .text:001B184E                 add     edx, 8
+  .text:001B1851                 cmp     esi, edx
+  .text:001B1853                 jnz     short loc_1B182F
+  .text:001B1855                 mov     [esp+13Ch+var_20], 3
+  .text:001B185D                 mov     cl, byte ptr [esp+13Ch+var_44]
+  .text:001B1864                 mov     byte ptr [esp+13Ch+var_3C], cl
+  .text:001B186B                 mov     dl, byte ptr [esp+13Ch+var_44+1]
+  .text:001B1872                 mov     byte ptr [esp+13Ch+var_3C+1], dl
+  .text:001B1879                 mov     cl, byte ptr [esp+13Ch+var_44+2]
+  .text:001B1880                 mov     byte ptr [esp+13Ch+var_3C+2], cl
+  .text:001B1887                 mov     dl, byte ptr [esp+13Ch+var_44+3]
+  .text:001B188E                 mov     byte ptr [esp+13Ch+var_3C+3], dl
+  .text:001B1895                 mov     cl, byte ptr [esp+13Ch+var_40]
+  .text:001B189C                 mov     byte ptr [esp+13Ch+var_38], cl
+  .text:001B18A3                 mov     dl, byte ptr [esp+13Ch+var_40+1]
+  .text:001B18AA                 mov     byte ptr [esp+13Ch+var_38+1], dl
+  .text:001B18B1                 mov     cl, byte ptr [esp+13Ch+var_40+2]
+  .text:001B18B8                 mov     byte ptr [esp+13Ch+var_38+2], cl
+  .text:001B18BF                 mov     dl, byte ptr [esp+13Ch+var_40+3]
+  .text:001B18C6                 mov     byte ptr [esp+13Ch+var_38+3], dl
+  .text:001B18CD                 push    0
+  .text:001B18CF                 push    0
+  .text:001B18D1                 push    0
+  .text:001B18D3                 push    3
+  .text:001B18D5                 push    ebp
+  .text:001B18D6                 lea     ebp, (aVoidClear - 8B0000h)[ebx]; "void clear()"
+  .text:001B18DC                 push    ebp
+  .text:001B18DD                 mov     esi, [esp+154h+var_138]
+  .text:001B18E1                 push    esi
+  .text:001B18E2                 push    edi
+  .text:001B18E3                 call    eax
+  .text:001B18E5                 add     esp, 18h
+  .text:001B18E8                 mov     eax, [edi]
+  .text:001B18EA                 push    3EBh
+  .text:001B18EF                 push    edi
+  .text:001B18F0                 call    dword ptr [eax+144h]
+  .text:001B18F6                 add     esp, 10h
+  .text:001B18F9                 test    eax, eax
+  .text:001B18FB                 jz      short loc_1B1908
+  .text:001B18FD                 add     esp, 12Ch
+  .text:001B1903                 pop     ebx
+  .text:001B1904                 pop     esi
+  .text:001B1905                 pop     edi
+  .text:001B1906                 pop     ebp
+  .text:001B1907                 retn
+  .text:001B1908                 sub     esp, 0Ch
+  .text:001B190B                 ; unsigned int
+  .text:001B190B                 push    0Ch; unsigned int
+  .text:001B190D                 call    __Znwj; operator new(uint)
+  .text:001B1912                 mov     esi, eax
+  .text:001B1914                 add     esp, 0Ch
+  .text:001B1917                 mov     ebp, [edi]
+  .text:001B1919                 push    3EBh
+  .text:001B191E                 push    eax
+  .text:001B191F                 push    edi
+  .text:001B1920                 call    dword ptr [ebp+140h]
+  .text:001B1926                 add     esp, 0Ch
+  .text:001B1929                 mov     ecx, [edi]
+  .text:001B192B                 push    3EBh
+  .text:001B1930                 mov     edx, ds:(_ZN16SDictionaryCache7CleanupEP15asIScriptEngine_ptr - 8B0000h)[ebx]
+  .text:001B1936                 push    edx
+  .text:001B1937                 push    edi
+  .text:001B1938                 call    dword ptr [ecx+148h]
+  .text:001B193E                 pop     ecx
+  .text:001B193F                 pop     ebp
+  .text:001B1940                 mov     eax, [edi]
+  .text:001B1942                 mov     ebp, [esp+144h+var_138]
+  .text:001B1946                 push    ebp
+  .text:001B1947                 push    edi
+  .text:001B1948                 call    dword ptr [eax+0E0h]
+  .text:001B194E                 mov     [esi], eax
+  .text:001B1950                 pop     ecx
+  .text:001B1951                 pop     ebp
+  .text:001B1952                 mov     eax, [edi]
+  .text:001B1954                 lea     ecx, (aArrayString - 8B0000h)[ebx]; "array<string>"
+  .text:001B195A                 push    ecx
+  .text:001B195B                 push    edi
+  .text:001B195C                 call    dword ptr [eax+0E4h]
+  .text:001B1962                 mov     [esi+4], eax
+  .text:001B1965                 pop     eax
+  .text:001B1966                 pop     edx
+  .text:001B1967                 mov     ebp, [edi]
+  .text:001B1969                 lea     ebx, (aExpectedString+9 - 8B0000h)[ebx]; "string"
+  .text:001B196F                 push    ebx
+  .text:001B1970                 push    edi
+  .text:001B1971                 call    dword ptr [ebp+0E4h]
+  .text:001B1977                 mov     [esi+8], eax
+  .text:001B197A                 add     esp, 10h
+  .text:001B197D                 add     esp, 12Ch
+  .text:001B1983                 pop     ebx
+  .text:001B1984                 pop     esi
+  .text:001B1985                 pop     edi
+  .text:001B1986                 pop     ebp
+  .text:001B1987                 retn
+procedure: |-
+  // Current binary evidence: dictionary@ f() intersect void erase(const string &in) selects this registration. Select dictionary native methods with asCALL_THISCALL, not generic wrappers. Windows merges native/generic bodies; Linux retains native registration. The SDK source is a reference revision; unknown non-target callbacks and slots remain neutral. No usable DWARF was supplied.
+  void __cdecl RegisterScriptDictionary_Native(asIScriptEngine *engine)
+  {
+    int (__cdecl *RegisterObjectBehaviour)(asIScriptEngine *, const char *, DictionaryBehaviour, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // eax
+    char *v2; // ecx
+    int (__cdecl *v3)(asIScriptEngine *, const char *, DictionaryBehaviour, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v4; // edx
+    int (__cdecl *v5)(asIScriptEngine *, const char *, DictionaryBehaviour, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v6; // ecx
+    int (__cdecl *v7)(asIScriptEngine *, const char *, DictionaryBehaviour, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v8; // ecx
+    int (__cdecl *RegisterObjectMethod)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // eax
+    char *v10; // ecx
+    int (__cdecl *v11)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v12; // edx
+    int (__cdecl *v13)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v14; // eax
+    int (__cdecl *v15)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v16; // eax
+    int (__cdecl *v17)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v18; // eax
+    int (__cdecl *v19)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v20; // eax
+    int (__cdecl *v21)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // eax
+    char *v22; // ecx
+    int (__cdecl *v23)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v24; // eax
+    int (__cdecl *v25)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v26; // eax
+    int (__cdecl *v27)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v28; // eax
+    int (__cdecl *v29)(asIScriptEngine *, const char *, DictionaryBehaviour, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v30; // eax
+    int (__cdecl *v31)(asIScriptEngine *, const char *, DictionaryBehaviour, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v32; // eax
+    int (__cdecl *v33)(asIScriptEngine *, const char *, DictionaryBehaviour, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v34; // ecx
+    int (__cdecl *v35)(asIScriptEngine *, const char *, DictionaryBehaviour, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v36; // edx
+    int (__cdecl *v37)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v38; // ecx
+    int (__cdecl *v39)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v40; // ecx
+    int (__cdecl *v41)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v42; // edx
+    int (__cdecl *v43)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v44; // ecx
+    int (__cdecl *v45)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v46; // edx
+    int (__cdecl *v47)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v48; // ecx
+    int (__cdecl *v49)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v50; // edx
+    int (__cdecl *v51)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v52; // ecx
+    int (__cdecl *v53)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v54; // ecx
+    int (__cdecl *v55)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v56; // edx
+    int (__cdecl *v57)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v58; // ecx
+    int (__cdecl *v59)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v60; // edx
+    int (__cdecl *v61)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v62; // ecx
+    int (__cdecl *v63)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v64; // edx
+    int (__cdecl *v65)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v66; // ecx
+    int (__cdecl *v67)(asIScriptEngine *, const char *, DictionaryBehaviour, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v68; // ecx
+    int (__cdecl *v69)(asIScriptEngine *, const char *, DictionaryBehaviour, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v70; // edx
+    int (__cdecl *v71)(asIScriptEngine *, const char *, DictionaryBehaviour, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v72; // ecx
+    int (__cdecl *v73)(asIScriptEngine *, const char *, DictionaryBehaviour, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // ecx
+    char *v74; // edx
+    int (__cdecl *v75)(asIScriptEngine *, const char *, DictionaryBehaviour, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // edx
+    char *v76; // ecx
+    int (__cdecl *v77)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // eax
+    char *v78; // edx
+    int (__cdecl *v79)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // eax
+    char *v80; // edx
+    int (__cdecl *v81)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // eax
+    char *v82; // edx
+    int (__cdecl *v83)(asIScriptEngine *, const char *, const char *, const asSFuncPtr *, DictionaryCallConv, void *, int, bool); // eax
+    char *v84; // edx
+    _DWORD *v85; // esi
+    int (__cdecl *v86)(int, int); // [esp+100h] [ebp-3Ch] BYREF
+    int v87; // [esp+104h] [ebp-38h]
+    _BYTE v88[3]; // [esp+119h] [ebp-23h] BYREF
+    char v89; // [esp+11Ch] [ebp-20h]
+
+    engine->vtable->RegisterObjectType(engine, "dictionaryValue", 12, 6022u);
+    RegisterObjectBehaviour = engine->vtable->RegisterObjectBehaviour;
+    v2 = (char *)&v86 + 1;
+    do
+    {
+      *v2 = 0;
+      v2[1] = 0;
+      v2[2] = 0;
+      v2[3] = 0;
+      v2[4] = 0;
+      v2[5] = 0;
+      v2[6] = 0;
+      v2[7] = 0;
+      v2 += 8;
+    }
+    while ( v88 != v2 );
+    v89 = 2;
+    v86 = (int (__cdecl *)(int, int))CScriptDictValue_Construct;
+    RegisterObjectBehaviour(
+      engine,
+      "dictionaryValue",
+      asBEHAVE_CONSTRUCT,
+      "void f()",
+      (const asSFuncPtr *)&v86,
+      asCALL_CDECL_OBJLAST,
+      nullptr,
+      0,
+      0);
+    v3 = engine->vtable->RegisterObjectBehaviour;
+    v4 = (char *)&v86 + 1;
+    do
+    {
+      *v4 = 0;
+      v4[1] = 0;
+      v4[2] = 0;
+      v4[3] = 0;
+      v4[4] = 0;
+      v4[5] = 0;
+      v4[6] = 0;
+      v4[7] = 0;
+      v4 += 8;
+    }
+    while ( v88 != v4 );
+    v89 = 2;
+    v86 = (int (__cdecl *)(int, int))CScriptDictValue_Destruct;
+    v3(
+      engine,
+      "dictionaryValue",
+      asBEHAVE_DESTRUCT,
+      "void f()",
+      (const asSFuncPtr *)&v86,
+      asCALL_CDECL_OBJLAST,
+      nullptr,
+      0,
+      0);
+    v5 = engine->vtable->RegisterObjectBehaviour;
+    v6 = (char *)&v86 + 1;
+    do
+    {
+      *v6 = 0;
+      v6[1] = 0;
+      v6[2] = 0;
+      v6[3] = 0;
+      v6[4] = 0;
+      v6[5] = 0;
+      v6[6] = 0;
+      v6[7] = 0;
+      v6 += 8;
+    }
+    while ( v88 != v6 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int, int))CScriptDictValue::EnumReferences;
+    v87 = 0;
+    v5(
+      engine,
+      "dictionaryValue",
+      asBEHAVE_ENUMREFS,
+      "void f(int&in)",
+      (const asSFuncPtr *)&v86,
+      asCALL_THISCALL,
+      nullptr,
+      0,
+      0);
+    v7 = engine->vtable->RegisterObjectBehaviour;
+    v8 = (char *)&v86 + 1;
+    do
+    {
+      *v8 = 0;
+      v8[1] = 0;
+      v8[2] = 0;
+      v8[3] = 0;
+      v8[4] = 0;
+      v8[5] = 0;
+      v8[6] = 0;
+      v8[7] = 0;
+      v8 += 8;
+    }
+    while ( v88 != v8 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int, int))CScriptDictValue::FreeValue;
+    v87 = 0;
+    v7(
+      engine,
+      "dictionaryValue",
+      asBEHAVE_RELEASEREFS,
+      "void f(int&in)",
+      (const asSFuncPtr *)&v86,
+      asCALL_THISCALL,
+      nullptr,
+      0,
+      0);
+    RegisterObjectMethod = engine->vtable->RegisterObjectMethod;
+    v10 = (char *)&v86 + 1;
+    do
+    {
+      *v10 = 0;
+      v10[1] = 0;
+      v10[2] = 0;
+      v10[3] = 0;
+      v10[4] = 0;
+      v10[5] = 0;
+      v10[6] = 0;
+      v10[7] = 0;
+      v10 += 8;
+    }
+    while ( v88 != v10 );
+    v89 = 2;
+    v86 = (int (__cdecl *)(int, int))CScriptDictValue_opAssign;
+    RegisterObjectMethod(
+      engine,
+      "dictionaryValue",
+      "dictionaryValue &opAssign(const dictionaryValue &in)",
+      (const asSFuncPtr *)&v86,
+      asCALL_CDECL_OBJLAST,
+      nullptr,
+      0,
+      0);
+    v11 = engine->vtable->RegisterObjectMethod;
+    v12 = (char *)&v86 + 1;
+    do
+    {
+      *v12 = 0;
+      v12[1] = 0;
+      v12[2] = 0;
+      v12[3] = 0;
+      v12[4] = 0;
+      v12[5] = 0;
+      v12[6] = 0;
+      v12[7] = 0;
+      v12 += 8;
+    }
+    while ( v88 != v12 );
+    v89 = 2;
+    v86 = (int (__cdecl *)(int, int))CScriptDictValue_opAssign;
+    v11(
+      engine,
+      "dictionaryValue",
+      "dictionaryValue &opHndlAssign(const ?&in)",
+      (const asSFuncPtr *)&v86,
+      asCALL_CDECL_OBJLAST,
+      nullptr,
+      0,
+      0);
+    v13 = engine->vtable->RegisterObjectMethod;
+    v14 = (char *)&v86 + 1;
+    do
+    {
+      *v14 = 0;
+      v14[1] = 0;
+      v14[2] = 0;
+      v14[3] = 0;
+      v14[4] = 0;
+      v14[5] = 0;
+      v14[6] = 0;
+      v14[7] = 0;
+      v14 += 8;
+    }
+    while ( v14 != v88 );
+    v89 = 2;
+    v86 = (int (__cdecl *)(int, int))CScriptDictValue_opAssign;
+    v13(
+      engine,
+      "dictionaryValue",
+      "dictionaryValue &opHndlAssign(const dictionaryValue &in)",
+      (const asSFuncPtr *)&v86,
+      asCALL_CDECL_OBJLAST,
+      nullptr,
+      0,
+      0);
+    v15 = engine->vtable->RegisterObjectMethod;
+    v16 = (char *)&v86 + 1;
+    do
+    {
+      *v16 = 0;
+      v16[1] = 0;
+      v16[2] = 0;
+      v16[3] = 0;
+      v16[4] = 0;
+      v16[5] = 0;
+      v16[6] = 0;
+      v16[7] = 0;
+      v16 += 8;
+    }
+    while ( v88 != v16 );
+    v89 = 2;
+    v86 = (int (__cdecl *)(int, int))CScriptDictValue_opAssign;
+    v15(
+      engine,
+      "dictionaryValue",
+      "dictionaryValue &opAssign(const ?&in)",
+      (const asSFuncPtr *)&v86,
+      asCALL_CDECL_OBJLAST,
+      nullptr,
+      0,
+      0);
+    v17 = engine->vtable->RegisterObjectMethod;
+    v18 = (char *)&v86 + 1;
+    do
+    {
+      *v18 = 0;
+      v18[1] = 0;
+      v18[2] = 0;
+      v18[3] = 0;
+      v18[4] = 0;
+      v18[5] = 0;
+      v18[6] = 0;
+      v18[7] = 0;
+      v18 += 8;
+    }
+    while ( v88 != v18 );
+    v89 = 2;
+    v86 = (int (__cdecl *)(int, int))CScriptDictValue_opAssign;
+    v17(
+      engine,
+      "dictionaryValue",
+      "dictionaryValue &opAssign(double)",
+      (const asSFuncPtr *)&v86,
+      asCALL_CDECL_OBJLAST,
+      nullptr,
+      0,
+      0);
+    v19 = engine->vtable->RegisterObjectMethod;
+    v20 = (char *)&v86 + 1;
+    do
+    {
+      *v20 = 0;
+      v20[1] = 0;
+      v20[2] = 0;
+      v20[3] = 0;
+      v20[4] = 0;
+      v20[5] = 0;
+      v20[6] = 0;
+      v20[7] = 0;
+      v20 += 8;
+    }
+    while ( v88 != v20 );
+    v89 = 2;
+    v86 = (int (__cdecl *)(int, int))CScriptDictValue_opAssign;
+    v19(
+      engine,
+      "dictionaryValue",
+      "dictionaryValue &opAssign(int64)",
+      (const asSFuncPtr *)&v86,
+      asCALL_CDECL_OBJLAST,
+      nullptr,
+      0,
+      0);
+    v21 = engine->vtable->RegisterObjectMethod;
+    v22 = (char *)&v86 + 1;
+    do
+    {
+      *v22 = 0;
+      v22[1] = 0;
+      v22[2] = 0;
+      v22[3] = 0;
+      v22[4] = 0;
+      v22[5] = 0;
+      v22[6] = 0;
+      v22[7] = 0;
+      v22 += 8;
+    }
+    while ( v88 != v22 );
+    v89 = 2;
+    v86 = (int (__cdecl *)(int, int))CScriptDictValue_opCast;
+    v21(engine, "dictionaryValue", "void opCast(?&out)", (const asSFuncPtr *)&v86, asCALL_CDECL_OBJLAST, nullptr, 0, 0);
+    v23 = engine->vtable->RegisterObjectMethod;
+    v24 = (char *)&v86 + 1;
+    do
+    {
+      *v24 = 0;
+      v24[1] = 0;
+      v24[2] = 0;
+      v24[3] = 0;
+      v24[4] = 0;
+      v24[5] = 0;
+      v24[6] = 0;
+      v24[7] = 0;
+      v24 += 8;
+    }
+    while ( v88 != v24 );
+    v89 = 2;
+    v86 = (int (__cdecl *)(int, int))CScriptDictValue_opCast;
+    v23(engine, "dictionaryValue", "void opConv(?&out)", (const asSFuncPtr *)&v86, asCALL_CDECL_OBJLAST, nullptr, 0, 0);
+    v25 = engine->vtable->RegisterObjectMethod;
+    v26 = (char *)&v86 + 1;
+    do
+    {
+      *v26 = 0;
+      v26[1] = 0;
+      v26[2] = 0;
+      v26[3] = 0;
+      v26[4] = 0;
+      v26[5] = 0;
+      v26[6] = 0;
+      v26[7] = 0;
+      v26 += 8;
+    }
+    while ( v88 != v26 );
+    v89 = 2;
+    v86 = (int (__cdecl *)(int, int))CScriptDictValue_opConvInt;
+    v25(engine, "dictionaryValue", "int64 opConv()", (const asSFuncPtr *)&v86, asCALL_CDECL_OBJLAST, nullptr, 0, 0);
+    v27 = engine->vtable->RegisterObjectMethod;
+    v28 = (char *)&v86 + 1;
+    do
+    {
+      *v28 = 0;
+      v28[1] = 0;
+      v28[2] = 0;
+      v28[3] = 0;
+      v28[4] = 0;
+      v28[5] = 0;
+      v28[6] = 0;
+      v28[7] = 0;
+      v28 += 8;
+    }
+    while ( v28 != v88 );
+    v89 = 2;
+    v86 = (int (__cdecl *)(int, int))CScriptDictValue_opConvDouble;
+    v27(engine, "dictionaryValue", "double opConv()", (const asSFuncPtr *)&v86, asCALL_CDECL_OBJLAST, nullptr, 0, 0);
+    engine->vtable->RegisterObjectType(engine, "dictionary", 44, 5u);
+    v29 = engine->vtable->RegisterObjectBehaviour;
+    v30 = (char *)&v86 + 1;
+    do
+    {
+      *v30 = 0;
+      v30[1] = 0;
+      v30[2] = 0;
+      v30[3] = 0;
+      v30[4] = 0;
+      v30[5] = 0;
+      v30[6] = 0;
+      v30[7] = 0;
+      v30 += 8;
+    }
+    while ( v88 != v30 );
+    v89 = 1;
+    v86 = (int (__cdecl *)(int, int))ScriptDictionaryFactory_Generic; // found_funcptr ScriptDictionaryFactory_Generic: dictionary@ f(), asBEHAVE_FACTORY, asCALL_GENERIC
+    v29(
+      engine,
+      "dictionary",
+      asBEHAVE_FACTORY,
+      "dictionary@ f()",
+      (const asSFuncPtr *)&v86,
+      asCALL_GENERIC,
+      nullptr,
+      0,
+      0);
+    v31 = engine->vtable->RegisterObjectBehaviour;
+    v32 = (char *)&v86 + 1;
+    do
+    {
+      *v32 = 0;
+      v32[1] = 0;
+      v32[2] = 0;
+      v32[3] = 0;
+      v32[4] = 0;
+      v32[5] = 0;
+      v32[6] = 0;
+      v32[7] = 0;
+      v32 += 8;
+    }
+    while ( v88 != v32 );
+    v89 = 1;
+    v86 = (int (__cdecl *)(int, int))ScriptDictionaryListFactory_Generic;
+    v31(
+      engine,
+      "dictionary",
+      asBEHAVE_LIST_FACTORY,
+      "dictionary @f(int &in) {repeat {string, ?}}",
+      (const asSFuncPtr *)&v86,
+      asCALL_GENERIC,
+      nullptr,
+      0,
+      0);
+    v33 = engine->vtable->RegisterObjectBehaviour;
+    v34 = (char *)&v86 + 1;
+    do
+    {
+      *v34 = 0;
+      v34[1] = 0;
+      v34[2] = 0;
+      v34[3] = 0;
+      v34[4] = 0;
+      v34[5] = 0;
+      v34[6] = 0;
+      v34[7] = 0;
+      v34 += 8;
+    }
+    while ( v88 != v34 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int, int))CScriptDictionary::AddRef; // found_funcptr CScriptDictionary_AddRef: native dictionary member for asBEHAVE_ADDREF
+    v87 = 0;
+    v33(engine, "dictionary", asBEHAVE_ADDREF, "void f()", (const asSFuncPtr *)&v86, asCALL_THISCALL, nullptr, 0, 0);
+    v35 = engine->vtable->RegisterObjectBehaviour;
+    v36 = (char *)&v86 + 1;
+    do
+    {
+      *v36 = 0;
+      v36[1] = 0;
+      v36[2] = 0;
+      v36[3] = 0;
+      v36[4] = 0;
+      v36[5] = 0;
+      v36[6] = 0;
+      v36[7] = 0;
+      v36 += 8;
+    }
+    while ( v88 != v36 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int, int))CScriptDictionary::Release; // found_funcptr CScriptDictionary_Release: native dictionary member for asBEHAVE_RELEASE
+    v87 = 0;
+    v35(engine, "dictionary", asBEHAVE_RELEASE, "void f()", (const asSFuncPtr *)&v86, asCALL_THISCALL, nullptr, 0, 0);
+    v37 = engine->vtable->RegisterObjectMethod;
+    v38 = (char *)&v86 + 1;
+    do
+    {
+      *v38 = 0;
+      v38[1] = 0;
+      v38[2] = 0;
+      v38[3] = 0;
+      v38[4] = 0;
+      v38[5] = 0;
+      v38[6] = 0;
+      v38[7] = 0;
+      v38 += 8;
+    }
+    while ( v88 != v38 );
+    v89 = 3;
+    v86 = CScriptDictionary::operator=;
+    v87 = 0;
+    v37(
+      engine,
+      "dictionary",
+      "dictionary &opAssign(const dictionary &in)",
+      (const asSFuncPtr *)&v86,
+      asCALL_THISCALL,
+      nullptr,
+      0,
+      0);
+    v39 = engine->vtable->RegisterObjectMethod;
+    v40 = (char *)&v86 + 1;
+    do
+    {
+      *v40 = 0;
+      v40[1] = 0;
+      v40[2] = 0;
+      v40[3] = 0;
+      v40[4] = 0;
+      v40[5] = 0;
+      v40[6] = 0;
+      v40[7] = 0;
+      v40 += 8;
+    }
+    while ( v88 != v40 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int, int))CScriptDictionary::Set; // found_funcptr CScriptDictionary_Set: native dictionary member for "void set(const string &in, const ?&in)"
+    v87 = 0;
+    v39(
+      engine,
+      "dictionary",
+      "void set(const string &in, const ?&in)",
+      (const asSFuncPtr *)&v86,
+      asCALL_THISCALL,
+      nullptr,
+      0,
+      0);
+    v41 = engine->vtable->RegisterObjectMethod;
+    v42 = (char *)&v86 + 1;
+    do
+    {
+      *v42 = 0;
+      v42[1] = 0;
+      v42[2] = 0;
+      v42[3] = 0;
+      v42[4] = 0;
+      v42[5] = 0;
+      v42[6] = 0;
+      v42[7] = 0;
+      v42 += 8;
+    }
+    while ( v42 != v88 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int, int))CScriptDictionary::Get; // found_funcptr CScriptDictionary_Get: native dictionary member for "bool get(const string &in, ?&out) const"
+    v87 = 0;
+    v41(
+      engine,
+      "dictionary",
+      "bool get(const string &in, ?&out) const",
+      (const asSFuncPtr *)&v86,
+      asCALL_THISCALL,
+      nullptr,
+      0,
+      0);
+    v43 = engine->vtable->RegisterObjectMethod;
+    v44 = (char *)&v86 + 1;
+    do
+    {
+      *v44 = 0;
+      v44[1] = 0;
+      v44[2] = 0;
+      v44[3] = 0;
+      v44[4] = 0;
+      v44[5] = 0;
+      v44[6] = 0;
+      v44[7] = 0;
+      v44 += 8;
+    }
+    while ( v88 != v44 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int, int))CScriptDictionary::Set;
+    v87 = 0;
+    v43(
+      engine,
+      "dictionary",
+      "void set(const string &in, const int64&in)",
+      (const asSFuncPtr *)&v86,
+      asCALL_THISCALL,
+      nullptr,
+      0,
+      0);
+    v45 = engine->vtable->RegisterObjectMethod;
+    v46 = (char *)&v86 + 1;
+    do
+    {
+      *v46 = 0;
+      v46[1] = 0;
+      v46[2] = 0;
+      v46[3] = 0;
+      v46[4] = 0;
+      v46[5] = 0;
+      v46[6] = 0;
+      v46[7] = 0;
+      v46 += 8;
+    }
+    while ( v88 != v46 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int, int))CScriptDictionary::Get;
+    v87 = 0;
+    v45(
+      engine,
+      "dictionary",
+      "bool get(const string &in, int64&out) const",
+      (const asSFuncPtr *)&v86,
+      asCALL_THISCALL,
+      nullptr,
+      0,
+      0);
+    v47 = engine->vtable->RegisterObjectMethod;
+    v48 = (char *)&v86 + 1;
+    do
+    {
+      *v48 = 0;
+      v48[1] = 0;
+      v48[2] = 0;
+      v48[3] = 0;
+      v48[4] = 0;
+      v48[5] = 0;
+      v48[6] = 0;
+      v48[7] = 0;
+      v48 += 8;
+    }
+    while ( v88 != v48 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int, int))CScriptDictionary::Set;
+    v87 = 0;
+    v47(
+      engine,
+      "dictionary",
+      "void set(const string &in, const double&in)",
+      (const asSFuncPtr *)&v86,
+      asCALL_THISCALL,
+      nullptr,
+      0,
+      0);
+    v49 = engine->vtable->RegisterObjectMethod;
+    v50 = (char *)&v86 + 1;
+    do
+    {
+      *v50 = 0;
+      v50[1] = 0;
+      v50[2] = 0;
+      v50[3] = 0;
+      v50[4] = 0;
+      v50[5] = 0;
+      v50[6] = 0;
+      v50[7] = 0;
+      v50 += 8;
+    }
+    while ( v88 != v50 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int, int))CScriptDictionary::Get;
+    v87 = 0;
+    v49(
+      engine,
+      "dictionary",
+      "bool get(const string &in, double&out) const",
+      (const asSFuncPtr *)&v86,
+      asCALL_THISCALL,
+      nullptr,
+      0,
+      0);
+    v51 = engine->vtable->RegisterObjectMethod;
+    v52 = (char *)&v86 + 1;
+    do
+    {
+      *v52 = 0;
+      v52[1] = 0;
+      v52[2] = 0;
+      v52[3] = 0;
+      v52[4] = 0;
+      v52[5] = 0;
+      v52[6] = 0;
+      v52[7] = 0;
+      v52 += 8;
+    }
+    while ( v88 != v52 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int, int))CScriptDictionary::Exists; // found_funcptr CScriptDictionary_Exists: native dictionary member for "bool exists(const string &in) const"
+    v87 = 0;
+    v51(
+      engine,
+      "dictionary",
+      "bool exists(const string &in) const",
+      (const asSFuncPtr *)&v86,
+      asCALL_THISCALL,
+      nullptr,
+      0,
+      0);
+    v53 = engine->vtable->RegisterObjectMethod;
+    v54 = (char *)&v86 + 1;
+    do
+    {
+      *v54 = 0;
+      v54[1] = 0;
+      v54[2] = 0;
+      v54[3] = 0;
+      v54[4] = 0;
+      v54[5] = 0;
+      v54[6] = 0;
+      v54[7] = 0;
+      v54 += 8;
+    }
+    while ( v88 != v54 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int, int))CScriptDictionary::IsEmpty; // found_funcptr CScriptDictionary_IsEmpty: native dictionary member for "bool isEmpty() const"
+    v87 = 0;
+    v53(engine, "dictionary", "bool isEmpty() const", (const asSFuncPtr *)&v86, asCALL_THISCALL, nullptr, 0, 0);
+    v55 = engine->vtable->RegisterObjectMethod;
+    v56 = (char *)&v86 + 1;
+    do
+    {
+      *v56 = 0;
+      v56[1] = 0;
+      v56[2] = 0;
+      v56[3] = 0;
+      v56[4] = 0;
+      v56[5] = 0;
+      v56[6] = 0;
+      v56[7] = 0;
+      v56 += 8;
+    }
+    while ( v56 != v88 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int, int))CScriptDictionary::GetSize; // found_funcptr CScriptDictionary_GetSize: native dictionary member for "uint getSize() const"
+    v87 = 0;
+    v55(engine, "dictionary", "uint getSize() const", (const asSFuncPtr *)&v86, asCALL_THISCALL, nullptr, 0, 0);
+    v57 = engine->vtable->RegisterObjectMethod;
+    v58 = (char *)&v86 + 1;
+    do
+    {
+      *v58 = 0;
+      v58[1] = 0;
+      v58[2] = 0;
+      v58[3] = 0;
+      v58[4] = 0;
+      v58[5] = 0;
+      v58[6] = 0;
+      v58[7] = 0;
+      v58 += 8;
+    }
+    while ( v58 != v88 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int, int))CScriptDictionary::Delete; // found_funcptr CScriptDictionary_Delete: native dictionary member for "bool delete(const string &in)"
+    v87 = 0;
+    v57(engine, "dictionary", "bool delete(const string &in)", (const asSFuncPtr *)&v86, asCALL_THISCALL, nullptr, 0, 0);
+    v59 = engine->vtable->RegisterObjectMethod;
+    v60 = (char *)&v86 + 1;
+    do
+    {
+      *v60 = 0;
+      v60[1] = 0;
+      v60[2] = 0;
+      v60[3] = 0;
+      v60[4] = 0;
+      v60[5] = 0;
+      v60[6] = 0;
+      v60[7] = 0;
+      v60 += 8;
+    }
+    while ( v60 != v88 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int, int))CScriptDictionary::DeleteAll; // found_funcptr CScriptDictionary_DeleteAll: native dictionary member for "void deleteAll()"
+    v87 = 0;
+    v59(engine, "dictionary", "void deleteAll()", (const asSFuncPtr *)&v86, asCALL_THISCALL, nullptr, 0, 0);
+    v61 = engine->vtable->RegisterObjectMethod;
+    v62 = (char *)&v86 + 1;
+    do
+    {
+      *v62 = 0;
+      v62[1] = 0;
+      v62[2] = 0;
+      v62[3] = 0;
+      v62[4] = 0;
+      v62[5] = 0;
+      v62[6] = 0;
+      v62[7] = 0;
+      v62 += 8;
+    }
+    while ( v88 != v62 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int, int))CScriptDictionary::GetKeys;
+    v87 = 0;
+    v61(engine, "dictionary", "array<string> @getKeys() const", (const asSFuncPtr *)&v86, asCALL_THISCALL, nullptr, 0, 0);
+    v63 = engine->vtable->RegisterObjectMethod;
+    v64 = (char *)&v86 + 1;
+    do
+    {
+      *v64 = 0;
+      v64[1] = 0;
+      v64[2] = 0;
+      v64[3] = 0;
+      v64[4] = 0;
+      v64[5] = 0;
+      v64[6] = 0;
+      v64[7] = 0;
+      v64 += 8;
+    }
+    while ( v64 != v88 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int, int))CScriptDictionary::operator[];
+    v87 = 0;
+    v63(
+      engine,
+      "dictionary",
+      "dictionaryValue &opIndex(const string &in)",
+      (const asSFuncPtr *)&v86,
+      asCALL_THISCALL,
+      nullptr,
+      0,
+      0);
+    v65 = engine->vtable->RegisterObjectMethod;
+    v66 = (char *)&v86 + 1;
+    do
+    {
+      *v66 = 0;
+      v66[1] = 0;
+      v66[2] = 0;
+      v66[3] = 0;
+      v66[4] = 0;
+      v66[5] = 0;
+      v66[6] = 0;
+      v66[7] = 0;
+      v66 += 8;
+    }
+    while ( v66 != v88 );
+    v89 = 3;
+    v86 = CScriptDictionary::operator[];
+    v87 = 0;
+    v65(
+      engine,
+      "dictionary",
+      "const dictionaryValue &opIndex(const string &in) const",
+      (const asSFuncPtr *)&v86,
+      asCALL_THISCALL,
+      nullptr,
+      0,
+      0);
+    v67 = engine->vtable->RegisterObjectBehaviour;
+    v68 = (char *)&v86 + 1;
+    do
+    {
+      *v68 = 0;
+      v68[1] = 0;
+      v68[2] = 0;
+      v68[3] = 0;
+      v68[4] = 0;
+      v68[5] = 0;
+      v68[6] = 0;
+      v68[7] = 0;
+      v68 += 8;
+    }
+    while ( v68 != v88 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int, int))CScriptDictionary::GetRefCount;
+    v87 = 0;
+    v67(engine, "dictionary", asBEHAVE_GETREFCOUNT, "int f()", (const asSFuncPtr *)&v86, asCALL_THISCALL, nullptr, 0, 0);
+    v69 = engine->vtable->RegisterObjectBehaviour;
+    v70 = (char *)&v86 + 1;
+    do
+    {
+      *v70 = 0;
+      v70[1] = 0;
+      v70[2] = 0;
+      v70[3] = 0;
+      v70[4] = 0;
+      v70[5] = 0;
+      v70[6] = 0;
+      v70[7] = 0;
+      v70 += 8;
+    }
+    while ( v88 != v70 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int, int))CScriptDictionary::SetGCFlag;
+    v87 = 0;
+    v69(engine, "dictionary", asBEHAVE_SETGCFLAG, "void f()", (const asSFuncPtr *)&v86, asCALL_THISCALL, nullptr, 0, 0);
+    v71 = engine->vtable->RegisterObjectBehaviour;
+    v72 = (char *)&v86 + 1;
+    do
+    {
+      *v72 = 0;
+      v72[1] = 0;
+      v72[2] = 0;
+      v72[3] = 0;
+      v72[4] = 0;
+      v72[5] = 0;
+      v72[6] = 0;
+      v72[7] = 0;
+      v72 += 8;
+    }
+    while ( v72 != v88 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int, int))CScriptDictionary::GetGCFlag;
+    v87 = 0;
+    v71(engine, "dictionary", asBEHAVE_GETGCFLAG, "bool f()", (const asSFuncPtr *)&v86, asCALL_THISCALL, nullptr, 0, 0);
+    v73 = engine->vtable->RegisterObjectBehaviour;
+    v74 = (char *)&v86 + 1;
+    do
+    {
+      *v74 = 0;
+      v74[1] = 0;
+      v74[2] = 0;
+      v74[3] = 0;
+      v74[4] = 0;
+      v74[5] = 0;
+      v74[6] = 0;
+      v74[7] = 0;
+      v74 += 8;
+    }
+    while ( v74 != v88 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int, int))CScriptDictionary::EnumReferences;
+    v87 = 0;
+    v73(
+      engine,
+      "dictionary",
+      asBEHAVE_ENUMREFS,
+      "void f(int&in)",
+      (const asSFuncPtr *)&v86,
+      asCALL_THISCALL,
+      nullptr,
+      0,
+      0);
+    v75 = engine->vtable->RegisterObjectBehaviour;
+    v76 = (char *)&v86 + 1;
+    do
+    {
+      *v76 = 0;
+      v76[1] = 0;
+      v76[2] = 0;
+      v76[3] = 0;
+      v76[4] = 0;
+      v76[5] = 0;
+      v76[6] = 0;
+      v76[7] = 0;
+      v76 += 8;
+    }
+    while ( v76 != v88 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int, int))CScriptDictionary::ReleaseAllReferences;
+    v87 = 0;
+    v75(
+      engine,
+      "dictionary",
+      asBEHAVE_RELEASEREFS,
+      "void f(int&in)",
+      (const asSFuncPtr *)&v86,
+      asCALL_THISCALL,
+      nullptr,
+      0,
+      0);
+    v77 = engine->vtable->RegisterObjectMethod;
+    v78 = (char *)&v86 + 1;
+    do
+    {
+      *v78 = 0;
+      v78[1] = 0;
+      v78[2] = 0;
+      v78[3] = 0;
+      v78[4] = 0;
+      v78[5] = 0;
+      v78[6] = 0;
+      v78[7] = 0;
+      v78 += 8;
+    }
+    while ( v78 != v88 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int, int))CScriptDictionary::IsEmpty;
+    v87 = 0;
+    v77(engine, "dictionary", "bool empty() const", (const asSFuncPtr *)&v86, asCALL_THISCALL, nullptr, 0, 0);
+    v79 = engine->vtable->RegisterObjectMethod;
+    v80 = (char *)&v86 + 1;
+    do
+    {
+      *v80 = 0;
+      v80[1] = 0;
+      v80[2] = 0;
+      v80[3] = 0;
+      v80[4] = 0;
+      v80[5] = 0;
+      v80[6] = 0;
+      v80[7] = 0;
+      v80 += 8;
+    }
+    while ( v80 != v88 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int, int))CScriptDictionary::GetSize;
+    v87 = 0;
+    v79(engine, "dictionary", "uint size() const", (const asSFuncPtr *)&v86, asCALL_THISCALL, nullptr, 0, 0);
+    v81 = engine->vtable->RegisterObjectMethod;
+    v82 = (char *)&v86 + 1;
+    do
+    {
+      *v82 = 0;
+      v82[1] = 0;
+      v82[2] = 0;
+      v82[3] = 0;
+      v82[4] = 0;
+      v82[5] = 0;
+      v82[6] = 0;
+      v82[7] = 0;
+      v82 += 8;
+    }
+    while ( v82 != v88 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int, int))CScriptDictionary::Delete;
+    v87 = 0;
+    v81(engine, "dictionary", "void erase(const string &in)", (const asSFuncPtr *)&v86, asCALL_THISCALL, nullptr, 0, 0);
+    v83 = engine->vtable->RegisterObjectMethod;
+    v84 = (char *)&v86 + 1;
+    do
+    {
+      *v84 = 0;
+      v84[1] = 0;
+      v84[2] = 0;
+      v84[3] = 0;
+      v84[4] = 0;
+      v84[5] = 0;
+      v84[6] = 0;
+      v84[7] = 0;
+      v84 += 8;
+    }
+    while ( v88 != v84 );
+    v89 = 3;
+    v86 = (int (__cdecl *)(int, int))CScriptDictionary::DeleteAll;
+    v87 = 0;
+    ((void (__cdecl *)(asIScriptEngine *, const char *, const char *, int (__cdecl **)(int, int), int, _DWORD))v83)(
+      engine,
+      "dictionary",
+      "void clear()",
+      &v86,
+      3,
+      0);
+    if ( !engine->vtable->GetUserData(engine, 1003) )
+    {
+      v85 = (_DWORD *)operator new(0xCu);
+      engine->vtable->SetUserData(engine, v85, 1003u);
+      ((void (__cdecl *)(asIScriptEngine *))engine->vtable->SetEngineUserDataCleanupCallback)(engine);
+      *v85 = ((int (__cdecl *)(asIScriptEngine *))engine->vtable->unknown_23_to_73[33])(engine);
+      v85[1] = ((int (__cdecl *)(asIScriptEngine *, const char *))engine->vtable->unknown_23_to_73[34])(
+                 engine,
+                 "array<string>");
+      v85[2] = ((int (__cdecl *)(asIScriptEngine *, char *))engine->vtable->unknown_23_to_73[34])(engine, "string");
+    }
+  }

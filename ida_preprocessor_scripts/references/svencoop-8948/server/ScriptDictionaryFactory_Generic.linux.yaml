@@ -1,0 +1,37 @@
+func_name: "ScriptDictionaryFactory_Generic"
+func_va: "0x1b2b36"
+disasm_code: |-
+  .text:001B2B36                 push    edi
+  .text:001B2B37                 push    esi
+  .text:001B2B38                 push    ebx
+  .text:001B2B39                 call    __x86_get_pc_thunk_bx
+  .text:001B2B3E                 add     ebx, (offset _GLOBAL_OFFSET_TABLE_ - $)
+  .text:001B2B44                 mov     esi, [esp+0Ch+generic]
+  .text:001B2B48                 sub     esp, 0Ch
+  .text:001B2B4B                 mov     eax, [esi]
+  .text:001B2B4D                 push    esi
+  .text:001B2B4E                 call    dword ptr [eax+64h]
+  .text:001B2B51                 mov     edi, eax
+  .text:001B2B53                 mov     eax, [esi]
+  .text:001B2B55                 mov     [esp+1Ch+engine], esi
+  .text:001B2B58                 call    dword ptr [eax]
+  .text:001B2B5A                 ; engine
+  .text:001B2B5A                 mov     [esp+1Ch+engine], eax; engine
+  .text:001B2B5D                 call    __ZN17CScriptDictionary6CreateEP15asIScriptEngine; found_call CScriptDictionary_Create: engine overload; resolve this PLT to its independent function body
+  .text:001B2B62                 mov     [edi], eax
+  .text:001B2B64                 add     esp, 10h
+  .text:001B2B67                 pop     ebx
+  .text:001B2B68                 pop     esi
+  .text:001B2B69                 pop     edi
+  .text:001B2B6A                 retn
+procedure: |-
+  // SDK generic factory: engine from GetEngine, store dictionary in GetAddressOfReturnLocation. Windows inlines allocation/construction; Linux calls the independent engine-taking Create. This wrapper is not CScriptDictionary::Create.
+  void __cdecl ScriptDictionaryFactory_Generic(asIScriptGeneric *generic)
+  {
+    CScriptDictionary **returnLocation; // edi
+    asIScriptEngine *engine; // eax
+
+    returnLocation = (CScriptDictionary **)generic->vtable->GetAddressOfReturnLocation(generic);
+    engine = (asIScriptEngine *)generic->vtable->GetEngine(generic);
+    *returnLocation = CScriptDictionary::Create(engine); // found_call CScriptDictionary_Create: allocate dictionary for this engine, then publish the returned object
+  }

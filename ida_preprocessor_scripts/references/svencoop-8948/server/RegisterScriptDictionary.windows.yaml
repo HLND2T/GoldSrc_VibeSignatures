@@ -1,0 +1,2406 @@
+func_name: "RegisterScriptDictionary"
+func_va: "0x10334780"
+disasm_code: |-
+  .text:10334780                 push    offset aAsMaxPortabili; "AS_MAX_PORTABILITY"
+  .text:10334785                 call    sub_10085580
+  .text:1033478A                 ; Str
+  .text:1033478A                 push    eax; Str
+  .text:1033478B                 call    _strstr
+  .text:10334790                 add     esp, 8
+  .text:10334793                 test    eax, eax
+  .text:10334795                 jnz     loc_10334F50
+  .text:1033479B                 jmp     $+5
+  .text:103347A0                 sub     esp, 2Ch
+  .text:103347A3                 mov     eax, ___security_cookie
+  .text:103347A8                 xor     eax, esp
+  .text:103347AA                 mov     [esp+2Ch+var_4], eax
+  .text:103347AE                 push    esi
+  .text:103347AF                 push    edi
+  .text:103347B0                 mov     edi, [esp+34h+engine]
+  .text:103347B4                 mov     ecx, edi
+  .text:103347B6                 push    1786h
+  .text:103347BB                 push    10h
+  .text:103347BD                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:103347C2                 mov     eax, [edi]
+  .text:103347C4                 call    dword ptr [eax+4Ch]
+  .text:103347C7                 mov     esi, [edi]
+  .text:103347C9                 lea     eax, [esp+18h+var_10]
+  .text:103347CD                 push    0
+  .text:103347CF                 push    0
+  .text:103347D1                 push    0
+  .text:103347D3                 push    4
+  .text:103347D5                 ; function
+  .text:103347D5                 push    offset sub_10335C80; function
+  .text:103347DA                 ; result
+  .text:103347DA                 push    eax; result
+  .text:103347DB                 call    asFunctionPtr_Global; Verified x86 asSFuncPtr conversion: flag 2 at +32; member/global/generic pointer materialization.
+  .text:103347E0                 add     esp, 8
+  .text:103347E3                 mov     ecx, edi
+  .text:103347E5                 push    eax
+  .text:103347E6                 push    offset aVoidF; "void f()"
+  .text:103347EB                 push    0
+  .text:103347ED                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:103347F2                 call    dword ptr [esi+58h]
+  .text:103347F5                 mov     esi, [edi]
+  .text:103347F7                 lea     eax, [esp+18h+var_10]
+  .text:103347FB                 push    0
+  .text:103347FD                 push    0
+  .text:103347FF                 push    0
+  .text:10334801                 push    4
+  .text:10334803                 ; function
+  .text:10334803                 push    offset sub_10335CA0; function
+  .text:10334808                 ; result
+  .text:10334808                 push    eax; result
+  .text:10334809                 call    asFunctionPtr_Global; Verified x86 asSFuncPtr conversion: flag 2 at +32; member/global/generic pointer materialization.
+  .text:1033480E                 add     esp, 8
+  .text:10334811                 mov     ecx, edi
+  .text:10334813                 push    eax
+  .text:10334814                 push    offset aVoidF; "void f()"
+  .text:10334819                 push    2
+  .text:1033481B                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:10334820                 call    dword ptr [esi+58h]
+  .text:10334823                 mov     esi, [edi]
+  .text:10334825                 lea     eax, [esp+18h+var_10]
+  .text:10334829                 push    0
+  .text:1033482B                 push    0
+  .text:1033482D                 push    0
+  .text:1033482F                 push    3
+  .text:10334831                 ; function
+  .text:10334831                 push    offset sub_10333850; function
+  .text:10334836                 ; result
+  .text:10334836                 push    eax; result
+  .text:10334837                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:1033483C                 add     esp, 8
+  .text:1033483F                 mov     ecx, edi
+  .text:10334841                 push    eax
+  .text:10334842                 push    offset aVoidFIntIn; "void f(int&in)"
+  .text:10334847                 push    0Ch
+  .text:10334849                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:1033484E                 call    dword ptr [esi+58h]
+  .text:10334851                 mov     esi, [edi]
+  .text:10334853                 lea     eax, [esp+18h+var_10]
+  .text:10334857                 push    0
+  .text:10334859                 push    0
+  .text:1033485B                 push    0
+  .text:1033485D                 push    3
+  .text:1033485F                 ; function
+  .text:1033485F                 push    offset sub_10333810; function
+  .text:10334864                 ; result
+  .text:10334864                 push    eax; result
+  .text:10334865                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:1033486A                 add     esp, 8
+  .text:1033486D                 mov     ecx, edi
+  .text:1033486F                 push    eax
+  .text:10334870                 push    offset aVoidFIntIn; "void f(int&in)"
+  .text:10334875                 push    0Dh
+  .text:10334877                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:1033487C                 call    dword ptr [esi+58h]
+  .text:1033487F                 mov     esi, [edi]
+  .text:10334881                 lea     eax, [esp+18h+var_10]
+  .text:10334885                 push    0
+  .text:10334887                 push    0
+  .text:10334889                 push    0
+  .text:1033488B                 push    4
+  .text:1033488D                 ; function
+  .text:1033488D                 push    offset sub_10335DA0; function
+  .text:10334892                 ; result
+  .text:10334892                 push    eax; result
+  .text:10334893                 call    asFunctionPtr_Global; Verified x86 asSFuncPtr conversion: flag 2 at +32; member/global/generic pointer materialization.
+  .text:10334898                 add     esp, 8
+  .text:1033489B                 mov     ecx, edi
+  .text:1033489D                 push    eax
+  .text:1033489E                 push    offset aDictionaryvalu_0; "dictionaryValue &opAssign(const diction"...
+  .text:103348A3                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:103348A8                 call    dword ptr [esi+54h]
+  .text:103348AB                 mov     esi, [edi]
+  .text:103348AD                 lea     eax, [esp+18h+var_10]
+  .text:103348B1                 push    0
+  .text:103348B3                 push    0
+  .text:103348B5                 push    0
+  .text:103348B7                 push    4
+  .text:103348B9                 ; function
+  .text:103348B9                 push    offset sub_10335D70; function
+  .text:103348BE                 ; result
+  .text:103348BE                 push    eax; result
+  .text:103348BF                 call    asFunctionPtr_Global; Verified x86 asSFuncPtr conversion: flag 2 at +32; member/global/generic pointer materialization.
+  .text:103348C4                 add     esp, 8
+  .text:103348C7                 mov     ecx, edi
+  .text:103348C9                 push    eax
+  .text:103348CA                 push    offset aDictionaryvalu_1; "dictionaryValue &opHndlAssign(const ?&i"...
+  .text:103348CF                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:103348D4                 call    dword ptr [esi+54h]
+  .text:103348D7                 mov     esi, [edi]
+  .text:103348D9                 lea     eax, [esp+18h+var_10]
+  .text:103348DD                 push    0
+  .text:103348DF                 push    0
+  .text:103348E1                 push    0
+  .text:103348E3                 push    4
+  .text:103348E5                 ; function
+  .text:103348E5                 push    offset sub_10335DA0; function
+  .text:103348EA                 ; result
+  .text:103348EA                 push    eax; result
+  .text:103348EB                 call    asFunctionPtr_Global; Verified x86 asSFuncPtr conversion: flag 2 at +32; member/global/generic pointer materialization.
+  .text:103348F0                 add     esp, 8
+  .text:103348F3                 mov     ecx, edi
+  .text:103348F5                 push    eax
+  .text:103348F6                 push    offset aDictionaryvalu_2; "dictionaryValue &opHndlAssign(const dic"...
+  .text:103348FB                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:10334900                 call    dword ptr [esi+54h]
+  .text:10334903                 mov     esi, [edi]
+  .text:10334905                 lea     eax, [esp+18h+var_10]
+  .text:10334909                 push    0
+  .text:1033490B                 push    0
+  .text:1033490D                 push    0
+  .text:1033490F                 push    4
+  .text:10334911                 ; function
+  .text:10334911                 push    offset sub_10335D70; function
+  .text:10334916                 ; result
+  .text:10334916                 push    eax; result
+  .text:10334917                 call    asFunctionPtr_Global; Verified x86 asSFuncPtr conversion: flag 2 at +32; member/global/generic pointer materialization.
+  .text:1033491C                 add     esp, 8
+  .text:1033491F                 mov     ecx, edi
+  .text:10334921                 push    eax
+  .text:10334922                 push    offset aDictionaryvalu_3; "dictionaryValue &opAssign(const ?&in)"
+  .text:10334927                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:1033492C                 call    dword ptr [esi+54h]
+  .text:1033492F                 mov     esi, [edi]
+  .text:10334931                 lea     eax, [esp+18h+var_10]
+  .text:10334935                 push    0
+  .text:10334937                 push    0
+  .text:10334939                 push    0
+  .text:1033493B                 push    4
+  .text:1033493D                 ; function
+  .text:1033493D                 push    offset sub_10335DF0; function
+  .text:10334942                 ; result
+  .text:10334942                 push    eax; result
+  .text:10334943                 call    asFunctionPtr_Global; Verified x86 asSFuncPtr conversion: flag 2 at +32; member/global/generic pointer materialization.
+  .text:10334948                 add     esp, 8
+  .text:1033494B                 mov     ecx, edi
+  .text:1033494D                 push    eax
+  .text:1033494E                 push    offset aDictionaryvalu_4; "dictionaryValue &opAssign(double)"
+  .text:10334953                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:10334958                 call    dword ptr [esi+54h]
+  .text:1033495B                 mov     esi, [edi]
+  .text:1033495D                 lea     eax, [esp+18h+var_10]
+  .text:10334961                 push    0
+  .text:10334963                 push    0
+  .text:10334965                 push    0
+  .text:10334967                 push    4
+  .text:10334969                 ; function
+  .text:10334969                 push    offset sub_10335E20; function
+  .text:1033496E                 ; result
+  .text:1033496E                 push    eax; result
+  .text:1033496F                 call    asFunctionPtr_Global; Verified x86 asSFuncPtr conversion: flag 2 at +32; member/global/generic pointer materialization.
+  .text:10334974                 add     esp, 8
+  .text:10334977                 mov     ecx, edi
+  .text:10334979                 push    eax
+  .text:1033497A                 push    offset aDictionaryvalu_5; "dictionaryValue &opAssign(int64)"
+  .text:1033497F                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:10334984                 call    dword ptr [esi+54h]
+  .text:10334987                 mov     esi, [edi]
+  .text:10334989                 lea     eax, [esp+18h+var_10]
+  .text:1033498D                 push    0
+  .text:1033498F                 push    0
+  .text:10334991                 push    0
+  .text:10334993                 push    4
+  .text:10334995                 ; function
+  .text:10334995                 push    offset sub_10335E50; function
+  .text:1033499A                 ; result
+  .text:1033499A                 push    eax; result
+  .text:1033499B                 call    asFunctionPtr_Global; Verified x86 asSFuncPtr conversion: flag 2 at +32; member/global/generic pointer materialization.
+  .text:103349A0                 add     esp, 8
+  .text:103349A3                 mov     ecx, edi
+  .text:103349A5                 push    eax
+  .text:103349A6                 push    offset aVoidOpcastOut; "void opCast(?&out)"
+  .text:103349AB                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:103349B0                 call    dword ptr [esi+54h]
+  .text:103349B3                 mov     esi, [edi]
+  .text:103349B5                 lea     eax, [esp+18h+var_10]
+  .text:103349B9                 push    0
+  .text:103349BB                 push    0
+  .text:103349BD                 push    0
+  .text:103349BF                 push    4
+  .text:103349C1                 ; function
+  .text:103349C1                 push    offset sub_10335E50; function
+  .text:103349C6                 ; result
+  .text:103349C6                 push    eax; result
+  .text:103349C7                 call    asFunctionPtr_Global; Verified x86 asSFuncPtr conversion: flag 2 at +32; member/global/generic pointer materialization.
+  .text:103349CC                 add     esp, 8
+  .text:103349CF                 mov     ecx, edi
+  .text:103349D1                 push    eax
+  .text:103349D2                 push    offset aVoidOpconvOut; "void opConv(?&out)"
+  .text:103349D7                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:103349DC                 call    dword ptr [esi+54h]
+  .text:103349DF                 mov     esi, [edi]
+  .text:103349E1                 lea     eax, [esp+18h+var_10]
+  .text:103349E5                 push    0
+  .text:103349E7                 push    0
+  .text:103349E9                 push    0
+  .text:103349EB                 push    4
+  .text:103349ED                 ; function
+  .text:103349ED                 push    offset sub_10335E80; function
+  .text:103349F2                 ; result
+  .text:103349F2                 push    eax; result
+  .text:103349F3                 call    asFunctionPtr_Global; Verified x86 asSFuncPtr conversion: flag 2 at +32; member/global/generic pointer materialization.
+  .text:103349F8                 add     esp, 8
+  .text:103349FB                 mov     ecx, edi
+  .text:103349FD                 push    eax
+  .text:103349FE                 push    offset aInt64Opconv; "int64 opConv()"
+  .text:10334A03                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:10334A08                 call    dword ptr [esi+54h]
+  .text:10334A0B                 mov     esi, [edi]
+  .text:10334A0D                 lea     eax, [esp+18h+var_10]
+  .text:10334A11                 push    0
+  .text:10334A13                 push    0
+  .text:10334A15                 push    0
+  .text:10334A17                 push    4
+  .text:10334A19                 ; function
+  .text:10334A19                 push    offset sub_10335EB0; function
+  .text:10334A1E                 ; result
+  .text:10334A1E                 push    eax; result
+  .text:10334A1F                 call    asFunctionPtr_Global; Verified x86 asSFuncPtr conversion: flag 2 at +32; member/global/generic pointer materialization.
+  .text:10334A24                 add     esp, 8
+  .text:10334A27                 mov     ecx, edi
+  .text:10334A29                 push    eax
+  .text:10334A2A                 push    offset aDoubleOpconv; "double opConv()"
+  .text:10334A2F                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:10334A34                 call    dword ptr [esi+54h]
+  .text:10334A37                 mov     eax, [edi]
+  .text:10334A39                 mov     ecx, edi
+  .text:10334A3B                 push    5
+  .text:10334A3D                 push    30h ; '0'
+  .text:10334A3F                 push    offset aDictionary; "dictionary"
+  .text:10334A44                 call    dword ptr [eax+4Ch]
+  .text:10334A47                 mov     esi, [edi]
+  .text:10334A49                 lea     eax, [esp+18h+var_10]
+  .text:10334A4D                 push    0
+  .text:10334A4F                 push    0
+  .text:10334A51                 push    0
+  .text:10334A53                 push    6
+  .text:10334A55                 ; function
+  .text:10334A55                 push    offset ScriptDictionaryFactory_Generic; function
+  .text:10334A5A                 ; result
+  .text:10334A5A                 push    eax; result
+  .text:10334A5B                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:10334A60                 add     esp, 8
+  .text:10334A63                 push    eax
+  .text:10334A64                 push    offset aDictionaryF; "dictionary@ f()"
+  .text:10334A69                 push    3
+  .text:10334A6B                 push    offset aDictionary; "dictionary"
+  .text:10334A70                 mov     ecx, edi
+  .text:10334A72                 call    dword ptr [esi+58h]
+  .text:10334A75                 mov     esi, [edi]
+  .text:10334A77                 lea     eax, [esp+18h+var_10]
+  .text:10334A7B                 push    0
+  .text:10334A7D                 push    0
+  .text:10334A7F                 push    0
+  .text:10334A81                 push    6
+  .text:10334A83                 ; function
+  .text:10334A83                 push    offset sub_10335710; function
+  .text:10334A88                 ; result
+  .text:10334A88                 push    eax; result
+  .text:10334A89                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:10334A8E                 add     esp, 8
+  .text:10334A91                 mov     ecx, edi
+  .text:10334A93                 push    eax
+  .text:10334A94                 push    offset aDictionaryFInt; "dictionary @f(int &in) {repeat {string,"...
+  .text:10334A99                 push    4
+  .text:10334A9B                 push    offset aDictionary; "dictionary"
+  .text:10334AA0                 call    dword ptr [esi+58h]
+  .text:10334AA3                 mov     esi, [edi]
+  .text:10334AA5                 lea     eax, [esp+18h+var_10]
+  .text:10334AA9                 push    0
+  .text:10334AAB                 push    0
+  .text:10334AAD                 push    0
+  .text:10334AAF                 push    3
+  .text:10334AB1                 ; function
+  .text:10334AB1                 push    offset CScriptDictionary_AddRef; function; found_funcptr CScriptDictionary_AddRef: native dictionary member, asCALL_THISCALL=3
+  .text:10334AB6                 ; result
+  .text:10334AB6                 push    eax; result
+  .text:10334AB7                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:10334ABC                 add     esp, 8
+  .text:10334ABF                 mov     ecx, edi
+  .text:10334AC1                 push    eax
+  .text:10334AC2                 push    offset aVoidF; "void f()"
+  .text:10334AC7                 push    5
+  .text:10334AC9                 push    offset aDictionary; "dictionary"
+  .text:10334ACE                 call    dword ptr [esi+58h]
+  .text:10334AD1                 mov     esi, [edi]
+  .text:10334AD3                 lea     eax, [esp+18h+var_10]
+  .text:10334AD7                 push    0
+  .text:10334AD9                 push    0
+  .text:10334ADB                 push    0
+  .text:10334ADD                 push    3
+  .text:10334ADF                 ; function
+  .text:10334ADF                 push    offset CScriptDictionary_Release; function; found_funcptr CScriptDictionary_Release: native dictionary member, asCALL_THISCALL=3
+  .text:10334AE4                 ; result
+  .text:10334AE4                 push    eax; result
+  .text:10334AE5                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:10334AEA                 add     esp, 8
+  .text:10334AED                 mov     ecx, edi
+  .text:10334AEF                 push    eax
+  .text:10334AF0                 push    offset aVoidF; "void f()"
+  .text:10334AF5                 push    6
+  .text:10334AF7                 push    offset aDictionary; "dictionary"
+  .text:10334AFC                 call    dword ptr [esi+58h]
+  .text:10334AFF                 mov     esi, [edi]
+  .text:10334B01                 lea     eax, [esp+18h+var_10]
+  .text:10334B05                 push    0
+  .text:10334B07                 push    0
+  .text:10334B09                 push    0
+  .text:10334B0B                 push    3
+  .text:10334B0D                 ; function
+  .text:10334B0D                 push    offset sub_10333980; function
+  .text:10334B12                 ; result
+  .text:10334B12                 push    eax; result
+  .text:10334B13                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:10334B18                 add     esp, 8
+  .text:10334B1B                 mov     ecx, edi
+  .text:10334B1D                 push    eax
+  .text:10334B1E                 push    offset aDictionaryOpas; "dictionary &opAssign(const dictionary &"...
+  .text:10334B23                 push    offset aDictionary; "dictionary"
+  .text:10334B28                 call    dword ptr [esi+54h]
+  .text:10334B2B                 mov     esi, [edi]
+  .text:10334B2D                 lea     eax, [esp+18h+var_10]
+  .text:10334B31                 push    0
+  .text:10334B33                 push    0
+  .text:10334B35                 push    0
+  .text:10334B37                 push    3
+  .text:10334B39                 ; function
+  .text:10334B39                 push    offset CScriptDictionary_Set; function; found_funcptr CScriptDictionary_Set: native dictionary member, asCALL_THISCALL=3
+  .text:10334B3E                 ; result
+  .text:10334B3E                 push    eax; result
+  .text:10334B3F                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:10334B44                 add     esp, 8
+  .text:10334B47                 mov     ecx, edi
+  .text:10334B49                 push    eax
+  .text:10334B4A                 push    offset aVoidSetConstSt_1; "void set(const string &in, const ?&in)"
+  .text:10334B4F                 push    offset aDictionary; "dictionary"
+  .text:10334B54                 call    dword ptr [esi+54h]
+  .text:10334B57                 mov     esi, [edi]
+  .text:10334B59                 push    0
+  .text:10334B5B                 push    0
+  .text:10334B5D                 push    0
+  .text:10334B5F                 push    3
+  .text:10334B61                 lea     eax, [esp+28h+var_10]
+  .text:10334B65                 ; function
+  .text:10334B65                 push    offset CScriptDictionary_Get; function; found_funcptr CScriptDictionary_Get: native dictionary member, asCALL_THISCALL=3
+  .text:10334B6A                 ; result
+  .text:10334B6A                 push    eax; result
+  .text:10334B6B                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:10334B70                 add     esp, 8
+  .text:10334B73                 mov     ecx, edi
+  .text:10334B75                 push    eax
+  .text:10334B76                 push    offset aBoolGetConstSt; "bool get(const string &in, ?&out) const"
+  .text:10334B7B                 push    offset aDictionary; "dictionary"
+  .text:10334B80                 call    dword ptr [esi+54h]
+  .text:10334B83                 mov     esi, [edi]
+  .text:10334B85                 lea     eax, [esp+18h+var_10]
+  .text:10334B89                 push    0
+  .text:10334B8B                 push    0
+  .text:10334B8D                 push    0
+  .text:10334B8F                 push    3
+  .text:10334B91                 ; function
+  .text:10334B91                 push    offset sub_10333C00; function
+  .text:10334B96                 ; result
+  .text:10334B96                 push    eax; result
+  .text:10334B97                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:10334B9C                 add     esp, 8
+  .text:10334B9F                 mov     ecx, edi
+  .text:10334BA1                 push    eax
+  .text:10334BA2                 push    offset aVoidSetConstSt_2; "void set(const string &in, const int64&"...
+  .text:10334BA7                 push    offset aDictionary; "dictionary"
+  .text:10334BAC                 call    dword ptr [esi+54h]
+  .text:10334BAF                 mov     esi, [edi]
+  .text:10334BB1                 lea     eax, [esp+18h+var_10]
+  .text:10334BB5                 push    0
+  .text:10334BB7                 push    0
+  .text:10334BB9                 push    0
+  .text:10334BBB                 push    3
+  .text:10334BBD                 ; function
+  .text:10334BBD                 push    offset sub_10333C80; function
+  .text:10334BC2                 ; result
+  .text:10334BC2                 push    eax; result
+  .text:10334BC3                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:10334BC8                 add     esp, 8
+  .text:10334BCB                 mov     ecx, edi
+  .text:10334BCD                 push    eax
+  .text:10334BCE                 push    offset aBoolGetConstSt_0; "bool get(const string &in, int64&out) c"...
+  .text:10334BD3                 push    offset aDictionary; "dictionary"
+  .text:10334BD8                 call    dword ptr [esi+54h]
+  .text:10334BDB                 mov     esi, [edi]
+  .text:10334BDD                 lea     eax, [esp+18h+var_10]
+  .text:10334BE1                 push    0
+  .text:10334BE3                 push    0
+  .text:10334BE5                 push    0
+  .text:10334BE7                 push    3
+  .text:10334BE9                 ; function
+  .text:10334BE9                 push    offset sub_10333C20; function
+  .text:10334BEE                 ; result
+  .text:10334BEE                 push    eax; result
+  .text:10334BEF                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:10334BF4                 add     esp, 8
+  .text:10334BF7                 mov     ecx, edi
+  .text:10334BF9                 push    eax
+  .text:10334BFA                 push    offset aVoidSetConstSt_3; "void set(const string &in, const double"...
+  .text:10334BFF                 push    offset aDictionary; "dictionary"
+  .text:10334C04                 call    dword ptr [esi+54h]
+  .text:10334C07                 mov     esi, [edi]
+  .text:10334C09                 lea     eax, [esp+18h+var_10]
+  .text:10334C0D                 push    0
+  .text:10334C0F                 push    0
+  .text:10334C11                 push    0
+  .text:10334C13                 push    3
+  .text:10334C15                 ; function
+  .text:10334C15                 push    offset sub_10333CC0; function
+  .text:10334C1A                 ; result
+  .text:10334C1A                 push    eax; result
+  .text:10334C1B                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:10334C20                 add     esp, 8
+  .text:10334C23                 mov     ecx, edi
+  .text:10334C25                 push    eax
+  .text:10334C26                 push    offset aBoolGetConstSt_1; "bool get(const string &in, double&out) "...
+  .text:10334C2B                 push    offset aDictionary; "dictionary"
+  .text:10334C30                 call    dword ptr [esi+54h]
+  .text:10334C33                 mov     esi, [edi]
+  .text:10334C35                 lea     eax, [esp+18h+var_10]
+  .text:10334C39                 push    0
+  .text:10334C3B                 push    0
+  .text:10334C3D                 push    0
+  .text:10334C3F                 push    3
+  .text:10334C41                 ; function
+  .text:10334C41                 push    offset CScriptDictionary_Exists; function; found_funcptr CScriptDictionary_Exists: native dictionary member, asCALL_THISCALL=3
+  .text:10334C46                 ; result
+  .text:10334C46                 push    eax; result
+  .text:10334C47                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:10334C4C                 add     esp, 8
+  .text:10334C4F                 mov     ecx, edi
+  .text:10334C51                 push    eax
+  .text:10334C52                 push    offset aBoolExistsCons_2; "bool exists(const string &in) const"
+  .text:10334C57                 push    offset aDictionary; "dictionary"
+  .text:10334C5C                 call    dword ptr [esi+54h]
+  .text:10334C5F                 mov     esi, [edi]
+  .text:10334C61                 lea     eax, [esp+18h+var_10]
+  .text:10334C65                 push    0
+  .text:10334C67                 push    0
+  .text:10334C69                 push    0
+  .text:10334C6B                 push    3
+  .text:10334C6D                 ; function
+  .text:10334C6D                 push    offset CScriptDictionary_IsEmpty; function; found_funcptr CScriptDictionary_IsEmpty: native dictionary member, asCALL_THISCALL=3
+  .text:10334C72                 ; result
+  .text:10334C72                 push    eax; result
+  .text:10334C73                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:10334C78                 add     esp, 8
+  .text:10334C7B                 mov     ecx, edi
+  .text:10334C7D                 push    eax
+  .text:10334C7E                 push    offset aBoolIsemptyCon_0; "bool isEmpty() const"
+  .text:10334C83                 push    offset aDictionary; "dictionary"
+  .text:10334C88                 call    dword ptr [esi+54h]
+  .text:10334C8B                 mov     esi, [edi]
+  .text:10334C8D                 lea     eax, [esp+18h+var_10]
+  .text:10334C91                 push    0
+  .text:10334C93                 push    0
+  .text:10334C95                 push    0
+  .text:10334C97                 push    3
+  .text:10334C99                 ; function
+  .text:10334C99                 push    offset CScriptDictionary_GetSize; function; found_funcptr CScriptDictionary_GetSize: native dictionary member, asCALL_THISCALL=3
+  .text:10334C9E                 ; result
+  .text:10334C9E                 push    eax; result
+  .text:10334C9F                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:10334CA4                 add     esp, 8
+  .text:10334CA7                 mov     ecx, edi
+  .text:10334CA9                 push    eax
+  .text:10334CAA                 push    offset aUintGetsizeCon; "uint getSize() const"
+  .text:10334CAF                 push    offset aDictionary; "dictionary"
+  .text:10334CB4                 call    dword ptr [esi+54h]
+  .text:10334CB7                 mov     esi, [edi]
+  .text:10334CB9                 lea     eax, [esp+18h+var_10]
+  .text:10334CBD                 push    0
+  .text:10334CBF                 push    0
+  .text:10334CC1                 push    0
+  .text:10334CC3                 push    3
+  .text:10334CC5                 ; function
+  .text:10334CC5                 push    offset CScriptDictionary_Delete; function; found_funcptr CScriptDictionary_Delete: native dictionary member, asCALL_THISCALL=3
+  .text:10334CCA                 ; result
+  .text:10334CCA                 push    eax; result
+  .text:10334CCB                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:10334CD0                 add     esp, 8
+  .text:10334CD3                 mov     ecx, edi
+  .text:10334CD5                 push    eax
+  .text:10334CD6                 push    offset aBoolDeleteCons; "bool delete(const string &in)"
+  .text:10334CDB                 push    offset aDictionary; "dictionary"
+  .text:10334CE0                 call    dword ptr [esi+54h]
+  .text:10334CE3                 mov     esi, [edi]
+  .text:10334CE5                 lea     eax, [esp+18h+var_10]
+  .text:10334CE9                 push    0
+  .text:10334CEB                 push    0
+  .text:10334CED                 push    0
+  .text:10334CEF                 push    3
+  .text:10334CF1                 ; function
+  .text:10334CF1                 push    offset CScriptDictionary_DeleteAll; function; found_funcptr CScriptDictionary_DeleteAll: native dictionary member, asCALL_THISCALL=3
+  .text:10334CF6                 ; result
+  .text:10334CF6                 push    eax; result
+  .text:10334CF7                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:10334CFC                 add     esp, 8
+  .text:10334CFF                 mov     ecx, edi
+  .text:10334D01                 push    eax
+  .text:10334D02                 push    offset aVoidDeleteall; "void deleteAll()"
+  .text:10334D07                 push    offset aDictionary; "dictionary"
+  .text:10334D0C                 call    dword ptr [esi+54h]
+  .text:10334D0F                 mov     esi, [edi]
+  .text:10334D11                 lea     eax, [esp+18h+var_10]
+  .text:10334D15                 push    0
+  .text:10334D17                 push    0
+  .text:10334D19                 push    0
+  .text:10334D1B                 push    3
+  .text:10334D1D                 ; function
+  .text:10334D1D                 push    offset sub_10334130; function
+  .text:10334D22                 ; result
+  .text:10334D22                 push    eax; result
+  .text:10334D23                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:10334D28                 add     esp, 8
+  .text:10334D2B                 push    eax
+  .text:10334D2C                 push    offset aArrayStringGet_0; "array<string> @getKeys() const"
+  .text:10334D31                 push    offset aDictionary; "dictionary"
+  .text:10334D36                 mov     ecx, edi
+  .text:10334D38                 call    dword ptr [esi+54h]
+  .text:10334D3B                 mov     esi, [edi]
+  .text:10334D3D                 lea     eax, [esp+18h+var_10]
+  .text:10334D41                 push    0
+  .text:10334D43                 push    0
+  .text:10334D45                 push    0
+  .text:10334D47                 push    3
+  .text:10334D49                 ; function
+  .text:10334D49                 push    offset sub_10333D00; function
+  .text:10334D4E                 ; result
+  .text:10334D4E                 push    eax; result
+  .text:10334D4F                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:10334D54                 add     esp, 8
+  .text:10334D57                 mov     ecx, edi
+  .text:10334D59                 push    eax
+  .text:10334D5A                 push    offset aDictionaryvalu_6; "dictionaryValue &opIndex(const string &"...
+  .text:10334D5F                 push    offset aDictionary; "dictionary"
+  .text:10334D64                 call    dword ptr [esi+54h]
+  .text:10334D67                 mov     esi, [edi]
+  .text:10334D69                 lea     eax, [esp+18h+var_10]
+  .text:10334D6D                 push    0
+  .text:10334D6F                 push    0
+  .text:10334D71                 push    0
+  .text:10334D73                 push    3
+  .text:10334D75                 ; function
+  .text:10334D75                 push    offset sub_10333E90; function
+  .text:10334D7A                 ; result
+  .text:10334D7A                 push    eax; result
+  .text:10334D7B                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:10334D80                 add     esp, 8
+  .text:10334D83                 mov     ecx, edi
+  .text:10334D85                 push    eax
+  .text:10334D86                 push    offset aConstDictionar; "const dictionaryValue &opIndex(const st"...
+  .text:10334D8B                 push    offset aDictionary; "dictionary"
+  .text:10334D90                 call    dword ptr [esi+54h]
+  .text:10334D93                 mov     esi, [edi]
+  .text:10334D95                 lea     eax, [esp+18h+var_10]
+  .text:10334D99                 push    0
+  .text:10334D9B                 push    0
+  .text:10334D9D                 push    0
+  .text:10334D9F                 push    3
+  .text:10334DA1                 ; function
+  .text:10334DA1                 push    offset sub_10334350; function
+  .text:10334DA6                 ; result
+  .text:10334DA6                 push    eax; result
+  .text:10334DA7                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:10334DAC                 add     esp, 8
+  .text:10334DAF                 mov     ecx, edi
+  .text:10334DB1                 push    eax
+  .text:10334DB2                 push    offset aIntF; "int f()"
+  .text:10334DB7                 push    9
+  .text:10334DB9                 push    offset aDictionary; "dictionary"
+  .text:10334DBE                 call    dword ptr [esi+58h]
+  .text:10334DC1                 mov     esi, [edi]
+  .text:10334DC3                 lea     eax, [esp+18h+var_10]
+  .text:10334DC7                 push    0
+  .text:10334DC9                 push    0
+  .text:10334DCB                 push    0
+  .text:10334DCD                 push    3
+  .text:10334DCF                 ; function
+  .text:10334DCF                 push    offset ?enable@guard@?$cached@H@__crt_cached_ptd_host@@QAEXXZ_1; function
+  .text:10334DD4                 ; result
+  .text:10334DD4                 push    eax; result
+  .text:10334DD5                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:10334DDA                 add     esp, 8
+  .text:10334DDD                 mov     ecx, edi
+  .text:10334DDF                 push    eax
+  .text:10334DE0                 push    offset aVoidF; "void f()"
+  .text:10334DE5                 push    0Ah
+  .text:10334DE7                 push    offset aDictionary; "dictionary"
+  .text:10334DEC                 call    dword ptr [esi+58h]
+  .text:10334DEF                 mov     esi, [edi]
+  .text:10334DF1                 lea     eax, [esp+18h+var_10]
+  .text:10334DF5                 push    0
+  .text:10334DF7                 push    0
+  .text:10334DF9                 push    0
+  .text:10334DFB                 push    3
+  .text:10334DFD                 ; function
+  .text:10334DFD                 push    offset sub_10334370; function
+  .text:10334E02                 ; result
+  .text:10334E02                 push    eax; result
+  .text:10334E03                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:10334E08                 add     esp, 8
+  .text:10334E0B                 mov     ecx, edi
+  .text:10334E0D                 push    eax
+  .text:10334E0E                 push    offset aBoolF; "bool f()"
+  .text:10334E13                 push    0Bh
+  .text:10334E15                 push    offset aDictionary; "dictionary"
+  .text:10334E1A                 call    dword ptr [esi+58h]
+  .text:10334E1D                 mov     esi, [edi]
+  .text:10334E1F                 push    0
+  .text:10334E21                 push    0
+  .text:10334E23                 push    0
+  .text:10334E25                 push    3
+  .text:10334E27                 lea     eax, [esp+28h+var_10]
+  .text:10334E2B                 ; function
+  .text:10334E2B                 push    offset sub_10334380; function
+  .text:10334E30                 ; result
+  .text:10334E30                 push    eax; result
+  .text:10334E31                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:10334E36                 add     esp, 8
+  .text:10334E39                 mov     ecx, edi
+  .text:10334E3B                 push    eax
+  .text:10334E3C                 push    offset aVoidFIntIn; "void f(int&in)"
+  .text:10334E41                 push    0Ch
+  .text:10334E43                 push    offset aDictionary; "dictionary"
+  .text:10334E48                 call    dword ptr [esi+58h]
+  .text:10334E4B                 mov     esi, [edi]
+  .text:10334E4D                 lea     eax, [esp+18h+var_10]
+  .text:10334E51                 push    0
+  .text:10334E53                 push    0
+  .text:10334E55                 push    0
+  .text:10334E57                 push    3
+  .text:10334E59                 ; function
+  .text:10334E59                 push    offset sub_103343F0; function
+  .text:10334E5E                 ; result
+  .text:10334E5E                 push    eax; result
+  .text:10334E5F                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:10334E64                 add     esp, 8
+  .text:10334E67                 mov     ecx, edi
+  .text:10334E69                 push    eax
+  .text:10334E6A                 push    offset aVoidFIntIn; "void f(int&in)"
+  .text:10334E6F                 push    0Dh
+  .text:10334E71                 push    offset aDictionary; "dictionary"
+  .text:10334E76                 call    dword ptr [esi+58h]
+  .text:10334E79                 mov     esi, [edi]
+  .text:10334E7B                 lea     eax, [esp+18h+var_10]
+  .text:10334E7F                 push    0
+  .text:10334E81                 push    0
+  .text:10334E83                 push    0
+  .text:10334E85                 push    3
+  .text:10334E87                 ; function
+  .text:10334E87                 push    offset CScriptDictionary_IsEmpty; function; found_funcptr CScriptDictionary_IsEmpty: native dictionary member, asCALL_THISCALL=3
+  .text:10334E8C                 ; result
+  .text:10334E8C                 push    eax; result
+  .text:10334E8D                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:10334E92                 add     esp, 8
+  .text:10334E95                 mov     ecx, edi
+  .text:10334E97                 push    eax
+  .text:10334E98                 push    offset aBoolEmptyConst; "bool empty() const"
+  .text:10334E9D                 push    offset aDictionary; "dictionary"
+  .text:10334EA2                 call    dword ptr [esi+54h]
+  .text:10334EA5                 mov     esi, [edi]
+  .text:10334EA7                 lea     eax, [esp+18h+var_10]
+  .text:10334EAB                 push    0
+  .text:10334EAD                 push    0
+  .text:10334EAF                 push    0
+  .text:10334EB1                 push    3
+  .text:10334EB3                 ; function
+  .text:10334EB3                 push    offset CScriptDictionary_GetSize; function; found_funcptr CScriptDictionary_GetSize: native dictionary member, asCALL_THISCALL=3
+  .text:10334EB8                 ; result
+  .text:10334EB8                 push    eax; result
+  .text:10334EB9                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:10334EBE                 add     esp, 8
+  .text:10334EC1                 mov     ecx, edi
+  .text:10334EC3                 push    eax
+  .text:10334EC4                 push    offset aUintSizeConst; "uint size() const"
+  .text:10334EC9                 push    offset aDictionary; "dictionary"
+  .text:10334ECE                 call    dword ptr [esi+54h]
+  .text:10334ED1                 mov     esi, [edi]
+  .text:10334ED3                 lea     eax, [esp+18h+var_10]
+  .text:10334ED7                 push    0
+  .text:10334ED9                 push    0
+  .text:10334EDB                 push    0
+  .text:10334EDD                 push    3
+  .text:10334EDF                 ; function
+  .text:10334EDF                 push    offset CScriptDictionary_Delete; function; found_funcptr CScriptDictionary_Delete: native dictionary member, asCALL_THISCALL=3
+  .text:10334EE4                 ; result
+  .text:10334EE4                 push    eax; result
+  .text:10334EE5                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:10334EEA                 add     esp, 8
+  .text:10334EED                 mov     ecx, edi
+  .text:10334EEF                 push    eax
+  .text:10334EF0                 push    offset aVoidEraseConst; "void erase(const string &in)"
+  .text:10334EF5                 push    offset aDictionary; "dictionary"
+  .text:10334EFA                 call    dword ptr [esi+54h]
+  .text:10334EFD                 mov     esi, [edi]
+  .text:10334EFF                 push    0
+  .text:10334F01                 push    0
+  .text:10334F03                 push    0
+  .text:10334F05                 push    3
+  .text:10334F07                 lea     eax, [esp+28h+var_10]
+  .text:10334F0B                 ; function
+  .text:10334F0B                 push    offset CScriptDictionary_DeleteAll; function; found_funcptr CScriptDictionary_DeleteAll: native dictionary member, asCALL_THISCALL=3
+  .text:10334F10                 ; result
+  .text:10334F10                 push    eax; result
+  .text:10334F11                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:10334F16                 add     esp, 8
+  .text:10334F19                 mov     ecx, edi
+  .text:10334F1B                 push    eax
+  .text:10334F1C                 push    offset aVoidClear_0; "void clear()"
+  .text:10334F21                 push    offset aDictionary; "dictionary"
+  .text:10334F26                 call    dword ptr [esi+54h]
+  .text:10334F29                 push    edi
+  .text:10334F2A                 call    sub_10346770
+  .text:10334F2F                 mov     ecx, [esp+38h+var_4]
+  .text:10334F33                 add     esp, 4
+  .text:10334F36                 pop     edi
+  .text:10334F37                 pop     esi
+  .text:10334F38                 ; StackCookie
+  .text:10334F38                 xor     ecx, esp; StackCookie
+  .text:10334F3A                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:10334F3F                 add     esp, 2Ch
+  .text:10334F42                 retn
+  .text:10334F50                 sub     esp, 2Ch
+  .text:10334F53                 mov     eax, ___security_cookie
+  .text:10334F58                 xor     eax, esp
+  .text:10334F5A                 mov     [esp+2Ch+var_4], eax
+  .text:10334F5E                 push    esi
+  .text:10334F5F                 push    edi
+  .text:10334F60                 mov     edi, [esp+34h+engine]
+  .text:10334F64                 mov     ecx, edi
+  .text:10334F66                 push    3EBh
+  .text:10334F6B                 push    offset sub_10344E00
+  .text:10334F70                 mov     eax, [edi]
+  .text:10334F72                 call    dword ptr [eax+148h]
+  .text:10334F78                 mov     eax, [edi]
+  .text:10334F7A                 mov     ecx, edi
+  .text:10334F7C                 push    1786h
+  .text:10334F81                 push    10h
+  .text:10334F83                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:10334F88                 call    dword ptr [eax+4Ch]
+  .text:10334F8B                 mov     esi, [edi]
+  .text:10334F8D                 lea     eax, [esp+14h+var_C]
+  .text:10334F91                 push    0
+  .text:10334F93                 push    0
+  .text:10334F95                 push    0
+  .text:10334F97                 push    6
+  .text:10334F99                 ; function
+  .text:10334F99                 push    offset sub_10336120; function
+  .text:10334F9E                 ; result
+  .text:10334F9E                 push    eax; result
+  .text:10334F9F                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:10334FA4                 add     esp, 8
+  .text:10334FA7                 mov     ecx, edi
+  .text:10334FA9                 push    eax
+  .text:10334FAA                 push    offset aVoidF; "void f()"
+  .text:10334FAF                 push    0
+  .text:10334FB1                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:10334FB6                 call    dword ptr [esi+58h]
+  .text:10334FB9                 mov     esi, [edi]
+  .text:10334FBB                 lea     eax, [esp+14h+var_C]
+  .text:10334FBF                 push    0
+  .text:10334FC1                 push    0
+  .text:10334FC3                 push    0
+  .text:10334FC5                 push    6
+  .text:10334FC7                 ; function
+  .text:10334FC7                 push    offset sub_10336140; function
+  .text:10334FCC                 ; result
+  .text:10334FCC                 push    eax; result
+  .text:10334FCD                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:10334FD2                 add     esp, 8
+  .text:10334FD5                 mov     ecx, edi
+  .text:10334FD7                 push    eax
+  .text:10334FD8                 push    offset aVoidF; "void f()"
+  .text:10334FDD                 push    2
+  .text:10334FDF                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:10334FE4                 call    dword ptr [esi+58h]
+  .text:10334FE7                 mov     esi, [edi]
+  .text:10334FE9                 lea     eax, [esp+14h+var_C]
+  .text:10334FED                 push    0
+  .text:10334FEF                 push    0
+  .text:10334FF1                 push    0
+  .text:10334FF3                 push    6
+  .text:10334FF5                 ; function
+  .text:10334FF5                 push    offset sub_10336160; function
+  .text:10334FFA                 ; result
+  .text:10334FFA                 push    eax; result
+  .text:10334FFB                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:10335000                 add     esp, 8
+  .text:10335003                 mov     ecx, edi
+  .text:10335005                 push    eax
+  .text:10335006                 push    offset aVoidFIntIn; "void f(int&in)"
+  .text:1033500B                 push    0Ch
+  .text:1033500D                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:10335012                 call    dword ptr [esi+58h]
+  .text:10335015                 mov     esi, [edi]
+  .text:10335017                 lea     eax, [esp+14h+var_C]
+  .text:1033501B                 push    0
+  .text:1033501D                 push    0
+  .text:1033501F                 push    0
+  .text:10335021                 push    6
+  .text:10335023                 ; function
+  .text:10335023                 push    offset sub_103361B0; function
+  .text:10335028                 ; result
+  .text:10335028                 push    eax; result
+  .text:10335029                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:1033502E                 add     esp, 8
+  .text:10335031                 mov     ecx, edi
+  .text:10335033                 push    eax
+  .text:10335034                 push    offset aVoidFIntIn; "void f(int&in)"
+  .text:10335039                 push    0Dh
+  .text:1033503B                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:10335040                 call    dword ptr [esi+58h]
+  .text:10335043                 mov     esi, [edi]
+  .text:10335045                 push    0
+  .text:10335047                 push    0
+  .text:10335049                 push    0
+  .text:1033504B                 push    6
+  .text:1033504D                 lea     eax, [esp+24h+var_C]
+  .text:10335051                 ; function
+  .text:10335051                 push    offset sub_103360C0; function
+  .text:10335056                 ; result
+  .text:10335056                 push    eax; result
+  .text:10335057                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:1033505C                 add     esp, 8
+  .text:1033505F                 mov     ecx, edi
+  .text:10335061                 push    eax
+  .text:10335062                 push    offset aDictionaryvalu_0; "dictionaryValue &opAssign(const diction"...
+  .text:10335067                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:1033506C                 call    dword ptr [esi+54h]
+  .text:1033506F                 mov     esi, [edi]
+  .text:10335071                 lea     eax, [esp+14h+var_C]
+  .text:10335075                 push    0
+  .text:10335077                 push    0
+  .text:10335079                 push    0
+  .text:1033507B                 push    6
+  .text:1033507D                 ; function
+  .text:1033507D                 push    offset sub_10336060; function
+  .text:10335082                 ; result
+  .text:10335082                 push    eax; result
+  .text:10335083                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:10335088                 add     esp, 8
+  .text:1033508B                 mov     ecx, edi
+  .text:1033508D                 push    eax
+  .text:1033508E                 push    offset aDictionaryvalu_1; "dictionaryValue &opHndlAssign(const ?&i"...
+  .text:10335093                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:10335098                 call    dword ptr [esi+54h]
+  .text:1033509B                 mov     esi, [edi]
+  .text:1033509D                 lea     eax, [esp+14h+var_C]
+  .text:103350A1                 push    0
+  .text:103350A3                 push    0
+  .text:103350A5                 push    0
+  .text:103350A7                 push    6
+  .text:103350A9                 ; function
+  .text:103350A9                 push    offset sub_103360C0; function
+  .text:103350AE                 ; result
+  .text:103350AE                 push    eax; result
+  .text:103350AF                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:103350B4                 add     esp, 8
+  .text:103350B7                 mov     ecx, edi
+  .text:103350B9                 push    eax
+  .text:103350BA                 push    offset aDictionaryvalu_2; "dictionaryValue &opHndlAssign(const dic"...
+  .text:103350BF                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:103350C4                 call    dword ptr [esi+54h]
+  .text:103350C7                 mov     esi, [edi]
+  .text:103350C9                 lea     eax, [esp+14h+var_C]
+  .text:103350CD                 push    0
+  .text:103350CF                 push    0
+  .text:103350D1                 push    0
+  .text:103350D3                 push    6
+  .text:103350D5                 ; function
+  .text:103350D5                 push    offset sub_10336060; function
+  .text:103350DA                 ; result
+  .text:103350DA                 push    eax; result
+  .text:103350DB                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:103350E0                 add     esp, 8
+  .text:103350E3                 mov     ecx, edi
+  .text:103350E5                 push    eax
+  .text:103350E6                 push    offset aDictionaryvalu_3; "dictionaryValue &opAssign(const ?&in)"
+  .text:103350EB                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:103350F0                 call    dword ptr [esi+54h]
+  .text:103350F3                 mov     esi, [edi]
+  .text:103350F5                 lea     eax, [esp+14h+var_C]
+  .text:103350F9                 push    0
+  .text:103350FB                 push    0
+  .text:103350FD                 push    0
+  .text:103350FF                 push    6
+  .text:10335101                 ; function
+  .text:10335101                 push    offset sub_10336010; function
+  .text:10335106                 ; result
+  .text:10335106                 push    eax; result
+  .text:10335107                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:1033510C                 add     esp, 8
+  .text:1033510F                 mov     ecx, edi
+  .text:10335111                 push    eax
+  .text:10335112                 push    offset aDictionaryvalu_4; "dictionaryValue &opAssign(double)"
+  .text:10335117                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:1033511C                 call    dword ptr [esi+54h]
+  .text:1033511F                 mov     esi, [edi]
+  .text:10335121                 lea     eax, [esp+14h+var_C]
+  .text:10335125                 push    0
+  .text:10335127                 push    0
+  .text:10335129                 push    0
+  .text:1033512B                 push    6
+  .text:1033512D                 ; function
+  .text:1033512D                 push    offset sub_10335FB0; function
+  .text:10335132                 ; result
+  .text:10335132                 push    eax; result
+  .text:10335133                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:10335138                 add     esp, 8
+  .text:1033513B                 mov     ecx, edi
+  .text:1033513D                 push    eax
+  .text:1033513E                 push    offset aDictionaryvalu_5; "dictionaryValue &opAssign(int64)"
+  .text:10335143                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:10335148                 call    dword ptr [esi+54h]
+  .text:1033514B                 mov     esi, [edi]
+  .text:1033514D                 lea     eax, [esp+14h+var_C]
+  .text:10335151                 push    0
+  .text:10335153                 push    0
+  .text:10335155                 push    0
+  .text:10335157                 push    6
+  .text:10335159                 ; function
+  .text:10335159                 push    offset sub_10335F70; function
+  .text:1033515E                 ; result
+  .text:1033515E                 push    eax; result
+  .text:1033515F                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:10335164                 add     esp, 8
+  .text:10335167                 mov     ecx, edi
+  .text:10335169                 push    eax
+  .text:1033516A                 push    offset aVoidOpcastOut; "void opCast(?&out)"
+  .text:1033516F                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:10335174                 call    dword ptr [esi+54h]
+  .text:10335177                 mov     esi, [edi]
+  .text:10335179                 lea     eax, [esp+14h+var_C]
+  .text:1033517D                 push    0
+  .text:1033517F                 push    0
+  .text:10335181                 push    0
+  .text:10335183                 push    6
+  .text:10335185                 ; function
+  .text:10335185                 push    offset sub_10335F70; function
+  .text:1033518A                 ; result
+  .text:1033518A                 push    eax; result
+  .text:1033518B                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:10335190                 add     esp, 8
+  .text:10335193                 mov     ecx, edi
+  .text:10335195                 push    eax
+  .text:10335196                 push    offset aVoidOpconvOut; "void opConv(?&out)"
+  .text:1033519B                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:103351A0                 call    dword ptr [esi+54h]
+  .text:103351A3                 mov     esi, [edi]
+  .text:103351A5                 lea     eax, [esp+14h+var_C]
+  .text:103351A9                 push    0
+  .text:103351AB                 push    0
+  .text:103351AD                 push    0
+  .text:103351AF                 push    6
+  .text:103351B1                 ; function
+  .text:103351B1                 push    offset sub_10335F20; function
+  .text:103351B6                 ; result
+  .text:103351B6                 push    eax; result
+  .text:103351B7                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:103351BC                 add     esp, 8
+  .text:103351BF                 mov     ecx, edi
+  .text:103351C1                 push    eax
+  .text:103351C2                 push    offset aInt64Opconv; "int64 opConv()"
+  .text:103351C7                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:103351CC                 call    dword ptr [esi+54h]
+  .text:103351CF                 mov     esi, [edi]
+  .text:103351D1                 lea     eax, [esp+14h+var_C]
+  .text:103351D5                 push    0
+  .text:103351D7                 push    0
+  .text:103351D9                 push    0
+  .text:103351DB                 push    6
+  .text:103351DD                 ; function
+  .text:103351DD                 push    offset sub_10335EE0; function
+  .text:103351E2                 ; result
+  .text:103351E2                 push    eax; result
+  .text:103351E3                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:103351E8                 add     esp, 8
+  .text:103351EB                 mov     ecx, edi
+  .text:103351ED                 push    eax
+  .text:103351EE                 push    offset aDoubleOpconv; "double opConv()"
+  .text:103351F3                 push    offset aDictionaryvalu; "dictionaryValue"
+  .text:103351F8                 call    dword ptr [esi+54h]
+  .text:103351FB                 mov     eax, [edi]
+  .text:103351FD                 mov     ecx, edi
+  .text:103351FF                 push    5
+  .text:10335201                 push    30h ; '0'
+  .text:10335203                 push    offset aDictionary; "dictionary"
+  .text:10335208                 call    dword ptr [eax+4Ch]
+  .text:1033520B                 mov     esi, [edi]
+  .text:1033520D                 lea     eax, [esp+14h+var_C]
+  .text:10335211                 push    0
+  .text:10335213                 push    0
+  .text:10335215                 push    0
+  .text:10335217                 push    6
+  .text:10335219                 ; function
+  .text:10335219                 push    offset ScriptDictionaryFactory_Generic; function
+  .text:1033521E                 ; result
+  .text:1033521E                 push    eax; result
+  .text:1033521F                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:10335224                 add     esp, 8
+  .text:10335227                 mov     ecx, edi
+  .text:10335229                 push    eax
+  .text:1033522A                 push    offset aDictionaryF; "dictionary@ f()"
+  .text:1033522F                 push    3
+  .text:10335231                 push    offset aDictionary; "dictionary"
+  .text:10335236                 call    dword ptr [esi+58h]
+  .text:10335239                 mov     esi, [edi]
+  .text:1033523B                 lea     eax, [esp+14h+var_C]
+  .text:1033523F                 push    0
+  .text:10335241                 push    0
+  .text:10335243                 push    0
+  .text:10335245                 push    6
+  .text:10335247                 ; function
+  .text:10335247                 push    offset sub_10335710; function
+  .text:1033524C                 ; result
+  .text:1033524C                 push    eax; result
+  .text:1033524D                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:10335252                 add     esp, 8
+  .text:10335255                 mov     ecx, edi
+  .text:10335257                 push    eax
+  .text:10335258                 push    offset aDictionaryFInt; "dictionary @f(int &in) {repeat {string,"...
+  .text:1033525D                 push    4
+  .text:1033525F                 push    offset aDictionary; "dictionary"
+  .text:10335264                 call    dword ptr [esi+58h]
+  .text:10335267                 mov     esi, [edi]
+  .text:10335269                 lea     eax, [esp+14h+var_C]
+  .text:1033526D                 push    0
+  .text:1033526F                 push    0
+  .text:10335271                 push    0
+  .text:10335273                 push    6
+  .text:10335275                 ; function
+  .text:10335275                 push    offset sub_10335750; function
+  .text:1033527A                 ; result
+  .text:1033527A                 push    eax; result
+  .text:1033527B                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:10335280                 add     esp, 8
+  .text:10335283                 mov     ecx, edi
+  .text:10335285                 push    eax
+  .text:10335286                 push    offset aVoidF; "void f()"
+  .text:1033528B                 push    5
+  .text:1033528D                 push    offset aDictionary; "dictionary"
+  .text:10335292                 call    dword ptr [esi+58h]
+  .text:10335295                 mov     esi, [edi]
+  .text:10335297                 lea     eax, [esp+14h+var_C]
+  .text:1033529B                 push    0
+  .text:1033529D                 push    0
+  .text:1033529F                 push    0
+  .text:103352A1                 push    6
+  .text:103352A3                 ; function
+  .text:103352A3                 push    offset sub_10335770; function
+  .text:103352A8                 ; result
+  .text:103352A8                 push    eax; result
+  .text:103352A9                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:103352AE                 add     esp, 8
+  .text:103352B1                 mov     ecx, edi
+  .text:103352B3                 push    eax
+  .text:103352B4                 push    offset aVoidF; "void f()"
+  .text:103352B9                 push    6
+  .text:103352BB                 push    offset aDictionary; "dictionary"
+  .text:103352C0                 call    dword ptr [esi+58h]
+  .text:103352C3                 mov     esi, [edi]
+  .text:103352C5                 lea     eax, [esp+14h+var_C]
+  .text:103352C9                 push    0
+  .text:103352CB                 push    0
+  .text:103352CD                 push    0
+  .text:103352CF                 push    6
+  .text:103352D1                 ; function
+  .text:103352D1                 push    offset sub_103357B0; function
+  .text:103352D6                 ; result
+  .text:103352D6                 push    eax; result
+  .text:103352D7                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:103352DC                 add     esp, 8
+  .text:103352DF                 mov     ecx, edi
+  .text:103352E1                 push    eax
+  .text:103352E2                 push    offset aDictionaryOpas; "dictionary &opAssign(const dictionary &"...
+  .text:103352E7                 push    offset aDictionary; "dictionary"
+  .text:103352EC                 call    dword ptr [esi+54h]
+  .text:103352EF                 mov     esi, [edi]
+  .text:103352F1                 lea     eax, [esp+14h+var_C]
+  .text:103352F5                 push    0
+  .text:103352F7                 push    0
+  .text:103352F9                 push    0
+  .text:103352FB                 push    6
+  .text:103352FD                 ; function
+  .text:103352FD                 push    offset sub_103357E0; function
+  .text:10335302                 ; result
+  .text:10335302                 push    eax; result
+  .text:10335303                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:10335308                 add     esp, 8
+  .text:1033530B                 push    eax
+  .text:1033530C                 push    offset aVoidSetConstSt_1; "void set(const string &in, const ?&in)"
+  .text:10335311                 push    offset aDictionary; "dictionary"
+  .text:10335316                 mov     ecx, edi
+  .text:10335318                 call    dword ptr [esi+54h]
+  .text:1033531B                 mov     esi, [edi]
+  .text:1033531D                 lea     eax, [esp+14h+var_C]
+  .text:10335321                 push    0
+  .text:10335323                 push    0
+  .text:10335325                 push    0
+  .text:10335327                 push    6
+  .text:10335329                 ; function
+  .text:10335329                 push    offset sub_103358B0; function
+  .text:1033532E                 ; result
+  .text:1033532E                 push    eax; result
+  .text:1033532F                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:10335334                 add     esp, 8
+  .text:10335337                 mov     ecx, edi
+  .text:10335339                 push    eax
+  .text:1033533A                 push    offset aBoolGetConstSt; "bool get(const string &in, ?&out) const"
+  .text:1033533F                 push    offset aDictionary; "dictionary"
+  .text:10335344                 call    dword ptr [esi+54h]
+  .text:10335347                 mov     esi, [edi]
+  .text:10335349                 lea     eax, [esp+14h+var_C]
+  .text:1033534D                 push    0
+  .text:1033534F                 push    0
+  .text:10335351                 push    0
+  .text:10335353                 push    6
+  .text:10335355                 ; function
+  .text:10335355                 push    offset sub_10335830; function
+  .text:1033535A                 ; result
+  .text:1033535A                 push    eax; result
+  .text:1033535B                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:10335360                 add     esp, 8
+  .text:10335363                 mov     ecx, edi
+  .text:10335365                 push    eax
+  .text:10335366                 push    offset aVoidSetConstSt_2; "void set(const string &in, const int64&"...
+  .text:1033536B                 push    offset aDictionary; "dictionary"
+  .text:10335370                 call    dword ptr [esi+54h]
+  .text:10335373                 mov     esi, [edi]
+  .text:10335375                 lea     eax, [esp+14h+var_C]
+  .text:10335379                 push    0
+  .text:1033537B                 push    0
+  .text:1033537D                 push    0
+  .text:1033537F                 push    6
+  .text:10335381                 ; function
+  .text:10335381                 push    offset sub_10335930; function
+  .text:10335386                 ; result
+  .text:10335386                 push    eax; result
+  .text:10335387                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:1033538C                 add     esp, 8
+  .text:1033538F                 mov     ecx, edi
+  .text:10335391                 push    eax
+  .text:10335392                 push    offset aBoolGetConstSt_0; "bool get(const string &in, int64&out) c"...
+  .text:10335397                 push    offset aDictionary; "dictionary"
+  .text:1033539C                 call    dword ptr [esi+54h]
+  .text:1033539F                 mov     esi, [edi]
+  .text:103353A1                 lea     eax, [esp+14h+var_C]
+  .text:103353A5                 push    0
+  .text:103353A7                 push    0
+  .text:103353A9                 push    0
+  .text:103353AB                 push    6
+  .text:103353AD                 ; function
+  .text:103353AD                 push    offset sub_10335870; function
+  .text:103353B2                 ; result
+  .text:103353B2                 push    eax; result
+  .text:103353B3                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:103353B8                 add     esp, 8
+  .text:103353BB                 mov     ecx, edi
+  .text:103353BD                 push    eax
+  .text:103353BE                 push    offset aVoidSetConstSt_3; "void set(const string &in, const double"...
+  .text:103353C3                 push    offset aDictionary; "dictionary"
+  .text:103353C8                 call    dword ptr [esi+54h]
+  .text:103353CB                 mov     esi, [edi]
+  .text:103353CD                 lea     eax, [esp+14h+var_C]
+  .text:103353D1                 push    0
+  .text:103353D3                 push    0
+  .text:103353D5                 push    0
+  .text:103353D7                 push    6
+  .text:103353D9                 ; function
+  .text:103353D9                 push    offset sub_103359A0; function
+  .text:103353DE                 ; result
+  .text:103353DE                 push    eax; result
+  .text:103353DF                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:103353E4                 add     esp, 8
+  .text:103353E7                 mov     ecx, edi
+  .text:103353E9                 push    eax
+  .text:103353EA                 push    offset aBoolGetConstSt_1; "bool get(const string &in, double&out) "...
+  .text:103353EF                 push    offset aDictionary; "dictionary"
+  .text:103353F4                 call    dword ptr [esi+54h]
+  .text:103353F7                 mov     esi, [edi]
+  .text:103353F9                 push    0
+  .text:103353FB                 push    0
+  .text:103353FD                 push    0
+  .text:103353FF                 push    6
+  .text:10335401                 lea     eax, [esp+24h+var_C]
+  .text:10335405                 ; function
+  .text:10335405                 push    offset sub_10335A10; function
+  .text:1033540A                 ; result
+  .text:1033540A                 push    eax; result
+  .text:1033540B                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:10335410                 add     esp, 8
+  .text:10335413                 mov     ecx, edi
+  .text:10335415                 push    eax
+  .text:10335416                 push    offset aBoolExistsCons_2; "bool exists(const string &in) const"
+  .text:1033541B                 push    offset aDictionary; "dictionary"
+  .text:10335420                 call    dword ptr [esi+54h]
+  .text:10335423                 mov     esi, [edi]
+  .text:10335425                 lea     eax, [esp+14h+var_C]
+  .text:10335429                 push    0
+  .text:1033542B                 push    0
+  .text:1033542D                 push    0
+  .text:1033542F                 push    6
+  .text:10335431                 ; function
+  .text:10335431                 push    offset sub_10335A50; function
+  .text:10335436                 ; result
+  .text:10335436                 push    eax; result
+  .text:10335437                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:1033543C                 add     esp, 8
+  .text:1033543F                 mov     ecx, edi
+  .text:10335441                 push    eax
+  .text:10335442                 push    offset aBoolIsemptyCon_0; "bool isEmpty() const"
+  .text:10335447                 push    offset aDictionary; "dictionary"
+  .text:1033544C                 call    dword ptr [esi+54h]
+  .text:1033544F                 mov     esi, [edi]
+  .text:10335451                 lea     eax, [esp+14h+var_C]
+  .text:10335455                 push    0
+  .text:10335457                 push    0
+  .text:10335459                 push    0
+  .text:1033545B                 push    6
+  .text:1033545D                 ; function
+  .text:1033545D                 push    offset sub_10335A80; function
+  .text:10335462                 ; result
+  .text:10335462                 push    eax; result
+  .text:10335463                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:10335468                 add     esp, 8
+  .text:1033546B                 mov     ecx, edi
+  .text:1033546D                 push    eax
+  .text:1033546E                 push    offset aUintGetsizeCon; "uint getSize() const"
+  .text:10335473                 push    offset aDictionary; "dictionary"
+  .text:10335478                 call    dword ptr [esi+54h]
+  .text:1033547B                 mov     esi, [edi]
+  .text:1033547D                 lea     eax, [esp+14h+var_C]
+  .text:10335481                 push    0
+  .text:10335483                 push    0
+  .text:10335485                 push    0
+  .text:10335487                 push    6
+  .text:10335489                 ; function
+  .text:10335489                 push    offset sub_10335AA0; function
+  .text:1033548E                 ; result
+  .text:1033548E                 push    eax; result
+  .text:1033548F                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:10335494                 add     esp, 8
+  .text:10335497                 mov     ecx, edi
+  .text:10335499                 push    eax
+  .text:1033549A                 push    offset aBoolDeleteCons; "bool delete(const string &in)"
+  .text:1033549F                 push    offset aDictionary; "dictionary"
+  .text:103354A4                 call    dword ptr [esi+54h]
+  .text:103354A7                 mov     esi, [edi]
+  .text:103354A9                 lea     eax, [esp+14h+var_C]
+  .text:103354AD                 push    0
+  .text:103354AF                 push    0
+  .text:103354B1                 push    0
+  .text:103354B3                 push    6
+  .text:103354B5                 ; function
+  .text:103354B5                 push    offset sub_10335AE0; function
+  .text:103354BA                 ; result
+  .text:103354BA                 push    eax; result
+  .text:103354BB                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:103354C0                 add     esp, 8
+  .text:103354C3                 mov     ecx, edi
+  .text:103354C5                 push    eax
+  .text:103354C6                 push    offset aVoidDeleteall; "void deleteAll()"
+  .text:103354CB                 push    offset aDictionary; "dictionary"
+  .text:103354D0                 call    dword ptr [esi+54h]
+  .text:103354D3                 mov     esi, [edi]
+  .text:103354D5                 lea     eax, [esp+14h+var_C]
+  .text:103354D9                 push    0
+  .text:103354DB                 push    0
+  .text:103354DD                 push    0
+  .text:103354DF                 push    6
+  .text:103354E1                 ; function
+  .text:103354E1                 push    offset sub_10335BA0; function
+  .text:103354E6                 ; result
+  .text:103354E6                 push    eax; result
+  .text:103354E7                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:103354EC                 add     esp, 8
+  .text:103354EF                 mov     ecx, edi
+  .text:103354F1                 push    eax
+  .text:103354F2                 push    offset aArrayStringGet_0; "array<string> @getKeys() const"
+  .text:103354F7                 push    offset aDictionary; "dictionary"
+  .text:103354FC                 call    dword ptr [esi+54h]
+  .text:103354FF                 mov     esi, [edi]
+  .text:10335501                 lea     eax, [esp+14h+var_C]
+  .text:10335505                 push    0
+  .text:10335507                 push    0
+  .text:10335509                 push    0
+  .text:1033550B                 push    6
+  .text:1033550D                 ; function
+  .text:1033550D                 push    offset sub_10335BD0; function
+  .text:10335512                 ; result
+  .text:10335512                 push    eax; result
+  .text:10335513                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:10335518                 add     esp, 8
+  .text:1033551B                 mov     ecx, edi
+  .text:1033551D                 push    eax
+  .text:1033551E                 push    offset aDictionaryvalu_6; "dictionaryValue &opIndex(const string &"...
+  .text:10335523                 push    offset aDictionary; "dictionary"
+  .text:10335528                 call    dword ptr [esi+54h]
+  .text:1033552B                 mov     esi, [edi]
+  .text:1033552D                 lea     eax, [esp+14h+var_C]
+  .text:10335531                 push    0
+  .text:10335533                 push    0
+  .text:10335535                 push    0
+  .text:10335537                 push    6
+  .text:10335539                 ; function
+  .text:10335539                 push    offset sub_10335C10; function
+  .text:1033553E                 ; result
+  .text:1033553E                 push    eax; result
+  .text:1033553F                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:10335544                 add     esp, 8
+  .text:10335547                 mov     ecx, edi
+  .text:10335549                 push    eax
+  .text:1033554A                 push    offset aConstDictionar; "const dictionaryValue &opIndex(const st"...
+  .text:1033554F                 push    offset aDictionary; "dictionary"
+  .text:10335554                 call    dword ptr [esi+54h]
+  .text:10335557                 mov     esi, [edi]
+  .text:10335559                 lea     eax, [esp+14h+var_C]
+  .text:1033555D                 push    0
+  .text:1033555F                 push    0
+  .text:10335561                 push    0
+  .text:10335563                 push    6
+  .text:10335565                 ; function
+  .text:10335565                 push    offset sub_10335AF0; function
+  .text:1033556A                 ; result
+  .text:1033556A                 push    eax; result
+  .text:1033556B                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:10335570                 add     esp, 8
+  .text:10335573                 mov     ecx, edi
+  .text:10335575                 push    eax
+  .text:10335576                 push    offset aIntF; "int f()"
+  .text:1033557B                 push    9
+  .text:1033557D                 push    offset aDictionary; "dictionary"
+  .text:10335582                 call    dword ptr [esi+58h]
+  .text:10335585                 mov     esi, [edi]
+  .text:10335587                 lea     eax, [esp+14h+var_C]
+  .text:1033558B                 push    0
+  .text:1033558D                 push    0
+  .text:1033558F                 push    0
+  .text:10335591                 push    6
+  .text:10335593                 ; function
+  .text:10335593                 push    offset sub_10335B10; function
+  .text:10335598                 ; result
+  .text:10335598                 push    eax; result
+  .text:10335599                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:1033559E                 add     esp, 8
+  .text:103355A1                 mov     ecx, edi
+  .text:103355A3                 push    eax
+  .text:103355A4                 push    offset aVoidF; "void f()"
+  .text:103355A9                 push    0Ah
+  .text:103355AB                 push    offset aDictionary; "dictionary"
+  .text:103355B0                 call    dword ptr [esi+58h]
+  .text:103355B3                 mov     esi, [edi]
+  .text:103355B5                 lea     eax, [esp+14h+var_C]
+  .text:103355B9                 push    0
+  .text:103355BB                 push    0
+  .text:103355BD                 push    0
+  .text:103355BF                 push    6
+  .text:103355C1                 ; function
+  .text:103355C1                 push    offset sub_10335B20; function
+  .text:103355C6                 ; result
+  .text:103355C6                 push    eax; result
+  .text:103355C7                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:103355CC                 add     esp, 8
+  .text:103355CF                 push    eax
+  .text:103355D0                 push    offset aBoolF; "bool f()"
+  .text:103355D5                 push    0Bh
+  .text:103355D7                 push    offset aDictionary; "dictionary"
+  .text:103355DC                 mov     ecx, edi
+  .text:103355DE                 call    dword ptr [esi+58h]
+  .text:103355E1                 mov     esi, [edi]
+  .text:103355E3                 lea     eax, [esp+14h+var_C]
+  .text:103355E7                 push    0
+  .text:103355E9                 push    0
+  .text:103355EB                 push    0
+  .text:103355ED                 push    6
+  .text:103355EF                 ; function
+  .text:103355EF                 push    offset sub_10335B40; function
+  .text:103355F4                 ; result
+  .text:103355F4                 push    eax; result
+  .text:103355F5                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:103355FA                 add     esp, 8
+  .text:103355FD                 mov     ecx, edi
+  .text:103355FF                 push    eax
+  .text:10335600                 push    offset aVoidFIntIn; "void f(int&in)"
+  .text:10335605                 push    0Ch
+  .text:10335607                 push    offset aDictionary; "dictionary"
+  .text:1033560C                 call    dword ptr [esi+58h]
+  .text:1033560F                 mov     esi, [edi]
+  .text:10335611                 lea     eax, [esp+14h+var_C]
+  .text:10335615                 push    0
+  .text:10335617                 push    0
+  .text:10335619                 push    0
+  .text:1033561B                 push    6
+  .text:1033561D                 ; function
+  .text:1033561D                 push    offset sub_10335B70; function
+  .text:10335622                 ; result
+  .text:10335622                 push    eax; result
+  .text:10335623                 call    asFunctionPtr_Generic; Verified x86 asSFuncPtr conversion: flag 1 at +32; member/global/generic pointer materialization.
+  .text:10335628                 add     esp, 8
+  .text:1033562B                 mov     ecx, edi
+  .text:1033562D                 push    eax
+  .text:1033562E                 push    offset aVoidFIntIn; "void f(int&in)"
+  .text:10335633                 push    0Dh
+  .text:10335635                 push    offset aDictionary; "dictionary"
+  .text:1033563A                 call    dword ptr [esi+58h]
+  .text:1033563D                 push    edi
+  .text:1033563E                 call    sub_10346770
+  .text:10335643                 mov     ecx, [esp+38h+var_4]
+  .text:10335647                 add     esp, 4
+  .text:1033564A                 pop     edi
+  .text:1033564B                 pop     esi
+  .text:1033564C                 ; StackCookie
+  .text:1033564C                 xor     ecx, esp; StackCookie
+  .text:1033564E                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:10335653                 add     esp, 2Ch
+  .text:10335656                 retn
+procedure: |-
+  // Current binary evidence: dictionary@ f() intersect void erase(const string &in) selects this registration. Select dictionary native methods with asCALL_THISCALL, not generic wrappers. Windows merges native/generic bodies; Linux retains native registration. The SDK source is a reference revision; unknown non-target callbacks and slots remain neutral. No usable DWARF was supplied.
+  void __cdecl RegisterScriptDictionary(asIScriptEngine *engine)
+  {
+    int v1; // edi
+    const char *v2; // eax
+    const asIScriptEngine_vtbl *v3; // esi
+    asSFuncPtr *v4; // eax
+    const asIScriptEngine_vtbl *v5; // esi
+    asSFuncPtr *v6; // eax
+    const asIScriptEngine_vtbl *v7; // esi
+    asSFuncPtr *v8; // eax
+    const asIScriptEngine_vtbl *v9; // esi
+    asSFuncPtr *v10; // eax
+    const asIScriptEngine_vtbl *v11; // esi
+    asSFuncPtr *v12; // eax
+    const asIScriptEngine_vtbl *v13; // esi
+    asSFuncPtr *v14; // eax
+    const asIScriptEngine_vtbl *v15; // esi
+    asSFuncPtr *v16; // eax
+    const asIScriptEngine_vtbl *v17; // esi
+    asSFuncPtr *v18; // eax
+    const asIScriptEngine_vtbl *v19; // esi
+    asSFuncPtr *v20; // eax
+    const asIScriptEngine_vtbl *v21; // esi
+    asSFuncPtr *v22; // eax
+    const asIScriptEngine_vtbl *v23; // esi
+    asSFuncPtr *v24; // eax
+    const asIScriptEngine_vtbl *v25; // esi
+    asSFuncPtr *v26; // eax
+    const asIScriptEngine_vtbl *v27; // esi
+    asSFuncPtr *v28; // eax
+    const asIScriptEngine_vtbl *v29; // esi
+    asSFuncPtr *v30; // eax
+    const asIScriptEngine_vtbl *v31; // esi
+    asSFuncPtr *v32; // eax
+    const asIScriptEngine_vtbl *v33; // esi
+    asSFuncPtr *v34; // eax
+    const asIScriptEngine_vtbl *v35; // esi
+    asSFuncPtr *v36; // eax
+    const asIScriptEngine_vtbl *v37; // esi
+    asSFuncPtr *v38; // eax
+    const asIScriptEngine_vtbl *v39; // esi
+    asSFuncPtr *v40; // eax
+    const asIScriptEngine_vtbl *v41; // esi
+    asSFuncPtr *v42; // eax
+    const asIScriptEngine_vtbl *v43; // esi
+    asSFuncPtr *v44; // eax
+    const asIScriptEngine_vtbl *v45; // esi
+    asSFuncPtr *v46; // eax
+    const asIScriptEngine_vtbl *v47; // esi
+    asSFuncPtr *v48; // eax
+    const asIScriptEngine_vtbl *v49; // esi
+    asSFuncPtr *v50; // eax
+    const asIScriptEngine_vtbl *v51; // esi
+    asSFuncPtr *v52; // eax
+    const asIScriptEngine_vtbl *v53; // esi
+    asSFuncPtr *v54; // eax
+    const asIScriptEngine_vtbl *v55; // esi
+    asSFuncPtr *v56; // eax
+    const asIScriptEngine_vtbl *v57; // esi
+    asSFuncPtr *v58; // eax
+    const asIScriptEngine_vtbl *v59; // esi
+    asSFuncPtr *v60; // eax
+    const asIScriptEngine_vtbl *v61; // esi
+    asSFuncPtr *v62; // eax
+    const asIScriptEngine_vtbl *v63; // esi
+    asSFuncPtr *v64; // eax
+    const asIScriptEngine_vtbl *v65; // esi
+    asSFuncPtr *v66; // eax
+    const asIScriptEngine_vtbl *v67; // esi
+    asSFuncPtr *v68; // eax
+    const asIScriptEngine_vtbl *v69; // esi
+    asSFuncPtr *v70; // eax
+    const asIScriptEngine_vtbl *v71; // esi
+    asSFuncPtr *v72; // eax
+    const asIScriptEngine_vtbl *v73; // esi
+    asSFuncPtr *v74; // eax
+    const asIScriptEngine_vtbl *v75; // esi
+    asSFuncPtr *v76; // eax
+    const asIScriptEngine_vtbl *v77; // esi
+    asSFuncPtr *v78; // eax
+    const asIScriptEngine_vtbl *v79; // esi
+    asSFuncPtr *v80; // eax
+    const asIScriptEngine_vtbl *v81; // esi
+    asSFuncPtr *v82; // eax
+    const asIScriptEngine_vtbl *v83; // esi
+    asSFuncPtr *v84; // eax
+    const asIScriptEngine_vtbl *v85; // esi
+    asSFuncPtr *v86; // eax
+    const asIScriptEngine_vtbl *vtable; // esi
+    asSFuncPtr *v89; // eax
+    const asIScriptEngine_vtbl *v90; // esi
+    asSFuncPtr *v91; // eax
+    const asIScriptEngine_vtbl *v92; // esi
+    asSFuncPtr *v93; // eax
+    const asIScriptEngine_vtbl *v94; // esi
+    asSFuncPtr *v95; // eax
+    const asIScriptEngine_vtbl *v96; // esi
+    asSFuncPtr *v97; // eax
+    const asIScriptEngine_vtbl *v98; // esi
+    asSFuncPtr *v99; // eax
+    const asIScriptEngine_vtbl *v100; // esi
+    asSFuncPtr *v101; // eax
+    const asIScriptEngine_vtbl *v102; // esi
+    asSFuncPtr *v103; // eax
+    const asIScriptEngine_vtbl *v104; // esi
+    asSFuncPtr *v105; // eax
+    const asIScriptEngine_vtbl *v106; // esi
+    asSFuncPtr *v107; // eax
+    const asIScriptEngine_vtbl *v108; // esi
+    asSFuncPtr *v109; // eax
+    const asIScriptEngine_vtbl *v110; // esi
+    asSFuncPtr *v111; // eax
+    const asIScriptEngine_vtbl *v112; // esi
+    asSFuncPtr *v113; // eax
+    const asIScriptEngine_vtbl *v114; // esi
+    asSFuncPtr *v115; // eax
+    const asIScriptEngine_vtbl *v116; // esi
+    asSFuncPtr *v117; // eax
+    const asIScriptEngine_vtbl *v118; // esi
+    asSFuncPtr *v119; // eax
+    const asIScriptEngine_vtbl *v120; // esi
+    asSFuncPtr *v121; // eax
+    const asIScriptEngine_vtbl *v122; // esi
+    asSFuncPtr *v123; // eax
+    const asIScriptEngine_vtbl *v124; // esi
+    asSFuncPtr *v125; // eax
+    const asIScriptEngine_vtbl *v126; // esi
+    asSFuncPtr *v127; // eax
+    const asIScriptEngine_vtbl *v128; // esi
+    asSFuncPtr *v129; // eax
+    const asIScriptEngine_vtbl *v130; // esi
+    asSFuncPtr *v131; // eax
+    const asIScriptEngine_vtbl *v132; // esi
+    asSFuncPtr *v133; // eax
+    const asIScriptEngine_vtbl *v134; // esi
+    asSFuncPtr *v135; // eax
+    const asIScriptEngine_vtbl *v136; // esi
+    asSFuncPtr *v137; // eax
+    const asIScriptEngine_vtbl *v138; // esi
+    asSFuncPtr *v139; // eax
+    const asIScriptEngine_vtbl *v140; // esi
+    asSFuncPtr *v141; // eax
+    const asIScriptEngine_vtbl *v142; // esi
+    asSFuncPtr *v143; // eax
+    const asIScriptEngine_vtbl *v144; // esi
+    asSFuncPtr *v145; // eax
+    const asIScriptEngine_vtbl *v146; // esi
+    asSFuncPtr *v147; // eax
+    const asIScriptEngine_vtbl *v148; // esi
+    asSFuncPtr *v149; // eax
+    const asIScriptEngine_vtbl *v150; // esi
+    asSFuncPtr *v151; // eax
+    const asIScriptEngine_vtbl *v152; // esi
+    asSFuncPtr *v153; // eax
+    const asIScriptEngine_vtbl *v154; // esi
+    asSFuncPtr *v155; // eax
+    const asIScriptEngine_vtbl *v156; // esi
+    asSFuncPtr *v157; // eax
+    const asIScriptEngine_vtbl *v158; // esi
+    asSFuncPtr *v159; // eax
+    const asIScriptEngine_vtbl *v160; // esi
+    asSFuncPtr *v161; // eax
+    const asIScriptEngine_vtbl *v162; // esi
+    asSFuncPtr *v163; // eax
+    int v164; // [esp+4C0h] [ebp-34h]
+    _BYTE v165[4]; // [esp+4E4h] [ebp-10h] BYREF
+    _BYTE v166[8]; // [esp+4E8h] [ebp-Ch] BYREF
+
+    v2 = (const char *)sub_10085580();
+    if ( strstr(v2, "AS_MAX_PORTABILITY") )
+    {
+      v164 = v1;
+      ((void (__thiscall *)(asIScriptEngine *, void *(__cdecl *)(int), int, int))engine->vtable->SetEngineUserDataCleanupCallback)(
+        engine,
+        sub_10344E00,
+        1003,
+        v164);
+      engine->vtable->RegisterObjectType(engine, "dictionaryValue", 16, 6022u);
+      vtable = engine->vtable;
+      v89 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10336120);
+      vtable->RegisterObjectBehaviour(
+        engine,
+        "dictionaryValue",
+        asBEHAVE_CONSTRUCT,
+        "void f()",
+        v89,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v90 = engine->vtable;
+      v91 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10336140);
+      v90->RegisterObjectBehaviour(
+        engine,
+        "dictionaryValue",
+        asBEHAVE_DESTRUCT,
+        "void f()",
+        v91,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v92 = engine->vtable;
+      v93 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10336160);
+      v92->RegisterObjectBehaviour(
+        engine,
+        "dictionaryValue",
+        asBEHAVE_ENUMREFS,
+        "void f(int&in)",
+        v93,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v94 = engine->vtable;
+      v95 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_103361B0);
+      v94->RegisterObjectBehaviour(
+        engine,
+        "dictionaryValue",
+        asBEHAVE_RELEASEREFS,
+        "void f(int&in)",
+        v95,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v96 = engine->vtable;
+      v97 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_103360C0);
+      v96->RegisterObjectMethod(
+        engine,
+        "dictionaryValue",
+        "dictionaryValue &opAssign(const dictionaryValue &in)",
+        v97,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v98 = engine->vtable;
+      v99 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10336060);
+      v98->RegisterObjectMethod(
+        engine,
+        "dictionaryValue",
+        "dictionaryValue &opHndlAssign(const ?&in)",
+        v99,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v100 = engine->vtable;
+      v101 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_103360C0);
+      v100->RegisterObjectMethod(
+        engine,
+        "dictionaryValue",
+        "dictionaryValue &opHndlAssign(const dictionaryValue &in)",
+        v101,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v102 = engine->vtable;
+      v103 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10336060);
+      v102->RegisterObjectMethod(
+        engine,
+        "dictionaryValue",
+        "dictionaryValue &opAssign(const ?&in)",
+        v103,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v104 = engine->vtable;
+      v105 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10336010);
+      v104->RegisterObjectMethod(
+        engine,
+        "dictionaryValue",
+        "dictionaryValue &opAssign(double)",
+        v105,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v106 = engine->vtable;
+      v107 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10335FB0);
+      v106->RegisterObjectMethod(
+        engine,
+        "dictionaryValue",
+        "dictionaryValue &opAssign(int64)",
+        v107,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v108 = engine->vtable;
+      v109 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10335F70);
+      v108->RegisterObjectMethod(engine, "dictionaryValue", "void opCast(?&out)", v109, asCALL_GENERIC, nullptr, 0, 0);
+      v110 = engine->vtable;
+      v111 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10335F70);
+      v110->RegisterObjectMethod(engine, "dictionaryValue", "void opConv(?&out)", v111, asCALL_GENERIC, nullptr, 0, 0);
+      v112 = engine->vtable;
+      v113 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10335F20);
+      v112->RegisterObjectMethod(engine, "dictionaryValue", "int64 opConv()", v113, asCALL_GENERIC, nullptr, 0, 0);
+      v114 = engine->vtable;
+      v115 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10335EE0);
+      v114->RegisterObjectMethod(engine, "dictionaryValue", "double opConv()", v115, asCALL_GENERIC, nullptr, 0, 0);
+      engine->vtable->RegisterObjectType(engine, "dictionary", 48, 5u);
+      v116 = engine->vtable;
+      v117 = asFunctionPtr_Generic((asSFuncPtr *)v166, ScriptDictionaryFactory_Generic);
+      v116->RegisterObjectBehaviour(
+        engine,
+        "dictionary",
+        asBEHAVE_FACTORY,
+        "dictionary@ f()",
+        v117,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v118 = engine->vtable;
+      v119 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10335710);
+      v118->RegisterObjectBehaviour(
+        engine,
+        "dictionary",
+        asBEHAVE_LIST_FACTORY,
+        "dictionary @f(int &in) {repeat {string, ?}}",
+        v119,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v120 = engine->vtable;
+      v121 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10335750);
+      v120->RegisterObjectBehaviour(
+        engine,
+        "dictionary",
+        asBEHAVE_ADDREF,
+        "void f()",
+        v121,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v122 = engine->vtable;
+      v123 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10335770);
+      v122->RegisterObjectBehaviour(
+        engine,
+        "dictionary",
+        asBEHAVE_RELEASE,
+        "void f()",
+        v123,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v124 = engine->vtable;
+      v125 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_103357B0);
+      v124->RegisterObjectMethod(
+        engine,
+        "dictionary",
+        "dictionary &opAssign(const dictionary &in)",
+        v125,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v126 = engine->vtable;
+      v127 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_103357E0);
+      v126->RegisterObjectMethod(
+        engine,
+        "dictionary",
+        "void set(const string &in, const ?&in)",
+        v127,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v128 = engine->vtable;
+      v129 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_103358B0);
+      v128->RegisterObjectMethod(
+        engine,
+        "dictionary",
+        "bool get(const string &in, ?&out) const",
+        v129,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v130 = engine->vtable;
+      v131 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10335830);
+      v130->RegisterObjectMethod(
+        engine,
+        "dictionary",
+        "void set(const string &in, const int64&in)",
+        v131,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v132 = engine->vtable;
+      v133 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10335930);
+      v132->RegisterObjectMethod(
+        engine,
+        "dictionary",
+        "bool get(const string &in, int64&out) const",
+        v133,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v134 = engine->vtable;
+      v135 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10335870);
+      v134->RegisterObjectMethod(
+        engine,
+        "dictionary",
+        "void set(const string &in, const double&in)",
+        v135,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v136 = engine->vtable;
+      v137 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_103359A0);
+      v136->RegisterObjectMethod(
+        engine,
+        "dictionary",
+        "bool get(const string &in, double&out) const",
+        v137,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v138 = engine->vtable;
+      v139 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10335A10);
+      v138->RegisterObjectMethod(
+        engine,
+        "dictionary",
+        "bool exists(const string &in) const",
+        v139,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v140 = engine->vtable;
+      v141 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10335A50);
+      v140->RegisterObjectMethod(engine, "dictionary", "bool isEmpty() const", v141, asCALL_GENERIC, nullptr, 0, 0);
+      v142 = engine->vtable;
+      v143 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10335A80);
+      v142->RegisterObjectMethod(engine, "dictionary", "uint getSize() const", v143, asCALL_GENERIC, nullptr, 0, 0);
+      v144 = engine->vtable;
+      v145 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10335AA0);
+      v144->RegisterObjectMethod(
+        engine,
+        "dictionary",
+        "bool delete(const string &in)",
+        v145,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v146 = engine->vtable;
+      v147 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10335AE0);
+      v146->RegisterObjectMethod(engine, "dictionary", "void deleteAll()", v147, asCALL_GENERIC, nullptr, 0, 0);
+      v148 = engine->vtable;
+      v149 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10335BA0);
+      v148->RegisterObjectMethod(
+        engine,
+        "dictionary",
+        "array<string> @getKeys() const",
+        v149,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v150 = engine->vtable;
+      v151 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10335BD0);
+      v150->RegisterObjectMethod(
+        engine,
+        "dictionary",
+        "dictionaryValue &opIndex(const string &in)",
+        v151,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v152 = engine->vtable;
+      v153 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10335C10);
+      v152->RegisterObjectMethod(
+        engine,
+        "dictionary",
+        "const dictionaryValue &opIndex(const string &in) const",
+        v153,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v154 = engine->vtable;
+      v155 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10335AF0);
+      v154->RegisterObjectBehaviour(
+        engine,
+        "dictionary",
+        asBEHAVE_GETREFCOUNT,
+        "int f()",
+        v155,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v156 = engine->vtable;
+      v157 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10335B10);
+      v156->RegisterObjectBehaviour(
+        engine,
+        "dictionary",
+        asBEHAVE_SETGCFLAG,
+        "void f()",
+        v157,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v158 = engine->vtable;
+      v159 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10335B20);
+      v158->RegisterObjectBehaviour(
+        engine,
+        "dictionary",
+        asBEHAVE_GETGCFLAG,
+        "bool f()",
+        v159,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v160 = engine->vtable;
+      v161 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10335B40);
+      v160->RegisterObjectBehaviour(
+        engine,
+        "dictionary",
+        asBEHAVE_ENUMREFS,
+        "void f(int&in)",
+        v161,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v162 = engine->vtable;
+      v163 = asFunctionPtr_Generic((asSFuncPtr *)v166, sub_10335B70);
+      v162->RegisterObjectBehaviour(
+        engine,
+        "dictionary",
+        asBEHAVE_RELEASEREFS,
+        "void f(int&in)",
+        v163,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      sub_10346770(engine);
+    }
+    else
+    {
+      engine->vtable->RegisterObjectType(engine, "dictionaryValue", 16, 6022u);
+      v3 = engine->vtable;
+      v4 = asFunctionPtr_Global((asSFuncPtr *)v165, sub_10335C80);
+      v3->RegisterObjectBehaviour(
+        engine,
+        "dictionaryValue",
+        asBEHAVE_CONSTRUCT,
+        "void f()",
+        v4,
+        asCALL_CDECL_OBJLAST,
+        nullptr,
+        0,
+        0);
+      v5 = engine->vtable;
+      v6 = asFunctionPtr_Global((asSFuncPtr *)v165, sub_10335CA0);
+      v5->RegisterObjectBehaviour(
+        engine,
+        "dictionaryValue",
+        asBEHAVE_DESTRUCT,
+        "void f()",
+        v6,
+        asCALL_CDECL_OBJLAST,
+        nullptr,
+        0,
+        0);
+      v7 = engine->vtable;
+      v8 = asSMethodPtr_4_Convert((asSFuncPtr *)v165, sub_10333850);
+      v7->RegisterObjectBehaviour(
+        engine,
+        "dictionaryValue",
+        asBEHAVE_ENUMREFS,
+        "void f(int&in)",
+        v8,
+        asCALL_THISCALL,
+        nullptr,
+        0,
+        0);
+      v9 = engine->vtable;
+      v10 = asSMethodPtr_4_Convert((asSFuncPtr *)v165, sub_10333810);
+      v9->RegisterObjectBehaviour(
+        engine,
+        "dictionaryValue",
+        asBEHAVE_RELEASEREFS,
+        "void f(int&in)",
+        v10,
+        asCALL_THISCALL,
+        nullptr,
+        0,
+        0);
+      v11 = engine->vtable;
+      v12 = asFunctionPtr_Global((asSFuncPtr *)v165, sub_10335DA0);
+      v11->RegisterObjectMethod(
+        engine,
+        "dictionaryValue",
+        "dictionaryValue &opAssign(const dictionaryValue &in)",
+        v12,
+        asCALL_CDECL_OBJLAST,
+        nullptr,
+        0,
+        0);
+      v13 = engine->vtable;
+      v14 = asFunctionPtr_Global((asSFuncPtr *)v165, sub_10335D70);
+      v13->RegisterObjectMethod(
+        engine,
+        "dictionaryValue",
+        "dictionaryValue &opHndlAssign(const ?&in)",
+        v14,
+        asCALL_CDECL_OBJLAST,
+        nullptr,
+        0,
+        0);
+      v15 = engine->vtable;
+      v16 = asFunctionPtr_Global((asSFuncPtr *)v165, sub_10335DA0);
+      v15->RegisterObjectMethod(
+        engine,
+        "dictionaryValue",
+        "dictionaryValue &opHndlAssign(const dictionaryValue &in)",
+        v16,
+        asCALL_CDECL_OBJLAST,
+        nullptr,
+        0,
+        0);
+      v17 = engine->vtable;
+      v18 = asFunctionPtr_Global((asSFuncPtr *)v165, sub_10335D70);
+      v17->RegisterObjectMethod(
+        engine,
+        "dictionaryValue",
+        "dictionaryValue &opAssign(const ?&in)",
+        v18,
+        asCALL_CDECL_OBJLAST,
+        nullptr,
+        0,
+        0);
+      v19 = engine->vtable;
+      v20 = asFunctionPtr_Global((asSFuncPtr *)v165, sub_10335DF0);
+      v19->RegisterObjectMethod(
+        engine,
+        "dictionaryValue",
+        "dictionaryValue &opAssign(double)",
+        v20,
+        asCALL_CDECL_OBJLAST,
+        nullptr,
+        0,
+        0);
+      v21 = engine->vtable;
+      v22 = asFunctionPtr_Global((asSFuncPtr *)v165, sub_10335E20);
+      v21->RegisterObjectMethod(
+        engine,
+        "dictionaryValue",
+        "dictionaryValue &opAssign(int64)",
+        v22,
+        asCALL_CDECL_OBJLAST,
+        nullptr,
+        0,
+        0);
+      v23 = engine->vtable;
+      v24 = asFunctionPtr_Global((asSFuncPtr *)v165, sub_10335E50);
+      v23->RegisterObjectMethod(engine, "dictionaryValue", "void opCast(?&out)", v24, asCALL_CDECL_OBJLAST, nullptr, 0, 0);
+      v25 = engine->vtable;
+      v26 = asFunctionPtr_Global((asSFuncPtr *)v165, sub_10335E50);
+      v25->RegisterObjectMethod(engine, "dictionaryValue", "void opConv(?&out)", v26, asCALL_CDECL_OBJLAST, nullptr, 0, 0);
+      v27 = engine->vtable;
+      v28 = asFunctionPtr_Global((asSFuncPtr *)v165, sub_10335E80);
+      v27->RegisterObjectMethod(engine, "dictionaryValue", "int64 opConv()", v28, asCALL_CDECL_OBJLAST, nullptr, 0, 0);
+      v29 = engine->vtable;
+      v30 = asFunctionPtr_Global((asSFuncPtr *)v165, sub_10335EB0);
+      v29->RegisterObjectMethod(engine, "dictionaryValue", "double opConv()", v30, asCALL_CDECL_OBJLAST, nullptr, 0, 0);
+      engine->vtable->RegisterObjectType(engine, "dictionary", 48, 5u);
+      v31 = engine->vtable;
+      v32 = asFunctionPtr_Generic((asSFuncPtr *)v165, ScriptDictionaryFactory_Generic);
+      v31->RegisterObjectBehaviour(
+        engine,
+        "dictionary",
+        asBEHAVE_FACTORY,
+        "dictionary@ f()",
+        v32,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v33 = engine->vtable;
+      v34 = asFunctionPtr_Generic((asSFuncPtr *)v165, sub_10335710);
+      v33->RegisterObjectBehaviour(
+        engine,
+        "dictionary",
+        asBEHAVE_LIST_FACTORY,
+        "dictionary @f(int &in) {repeat {string, ?}}",
+        v34,
+        asCALL_GENERIC,
+        nullptr,
+        0,
+        0);
+      v35 = engine->vtable;
+      v36 = asSMethodPtr_4_Convert((asSFuncPtr *)v165, CScriptDictionary_AddRef); // found_funcptr CScriptDictionary_AddRef: native dictionary member for asBEHAVE_ADDREF
+      v35->RegisterObjectBehaviour(engine, "dictionary", asBEHAVE_ADDREF, "void f()", v36, asCALL_THISCALL, nullptr, 0, 0);
+      v37 = engine->vtable;
+      v38 = asSMethodPtr_4_Convert((asSFuncPtr *)v165, CScriptDictionary_Release); // found_funcptr CScriptDictionary_Release: native dictionary member for asBEHAVE_RELEASE
+      v37->RegisterObjectBehaviour(
+        engine,
+        "dictionary",
+        asBEHAVE_RELEASE,
+        "void f()",
+        v38,
+        asCALL_THISCALL,
+        nullptr,
+        0,
+        0);
+      v39 = engine->vtable;
+      v40 = asSMethodPtr_4_Convert((asSFuncPtr *)v165, sub_10333980);
+      v39->RegisterObjectMethod(
+        engine,
+        "dictionary",
+        "dictionary &opAssign(const dictionary &in)",
+        v40,
+        asCALL_THISCALL,
+        nullptr,
+        0,
+        0);
+      v41 = engine->vtable;
+      v42 = asSMethodPtr_4_Convert((asSFuncPtr *)v165, CScriptDictionary_Set); // found_funcptr CScriptDictionary_Set: native dictionary member for "void set(const string &in, const ?&in)"
+      v41->RegisterObjectMethod(
+        engine,
+        "dictionary",
+        "void set(const string &in, const ?&in)",
+        v42,
+        asCALL_THISCALL,
+        nullptr,
+        0,
+        0);
+      v43 = engine->vtable;
+      v44 = asSMethodPtr_4_Convert((asSFuncPtr *)v165, CScriptDictionary_Get); // found_funcptr CScriptDictionary_Get: native dictionary member for "bool get(const string &in, ?&out) const"
+      v43->RegisterObjectMethod(
+        engine,
+        "dictionary",
+        "bool get(const string &in, ?&out) const",
+        v44,
+        asCALL_THISCALL,
+        nullptr,
+        0,
+        0);
+      v45 = engine->vtable;
+      v46 = asSMethodPtr_4_Convert((asSFuncPtr *)v165, sub_10333C00);
+      v45->RegisterObjectMethod(
+        engine,
+        "dictionary",
+        "void set(const string &in, const int64&in)",
+        v46,
+        asCALL_THISCALL,
+        nullptr,
+        0,
+        0);
+      v47 = engine->vtable;
+      v48 = asSMethodPtr_4_Convert((asSFuncPtr *)v165, sub_10333C80);
+      v47->RegisterObjectMethod(
+        engine,
+        "dictionary",
+        "bool get(const string &in, int64&out) const",
+        v48,
+        asCALL_THISCALL,
+        nullptr,
+        0,
+        0);
+      v49 = engine->vtable;
+      v50 = asSMethodPtr_4_Convert((asSFuncPtr *)v165, sub_10333C20);
+      v49->RegisterObjectMethod(
+        engine,
+        "dictionary",
+        "void set(const string &in, const double&in)",
+        v50,
+        asCALL_THISCALL,
+        nullptr,
+        0,
+        0);
+      v51 = engine->vtable;
+      v52 = asSMethodPtr_4_Convert((asSFuncPtr *)v165, sub_10333CC0);
+      v51->RegisterObjectMethod(
+        engine,
+        "dictionary",
+        "bool get(const string &in, double&out) const",
+        v52,
+        asCALL_THISCALL,
+        nullptr,
+        0,
+        0);
+      v53 = engine->vtable;
+      v54 = asSMethodPtr_4_Convert((asSFuncPtr *)v165, CScriptDictionary_Exists); // found_funcptr CScriptDictionary_Exists: native dictionary member for "bool exists(const string &in) const"
+      v53->RegisterObjectMethod(
+        engine,
+        "dictionary",
+        "bool exists(const string &in) const",
+        v54,
+        asCALL_THISCALL,
+        nullptr,
+        0,
+        0);
+      v55 = engine->vtable;
+      v56 = asSMethodPtr_4_Convert((asSFuncPtr *)v165, CScriptDictionary_IsEmpty); // found_funcptr CScriptDictionary_IsEmpty: native dictionary member for "bool isEmpty() const"
+      v55->RegisterObjectMethod(engine, "dictionary", "bool isEmpty() const", v56, asCALL_THISCALL, nullptr, 0, 0);
+      v57 = engine->vtable;
+      v58 = asSMethodPtr_4_Convert((asSFuncPtr *)v165, CScriptDictionary_GetSize); // found_funcptr CScriptDictionary_GetSize: native dictionary member for "uint getSize() const"
+      v57->RegisterObjectMethod(engine, "dictionary", "uint getSize() const", v58, asCALL_THISCALL, nullptr, 0, 0);
+      v59 = engine->vtable;
+      v60 = asSMethodPtr_4_Convert((asSFuncPtr *)v165, CScriptDictionary_Delete); // found_funcptr CScriptDictionary_Delete: native dictionary member for "bool delete(const string &in)"
+      v59->RegisterObjectMethod(
+        engine,
+        "dictionary",
+        "bool delete(const string &in)",
+        v60,
+        asCALL_THISCALL,
+        nullptr,
+        0,
+        0);
+      v61 = engine->vtable;
+      v62 = asSMethodPtr_4_Convert((asSFuncPtr *)v165, CScriptDictionary_DeleteAll); // found_funcptr CScriptDictionary_DeleteAll: native dictionary member for "void deleteAll()"
+      v61->RegisterObjectMethod(engine, "dictionary", "void deleteAll()", v62, asCALL_THISCALL, nullptr, 0, 0);
+      v63 = engine->vtable;
+      v64 = asSMethodPtr_4_Convert((asSFuncPtr *)v165, sub_10334130);
+      v63->RegisterObjectMethod(
+        engine,
+        "dictionary",
+        "array<string> @getKeys() const",
+        v64,
+        asCALL_THISCALL,
+        nullptr,
+        0,
+        0);
+      v65 = engine->vtable;
+      v66 = asSMethodPtr_4_Convert((asSFuncPtr *)v165, sub_10333D00);
+      v65->RegisterObjectMethod(
+        engine,
+        "dictionary",
+        "dictionaryValue &opIndex(const string &in)",
+        v66,
+        asCALL_THISCALL,
+        nullptr,
+        0,
+        0);
+      v67 = engine->vtable;
+      v68 = asSMethodPtr_4_Convert((asSFuncPtr *)v165, sub_10333E90);
+      v67->RegisterObjectMethod(
+        engine,
+        "dictionary",
+        "const dictionaryValue &opIndex(const string &in) const",
+        v68,
+        asCALL_THISCALL,
+        nullptr,
+        0,
+        0);
+      v69 = engine->vtable;
+      v70 = asSMethodPtr_4_Convert((asSFuncPtr *)v165, sub_10334350);
+      v69->RegisterObjectBehaviour(
+        engine,
+        "dictionary",
+        asBEHAVE_GETREFCOUNT,
+        "int f()",
+        v70,
+        asCALL_THISCALL,
+        nullptr,
+        0,
+        0);
+      v71 = engine->vtable;
+      v72 = asSMethodPtr_4_Convert((asSFuncPtr *)v165, __crt_cached_ptd_host::cached<int>::guard::enable);
+      v71->RegisterObjectBehaviour(
+        engine,
+        "dictionary",
+        asBEHAVE_SETGCFLAG,
+        "void f()",
+        v72,
+        asCALL_THISCALL,
+        nullptr,
+        0,
+        0);
+      v73 = engine->vtable;
+      v74 = asSMethodPtr_4_Convert((asSFuncPtr *)v165, sub_10334370);
+      v73->RegisterObjectBehaviour(
+        engine,
+        "dictionary",
+        asBEHAVE_GETGCFLAG,
+        "bool f()",
+        v74,
+        asCALL_THISCALL,
+        nullptr,
+        0,
+        0);
+      v75 = engine->vtable;
+      v76 = asSMethodPtr_4_Convert((asSFuncPtr *)v165, sub_10334380);
+      v75->RegisterObjectBehaviour(
+        engine,
+        "dictionary",
+        asBEHAVE_ENUMREFS,
+        "void f(int&in)",
+        v76,
+        asCALL_THISCALL,
+        nullptr,
+        0,
+        0);
+      v77 = engine->vtable;
+      v78 = asSMethodPtr_4_Convert((asSFuncPtr *)v165, sub_103343F0);
+      v77->RegisterObjectBehaviour(
+        engine,
+        "dictionary",
+        asBEHAVE_RELEASEREFS,
+        "void f(int&in)",
+        v78,
+        asCALL_THISCALL,
+        nullptr,
+        0,
+        0);
+      v79 = engine->vtable;
+      v80 = asSMethodPtr_4_Convert((asSFuncPtr *)v165, CScriptDictionary_IsEmpty);
+      v79->RegisterObjectMethod(engine, "dictionary", "bool empty() const", v80, asCALL_THISCALL, nullptr, 0, 0);
+      v81 = engine->vtable;
+      v82 = asSMethodPtr_4_Convert((asSFuncPtr *)v165, CScriptDictionary_GetSize);
+      v81->RegisterObjectMethod(engine, "dictionary", "uint size() const", v82, asCALL_THISCALL, nullptr, 0, 0);
+      v83 = engine->vtable;
+      v84 = asSMethodPtr_4_Convert((asSFuncPtr *)v165, CScriptDictionary_Delete);
+      v83->RegisterObjectMethod(engine, "dictionary", "void erase(const string &in)", v84, asCALL_THISCALL, nullptr, 0, 0);
+      v85 = engine->vtable;
+      v86 = asSMethodPtr_4_Convert((asSFuncPtr *)v165, CScriptDictionary_DeleteAll);
+      v85->RegisterObjectMethod(engine, "dictionary", "void clear()", v86, asCALL_THISCALL, nullptr, 0, 0);
+      sub_10346770(engine);
+    }
+  }
