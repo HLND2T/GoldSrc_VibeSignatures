@@ -1,0 +1,58 @@
+name: Portable trusted CI command
+description: Run CI orchestration from this action's trusted checkout
+inputs:
+  command:
+    description: ci_runner.py command
+    required: true
+outputs:
+  cache-path:
+    value: ${{ steps.windows.outputs.cache-path || steps.linux.outputs.cache-path }}
+    description: Disposable external S3 staging
+  prefix:
+    value: ${{ steps.windows.outputs.prefix || steps.linux.outputs.prefix }}
+    description: Shared repository cache namespace
+  restore-prefixes:
+    value: ${{ steps.windows.outputs.restore-prefixes || steps.linux.outputs.restore-prefixes }}
+    description: Ordered producer discovery prefixes
+  selection_artifact_name:
+    value: ${{ steps.windows.outputs.selection_artifact_name || steps.linux.outputs.selection_artifact_name }}
+    description: Published selection artifact
+  selection_sha256:
+    value: ${{ steps.windows.outputs.selection_sha256 || steps.linux.outputs.selection_sha256 }}
+    description: Published selection digest
+  selection_schema_version:
+    value: ${{ steps.windows.outputs.selection_schema_version || steps.linux.outputs.selection_schema_version }}
+    description: Published selection schema
+  source_sha:
+    value: ${{ steps.windows.outputs.source_sha || steps.linux.outputs.source_sha }}
+    description: Exact producer source
+  available:
+    value: ${{ steps.windows.outputs.available || steps.linux.outputs.available }}
+    description: Whether diagnostic artifacts exist
+  paths:
+    value: ${{ steps.windows.outputs.paths || steps.linux.outputs.paths }}
+    description: Existing diagnostic artifact paths
+runs:
+  using: composite
+  steps:
+    - id: windows
+      if: always() && runner.os == 'Windows'
+      shell: pwsh
+      env:
+        CI_COMMAND: ${{ inputs.command }}
+        CI_TOOL_ROOT: ${{ github.action_path }}/../../..
+      run: |
+        uv run --project "$env:CI_TOOL_ROOT" --locked python "$env:CI_TOOL_ROOT/ci_runner.py" "$env:CI_COMMAND"
+        if ($LASTEXITCODE -ne 0) { throw 'CI command failed' }
+    - id: linux
+      if: always() && runner.os == 'Linux'
+      shell: bash
+      env:
+        CI_COMMAND: ${{ inputs.command }}
+        CI_TOOL_ROOT: ${{ github.action_path }}/../../..
+      run: |
+        set -euo pipefail
+        uv run --project "$CI_TOOL_ROOT" --locked python "$CI_TOOL_ROOT/ci_runner.py" "$CI_COMMAND"
+    - if: always() && runner.os != 'Windows' && runner.os != 'Linux'
+      shell: bash
+      run: exit 1

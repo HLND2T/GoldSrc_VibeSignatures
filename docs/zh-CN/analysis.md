@@ -52,9 +52,12 @@ tag 一次，按 binary target 保留最新三个有效 generation，并继续�
 （可移植的 S3 object key、zstd 自动发现），bucket 固定为
 `actions-cache-goldsrc-vibesignatures`，关闭 GitHub cache fallback。`http://HZVM:8333` 解析为
 `endpoint=HZVM`、`port=8333`、`insecure=true`；HTTPS 则为 `insecure=false`。
-producer 从仓库/平台隔离的前缀发现最近快照，校验并补齐后按 run ID/attempt 保存新快照，确认对象存在后
+producer 按仓库级 `shared`、旧 Windows、Linux、macOS 前缀的顺序发现最近快照，旧对象保持不变。
+校验并补齐后按 run ID/attempt 保存 shared 新快照，确认对象存在后
 输出精确 key。consumer 必须命中该 key，再执行 selection、租约和 payload 校验，不能降级恢复其他快照。
 快照包含整个 IDB store；这减少传输层复杂度，但每次上传会包含仍保留的历史 generation。
+runner OS 不再区分传输命名空间，entry 仍保留目标 binary 的 platform。producer 与 consumer 各自使用本地
+暂存区，通过 S3 传输；不要求 Windows 与 Linux 共享同一文件系统。
 
 self-hosted 的 selection、重建 artifacts、诊断和 release bundle 按 run ID/attempt 另存 S3。
 GitHub-hosted runner 无法访问内网，因此原 GitHub artifacts 跨 job 传输及发布摘要验证继续保留。

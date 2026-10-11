@@ -65,7 +65,9 @@ if binary[:6] == b'\x7fELF\x01\x01' and struct.unpack_from('<H', binary, 18)[0] 
     section_offset = struct.unpack_from('<I', binary, 32)[0]
     section_size, section_count, names_index = struct.unpack_from('<HHH', binary, 46)
     if section_size >= 40 and section_offset + section_count * section_size <= len(binary):
-        headers = [struct.unpack_from('<10I', binary, section_offset+i*section_size) for i in range(section_count)]
+        headers = []
+        for i in range(section_count):
+            headers.append(struct.unpack_from('<10I', binary, section_offset+i*section_size))
         names = headers[names_index]
         names_data = binary[names[4]:names[4]+names[5]]
         for header in headers:

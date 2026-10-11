@@ -33,8 +33,8 @@ runs:
   using: composite
   steps:
     - name: Parse endpoint
-      id: endpoint
-      if: ${{ !cancelled() }}
+      id: endpoint-windows
+      if: ${{ !cancelled() && runner.os == 'Windows' }}
       shell: pwsh
       env:
         S3_ENDPOINT_URL: ${{ inputs.endpoint-url }}
@@ -43,21 +43,34 @@ runs:
         CACHE_OPERATION: ${{ inputs.operation }}
         CACHE_ACTION_PATH: ${{ github.action_path }}
       run: |
-        if ($env:CACHE_OPERATION -notin @('restore', 'save')) { throw 'Invalid cache operation' }
-        python (Join-Path $env:CACHE_ACTION_PATH '../../../ci_s3_cache.py') endpoint
+        $toolRoot = Join-Path $env:CACHE_ACTION_PATH '../../..'
+        uv run --project $toolRoot --locked python (Join-Path $toolRoot 'ci_s3_cache.py') endpoint
         if ($LASTEXITCODE -ne 0) { throw 'Invalid S3 configuration' }
+    - name: Parse endpoint on Linux
+      id: endpoint-linux
+      if: ${{ !cancelled() && runner.os == 'Linux' }}
+      shell: bash
+      env:
+        S3_ENDPOINT_URL: ${{ inputs.endpoint-url }}
+        S3_ACCESS_KEY_ID: ${{ inputs.access-key }}
+        S3_SECRET_ACCESS_KEY: ${{ inputs.secret-key }}
+        CACHE_OPERATION: ${{ inputs.operation }}
+        CACHE_ACTION_PATH: ${{ github.action_path }}
+      run: |
+        set -euo pipefail
+        uv run --project "$CACHE_ACTION_PATH/../../.." --locked python "$CACHE_ACTION_PATH/../../../ci_s3_cache.py" endpoint
     - name: restore S3 cache
       id: restore
-      if: ${{ !cancelled() && steps.endpoint.outcome == 'success' && inputs.operation == 'restore' }}
+      if: ${{ !cancelled() && (steps.endpoint-windows.outcome == 'success' || steps.endpoint-linux.outcome == 'success') && inputs.operation == 'restore' }}
       uses: hzqst/actions-cache/restore@7128b4f7d510a48d0a4c66363349adf017741df0  # Portable S3 object keys, zstd auto-detection
       env:
         AWS_ACCESS_KEY_ID: ${{ inputs.access-key }}
         AWS_SECRET_ACCESS_KEY: ${{ inputs.secret-key }}
         AWS_SESSION_TOKEN: ''
       with:
-        endpoint: ${{ steps.endpoint.outputs.endpoint }}
-        port: ${{ steps.endpoint.outputs.port }}
-        insecure: ${{ steps.endpoint.outputs.insecure }}
+        endpoint: ${{ steps.endpoint-windows.outputs.endpoint || steps.endpoint-linux.outputs.endpoint }}
+        port: ${{ steps.endpoint-windows.outputs.port || steps.endpoint-linux.outputs.port }}
+        insecure: ${{ steps.endpoint-windows.outputs.insecure || steps.endpoint-linux.outputs.insecure }}
         accessKey: ${{ inputs.access-key }}
         secretKey: ${{ inputs.secret-key }}
         bucket: actions-cache-goldsrc-vibesignatures
@@ -68,16 +81,16 @@ runs:
         restore-keys: ${{ inputs.restore-keys }}
     - name: save S3 cache
       id: save
-      if: ${{ !cancelled() && steps.endpoint.outcome == 'success' && inputs.operation == 'save' }}
+      if: ${{ !cancelled() && (steps.endpoint-windows.outcome == 'success' || steps.endpoint-linux.outcome == 'success') && inputs.operation == 'save' }}
       uses: hzqst/actions-cache/save@7128b4f7d510a48d0a4c66363349adf017741df0  # Portable S3 object keys, zstd auto-detection
       env:
         AWS_ACCESS_KEY_ID: ${{ inputs.access-key }}
         AWS_SECRET_ACCESS_KEY: ${{ inputs.secret-key }}
         AWS_SESSION_TOKEN: ''
       with:
-        endpoint: ${{ steps.endpoint.outputs.endpoint }}
-        port: ${{ steps.endpoint.outputs.port }}
-        insecure: ${{ steps.endpoint.outputs.insecure }}
+        endpoint: ${{ steps.endpoint-windows.outputs.endpoint || steps.endpoint-linux.outputs.endpoint }}
+        port: ${{ steps.endpoint-windows.outputs.port || steps.endpoint-linux.outputs.port }}
+        insecure: ${{ steps.endpoint-windows.outputs.insecure || steps.endpoint-linux.outputs.insecure }}
         accessKey: ${{ inputs.access-key }}
         secretKey: ${{ inputs.secret-key }}
         bucket: actions-cache-goldsrc-vibesignatures
@@ -94,9 +107,9 @@ runs:
         AWS_SECRET_ACCESS_KEY: ${{ inputs.secret-key }}
         AWS_SESSION_TOKEN: ''
       with:
-        endpoint: ${{ steps.endpoint.outputs.endpoint }}
-        port: ${{ steps.endpoint.outputs.port }}
-        insecure: ${{ steps.endpoint.outputs.insecure }}
+        endpoint: ${{ steps.endpoint-windows.outputs.endpoint || steps.endpoint-linux.outputs.endpoint }}
+        port: ${{ steps.endpoint-windows.outputs.port || steps.endpoint-linux.outputs.port }}
+        insecure: ${{ steps.endpoint-windows.outputs.insecure || steps.endpoint-linux.outputs.insecure }}
         accessKey: ${{ inputs.access-key }}
         secretKey: ${{ inputs.secret-key }}
         bucket: actions-cache-goldsrc-vibesignatures
@@ -107,8 +120,17 @@ runs:
         lookup-only: 'true'
     - name: Require exact restore or verified publication
       if: >-
-        !cancelled() && steps.endpoint.outcome == 'success' && (
+        !cancelled() && runner.os == 'Windows' && (
         (inputs.operation == 'restore' && inputs.required == 'true' && steps.restore.outputs.cache-hit != 'true') ||
         (inputs.operation == 'save' && steps.saved.outputs.cache-hit != 'true'))
       shell: pwsh
       run: throw 'Required S3 cache object is unavailable'
+    - name: Require exact restore or verified publication on Linux
+      if: >-
+        !cancelled() && runner.os == 'Linux' && (
+        (inputs.operation == 'restore' && inputs.required == 'true' && steps.restore.outputs.cache-hit != 'true') ||
+        (inputs.operation == 'save' && steps.saved.outputs.cache-hit != 'true'))
+      shell: bash
+      run: |-
+        echo 'Required S3 cache object is unavailable' >&2
+        exit 1

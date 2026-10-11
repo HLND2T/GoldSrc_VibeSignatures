@@ -1582,11 +1582,11 @@ candidates.difference_update(excluded)
 required_floats = [float(value) for value in spec.get('xref_floats') or []]
 excluded_floats = [float(value) for value in spec.get('exclude_floats') or []]
 if required_floats or excluded_floats:
-    candidates = {
-        start
-        for start in candidates
-        if _function_matches_float_filters(start, required_floats, excluded_floats)
-    }
+    filtered_candidates = set()
+    for start in candidates:
+        if _function_matches_float_filters(start, required_floats, excluded_floats):
+            filtered_candidates.add(start)
+    candidates = filtered_candidates
 
 items = []
 for start in sorted(candidates):
@@ -3108,6 +3108,8 @@ _INSPECT_LLM_INSTRUCTION_PY_EVAL = (
     _ADDRESS_FLOW_RESOLVER
     + r"""
 import ida_bytes, ida_fixup, ida_funcs, ida_lines, ida_segment, ida_ua, idaapi, idautils, idc, json
+# Nested scopes need both the resolver definitions and these imports in globals.
+globals().update(locals())
 ea = EA_PLACEHOLDER
 pointer_size = 8 if idaapi.inf_is_64bit() else 4
 insn = ida_ua.insn_t()
@@ -3253,9 +3255,9 @@ if (func is not None and (relative_operand is not None or (size == 6
                     dest = decoded.ops[0]
                     if dest.type == ida_ua.o_reg:
                         changed[address_write_register(dest.reg, True)] = None
-                elif mnemonic in ('movss', 'movd', 'movq', 'movdqa'):
-                    # SIMD copies write only their explicit destination. Memory
-                    # address registers and GPR sources remain unchanged; MOVD
+                elif mnemonic in ('movss', 'movd', 'movq', 'movdqa', 'pxor', 'xorps', 'xorpd'):
+                    # SIMD copies and XOR write only their explicit destination.
+                    # Memory address registers and GPR sources stay unchanged; MOVD
                     # into a GPR must still invalidate that destination.
                     dest = decoded.ops[0]
                     if dest.type == ida_ua.o_reg and dest.reg < 8:
@@ -3355,6 +3357,11 @@ for value in list(operand_targets) + computed_targets + got_indirect_targets + l
     if (permissions and permissions & ida_segment.SEGPERM_EXEC
             and ida_funcs.get_func(address) is not None):
         code_address_targets.append(hex(address))
+# Keep imported modules in py_eval's local execution scope on Python <=3.11.
+data_refs = []
+for value in idautils.DataRefsFrom(ea):
+    if 0 <= int(value) <= 0xFFFFFFFF and ida_segment.getseg(int(value)) is not None:
+        data_refs.append(hex(int(value)))
 result = json.dumps({
     'pointer_size': pointer_size,
     'size': int(size or 0),
@@ -3365,8 +3372,7 @@ result = json.dumps({
     'code_refs': [hex(int(value)) for value in idautils.CodeRefsFrom(ea, 0)],
     # DataRefsFrom also includes IDA's synthetic type/member IDs. Only mapped
     # x86 addresses can identify runtime data; preserve all genuine candidates.
-    'data_refs': [hex(int(value)) for value in idautils.DataRefsFrom(ea)
-                  if 0 <= int(value) <= 0xFFFFFFFF and ida_segment.getseg(int(value)) is not None],
+    'data_refs': data_refs,
     'operand_targets': [hex(value) for value in operand_targets] + computed_targets,
     'code_address_targets': list(dict.fromkeys(code_address_targets)),
     'displacements': [hex(value) for value in displacements],

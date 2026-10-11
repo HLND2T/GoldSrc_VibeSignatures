@@ -43,6 +43,8 @@ def string_table():
     return {str(item): int(item.ea) for item in strings}
 
 
+globals().update(locals())
+
 try:
     table = string_table()
     sites = []
@@ -68,7 +70,12 @@ try:
                 continue
             if not ida_funcs.add_func(entry):
                 continue
-            if all(int(ida_funcs.get_func(owner).start_ea) == entry for owner in sites):
+            all_owned = True
+            for owner in sites:
+                if int(ida_funcs.get_func(owner).start_ea) != entry:
+                    all_owned = False
+                    break
+            if all_owned:
                 recovered = entry
             break
     result = json.dumps({

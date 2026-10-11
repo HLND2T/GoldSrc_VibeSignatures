@@ -156,7 +156,9 @@ try:
                     if follower['mnem'] != 'cmp':
                         continue
                     follower_insn = follower['insn']
-                    operand_regs = [register_id(follower_insn.ops[i]) for i in range(2)]
+                    operand_regs = []
+                    for i in range(2):
+                        operand_regs.append(register_id(follower_insn.ops[i]))
                     if target_reg in operand_regs:
                         lea_refs.setdefault(target, entry['ea'])
                         matched = True

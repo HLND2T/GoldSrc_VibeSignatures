@@ -185,10 +185,11 @@ jobs:
       always() && needs.plan.result == 'success'
       && needs.plan.outputs.has_analysis == 'true' && needs.plan.outputs.same_repository == 'true'
       && needs.warmup-idb.result == 'success'
-    runs-on: [self-hosted, windows, x64]
+    runs-on: [self-hosted, cross-platform]
     environment: win64
     timeout-minutes: 720
     env:
+      CI_KIND: pr
       GSVIBE_AGENT: ${{ secrets.GSVIBE_AGENT }}
       GSVIBE_AGENT_MODEL: ${{ secrets.GSVIBE_AGENT_MODEL }}
       GSVIBE_LLM_APIKEY: ${{ secrets.GSVIBE_LLM_APIKEY }}
@@ -217,14 +218,6 @@ jobs:
           submodules: false
           persist-credentials: false
           path: .trusted-validator
-      - name: Sync and update submodules
-        shell: pwsh
-        # The runner's Git URL rewrite routes reads through git-cache-proxy.
-        run: |
-          git submodule sync --recursive
-          if ($LASTEXITCODE -ne 0) { throw "git submodule sync failed." }
-          git submodule update --init --recursive --force --depth 1 --jobs 8
-          if ($LASTEXITCODE -ne 0) { throw "git submodule update failed." }
       - uses: hzqst/setup-uv@ed37cb7af6cd89cb8e2ea2f20674ba1d05dc7b35  # S3 cache backend
         with:
           # enable-cache: auto resolves to false on self-hosted runners, so the uv
@@ -236,62 +229,39 @@ jobs:
           S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
           S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
       - run: uv sync --locked
-      - run: uv sync --project .trusted-validator --locked
-      - uses: actions/download-artifact@v7
-        with:
-          name: gamesymbol-plan-${{ github.run_id }}
-          path: ${{ runner.temp }}/gamesymbol-validation
-      - name: Clean persisted submodule analysis state
-        shell: pwsh
-        run: |
-          $workspaceRoot = [IO.Path]::GetFullPath($env:GITHUB_WORKSPACE)
-          $binRoot = (Resolve-Path -LiteralPath (Join-Path $workspaceRoot 'bin')).Path
-          if (-not $binRoot.StartsWith($workspaceRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
-            throw "bin submodule escaped the checked-out workspace: $binRoot"
-          }
-          $gitTopLevel = (git -C $binRoot rev-parse --show-toplevel).Trim()
-          if ($LASTEXITCODE -ne 0 -or [IO.Path]::GetFullPath($gitTopLevel) -ne [IO.Path]::GetFullPath($binRoot)) {
-            throw "Refusing to clean an unexpected bin repository: $gitTopLevel"
-          }
-          # reset --hard reverts tracked-file modifications restored from a dirty
-          # cache before analysis; git clean handles the untracked side.
-          git -C $binRoot reset --hard
-          if ($LASTEXITCODE -ne 0) { throw 'failed to reset tracked bin files' }
-          git -C $binRoot clean -ffdx
-          if ($LASTEXITCODE -ne 0) { throw 'failed to clean persisted bin analysis state' }
-      - name: Resolve IDA interpreter identity
-        shell: pwsh
-        run: |
-          $pythonExe = (Get-Command python -ErrorAction SilentlyContinue).Source
-          $idalibMcpExe = (Get-Command idalib-mcp -ErrorAction SilentlyContinue).Source
-          if ([string]::IsNullOrWhiteSpace($pythonExe) -or [string]::IsNullOrWhiteSpace($idalibMcpExe)) {
-            throw 'python with idalib and idalib-mcp must both be available on PATH'
-          }
-          $probe = Join-Path $env:GITHUB_WORKSPACE 'ida_runtime_probe.py'
-          $idaVersionOutput = & $pythonExe $probe --idalib-mcp $idalibMcpExe
-          $probeExitCode = $LASTEXITCODE
-          $idaVersion = (@($idaVersionOutput) -join "`n").Trim()
-          if ($probeExitCode -ne 0 -or [string]::IsNullOrWhiteSpace($idaVersion)) {
-            throw 'Failed to resolve the IDA kernel version from the idalib-mcp installation'
-          }
-          "IDA_KERNEL_VERSION=$idaVersion" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
-      - name: Download exact warm IDB cache selection
-        uses: actions/download-artifact@v7
-        with:
-          name: ${{ needs.warmup-idb.outputs.selection_artifact_name }}
-          path: ${{ runner.temp }}/gamesymbol-validation
       - name: Checkout cache transport tooling
         uses: actions/checkout@v5
         with:
           ref: ${{ github.workflow_sha }}
           path: .ci-tools
           persist-credentials: false
+      - name: Sync and update submodules
+        uses: ./.ci-tools/.github/actions/ci-command
+        with:
+          command: sync-submodules
+      - run: uv sync --project .trusted-validator --locked
+      - uses: actions/download-artifact@v7
+        with:
+          name: gamesymbol-plan-${{ github.run_id }}
+          path: ${{ runner.temp }}/gamesymbol-validation
+      - name: Clean persisted submodule analysis state
+        uses: ./.ci-tools/.github/actions/ci-command
+        with:
+          command: clean-bin
+      - name: Resolve IDA interpreter identity
+        uses: ./.ci-tools/.github/actions/ci-command
+        with:
+          command: resolve-consumer-ida
+      - name: Download exact warm IDB cache selection
+        uses: actions/download-artifact@v7
+        with:
+          name: ${{ needs.warmup-idb.outputs.selection_artifact_name }}
+          path: ${{ runner.temp }}/gamesymbol-validation
       - name: Prepare disposable S3 staging
         id: s3-layout
-        shell: pwsh
-        run: |
-          python .ci-tools/ci_s3_cache.py prepare
-          if ($LASTEXITCODE -ne 0) { throw 'S3 staging preparation failed' }
+        uses: ./.ci-tools/.github/actions/ci-command
+        with:
+          command: cache-prepare
       - name: Restore exact producer IDB snapshot
         uses: ./.ci-tools/.github/actions/s3-cache
         with:
@@ -303,163 +273,16 @@ jobs:
           path: ${{ steps.s3-layout.outputs.cache-path }}
           required: 'true'
       - name: Verify and restore exact warm IDB cache generations
-        shell: pwsh
+        uses: ./.ci-tools/.github/actions/ci-command
+        with:
+          command: pr-restore
         env:
           PRODUCER_SELECTION_SHA256: ${{ needs.warmup-idb.outputs.selection_sha256 }}
-        run: |
-          $ErrorActionPreference = 'Stop'
-          if ([string]::IsNullOrWhiteSpace($env:IDB_CACHE_ROOT)) {
-            throw 'IDB_CACHE_ROOT is required for warm cache mode'
-          }
-          if ([string]::IsNullOrWhiteSpace($env:IDADIR) -or [string]::IsNullOrWhiteSpace($env:IDA_KERNEL_VERSION)) {
-            throw 'IDADIR and the dynamically resolved IDA_KERNEL_VERSION are required for warm cache mode'
-          }
-          $bundle = Join-Path $env:RUNNER_TEMP 'gamesymbol-validation'
-          $evidence = (Get-Content -Raw -LiteralPath (Join-Path $bundle 'cache-selection.sha256')).Trim()
-          if ($evidence -ne $env:PRODUCER_SELECTION_SHA256) {
-            throw 'downloaded cache selection evidence does not match the producer job output'
-          }
-          uv run python idb_cache_workflow.py restore `
-            -repo-root $env:GITHUB_WORKSPACE -plan (Join-Path $bundle 'plan.json') -merge-ref HEAD -bindir bin `
-            -persisted-root $env:IDB_CACHE_ROOT `
-            -kernel-version $env:IDA_KERNEL_VERSION -selection (Join-Path $bundle 'cache-selection.json') `
-            -selection-sha256 (Join-Path $bundle 'cache-selection.sha256')
-          if ($LASTEXITCODE -ne 0) { throw 'warm cache restore failed' }
       - name: Analyze selected nodes and build self-consistent candidates
         id: validate-artifacts
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          # ForEach-Object -Parallel refuses scriptblock variables through $using:, so the
-          # stage timer ships as text and is rebuilt from this single definition per runspace.
-          $stageHelper = @'
-          function Invoke-ValidationStage([string]$Label, [scriptblock]$Action) {
-            $timer = [Diagnostics.Stopwatch]::StartNew()
-            $status = 'failed'
-            Write-Host "[$([DateTime]::UtcNow.ToString('o'))] START $Label"
-            try {
-              & $Action
-              $status = 'succeeded'
-            } finally {
-              $timer.Stop()
-              Write-Host "[$([DateTime]::UtcNow.ToString('o'))] END $Label status=$status elapsed=$($timer.Elapsed.TotalSeconds.ToString('F3', [Globalization.CultureInfo]::InvariantCulture))s"
-            }
-          }
-          '@
-          . ([scriptblock]::Create($stageHelper))
-          $tailConcurrency = 0
-          if (-not [int]::TryParse($env:GSVIBE_TAIL_MAX_CONCURRENCY, [ref]$tailConcurrency) -or $tailConcurrency -lt 1 -or $tailConcurrency -gt 32) {
-            throw "GSVIBE_TAIL_MAX_CONCURRENCY must be a decimal integer in 1..32, got '$env:GSVIBE_TAIL_MAX_CONCURRENCY'"
-          }
-          $planPath = Join-Path $env:RUNNER_TEMP 'gamesymbol-validation\plan.json'
-          $trustedRoot = Join-Path $env:GITHUB_WORKSPACE '.trusted-validator'
-          $plannerCli = Join-Path $trustedRoot 'gamesymbol_pr_validation.py'
-          $candidateCli = Join-Path $trustedRoot 'gamesymbol_candidate.py'
-          $artifactRoot = Join-Path $env:RUNNER_TEMP 'rebuilt-bin-artifacts'
-          $plan = Get-Content -Raw -LiteralPath $planPath | ConvertFrom-Json
-          $selectionPath = Join-Path $env:RUNNER_TEMP 'gamesymbol-validation\analysis-selection.json'
-          $diagnosticsRoot = Join-Path $env:RUNNER_TEMP 'gamesymbol-analysis-${{ github.run_id }}-${{ github.run_attempt }}'
-          $analyzed = @($plan.tags | Where-Object { $_.analysis_nodes.Count -gt 0 })
-          $selections = @($analyzed | ForEach-Object {
-            @{ tag = $_.tag; node_ids = @($_.analysis_nodes) }
-          })
-          @{ schema_version = 1; selections = $selections } | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $selectionPath -Encoding utf8
-          Invoke-ValidationStage 'batch/validate-selection' {
-            uv run python -u ida_analyze_bin.py -batch_selection $selectionPath -validate_selection_only `
-              -artifactdir $artifactRoot -batch_diagnostics $diagnosticsRoot
-            if ($LASTEXITCODE -ne 0) { throw 'batch selection validation failed' }
-          }
-          $materializeFailures = [System.Collections.Concurrent.ConcurrentQueue[string]]::new()
-          $analyzed | ForEach-Object -ThrottleLimit $tailConcurrency -Parallel {
-            $ErrorActionPreference = 'Stop'
-            . ([scriptblock]::Create($using:stageHelper))
-            $planPath = $using:planPath
-            $trustedRoot = $using:trustedRoot
-            $plannerCli = $using:plannerCli
-            $artifactRoot = $using:artifactRoot
-            $failures = $using:materializeFailures
-            $tag = $_.tag
-            try {
-              Invoke-ValidationStage "$tag/materialize" {
-                uv run --project $trustedRoot python $plannerCli materialize -repo-root $env:GITHUB_WORKSPACE `
-                  -plan $planPath -tag $tag -merge-ref HEAD -bindir bin -artifactdir $artifactRoot
-                if ($LASTEXITCODE -ne 0) { throw "materialization failed for $tag" }
-              }
-            } catch {
-              $failures.Enqueue("$tag`: $($_.Exception.Message)")
-            }
-          }
-          if ($materializeFailures.Count -gt 0) {
-            foreach ($failure in $materializeFailures) { Write-Host "::error::$failure" }
-            throw "$($materializeFailures.Count) tag materialization(s) failed"
-          }
-          Invoke-ValidationStage 'batch/analyze' {
-            uv run python -u ida_analyze_bin.py -batch_selection $selectionPath -bindir bin `
-              -artifactdir $artifactRoot -batch_diagnostics $diagnosticsRoot -debug -process_reporter console
-            if ($LASTEXITCODE -ne 0) { throw 'selected-node batch analysis failed' }
-          }
-          $tailFailures = [System.Collections.Concurrent.ConcurrentQueue[string]]::new()
-          $analyzed | ForEach-Object -ThrottleLimit $tailConcurrency -Parallel {
-            $ErrorActionPreference = 'Stop'
-            . ([scriptblock]::Create($using:stageHelper))
-            $planPath = $using:planPath
-            $trustedRoot = $using:trustedRoot
-            $plannerCli = $using:plannerCli
-            $candidateCli = $using:candidateCli
-            $artifactRoot = $using:artifactRoot
-            $failures = $using:tailFailures
-            $tag = $_.tag
-            $stage = Join-Path $env:RUNNER_TEMP ("gamesymbol-$tag-" + [guid]::NewGuid().ToString('N'))
-            New-Item -ItemType Directory -Path $stage | Out-Null
-            try {
-              $candidate = Join-Path $stage "$tag.yaml"
-              $symbolSession = Join-Path $stage 'symbol-session.json'
-              $gamedataSession = Join-Path $stage 'gamedata-session.json'
-              Invoke-ValidationStage "$tag/compare" {
-                uv run --project $trustedRoot python $plannerCli compare -repo-root $env:GITHUB_WORKSPACE `
-                  -plan $planPath -tag $tag -merge-ref HEAD -bindir bin -artifactdir $artifactRoot
-                if ($LASTEXITCODE -ne 0) { throw "artifact byte comparison failed for $tag" }
-              }
-              Invoke-ValidationStage "$tag/symbol-build" {
-                uv run --project $trustedRoot python $candidateCli build -gamever $tag -bindir bin `
-                  -artifactdir $artifactRoot -configyaml "configs/$tag.yaml" -output $candidate -session $symbolSession `
-                  -snapshot-schema-version 8
-                if ($LASTEXITCODE -ne 0) { throw "candidate build failed for $tag" }
-              }
-              Invoke-ValidationStage "$tag/symbol-guard" {
-                uv run python gamesymbol_candidate.py guard -candidate $candidate -session $symbolSession
-                if ($LASTEXITCODE -ne 0) { throw "candidate guard failed for $tag" }
-              }
-              Invoke-ValidationStage "$tag/gamedata-build" {
-                uv run python gamedata_candidate.py build -gamever $tag -build-id "pr-${{ github.run_id }}" -snapshot $candidate `
-                  -configyaml "configs/$tag.yaml" -modulesdir gamedata-generators -candidate-root (Join-Path $stage 'gamedata') `
-                  -session $gamedataSession
-                if ($LASTEXITCODE -ne 0) { throw "gamedata build failed for $tag" }
-              }
-              Invoke-ValidationStage "$tag/gamedata-guard" {
-                uv run python gamedata_candidate.py guard -session $gamedataSession
-                if ($LASTEXITCODE -ne 0) { throw "gamedata guard failed for $tag" }
-              }
-              Invoke-ValidationStage "$tag/self-consistency" {
-                uv run python gamesymbol_candidate.py mark -candidate $candidate -session $symbolSession -step gamedata -gamedata-session $gamedataSession
-                if ($LASTEXITCODE -ne 0) { throw "candidate self-consistency check failed for $tag" }
-              }
-            } catch {
-              $failures.Enqueue("$tag`: $($_.Exception.Message)")
-            } finally {
-              Invoke-ValidationStage "$tag/cleanup" {
-                if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force }
-              }
-            }
-          }
-          if ($tailFailures.Count -gt 0) {
-            foreach ($failure in $tailFailures) { Write-Host "::error::$failure" }
-            throw "$($tailFailures.Count) tag validation pipeline(s) failed"
-          }
-          Invoke-ValidationStage 'batch/check-tracked-artifacts' {
-            git diff --exit-code -- bin_artifacts
-            if ($LASTEXITCODE -ne 0) { throw 'tracked bin_artifacts changed during isolated rebuild' }
-          }
+        uses: ./.ci-tools/.github/actions/ci-command
+        with:
+          command: pr-validate
       - name: Upload rebuilt artifacts on validation failure
         if: failure() && steps.validate-artifacts.outcome == 'failure'
         uses: actions/upload-artifact@v7
@@ -480,13 +303,11 @@ jobs:
       - name: Locate pr artifacts for S3
         id: s3-artifacts
         if: always() && steps.s3-layout.outcome == 'success'
-        shell: pwsh
-        run: |
-          $paths = @((Join-Path $env:RUNNER_TEMP 'rebuilt-bin-artifacts'), (Join-Path $env:RUNNER_TEMP 'gamesymbol-validation'), (Join-Path $env:RUNNER_TEMP 'gamesymbol-analysis-${{ github.run_id }}-${{ github.run_attempt }}'))
-          $available = @($paths | Where-Object { Test-Path -LiteralPath $_ })
-          "available=$($available.Count -gt 0)" | Out-File $env:GITHUB_OUTPUT -Encoding utf8 -Append
+        uses: ./.ci-tools/.github/actions/ci-command
+        with:
+          command: artifacts
       - name: Persist pr artifacts to S3
-        if: always() && steps.s3-artifacts.outputs.available == 'True'
+        if: always() && steps.s3-artifacts.outputs.available == 'true'
         uses: ./.ci-tools/.github/actions/s3-cache
         with:
           endpoint-url: ${{ secrets.S3_ENDPOINT_URL }}
@@ -494,27 +315,12 @@ jobs:
           secret-key: ${{ secrets.S3_SECRET_ACCESS_KEY }}
           operation: save
           key: ${{ steps.s3-layout.outputs.prefix }}-artifacts-pr-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            ${{ runner.temp }}/rebuilt-bin-artifacts
-            ${{ runner.temp }}/gamesymbol-validation
-            ${{ runner.temp }}/gamesymbol-analysis-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ steps.s3-artifacts.outputs.paths }}
       - name: Remove generated submodule analysis state
         if: always()
-        shell: pwsh
-        run: |
-          $workspaceRoot = [IO.Path]::GetFullPath($env:GITHUB_WORKSPACE)
-          $binRoot = (Resolve-Path -LiteralPath (Join-Path $workspaceRoot 'bin')).Path
-          if (-not $binRoot.StartsWith($workspaceRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
-            throw "bin submodule escaped the checked-out workspace: $binRoot"
-          }
-          $gitTopLevel = (git -C $binRoot rev-parse --show-toplevel).Trim()
-          if ($LASTEXITCODE -ne 0 -or [IO.Path]::GetFullPath($gitTopLevel) -ne [IO.Path]::GetFullPath($binRoot)) {
-            throw "Refusing to clean an unexpected bin repository: $gitTopLevel"
-          }
-          git -C $binRoot reset --hard
-          if ($LASTEXITCODE -ne 0) { throw 'failed to reset tracked bin files' }
-          git -C $binRoot clean -ffdx
-          if ($LASTEXITCODE -ne 0) { throw 'failed to remove generated bin analysis state' }
+        uses: ./.ci-tools/.github/actions/ci-command
+        with:
+          command: cleanup
   fork-analysis-blocked:
     needs: plan
     if: needs.plan.outputs.has_analysis == 'true' && needs.plan.outputs.same_repository != 'true'

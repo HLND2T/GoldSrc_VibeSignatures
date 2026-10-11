@@ -122,7 +122,10 @@ try:
             standalone.append(int(fn.start_ea))
         grouped.setdefault(int(fn.start_ea), []).append(int(ea))
     assignments = dict(KNOWN_OWNERS)
-    unknown = {owner: sites for owner, sites in grouped.items() if owner not in assignments}
+    unknown = {}
+    for owner, sites in grouped.items():
+        if owner not in assignments:
+            unknown[owner] = sites
     if standalone:
         if len(set(standalone)) != 1:
             raise RuntimeError('GL_GenTexture candidates are not unique: %r' % [hex(ea) for ea in standalone])
@@ -161,19 +164,19 @@ try:
     unexpected = sorted(set(inverse) - set(EXPECTED_NAMES) - set(KNOWN_OWNERS.values()))
     if missing or unexpected:
         raise RuntimeError('owner inventory mismatch missing=%r unexpected=%r' % (missing, unexpected))
+    owners = {}
+    for name, owner in sorted(inverse.items()):
+        owners[name] = {
+            'func_va': hex(owner),
+            'func_end': hex(int(ida_funcs.get_func(owner).end_ea)),
+            'sites': [hex(ea) for ea in sorted(grouped.get(owner, []))],
+            'func_name': idc.get_func_name(owner) or '',
+        }
     result = json.dumps({
         'pointer_size': 4,
         'global_ea': hex(int(GLOBAL_EA)),
         'raw_sites': [hex(ea) for ea in sorted(raw_sites)],
-        'owners': {
-            name: {
-                'func_va': hex(owner),
-                'func_end': hex(int(ida_funcs.get_func(owner).end_ea)),
-                'sites': [hex(ea) for ea in sorted(grouped.get(owner, []))],
-                'func_name': idc.get_func_name(owner) or '',
-            }
-            for name, owner in sorted(inverse.items())
-        },
+        'owners': owners,
     })
 except Exception as exc:
     result = json.dumps({'error': str(exc), 'trace': traceback.format_exc()})

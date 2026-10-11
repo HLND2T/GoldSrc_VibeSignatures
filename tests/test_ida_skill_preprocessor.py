@@ -3694,7 +3694,9 @@ found_struct_offset: []
                 namespace = {}
                 with patch.dict("sys.modules", modules):
                     exec(
-                        ida_analyze_util._INSPECT_LLM_INSTRUCTION_PY_EVAL.replace("EA_PLACEHOLDER", str(ea)), namespace
+                        ida_analyze_util._INSPECT_LLM_INSTRUCTION_PY_EVAL.replace("EA_PLACEHOLDER", str(ea)),
+                        {},
+                        namespace,
                     )
                 detail = json.loads(namespace["result"])
                 self.assertEqual([hex(displacement)], detail["data_refs"])
@@ -3759,6 +3761,11 @@ found_struct_offset: []
             ("movd", [SimpleNamespace(type=1, reg=0, dtype=2), SimpleNamespace(type=1, reg=64), void], "0xa000"),
             ("movd", [SimpleNamespace(type=1, reg=3, dtype=2), SimpleNamespace(type=1, reg=64), void], None),
             ("movd", [SimpleNamespace(type=1, reg=64), SimpleNamespace(type=1, reg=3), void], "0xa000"),
+            # GL_SetMode's MSAA error path zeros XMM0 before the paths merge
+            # into EBX-relative bDoScaledFBO loads. It never writes the PIC base.
+            ("pxor", [SimpleNamespace(type=1, reg=64), SimpleNamespace(type=1, reg=64), void], "0xa000"),
+            ("xorps", [SimpleNamespace(type=1, reg=64), SimpleNamespace(type=1, reg=64), void], "0xa000"),
+            ("xorpd", [SimpleNamespace(type=1, reg=64), SimpleNamespace(type=1, reg=64), void], "0xa000"),
             ("unknown_simd", [SimpleNamespace(type=1, reg=64), SimpleNamespace(type=4), void], None),
             ("neg", [SimpleNamespace(type=1, reg=0, dtype=2), void], "0xa000"),
             ("neg", [SimpleNamespace(type=1, reg=3, dtype=2), void], None),
@@ -3795,7 +3802,7 @@ found_struct_offset: []
                 block2 = SimpleNamespace(id=2, start_ea=0x1006, end_ea=0x100C)
                 block0.preds = lambda: []
                 block1.preds = lambda: [block0]
-                block2.preds = lambda: [block1, block2]
+                block2.preds = lambda entry=block0, branch=block1, loop=block2: [entry, branch, loop]
                 call = SimpleNamespace(ops=[SimpleNamespace(type=5, value=thunk), void], size=2)
                 add = SimpleNamespace(
                     ops=[
@@ -3864,7 +3871,9 @@ found_struct_offset: []
                 namespace = {}
                 with patch.dict("sys.modules", modules):
                     exec(
-                        ida_analyze_util._INSPECT_LLM_INSTRUCTION_PY_EVAL.replace("EA_PLACEHOLDER", str(ea)), namespace
+                        ida_analyze_util._INSPECT_LLM_INSTRUCTION_PY_EVAL.replace("EA_PLACEHOLDER", str(ea)),
+                        {},
+                        namespace,
                     )
                 detail = json.loads(namespace["result"])
                 self.assertEqual(expected, detail["relative_store_address"]["target"])

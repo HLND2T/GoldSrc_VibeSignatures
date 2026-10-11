@@ -154,7 +154,12 @@ try:
     matches = None
     stage_used = None
     for stage_name, predicate in stages:
-        selected = [rec for rec in constant_matches if predicate(rec)]
+        # py_eval uses separate globals/locals. On Python <=3.11 a
+        # comprehension cannot see this module-level loop's local predicate.
+        selected = []
+        for rec in constant_matches:
+            if predicate(rec):
+                selected.append(rec)
         if len(selected) == 1:
             matches = selected
             stage_used = stage_name

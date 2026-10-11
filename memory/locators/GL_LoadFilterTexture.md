@@ -49,3 +49,13 @@ The function owns no diagnostic string, so the anchor is its constant pair: an `
 - The constant pair is genuinely non-unique on hl-8684/linux even after correct masking — that build only resolves through the allocator stage.
 - The `GL_Bind` artifact is optional by contract: its absence must not turn the skill into a hard failure, and the waterfall must still fall through to the next stage.
 - Because the artifact records whether the across-boundary window was used, downstream consumers must honour `func_sig_allow_across_function_boundary`.
+
+## MCP scope regression (2026-10-11)
+
+- Trigger: PR #359 run 38055698749 attempt 6 failed for hl-3248/3266/3329/3647/4554 with `NameError: name 'predicate' is not defined`; the missing Agent skill file then made fallback fail.
+- Root cause: `py_eval` executes with separate globals/locals. On Python <=3.11 a list comprehension has a nested scope and cannot see a module-level loop variable assigned to the locals dictionary. The earlier `globals().update(locals())` runs before `predicate` is assigned. Python 3.12+ comprehension inlining can hide this bug during local verification.
+- Correct approach: select discriminator candidates with an explicit loop in the same execution scope. Keep the existing glbind -> allocfree -> constants ordering and fail closed on ambiguity; do not add a fallback skill to hide a deterministic locator exception.
+- Verification: `tests/test_gl_load_filter_texture_preprocessor.py` executes the shipped MCP script with separate namespaces and synthetic IDA modules. Run it with Python 3.11 as well as the newer local interpreter; cover strongest discriminator, ambiguous/missing GL_Bind, constant-only resolution and rejection of non-immediate evidence.
+- Scope: inline MCP scripts. The shared `_INSPECT_LLM_INSTRUCTION_PY_EVAL` data-reference filter has the same hazard with `ida_segment`, covered by existing split-namespace instruction-inspection tests.
+
+- CI prevention: `.github/workflows/ci.yaml` runs the shipped locator, GL_BuildLightmaps and common preprocessor regressions explicitly on Python 3.11 in a separate `.venv-py311`, on both hosted operating systems. The normal unpinned interpreter alone can mask pre-3.12 comprehension scope failures.

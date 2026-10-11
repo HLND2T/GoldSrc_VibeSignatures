@@ -86,3 +86,12 @@ The six GL_SetMode targets share one request; the two GL_EndRendering targets sh
 ## Callers
 
 The analyzer DAG runs each group after its existing owner artifact is available. Runtime consumers resolve the global/member storage through the generated GV signature and displacement metadata.
+
+
+### SIMD XOR and PIC address validation (2026-10-11)
+
+- Trigger: PR #359 run 38077454365 admitted all 90 parallel items; Sven 10257 Linux GL_SetMode decompilation was the sole failure. The second LLM candidate satisfied the FBO base-address rules but four bDoScaledFBO loads were rejected as unresolved EBX + 0x3b90; fallback then reported a missing skill file.
+- Root cause: the shared instruction-flow model treated `pxor xmm0, xmm0` on the MSAA error path as an unknown instruction that clobbered every GPR. This poisoned EBX at CFG joins, although SIMD XOR never writes the PIC base.
+- Correct approach: model `pxor`, `xorps`, and `xorpd` with the existing explicit-destination SIMD handling. Preserve unrelated GPRs, retain unknown-instruction rejection and MOVD-to-GPR invalidation, and keep FBO instruction rules unchanged.
+- Verification: split-namespace inspector subtests reproduce all three failures before the fix and resolve afterward, across a bypass/error-path merge and self-loop. A real Windows IDA MCP probe on a disposable copy of the same ELF IDB reproduces the four unresolved accesses with HEAD and resolves all seven bDoScaledFBO accesses to 0x2f1b90 with the fix. Full Linux runner acceptance is tracked separately.
+- Scope: shared x86 PIC address-flow validation; no LLM retry increase, fallback skill insertion or generated artifact changes.

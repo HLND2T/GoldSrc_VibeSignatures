@@ -15,7 +15,7 @@ tags:
 
 ## Overview
 
-Self-hosted `[windows, x64]` runners are the only place commercial IDA verification, official analysis, and release
+Prepared Windows x64 and Ubuntu x64 `[self-hosted, cross-platform]` runners are the only place commercial IDA verification, official analysis, and release
 builds run. This note captures the environment/secret/governance surface that CI workflows and repository code assume.
 The workflow internals built on top of it live in [[Immutable warm IDB cache generations]],
 [[Release bundle publication and recovery]], and [[ci-cd-and-repository-contract]].
@@ -51,35 +51,21 @@ probed. Key operational variables:
 - `DEPOTDOWNLOADER_STEAM_USERNAME` / `DEPOTDOWNLOADER_STEAM_PASSWORD` — depot authentication when required.
 
 ## Persisted cache root governance
+Official CI restores immutable private S3 snapshots into disposable `IDB_CACHE_ROOT` staging outside each checkout. `ci_s3_cache.prepare()` clears that job's staging; it is not the host's `PERSISTED_WORKSPACE` cache.
 
-The cache CLI receives an explicit persisted root that CI later exposes as the `PERSISTED_WORKSPACE` secret only inside
-the protected dedicated Windows runner job. Constraints:
-
-- The root must be outside the checkout and `bin/`, must not traverse a reparse point, and must sit on storage that
-  supports atomic same-filesystem rename.
-- The runner account needs exclusive write access to its cache root. Byte-range locks must be mutually exclusive across
-  two independent runner processes, not just threads in one process.
-- A shared cache is valid only when all consumers use the same controlled storage and ACL authority. Actions Artifacts
-  are evidence/selection transport and `READY.json` is a probe hint — never a cache transport or truth source.
-- Warm production requires one canonical Python executable with `idapro` on the dedicated runner. CI invokes
-  `idb_warm_worker.py --print-ida-version` with that executable and uses it for every bare-idalib worker. Consumer
-  analysis still requires `idalib-mcp` and `IDADIR`, but neither the MCP executable nor the IDA installation path
-  participates in the cache identity.
-- Store the absolute persisted path as the Environment secret `PERSISTED_WORKSPACE`.
+- Staging must not traverse links/reparse points and must support atomic same-filesystem rename and local process locks. Each runner account controls its own staging; Windows and Linux do not need a shared filesystem.
+- S3 namespace is repository-wide `gsvibe-s3-v1-<repository-hash>-shared`. Producers discover shared, legacy Windows, Linux, and macOS snapshots in order, verify and complete the store, and publish a new exact run/attempt snapshot with lookup verification. Old objects are not deleted.
+- Consumers restore only the producer's exact key, schema-3 selection, generation and sealed lease. Target binary platform remains in the IDB identity, independent of runner OS. Actions Artifacts carry evidence/selection, not IDB payloads.
+- `idb-cache/.locks/` coordinates local operations. GitHub job concurrency serializes this repository's producers; restored snapshot copies do not share filesystem locks across hosts.
+- The `win64` Environment supplies `S3_ENDPOINT_URL`, `S3_ACCESS_KEY_ID`, and `S3_SECRET_ACCESS_KEY` on both operating systems. Retain S3 snapshots for the lease window.
+- Warm workers use one native host Python with activated idalib; consumers also require paired `idalib-mcp`, `IDADIR`, and a supported Agent CLI. Workflow dependency environments are excluded from host-tool discovery. Linux venv symlinks retain installation identity.
+- `PERSISTED_WORKSPACE` is used only for explicit `cleanup_legacy_yaml` maintenance of the old host tree. Existing host caches are not automatically migrated or deleted.
 
 ## Release runner and repository authority
-
-- The release build runs on the same `[self-hosted, windows, x64]` runner as source analysis. Its protected `win64`
-  Environment supplies only analysis/runtime secrets and the checkout-external `PERSISTED_WORKSPACE`; the build has
-  read-only repository permission and no PAT, push, tag, or Release authority. PR routing must keep untrusted/fork
-  analysis off this runner.
-- Production release dispatch is restricted to `HLND2T/GoldSrc_VibeSignatures` and per-version concurrency. A separate
-  protected `release` Environment hosts the GitHub-hosted `publish-release` job — the only release-build job granted
-  `contents: write` (see [[Release bundle publication and recovery]]).
-- Branch protection requires the unique Actions-owned `pr-validate` check, no direct/admin-bypass pushes to `main`,
-  protected release tags, and the required approval policy for that Environment. No GitHub App token, `HLND2T_GH_TOKEN`,
-  generated-output branch, or merge-time promotion is part of the release authority.
-- Repository tests cannot activate or prove these external controls.
+- Release builds and source analysis select `[self-hosted, cross-platform]`. The protected `win64` Environment supplies analysis/runtime/S3 secrets and the optional legacy `PERSISTED_WORKSPACE`; build jobs retain read-only repository permission and no push, tag, or Release authority. Fork analysis remains blocked.
+- `ci_runner.py` and the portable composite actions execute from `github.workflow_sha`'s `.ci-tools` checkout. PR planner/materialization/comparison and snapshot build still use trusted base tools. Shells only launch checked Python commands; PR tail phases preserve bounded concurrency and all-sibling failure aggregation.
+- Production release dispatch is restricted to `HLND2T/GoldSrc_VibeSignatures` and per-version concurrency. A separate protected `release` Environment hosts the GitHub-hosted `publish-release` job, the only Release job granted `contents: write` (see [[Release bundle publication and recovery]]).
+- Branch protection requires the unique Actions-owned `pr-validate` check, no direct/admin-bypass pushes to `main`, protected release tags, and the Environment approval policy. No generated-output branch or merge-time promotion is part of release authority. Repository tests do not activate or prove these external controls.
 
 ## Progressive concurrency activation
 
