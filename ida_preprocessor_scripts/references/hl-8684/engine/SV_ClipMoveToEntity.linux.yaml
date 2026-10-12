@@ -1,0 +1,54 @@
+func_name: "SV_ClipMoveToEntity"
+func_va: "0x162eb0"
+disasm_code: |-
+  .text:00162EB0                 push    esi
+  .text:00162EB1                 push    ebx
+  .text:00162EB2                 sub     esp, 64h
+  .text:00162EB5                 mov     eax, [esp+6Ch+end]
+  .text:00162EBC                 lea     ebx, [esp+6Ch+goodtrace]
+  .text:00162EC0                 mov     esi, [esp+6Ch+retstr]
+  .text:00162EC4                 ; trace
+  .text:00162EC4                 mov     [esp+6Ch+trace], ebx; trace
+  .text:00162EC8                 ; end
+  .text:00162EC8                 mov     [esp+6Ch+var_5C], eax; end
+  .text:00162ECC                 mov     eax, [esp+6Ch+maxs]
+  .text:00162ED3                 ; maxs
+  .text:00162ED3                 mov     [esp+6Ch+var_60], eax; maxs
+  .text:00162ED7                 mov     eax, [esp+6Ch+mins]
+  .text:00162EDB                 ; mins
+  .text:00162EDB                 mov     [esp+6Ch+var_64], eax; mins
+  .text:00162EDF                 mov     eax, [esp+6Ch+start]
+  .text:00162EE3                 ; start
+  .text:00162EE3                 mov     [esp+6Ch+var_68], eax; start
+  .text:00162EE7                 mov     eax, [esp+6Ch+ent]
+  .text:00162EEB                 ; ent
+  .text:00162EEB                 mov     [esp+6Ch+var_6C], eax; ent
+  .text:00162EEE                 call    SV_SingleClipMoveToEntity
+  .text:00162EF3                 xor     edx, edx
+  .text:00162EF5                 mov     eax, [ebx+edx]
+  .text:00162EF8                 mov     [esi+edx], eax
+  .text:00162EFB                 add     edx, 4
+  .text:00162EFE                 cmp     edx, 38h ; '8'
+  .text:00162F01                 jb      short loc_162EF5
+  .text:00162F03                 add     esp, 64h
+  .text:00162F06                 mov     eax, esi
+  .text:00162F08                 pop     ebx
+  .text:00162F09                 pop     esi
+  .text:00162F0A                 retn    4
+procedure: |-
+  trace_t *__userpurge SV_ClipMoveToEntity@<eax>(
+          trace_t *__return_ptr retstr,
+          edict_t_0 *ent,
+          const vec_t *start,
+          const vec_t *mins,
+          const vec_t *maxs,
+          const vec_t *end)
+  {
+    unsigned int i; // edx
+    trace_t goodtrace; // [esp+28h] [ebp-44h] BYREF
+
+    SV_SingleClipMoveToEntity(ent, start, mins, maxs, end, &goodtrace);
+    for ( i = 0; i < 0x38; i += 4 )
+      *(qboolean_0 *)((char *)&retstr->allsolid + i) = *(qboolean_0 *)((char *)&goodtrace.allsolid + i);
+    return retstr;
+  }

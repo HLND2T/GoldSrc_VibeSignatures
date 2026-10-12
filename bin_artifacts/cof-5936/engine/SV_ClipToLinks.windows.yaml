@@ -1,0 +1,5 @@
+func_name: SV_ClipToLinks
+func_va: '0x1e11094'
+func_rva: '0x111094'
+func_size: '0x41d'
+func_sig: 55 8B EC 81 EC B4 00 00 00 56 57 8B 45 ?? 8B 48 ?? 89 4D ?? EB ?? 8B 55 ?? 89 55 ?? 8B 45 ??

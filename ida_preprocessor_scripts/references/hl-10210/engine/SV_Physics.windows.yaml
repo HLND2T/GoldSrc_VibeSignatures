@@ -1,0 +1,542 @@
+func_name: "SV_Physics"
+func_va: "0x10212fa0"
+disasm_code: |-
+  .text:10212FA0                 push    ebp
+  .text:10212FA1                 mov     ebp, esp
+  .text:10212FA3                 sub     esp, 1Ch
+  .text:10212FA6                 movsd   xmm0, qword_10FD1010
+  .text:10212FAE                 cvtpd2ps xmm0, xmm0
+  .text:10212FB2                 push    ebx
+  .text:10212FB3                 movss   dword_11198EA0, xmm0
+  .text:10212FBB                 call    dword_10F773E4
+  .text:10212FC1                 xor     ebx, ebx
+  .text:10212FC3                 xorps   xmm1, xmm1
+  .text:10212FC6                 mov     [ebp+var_4], ebx
+  .text:10212FC9                 cmp     dword_1100CC58, ebx
+  .text:10212FCF                 jle     loc_1021332F
+  .text:10212FD5                 xor     ecx, ecx
+  .text:10212FD7                 push    esi
+  .text:10212FD8                 mov     [ebp+var_8], ecx
+  .text:10212FDB                 push    edi
+  .text:10212FDC                 nop     dword ptr [eax+00h]
+  .text:10212FE0                 mov     edi, dword_1100CC60
+  .text:10212FE6                 add     edi, ecx
+  .text:10212FE8                 cmp     dword ptr [edi], 0
+  .text:10212FEB                 jnz     loc_10213311
+  .text:10212FF1                 movss   xmm0, dword_11198EA8
+  .text:10212FF9                 ucomiss xmm0, xmm1
+  .text:10212FFC                 lahf
+  .text:10212FFD                 test    ah, 44h
+  .text:10213000                 jnp     short loc_10213010
+  .text:10213002                 push    1
+  .text:10213004                 push    edi
+  .text:10213005                 call    SV_LinkEdict
+  .text:1021300A                 mov     ecx, [ebp+var_8]
+  .text:1021300D                 add     esp, 8
+  .text:10213010                 test    ebx, ebx
+  .text:10213012                 jle     short loc_10213020
+  .text:10213014                 cmp     ebx, nPlayers
+  .text:1021301A                 jle     loc_10213311
+  .text:10213020                 mov     ecx, [edi+224h]
+  .text:10213026                 mov     eax, ecx
+  .text:10213028                 test    ecx, 200h
+  .text:1021302E                 jz      short loc_10213091
+  .text:10213030                 mov     edx, [edi+21Ch]
+  .text:10213036                 test    edx, edx
+  .text:10213038                 jz      short loc_10213091
+  .text:1021303A                 test    byte ptr [edx+224h], 4
+  .text:10213041                 jz      short loc_10213091
+  .text:10213043                 movss   xmm0, dword ptr [edx+278h]
+  .text:1021304B                 lea     eax, [edi+0ACh]
+  .text:10213051                 lea     esi, [edx+0C4h]
+  .text:10213057                 push    eax
+  .text:10213058                 test    ecx, 400000h
+  .text:1021305E                 jz      short loc_10213072
+  .text:10213060                 push    esi
+  .text:10213061                 push    ecx
+  .text:10213062                 movss   [esp+34h+var_34], xmm0
+  .text:10213067                 push    eax
+  .text:10213068                 call    sub_101D9F70
+  .text:1021306D                 add     esp, 10h
+  .text:10213070                 jmp     short loc_10213081
+  .text:10213072                 push    ecx
+  .text:10213073                 movss   [esp+30h+var_30], xmm0
+  .text:10213078                 push    esi
+  .text:10213079                 call    sub_101DA2B0
+  .text:1021307E                 add     esp, 0Ch
+  .text:10213081                 or      dword ptr [edi+224h], 400000h
+  .text:1021308B                 mov     eax, [edi+224h]
+  .text:10213091                 test    eax, 400000h
+  .text:10213096                 jnz     short loc_10213103
+  .text:10213098                 movsd   xmm0, qword_11249EA8
+  .text:102130A0                 lea     eax, [edi+0A0h]
+  .text:102130A6                 mulsd   xmm0, ds:qword_10306550
+  .text:102130AE                 lea     esi, [edi+0ACh]
+  .text:102130B4                 push    eax
+  .text:102130B5                 push    esi
+  .text:102130B6                 push    ecx
+  .text:102130B7                 addsd   xmm0, ds:qword_103065C0
+  .text:102130BF                 cvtpd2ps xmm0, xmm0
+  .text:102130C3                 movss   [esp+34h+var_34], xmm0
+  .text:102130C8                 push    eax
+  .text:102130C9                 call    sub_101D9F70
+  .text:102130CE                 movss   xmm0, vec3_origin
+  .text:102130D6                 add     esp, 10h
+  .text:102130D9                 movss   dword ptr [esi], xmm0
+  .text:102130DD                 movss   xmm0, dword_104B980C
+  .text:102130E5                 movss   dword ptr [edi+0B0h], xmm0
+  .text:102130ED                 movss   xmm0, dword_104B9810
+  .text:102130F5                 movss   dword ptr [edi+0B4h], xmm0
+  .text:102130FD                 mov     eax, [edi+224h]
+  .text:10213103                 and     eax, 0FFBFFFFFh
+  .text:10213108                 mov     [edi+224h], eax
+  .text:1021310E                 mov     eax, [edi+188h]
+  .text:10213114                 cmp     eax, 7
+  .text:10213117                 jnz     loc_10213355
+  .text:1021311D                 movss   xmm4, dword ptr [edi+180h]
+  .text:10213125                 movss   xmm3, dword ptr [edi+184h]
+  .text:1021312D                 movsd   xmm2, qword_11249EA8
+  .text:10213135                 cvtps2pd xmm0, xmm4
+  .text:10213138                 cvtps2pd xmm1, xmm3
+  .text:1021313B                 addsd   xmm0, xmm2
+  .text:1021313F                 movss   [ebp+var_10], xmm4
+  .text:10213144                 movss   [ebp+var_1C], xmm3
+  .text:10213149                 comisd  xmm0, xmm1
+  .text:1021314D                 jbe     short loc_1021315F
+  .text:1021314F                 movaps  xmm0, xmm3
+  .text:10213152                 xorps   xmm1, xmm1
+  .text:10213155                 subss   xmm0, xmm4
+  .text:10213159                 maxss   xmm1, xmm0
+  .text:1021315D                 jmp     short loc_10213163
+  .text:1021315F                 cvtpd2ps xmm1, xmm2
+  .text:10213163                 xorps   xmm2, xmm2
+  .text:10213166                 movss   [ebp+var_C], xmm1
+  .text:1021316B                 ucomiss xmm1, xmm2
+  .text:1021316E                 lahf
+  .text:1021316F                 test    ah, 44h
+  .text:10213172                 jnp     loc_1021325A
+  .text:10213178                 movss   xmm0, dword ptr [edi+0DCh]
+  .text:10213180                 ucomiss xmm0, xmm2
+  .text:10213183                 lahf
+  .text:10213184                 test    ah, 44h
+  .text:10213187                 jp      short loc_102131BF
+  .text:10213189                 movss   xmm0, dword ptr [edi+0E0h]
+  .text:10213191                 ucomiss xmm0, xmm2
+  .text:10213194                 lahf
+  .text:10213195                 test    ah, 44h
+  .text:10213198                 jp      short loc_102131BF
+  .text:1021319A                 movss   xmm0, dword ptr [edi+0E4h]
+  .text:102131A2                 ucomiss xmm0, xmm2
+  .text:102131A5                 lahf
+  .text:102131A6                 test    ah, 44h
+  .text:102131A9                 jp      short loc_102131BF
+  .text:102131AB                 push    ecx
+  .text:102131AC                 movss   [esp+2Ch+var_2C], xmm1
+  .text:102131B1                 push    edi
+  .text:102131B2                 call    SV_PushMove
+  .text:102131B7                 add     esp, 8
+  .text:102131BA                 jmp     loc_1021325A
+  .text:102131BF                 movss   xmm0, dword ptr [edi+0A0h]
+  .text:102131C7                 ucomiss xmm0, xmm2
+  .text:102131CA                 lahf
+  .text:102131CB                 test    ah, 44h
+  .text:102131CE                 jp      short loc_10213203
+  .text:102131D0                 movss   xmm0, dword ptr [edi+0A4h]
+  .text:102131D8                 ucomiss xmm0, xmm2
+  .text:102131DB                 lahf
+  .text:102131DC                 test    ah, 44h
+  .text:102131DF                 jp      short loc_10213203
+  .text:102131E1                 movss   xmm0, dword ptr [edi+0A8h]
+  .text:102131E9                 ucomiss xmm0, xmm2
+  .text:102131EC                 lahf
+  .text:102131ED                 test    ah, 44h
+  .text:102131F0                 jp      short loc_10213203
+  .text:102131F2                 push    ecx
+  .text:102131F3                 movss   [esp+2Ch+var_2C], xmm1
+  .text:102131F8                 push    edi
+  .text:102131F9                 call    SV_PushRotate
+  .text:102131FE                 add     esp, 8
+  .text:10213201                 jmp     short loc_1021325A
+  .text:10213203                 push    ecx
+  .text:10213204                 movss   [esp+2Ch+var_2C], xmm1
+  .text:10213209                 push    edi
+  .text:1021320A                 call    SV_PushRotate
+  .text:1021320F                 add     esp, 8
+  .text:10213212                 test    eax, eax
+  .text:10213214                 jz      short loc_1021325A
+  .text:10213216                 movss   xmm0, dword ptr [edi+180h]
+  .text:1021321E                 movss   [ebp+var_14], xmm0
+  .text:10213223                 movss   xmm0, [ebp+var_10]
+  .text:10213228                 movss   dword ptr [edi+180h], xmm0
+  .text:10213230                 movss   xmm0, [ebp+var_C]
+  .text:10213235                 push    ecx
+  .text:10213236                 movss   [esp+2Ch+var_2C], xmm0
+  .text:1021323B                 push    edi
+  .text:1021323C                 call    SV_PushMove
+  .text:10213241                 movss   xmm0, [ebp+var_14]
+  .text:10213246                 add     esp, 8
+  .text:10213249                 comiss  xmm0, dword ptr [edi+180h]
+  .text:10213250                 jbe     short loc_1021325A
+  .text:10213252                 movss   dword ptr [edi+180h], xmm0
+  .text:1021325A                 movss   xmm1, ds:dword_102C6020
+  .text:10213262                 lea     esi, [edi+0D0h]
+  .text:10213268                 mov     ebx, 3
+  .text:1021326D                 nop     dword ptr [eax]
+  .text:10213270                 movss   xmm0, dword ptr [esi]
+  .text:10213274                 comiss  xmm1, xmm0
+  .text:10213277                 ja      short loc_10213282
+  .text:10213279                 comiss  xmm0, ds:dword_102C5DD0
+  .text:10213280                 jbe     short loc_102132A2
+  .text:10213282                 cvtps2pd xmm0, xmm0
+  .text:10213285                 movsd   qword ptr [ebp-18h], xmm0
+  .text:1021328A                 fld     qword ptr [ebp-18h]
+  .text:1021328D                 fld     ds:qword_102C5DC8
+  .text:10213293                 call    _CIfmod
+  .text:10213298                 movss   xmm1, ds:dword_102C6020
+  .text:102132A0                 fstp    dword ptr [esi]
+  .text:102132A2                 add     esi, 4
+  .text:102132A5                 sub     ebx, 1
+  .text:102132A8                 jnz     short loc_10213270
+  .text:102132AA                 movss   xmm1, [ebp+var_1C]
+  .text:102132AF                 comiss  xmm1, [ebp+var_10]
+  .text:102132B3                 jbe     short loc_102132F6
+  .text:102132B5                 test    dword ptr [edi+224h], 200000h
+  .text:102132BF                 jnz     short loc_102132CE
+  .text:102132C1                 movss   xmm0, dword ptr [edi+180h]
+  .text:102132C9                 comiss  xmm0, xmm1
+  .text:102132CC                 jb      short loc_102132F6
+  .text:102132CE                 mov     dword ptr [edi+184h], 0
+  .text:102132D8                 movsd   xmm0, qword_10FD1010
+  .text:102132E0                 cvtpd2ps xmm0, xmm0
+  .text:102132E4                 push    edi
+  .text:102132E5                 movss   dword_11198EA0, xmm0
+  .text:102132ED                 call    dword_10F77388
+  .text:102132F3                 add     esp, 4
+  .text:102132F6                 mov     ebx, [ebp+var_4]
+  .text:102132F9                 test    dword ptr [edi+224h], 40000000h
+  .text:10213303                 jz      short loc_1021330E
+  .text:10213305                 push    edi
+  .text:10213306                 call    sub_101E87D0
+  .text:1021330B                 add     esp, 4
+  .text:1021330E                 mov     ecx, [ebp+var_8]
+  .text:10213311                 inc     ebx
+  .text:10213312                 add     ecx, 324h
+  .text:10213318                 xorps   xmm1, xmm1
+  .text:1021331B                 mov     [ebp+var_4], ebx
+  .text:1021331E                 mov     [ebp+var_8], ecx
+  .text:10213321                 cmp     ebx, dword_1100CC58
+  .text:10213327                 jl      loc_10212FE0
+  .text:1021332D                 pop     edi
+  .text:1021332E                 pop     esi
+  .text:1021332F                 movss   xmm0, dword_11198EA8
+  .text:10213337                 ucomiss xmm0, xmm1
+  .text:1021333A                 pop     ebx
+  .text:1021333B                 lahf
+  .text:1021333C                 test    ah, 44h
+  .text:1021333F                 jnp     short loc_10213351
+  .text:10213341                 subss   xmm0, ds:flt_103064A8
+  .text:10213349                 movss   dword_11198EA8, xmm0
+  .text:10213351                 mov     esp, ebp
+  .text:10213353                 pop     ebp
+  .text:10213354                 retn
+  .text:10213355                 test    eax, eax
+  .text:10213357                 jnz     short loc_10213364
+  .text:10213359                 push    edi
+  .text:1021335A                 call    sub_10214E80
+  .text:1021335F                 add     esp, 4
+  .text:10213362                 jmp     short loc_102132F9
+  .text:10213364                 cmp     eax, 0Ch
+  .text:10213367                 jnz     loc_10213431
+  .text:1021336D                 push    edi
+  .text:1021336E                 call    sub_10214E80
+  .text:10213373                 add     esp, 4
+  .text:10213376                 test    eax, eax
+  .text:10213378                 jz      loc_102132F9
+  .text:1021337E                 mov     ecx, [edi+214h]
+  .text:10213384                 test    ecx, ecx
+  .text:10213386                 jz      loc_10213408
+  .text:1021338C                 movss   xmm0, dword ptr [ecx+88h]
+  .text:10213394                 addss   xmm0, dword ptr [edi+0F4h]
+  .text:1021339C                 push    1
+  .text:1021339E                 push    edi
+  .text:1021339F                 movss   dword ptr [edi+88h], xmm0
+  .text:102133A7                 movss   xmm0, dword ptr [ecx+8Ch]
+  .text:102133AF                 addss   xmm0, dword ptr [edi+0F8h]
+  .text:102133B7                 movss   dword ptr [edi+8Ch], xmm0
+  .text:102133BF                 movss   xmm0, dword ptr [ecx+90h]
+  .text:102133C7                 addss   xmm0, dword ptr [edi+0FCh]
+  .text:102133CF                 movss   dword ptr [edi+90h], xmm0
+  .text:102133D7                 mov     eax, [ecx+0D0h]
+  .text:102133DD                 mov     [edi+0D0h], eax
+  .text:102133E3                 mov     eax, [ecx+0D4h]
+  .text:102133E9                 mov     [edi+0D4h], eax
+  .text:102133EF                 mov     eax, [ecx+0D8h]
+  .text:102133F5                 mov     [edi+0D8h], eax
+  .text:102133FB                 call    SV_LinkEdict
+  .text:10213400                 add     esp, 8
+  .text:10213403                 jmp     loc_102132F9
+  .text:10213408                 mov     eax, [edi+80h]
+  .text:1021340E                 add     eax, dword_11198F4C
+  .text:10213414                 ; ArgList
+  .text:10213414                 push    eax; ArgList
+  .text:10213415                 push    offset aSMovetypeFollo; "%s movetype FOLLOW with NULL aiment\n"
+  .text:1021341A                 call    Con_DPrintf
+  .text:1021341F                 add     esp, 8
+  .text:10213422                 mov     dword ptr [edi+188h], 0
+  .text:1021342C                 jmp     loc_102132F9
+  .text:10213431                 cmp     eax, 8
+  .text:10213434                 jnz     short loc_102134A6
+  .text:10213436                 push    edi
+  .text:10213437                 call    sub_10214E80
+  .text:1021343C                 add     esp, 4
+  .text:1021343F                 test    eax, eax
+  .text:10213441                 jz      loc_102132F9
+  .text:10213447                 movsd   xmm0, qword_11249EA8
+  .text:1021344F                 lea     ecx, [edi+0D0h]
+  .text:10213455                 push    ecx
+  .text:10213456                 cvtpd2ps xmm0, xmm0
+  .text:1021345A                 lea     eax, [edi+0DCh]
+  .text:10213460                 push    eax
+  .text:10213461                 push    ecx
+  .text:10213462                 movss   [esp+34h+var_34], xmm0
+  .text:10213467                 push    ecx
+  .text:10213468                 call    sub_101D9F70
+  .text:1021346D                 movsd   xmm0, qword_11249EA8
+  .text:10213475                 lea     ecx, [edi+88h]
+  .text:1021347B                 add     esp, 10h
+  .text:1021347E                 lea     eax, [edi+0A0h]
+  .text:10213484                 cvtpd2ps xmm0, xmm0
+  .text:10213488                 push    ecx
+  .text:10213489                 push    eax
+  .text:1021348A                 push    ecx
+  .text:1021348B                 movss   [esp+34h+var_34], xmm0
+  .text:10213490                 push    ecx
+  .text:10213491                 call    sub_101D9F70
+  .text:10213496                 push    0
+  .text:10213498                 push    edi
+  .text:10213499                 call    SV_LinkEdict
+  .text:1021349E                 add     esp, 18h
+  .text:102134A1                 jmp     loc_102132F9
+  .text:102134A6                 cmp     eax, 4
+  .text:102134A9                 jz      short loc_102134F7
+  .text:102134AB                 cmp     eax, 0Dh
+  .text:102134AE                 jz      short loc_102134F7
+  .text:102134B0                 cmp     eax, 6
+  .text:102134B3                 jz      short loc_102134E9
+  .text:102134B5                 cmp     eax, 0Ah
+  .text:102134B8                 jz      short loc_102134E9
+  .text:102134BA                 cmp     eax, 0Bh
+  .text:102134BD                 jz      short loc_102134E9
+  .text:102134BF                 cmp     eax, 5
+  .text:102134C2                 jz      short loc_102134E9
+  .text:102134C4                 cmp     eax, 9
+  .text:102134C7                 jz      short loc_102134E9
+  .text:102134C9                 push    eax
+  .text:102134CA                 mov     eax, [edi+80h]
+  .text:102134D0                 add     eax, dword_11198F4C
+  .text:102134D6                 push    eax
+  .text:102134D7                 push    offset aSvPhysicsSBadM; "SV_Physics: %s bad movetype %d"
+  .text:102134DC                 call    Sys_Error
+  .text:102134E1                 add     esp, 0Ch
+  .text:102134E4                 jmp     loc_102132F9
+  .text:102134E9                 push    edi
+  .text:102134EA                 call    sub_10213C70
+  .text:102134EF                 add     esp, 4
+  .text:102134F2                 jmp     loc_102132F9
+  .text:102134F7                 push    edi
+  .text:102134F8                 call    sub_10213510
+  .text:102134FD                 add     esp, 4
+  .text:10213500                 jmp     loc_102132F9
+procedure: |-
+  void __cdecl SV_Physics()
+  {
+    int v0; // ebx
+    int v1; // ecx
+    int v2; // edi
+    int v3; // ecx
+    int v4; // eax
+    int v5; // edx
+    int v6; // xmm0_4
+    int v7; // eax
+    float v8; // xmm4_4
+    float v9; // xmm3_4
+    float v10; // xmm1_4
+    float *v11; // esi
+    int v12; // ebx
+    float v13; // xmm0_4
+    int v14; // ecx
+    float v15; // [esp+0h] [ebp-34h]
+    float v16; // [esp+0h] [ebp-34h]
+    float v17; // [esp+0h] [ebp-34h]
+    int v18; // [esp+8h] [ebp-2Ch]
+    float v19; // [esp+20h] [ebp-14h]
+    int v20; // [esp+2Ch] [ebp-8h]
+    int v21; // [esp+30h] [ebp-4h]
+
+    *(float *)&dword_11198EA0 = *(double *)&qword_10FD1010;
+    dword_10F773E4();
+    v0 = 0;
+    v21 = 0;
+    if ( dword_1100CC58 > 0 )
+    {
+      v1 = 0;
+      v20 = 0;
+      do
+      {
+        v2 = v1 + dword_1100CC60;
+        if ( !*(_DWORD *)(v1 + dword_1100CC60) )
+        {
+          if ( *(float *)&dword_11198EA8 != 0.0 )
+          {
+            SV_LinkEdict((edict_t *)(v1 + dword_1100CC60), 1);
+            v1 = v20;
+          }
+          if ( v0 <= 0 || v0 > *(int *)nPlayers )
+          {
+            v3 = *(_DWORD *)(v2 + 548);
+            v4 = v3;
+            if ( (v3 & 0x200) != 0 )
+            {
+              v5 = *(_DWORD *)(v2 + 540);
+              if ( v5 )
+              {
+                if ( (*(_BYTE *)(v5 + 548) & 4) != 0 )
+                {
+                  v6 = *(_DWORD *)(v5 + 632);
+                  v18 = v2 + 172;
+                  if ( (v3 & 0x400000) != 0 )
+                    sub_101D9F70(v2 + 172, v6, v5 + 196, v18);
+                  else
+                    sub_101DA2B0(v5 + 196, v6, v18);
+                  *(_DWORD *)(v2 + 548) |= 0x400000u;
+                  v4 = *(_DWORD *)(v2 + 548);
+                }
+              }
+            }
+            if ( (v4 & 0x400000) == 0 )
+            {
+              v15 = *(double *)&qword_11249EA8 * 0.5 + 1.0;
+              sub_101D9F70(v2 + 160, LODWORD(v15), v2 + 172, v2 + 160);
+              *(float *)(v2 + 172) = vec3_origin[0];
+              *(_DWORD *)(v2 + 176) = dword_104B980C;
+              *(_DWORD *)(v2 + 180) = dword_104B9810;
+              v4 = *(_DWORD *)(v2 + 548);
+            }
+            *(_DWORD *)(v2 + 548) = v4 & 0xFFBFFFFF;
+            v7 = *(_DWORD *)(v2 + 392);
+            if ( v7 == 7 )
+            {
+              v8 = *(float *)(v2 + 384);
+              v9 = *(float *)(v2 + 388);
+              if ( v8 + *(double *)&qword_11249EA8 <= v9 )
+                v10 = *(double *)&qword_11249EA8;
+              else
+                v10 = fmaxf(0.0, v9 - v8);
+              if ( v10 != 0.0 )
+              {
+                if ( *(float *)(v2 + 220) == 0.0 && *(float *)(v2 + 224) == 0.0 && *(float *)(v2 + 228) == 0.0 )
+                {
+                  SV_PushMove((edict_t *)v2, v10);
+                }
+                else if ( *(float *)(v2 + 160) == 0.0 && *(float *)(v2 + 164) == 0.0 && *(float *)(v2 + 168) == 0.0 )
+                {
+                  SV_PushRotate((edict_t *)v2, v10);
+                }
+                else if ( SV_PushRotate((edict_t *)v2, v10) )
+                {
+                  v19 = *(float *)(v2 + 384);
+                  *(float *)(v2 + 384) = v8;
+                  SV_PushMove((edict_t *)v2, v10);
+                  if ( v19 > *(float *)(v2 + 384) )
+                    *(float *)(v2 + 384) = v19;
+                }
+              }
+              v11 = (float *)(v2 + 208);
+              v12 = 3;
+              do
+              {
+                v13 = *v11;
+                if ( *v11 < -3600.0 || v13 > 3600.0 )
+                  *v11 = fmod(v13, 3600.0);
+                ++v11;
+                --v12;
+              }
+              while ( v12 );
+              if ( v9 > v8 && ((*(_DWORD *)(v2 + 548) & 0x200000) != 0 || *(float *)(v2 + 384) >= v9) )
+              {
+                *(_DWORD *)(v2 + 388) = 0;
+                *(float *)&dword_11198EA0 = *(double *)&qword_10FD1010;
+                dword_10F77388(v2);
+              }
+              v0 = v21;
+            }
+            else if ( v7 )
+            {
+              switch ( v7 )
+              {
+                case 12:
+                  if ( sub_10214E80(v2) )
+                  {
+                    v14 = *(_DWORD *)(v2 + 532);
+                    if ( v14 )
+                    {
+                      *(float *)(v2 + 136) = *(float *)(v14 + 136) + *(float *)(v2 + 244);
+                      *(float *)(v2 + 140) = *(float *)(v14 + 140) + *(float *)(v2 + 248);
+                      *(float *)(v2 + 144) = *(float *)(v14 + 144) + *(float *)(v2 + 252);
+                      *(_DWORD *)(v2 + 208) = *(_DWORD *)(v14 + 208);
+                      *(_DWORD *)(v2 + 212) = *(_DWORD *)(v14 + 212);
+                      *(_DWORD *)(v2 + 216) = *(_DWORD *)(v14 + 216);
+                      SV_LinkEdict((edict_t *)v2, 1);
+                    }
+                    else
+                    {
+                      Con_DPrintf(
+                        "%s movetype FOLLOW with NULL aiment\n",
+                        (const char *)(dword_11198F4C + *(_DWORD *)(v2 + 128)));
+                      *(_DWORD *)(v2 + 392) = 0;
+                    }
+                  }
+                  break;
+                case 8:
+                  if ( sub_10214E80(v2) )
+                  {
+                    v16 = *(double *)&qword_11249EA8;
+                    sub_101D9F70(v2 + 208, LODWORD(v16), v2 + 220, v2 + 208);
+                    v17 = *(double *)&qword_11249EA8;
+                    sub_101D9F70(v2 + 136, LODWORD(v17), v2 + 160, v2 + 136);
+                    SV_LinkEdict((edict_t *)v2, 0);
+                  }
+                  break;
+                case 4:
+                case 13:
+                  sub_10213510(v2);
+                  break;
+                default:
+                  if ( v7 != 6 && v7 != 10 && v7 != 11 && v7 != 5 && v7 != 9 )
+                    Sys_Error(
+                      "SV_Physics: %s bad movetype %d",
+                      (const char *)(dword_11198F4C + *(_DWORD *)(v2 + 128)),
+                      *(_DWORD *)(v2 + 392));
+                  sub_10213C70(v2);
+                  break;
+              }
+            }
+            else
+            {
+              sub_10214E80(v2);
+            }
+            if ( (*(_DWORD *)(v2 + 548) & 0x40000000) != 0 )
+              sub_101E87D0(v2);
+            v1 = v20;
+          }
+        }
+        ++v0;
+        v1 += 804;
+        v21 = v0;
+        v20 = v1;
+      }
+      while ( v0 < dword_1100CC58 );
+    }
+    if ( *(float *)&dword_11198EA8 != 0.0 )
+      *(float *)&dword_11198EA8 = *(float *)&dword_11198EA8 - 1.0;
+  }

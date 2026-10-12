@@ -1,0 +1,5 @@
+func_name: SV_PushRotate
+func_va: '0x102146d0'
+func_rva: '0x2146d0'
+func_size: '0x6d3'
+func_sig: 55 8B EC 81 EC BC 00 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 57 8B 7D ?? 0F 57 C9 F3 0F 10 97 ?? ?? ?? ??

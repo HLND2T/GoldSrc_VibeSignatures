@@ -1,0 +1,584 @@
+func_name: "SV_PushRotate"
+func_va: "0x1daf950"
+disasm_code: |-
+  .text:01DAF950                 sub     esp, 0B8h
+  .text:01DAF956                 mov     eax, ___security_cookie
+  .text:01DAF95B                 xor     eax, esp
+  .text:01DAF95D                 mov     [esp+0B8h+var_4], eax
+  .text:01DAF964                 push    edi
+  .text:01DAF965                 mov     edi, [esp+0BCh+pusher]
+  .text:01DAF96C                 fld     dword ptr [edi+0DCh]
+  .text:01DAF972                 fldz
+  .text:01DAF974                 fucom   st(1)
+  .text:01DAF976                 fnstsw  ax
+  .text:01DAF978                 test    ah, 44h
+  .text:01DAF97B                 jp      short loc_1DAF9CB
+  .text:01DAF97D                 fld     dword ptr [edi+0E0h]
+  .text:01DAF983                 fucomp  st(1)
+  .text:01DAF985                 fnstsw  ax
+  .text:01DAF987                 test    ah, 44h
+  .text:01DAF98A                 jp      short loc_1DAF9CB
+  .text:01DAF98C                 fld     dword ptr [edi+0E4h]
+  .text:01DAF992                 fucompp
+  .text:01DAF994                 fnstsw  ax
+  .text:01DAF996                 test    ah, 44h
+  .text:01DAF999                 jp      short loc_1DAF9CD
+  .text:01DAF99B                 fstp    st
+  .text:01DAF99D                 mov     eax, 1
+  .text:01DAF9A2                 fld     [esp+0BCh+movetime]
+  .text:01DAF9A9                 fadd    dword ptr [edi+180h]
+  .text:01DAF9AF                 fstp    dword ptr [edi+180h]
+  .text:01DAF9B5                 pop     edi
+  .text:01DAF9B6                 mov     ecx, [esp+0B8h+var_4]
+  .text:01DAF9BD                 ; StackCookie
+  .text:01DAF9BD                 xor     ecx, esp; StackCookie
+  .text:01DAF9BF                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:01DAF9C4                 add     esp, 0B8h
+  .text:01DAF9CA                 retn
+  .text:01DAF9CB                 fstp    st
+  .text:01DAF9CD                 fld     [esp+0BCh+movetime]
+  .text:01DAF9D4                 lea     eax, [esp+0BCh+var_40]
+  .text:01DAF9D8                 fmul    st(1), st
+  .text:01DAF9DA                 fxch    st(1)
+  .text:01DAF9DC                 push    ebx
+  .text:01DAF9DD                 push    ebp
+  .text:01DAF9DE                 ; ArgList
+  .text:01DAF9DE                 push    esi; ArgList
+  .text:01DAF9DF                 push    eax
+  .text:01DAF9E0                 fstp    [esp+0CCh+var_B0]
+  .text:01DAF9E4                 fld     dword ptr [edi+0E0h]
+  .text:01DAF9EA                 lea     eax, [esp+0CCh+var_4C]
+  .text:01DAF9F1                 fmul    st, st(1)
+  .text:01DAF9F3                 lea     esi, [edi+0D0h]
+  .text:01DAF9F9                 push    eax
+  .text:01DAF9FA                 lea     eax, [esp+0D0h+var_58]
+  .text:01DAF9FE                 push    eax
+  .text:01DAF9FF                 push    esi
+  .text:01DAFA00                 fstp    [esp+0D8h+var_B8]
+  .text:01DAFA04                 fmul    dword ptr [edi+0E4h]
+  .text:01DAFA0A                 fstp    [esp+0D8h+var_B4]
+  .text:01DAFA0E                 call    sub_1D72490
+  .text:01DAFA13                 fld     dword ptr [esi]
+  .text:01DAFA15                 lea     eax, [esp+0D8h+var_1C]
+  .text:01DAFA1C                 fst     [esp+0D8h+var_9C]
+  .text:01DAFA20                 fld     dword ptr [edi+0D4h]
+  .text:01DAFA26                 fst     [esp+0D8h+var_98]
+  .text:01DAFA2A                 fld     dword ptr [edi+0D8h]
+  .text:01DAFA30                 fst     [esp+0D8h+var_94]
+  .text:01DAFA34                 fld     [esp+0D8h+var_B0]
+  .text:01DAFA38                 faddp   st(3), st
+  .text:01DAFA3A                 fxch    st(2)
+  .text:01DAFA3C                 push    eax
+  .text:01DAFA3D                 lea     eax, [esp+0DCh+var_28]
+  .text:01DAFA44                 push    eax
+  .text:01DAFA45                 lea     eax, [esp+0E0h+var_34]
+  .text:01DAFA4C                 fstp    dword ptr [esi]
+  .text:01DAFA4E                 push    eax
+  .text:01DAFA4F                 fadd    [esp+0E4h+var_B8]
+  .text:01DAFA53                 push    esi
+  .text:01DAFA54                 fstp    dword ptr [edi+0D4h]
+  .text:01DAFA5A                 fadd    [esp+0E8h+var_B4]
+  .text:01DAFA5E                 fstp    dword ptr [edi+0D8h]
+  .text:01DAFA64                 call    sub_1D72560
+  .text:01DAFA69                 fld     [esp+0E8h+movetime]
+  .text:01DAFA70                 fadd    dword ptr [edi+180h]
+  .text:01DAFA76                 push    0
+  .text:01DAFA78                 push    edi
+  .text:01DAFA79                 fstp    dword ptr [edi+180h]
+  .text:01DAFA7F                 call    SV_LinkEdict
+  .text:01DAFA84                 add     esp, 28h
+  .text:01DAFA87                 cmp     dword ptr [edi+18Ch], 0
+  .text:01DAFA8E                 jz      loc_1DAFE51
+  .text:01DAFA94                 xor     ebx, ebx
+  .text:01DAFA96                 mov     [esp+0C8h+var_B4], 1
+  .text:01DAFA9E                 cmp     dword_9588580, 1
+  .text:01DAFAA5                 jle     loc_1DAFE51
+  .text:01DAFAAB                 mov     esi, 324h
+  .text:01DAFAB0                 xor     ebp, ebp
+  .text:01DAFAB2                 mov     [esp+0C8h+var_B0], esi
+  .text:01DAFAB6                 jmp     short loc_1DAFAC0
+  .text:01DAFAC0                 add     esi, dword_9588588
+  .text:01DAFAC6                 cmp     dword ptr [esi], 0
+  .text:01DAFAC9                 jnz     loc_1DAFE2E
+  .text:01DAFACF                 mov     eax, [esi+188h]
+  .text:01DAFAD5                 cmp     eax, 7
+  .text:01DAFAD8                 jz      loc_1DAFE2E
+  .text:01DAFADE                 test    eax, eax
+  .text:01DAFAE0                 jz      loc_1DAFE2E
+  .text:01DAFAE6                 cmp     eax, 0Ch
+  .text:01DAFAE9                 jz      loc_1DAFE2E
+  .text:01DAFAEF                 cmp     eax, 8
+  .text:01DAFAF2                 jz      loc_1DAFE2E
+  .text:01DAFAF8                 test    dword ptr [esi+224h], 200h
+  .text:01DAFB02                 jz      short loc_1DAFB10
+  .text:01DAFB04                 cmp     [esi+21Ch], edi
+  .text:01DAFB0A                 jz      loc_1DAFBAB
+  .text:01DAFB10                 fld     dword ptr [edi+150h]
+  .text:01DAFB16                 fcomp   dword ptr [esi+144h]
+  .text:01DAFB1C                 fnstsw  ax
+  .text:01DAFB1E                 test    ah, 41h
+  .text:01DAFB21                 jnp     loc_1DAFE2E
+  .text:01DAFB27                 fld     dword ptr [edi+154h]
+  .text:01DAFB2D                 fcomp   dword ptr [esi+148h]
+  .text:01DAFB33                 fnstsw  ax
+  .text:01DAFB35                 test    ah, 41h
+  .text:01DAFB38                 jnp     loc_1DAFE2E
+  .text:01DAFB3E                 fld     dword ptr [edi+158h]
+  .text:01DAFB44                 fcomp   dword ptr [esi+14Ch]
+  .text:01DAFB4A                 fnstsw  ax
+  .text:01DAFB4C                 test    ah, 41h
+  .text:01DAFB4F                 jnp     loc_1DAFE2E
+  .text:01DAFB55                 fld     dword ptr [edi+144h]
+  .text:01DAFB5B                 fcomp   dword ptr [esi+150h]
+  .text:01DAFB61                 fnstsw  ax
+  .text:01DAFB63                 test    ah, 1
+  .text:01DAFB66                 jz      loc_1DAFE2E
+  .text:01DAFB6C                 fld     dword ptr [edi+148h]
+  .text:01DAFB72                 fcomp   dword ptr [esi+154h]
+  .text:01DAFB78                 fnstsw  ax
+  .text:01DAFB7A                 test    ah, 1
+  .text:01DAFB7D                 jz      loc_1DAFE2E
+  .text:01DAFB83                 fld     dword ptr [edi+14Ch]
+  .text:01DAFB89                 fcomp   dword ptr [esi+158h]
+  .text:01DAFB8F                 fnstsw  ax
+  .text:01DAFB91                 test    ah, 1
+  .text:01DAFB94                 jz      loc_1DAFE2E
+  .text:01DAFB9A                 push    esi
+  .text:01DAFB9B                 call    SV_TestEntityPosition
+  .text:01DAFBA0                 add     esp, 4
+  .text:01DAFBA3                 test    eax, eax
+  .text:01DAFBA5                 jz      loc_1DAFE2E
+  .text:01DAFBAB                 cmp     dword ptr [esi+188h], 3
+  .text:01DAFBB2                 jz      short loc_1DAFBBE
+  .text:01DAFBB4                 and     dword ptr [esi+224h], 0FFFFFDFFh
+  .text:01DAFBBE                 fld     dword ptr [esi+88h]
+  .text:01DAFBC4                 mov     eax, dword_95D12EC
+  .text:01DAFBC9                 fst     [esp+0C8h+var_A8]
+  .text:01DAFBCD                 fld     dword ptr [esi+8Ch]
+  .text:01DAFBD3                 fstp    [esp+0C8h+var_A4]
+  .text:01DAFBD7                 fld     dword ptr [esi+90h]
+  .text:01DAFBDD                 fstp    [esp+0C8h+var_A0]
+  .text:01DAFBE1                 fstp    dword ptr [eax+ebp]
+  .text:01DAFBE4                 mov     eax, dword_95D12EC
+  .text:01DAFBE9                 fld     dword ptr [esi+8Ch]
+  .text:01DAFBEF                 fstp    dword ptr [eax+ebp+4]
+  .text:01DAFBF3                 mov     eax, dword_95D12EC
+  .text:01DAFBF8                 fld     dword ptr [esi+90h]
+  .text:01DAFBFE                 fstp    dword ptr [eax+ebp+8]
+  .text:01DAFC02                 mov     eax, dword_95D12E8
+  .text:01DAFC07                 add     ebp, 0Ch
+  .text:01DAFC0A                 mov     [eax+ebx*4], esi
+  .text:01DAFC0D                 inc     ebx
+  .text:01DAFC0E                 cmp     ebx, dword_9588584
+  .text:01DAFC14                 jl      short loc_1DAFC23
+  .text:01DAFC16                 push    offset aOutOfEdictsInS; "Out of edicts in simulator!\n"
+  .text:01DAFC1B                 call    Sys_Error
+  .text:01DAFC20                 add     esp, 4
+  .text:01DAFC23                 cmp     dword ptr [esi+188h], 0Dh
+  .text:01DAFC2A                 jnz     short loc_1DAFC74
+  .text:01DAFC2C                 fld     dword ptr [esi+150h]
+  .text:01DAFC32                 fadd    dword ptr [esi+144h]
+  .text:01DAFC38                 fld     ds:flt_1E61D00
+  .text:01DAFC3E                 fmul    st(1), st
+  .text:01DAFC40                 fxch    st(1)
+  .text:01DAFC42                 fsub    dword ptr [edi+88h]
+  .text:01DAFC48                 fld     dword ptr [esi+154h]
+  .text:01DAFC4E                 fadd    dword ptr [esi+148h]
+  .text:01DAFC54                 fmul    st, st(2)
+  .text:01DAFC56                 fsub    dword ptr [edi+8Ch]
+  .text:01DAFC5C                 fld     dword ptr [esi+158h]
+  .text:01DAFC62                 fadd    dword ptr [esi+14Ch]
+  .text:01DAFC68                 fmulp   st(3), st
+  .text:01DAFC6A                 fxch    st(2)
+  .text:01DAFC6C                 fsub    dword ptr [edi+90h]
+  .text:01DAFC72                 jmp     short loc_1DAFC9E
+  .text:01DAFC74                 fld     dword ptr [esi+88h]
+  .text:01DAFC7A                 fsub    dword ptr [edi+88h]
+  .text:01DAFC80                 fld     dword ptr [esi+8Ch]
+  .text:01DAFC86                 fsub    dword ptr [edi+8Ch]
+  .text:01DAFC8C                 fld     dword ptr [esi+90h]
+  .text:01DAFC92                 fsub    dword ptr [edi+90h]
+  .text:01DAFC98                 fxch    st(1)
+  .text:01DAFC9A                 fxch    st(2)
+  .text:01DAFC9C                 fxch    st(1)
+  .text:01DAFC9E                 fld     [esp+0C8h+var_58]
+  .text:01DAFCA2                 lea     eax, [esp+0C8h+var_10]
+  .text:01DAFCA9                 fmul    st, st(2)
+  .text:01DAFCAB                 fld     [esp+0C8h+var_54]
+  .text:01DAFCAF                 fmul    st, st(4)
+  .text:01DAFCB1                 push    eax
+  .text:01DAFCB2                 lea     eax, [esp+0CCh+var_90]
+  .text:01DAFCB6                 mov     dword ptr [edi+18Ch], 0
+  .text:01DAFCC0                 push    esi
+  .text:01DAFCC1                 push    eax
+  .text:01DAFCC2                 faddp   st(1), st
+  .text:01DAFCC4                 fld     [esp+0D4h+var_50]
+  .text:01DAFCCB                 fmul    st, st(2)
+  .text:01DAFCCD                 faddp   st(1), st
+  .text:01DAFCCF                 fld     [esp+0D4h+var_4C]
+  .text:01DAFCD6                 fmul    st, st(3)
+  .text:01DAFCD8                 fld     [esp+0D4h+var_48]
+  .text:01DAFCDF                 fmul    st, st(5)
+  .text:01DAFCE1                 faddp   st(1), st
+  .text:01DAFCE3                 fld     [esp+0D4h+var_44]
+  .text:01DAFCEA                 fmul    st, st(3)
+  .text:01DAFCEC                 faddp   st(1), st
+  .text:01DAFCEE                 fchs
+  .text:01DAFCF0                 fld     [esp+0D4h+var_40]
+  .text:01DAFCF7                 fmul    st, st(4)
+  .text:01DAFCF9                 fld     [esp+0D4h+var_3C]
+  .text:01DAFD00                 fmul    st, st(6)
+  .text:01DAFD02                 faddp   st(1), st
+  .text:01DAFD04                 fld     [esp+0D4h+var_38]
+  .text:01DAFD0B                 fmul    st, st(4)
+  .text:01DAFD0D                 faddp   st(1), st
+  .text:01DAFD0F                 fld     [esp+0D4h+var_30]
+  .text:01DAFD16                 fmul    st, st(2)
+  .text:01DAFD18                 fld     [esp+0D4h+var_34]
+  .text:01DAFD1F                 fmul    st, st(4)
+  .text:01DAFD21                 faddp   st(1), st
+  .text:01DAFD23                 fld     [esp+0D4h+var_2C]
+  .text:01DAFD2A                 fmul    st, st(2)
+  .text:01DAFD2C                 faddp   st(1), st
+  .text:01DAFD2E                 fsubrp  st(5), st
+  .text:01DAFD30                 fxch    st(4)
+  .text:01DAFD32                 fstp    [esp+0D4h+var_10]
+  .text:01DAFD39                 fld     [esp+0D4h+var_24]
+  .text:01DAFD40                 fmul    st, st(1)
+  .text:01DAFD42                 fld     [esp+0D4h+var_28]
+  .text:01DAFD49                 fmul    st, st(3)
+  .text:01DAFD4B                 faddp   st(1), st
+  .text:01DAFD4D                 fld     [esp+0D4h+var_20]
+  .text:01DAFD54                 fmul    st, st(5)
+  .text:01DAFD56                 faddp   st(1), st
+  .text:01DAFD58                 fsubrp  st(5), st
+  .text:01DAFD5A                 fxch    st(4)
+  .text:01DAFD5C                 fstp    [esp+0D4h+var_C]
+  .text:01DAFD63                 fld     [esp+0D4h+var_18]
+  .text:01DAFD6A                 fmulp   st(4), st
+  .text:01DAFD6C                 fmul    [esp+0D4h+var_1C]
+  .text:01DAFD73                 faddp   st(3), st
+  .text:01DAFD75                 fld     [esp+0D4h+var_14]
+  .text:01DAFD7C                 fmulp   st(2), st
+  .text:01DAFD7E                 fxch    st(2)
+  .text:01DAFD80                 faddp   st(1), st
+  .text:01DAFD82                 fsubrp  st(1), st
+  .text:01DAFD84                 fstp    [esp+0D4h+var_8]
+  .text:01DAFD8B                 call    SV_PushEntity
+  .text:01DAFD90                 add     esp, 0Ch
+  .text:01DAFD93                 mov     dword ptr [edi+18Ch], 4
+  .text:01DAFD9D                 cmp     dword ptr [esi+188h], 0Dh
+  .text:01DAFDA4                 jz      short loc_1DAFDD7
+  .text:01DAFDA6                 test    byte ptr [esi+224h], 8
+  .text:01DAFDAD                 fld     [esp+0C8h+var_B8]
+  .text:01DAFDB1                 jz      short loc_1DAFDCB
+  .text:01DAFDB3                 fadd    dword ptr [esi+0E0h]
+  .text:01DAFDB9                 mov     dword ptr [esi+120h], 2
+  .text:01DAFDC3                 fstp    dword ptr [esi+0E0h]
+  .text:01DAFDC9                 jmp     short loc_1DAFDD7
+  .text:01DAFDCB                 fadd    dword ptr [esi+0D4h]
+  .text:01DAFDD1                 fstp    dword ptr [esi+0D4h]
+  .text:01DAFDD7                 push    esi
+  .text:01DAFDD8                 call    SV_TestEntityPosition
+  .text:01DAFDDD                 add     esp, 4
+  .text:01DAFDE0                 test    eax, eax
+  .text:01DAFDE2                 jz      short loc_1DAFE2E
+  .text:01DAFDE4                 fld     dword ptr [esi+15Ch]
+  .text:01DAFDEA                 fld     dword ptr [esi+168h]
+  .text:01DAFDF0                 fucompp
+  .text:01DAFDF2                 fnstsw  ax
+  .text:01DAFDF4                 test    ah, 44h
+  .text:01DAFDF7                 jnp     short loc_1DAFE2E
+  .text:01DAFDF9                 mov     eax, [esi+18Ch]
+  .text:01DAFDFF                 test    eax, eax
+  .text:01DAFE01                 jz      short loc_1DAFE08
+  .text:01DAFE03                 cmp     eax, 1
+  .text:01DAFE06                 jnz     short loc_1DAFE6F
+  .text:01DAFE08                 fldz
+  .text:01DAFE0A                 fst     dword ptr [esi+160h]
+  .text:01DAFE10                 fst     dword ptr [esi+15Ch]
+  .text:01DAFE16                 fst     dword ptr [esi+168h]
+  .text:01DAFE1C                 fstp    dword ptr [esi+16Ch]
+  .text:01DAFE22                 fld     dword ptr [esi+164h]
+  .text:01DAFE28                 fstp    dword ptr [esi+170h]
+  .text:01DAFE2E                 mov     eax, [esp+0C8h+var_B4]
+  .text:01DAFE32                 mov     esi, [esp+0C8h+var_B0]
+  .text:01DAFE36                 inc     eax
+  .text:01DAFE37                 add     esi, 324h
+  .text:01DAFE3D                 mov     [esp+0C8h+var_B4], eax
+  .text:01DAFE41                 mov     [esp+0C8h+var_B0], esi
+  .text:01DAFE45                 cmp     eax, dword_9588580
+  .text:01DAFE4B                 jl      loc_1DAFAC0
+  .text:01DAFE51                 mov     eax, 1
+  .text:01DAFE56                 mov     ecx, [esp+0C8h+var_4]
+  .text:01DAFE5D                 pop     esi
+  .text:01DAFE5E                 pop     ebp
+  .text:01DAFE5F                 pop     ebx
+  .text:01DAFE60                 pop     edi
+  .text:01DAFE61                 ; StackCookie
+  .text:01DAFE61                 xor     ecx, esp; StackCookie
+  .text:01DAFE63                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:01DAFE68                 add     esp, 0B8h
+  .text:01DAFE6E                 retn
+  .text:01DAFE6F                 fld     [esp+0C8h+var_A8]
+  .text:01DAFE73                 fstp    dword ptr [esi+88h]
+  .text:01DAFE79                 fld     [esp+0C8h+var_A4]
+  .text:01DAFE7D                 fstp    dword ptr [esi+8Ch]
+  .text:01DAFE83                 fld     [esp+0C8h+var_A0]
+  .text:01DAFE87                 push    1
+  .text:01DAFE89                 push    esi
+  .text:01DAFE8A                 fstp    dword ptr [esi+90h]
+  .text:01DAFE90                 call    SV_LinkEdict
+  .text:01DAFE95                 fld     [esp+0D0h+var_9C]
+  .text:01DAFE99                 fstp    dword ptr [edi+0D0h]
+  .text:01DAFE9F                 fld     [esp+0D0h+var_98]
+  .text:01DAFEA3                 fstp    dword ptr [edi+0D4h]
+  .text:01DAFEA9                 fld     [esp+0D0h+var_94]
+  .text:01DAFEAD                 push    0
+  .text:01DAFEAF                 push    edi
+  .text:01DAFEB0                 fstp    dword ptr [edi+0D8h]
+  .text:01DAFEB6                 call    SV_LinkEdict
+  .text:01DAFEBB                 fld     dword ptr [edi+180h]
+  .text:01DAFEC1                 fsub    [esp+0D8h+movetime]
+  .text:01DAFEC8                 push    esi
+  .text:01DAFEC9                 push    edi
+  .text:01DAFECA                 fstp    dword ptr [edi+180h]
+  .text:01DAFED0                 call    dword_95D2254
+  .text:01DAFED6                 add     esp, 18h
+  .text:01DAFED9                 xor     esi, esi
+  .text:01DAFEDB                 test    ebx, ebx
+  .text:01DAFEDD                 jle     loc_1DAFF8B
+  .text:01DAFEE3                 xor     edi, edi
+  .text:01DAFEE5                 jmp     short loc_1DAFEF0
+  .text:01DAFEF0                 mov     eax, dword_95D12E8
+  .text:01DAFEF5                 mov     ecx, [eax+esi*4]
+  .text:01DAFEF8                 mov     eax, dword_95D12EC
+  .text:01DAFEFD                 fld     dword ptr [edi+eax]
+  .text:01DAFF00                 fstp    dword ptr [ecx+88h]
+  .text:01DAFF06                 mov     eax, dword_95D12E8
+  .text:01DAFF0B                 mov     ecx, [eax+esi*4]
+  .text:01DAFF0E                 mov     eax, dword_95D12EC
+  .text:01DAFF13                 fld     dword ptr [edi+eax+4]
+  .text:01DAFF17                 fstp    dword ptr [ecx+8Ch]
+  .text:01DAFF1D                 mov     eax, dword_95D12E8
+  .text:01DAFF22                 mov     ecx, [eax+esi*4]
+  .text:01DAFF25                 mov     eax, dword_95D12EC
+  .text:01DAFF2A                 fld     dword ptr [edi+eax+8]
+  .text:01DAFF2E                 fstp    dword ptr [ecx+90h]
+  .text:01DAFF34                 mov     ecx, dword_95D12E8
+  .text:01DAFF3A                 mov     eax, [ecx+esi*4]
+  .text:01DAFF3D                 test    byte ptr [eax+224h], 8
+  .text:01DAFF44                 jz      short loc_1DAFF50
+  .text:01DAFF46                 fldz
+  .text:01DAFF48                 fstp    dword ptr [eax+0E0h]
+  .text:01DAFF4E                 jmp     short loc_1DAFF6C
+  .text:01DAFF50                 cmp     dword ptr [eax+188h], 0Dh
+  .text:01DAFF57                 jz      short loc_1DAFF72
+  .text:01DAFF59                 mov     eax, [ecx+esi*4]
+  .text:01DAFF5C                 fld     dword ptr [eax+0D4h]
+  .text:01DAFF62                 fsub    [esp+0C8h+var_B8]
+  .text:01DAFF66                 fstp    dword ptr [eax+0D4h]
+  .text:01DAFF6C                 mov     ecx, dword_95D12E8
+  .text:01DAFF72                 push    0
+  .text:01DAFF74                 push    dword ptr [ecx+esi*4]
+  .text:01DAFF77                 call    SV_LinkEdict
+  .text:01DAFF7C                 inc     esi
+  .text:01DAFF7D                 add     esp, 8
+  .text:01DAFF80                 add     edi, 0Ch
+  .text:01DAFF83                 cmp     esi, ebx
+  .text:01DAFF85                 jl      loc_1DAFEF0
+  .text:01DAFF8B                 xor     eax, eax
+  .text:01DAFF8D                 jmp     loc_1DAFE56
+procedure: |-
+  int __cdecl SV_PushRotate(edict_t *pusher, float movetime)
+  {
+    double v2; // st7
+    double v4; // st6
+    int v5; // ebx
+    int v6; // esi
+    int v7; // ebp
+    edict_t *v8; // esi
+    int movetype; // eax
+    double v10; // st6
+    double v11; // st7
+    double v12; // st5
+    double v13; // st4
+    double v14; // st3
+    double v15; // st4
+    double v16; // st3
+    double v17; // st2
+    double v18; // st7
+    double v19; // st7
+    int v20; // esi
+    int j; // edi
+    edict_t **v22; // ecx
+    int v23; // eax
+    float v24; // [esp+4h] [ebp-B8h]
+    float v25; // [esp+8h] [ebp-B4h]
+    int v26; // [esp+8h] [ebp-B4h]
+    float v27; // [esp+Ch] [ebp-B0h]
+    int i; // [esp+Ch] [ebp-B0h]
+    float v29; // [esp+14h] [ebp-A8h]
+    float v30; // [esp+18h] [ebp-A4h]
+    float v31; // [esp+1Ch] [ebp-A0h]
+    float v32; // [esp+20h] [ebp-9Ch]
+    float v33; // [esp+24h] [ebp-98h]
+    float v34; // [esp+28h] [ebp-94h]
+    gsv350_trace_t v35; // [esp+2Ch] [ebp-90h] BYREF
+    float v36[3]; // [esp+64h] [ebp-58h] BYREF
+    float v37[3]; // [esp+70h] [ebp-4Ch] BYREF
+    float v38[3]; // [esp+7Ch] [ebp-40h] BYREF
+    float v39[3]; // [esp+88h] [ebp-34h] BYREF
+    float v40[3]; // [esp+94h] [ebp-28h] BYREF
+    float v41[3]; // [esp+A0h] [ebp-1Ch] BYREF
+    float v42[3]; // [esp+ACh] [ebp-10h] BYREF
+
+    v2 = pusher->avelocity[0];
+    if ( 0.0 == v2 && pusher->avelocity[1] == 0.0 && pusher->avelocity[2] == 0.0 )
+    {
+      pusher->ltime = movetime + pusher->ltime;
+      return 1;
+    }
+    v27 = v2 * movetime;
+    v24 = pusher->avelocity[1] * movetime;
+    v25 = movetime * pusher->avelocity[2];
+    sub_1D72490(pusher->angles, v36, v37, v38);
+    v32 = pusher->angles[0];
+    v4 = pusher->angles[1];
+    v33 = pusher->angles[1];
+    v34 = pusher->angles[2];
+    pusher->angles[0] = v32 + v27;
+    pusher->angles[1] = v4 + v24;
+    pusher->angles[2] = v34 + v25;
+    sub_1D72560(pusher->angles, v39, v40, v41);
+    pusher->ltime = movetime + pusher->ltime;
+    SV_LinkEdict(pusher, 0);
+    if ( !pusher->solid )
+      return 1;
+    v5 = 0;
+    v26 = 1;
+    if ( dword_9588580 <= 1 )
+      return 1;
+    v6 = 804;
+    v7 = 0;
+    for ( i = 804; ; i += 804 )
+    {
+      v8 = (edict_t *)(dword_9588588 + v6);
+      if ( v8->free )
+        goto LABEL_37;
+      movetype = v8->movetype;
+      if ( movetype == 7 || !movetype || movetype == 12 || movetype == 8 )
+        goto LABEL_37;
+      if ( ((v8->flags & 0x200) == 0 || v8->groundentity != pusher)
+        && (pusher->absmax[0] <= (double)v8->absmin[0]
+         || pusher->absmax[1] <= (double)v8->absmin[1]
+         || pusher->absmax[2] <= (double)v8->absmin[2]
+         || pusher->absmin[0] >= (double)v8->absmax[0]
+         || pusher->absmin[1] >= (double)v8->absmax[1]
+         || pusher->absmin[2] >= (double)v8->absmax[2]
+         || !SV_TestEntityPosition(v8)) )
+      {
+        goto LABEL_37;
+      }
+      if ( v8->movetype != 3 )
+        v8->flags &= ~0x200u;
+      v29 = v8->origin[0];
+      v30 = v8->origin[1];
+      v31 = v8->origin[2];
+      *(float *)((char *)dword_95D12EC + v7) = v29;
+      *(float *)((char *)dword_95D12EC + v7 + 4) = v8->origin[1];
+      *(float *)((char *)dword_95D12EC + v7 + 8) = v8->origin[2];
+      v7 += 12;
+      *((_DWORD *)dword_95D12E8 + v5++) = v8;
+      if ( v5 >= dword_9588584 )
+        Sys_Error("Out of edicts in simulator!\n");
+      if ( v8->movetype == 13 )
+      {
+        v10 = (v8->absmax[0] + v8->absmin[0]) * 0.5 - pusher->origin[0];
+        v11 = (v8->absmax[1] + v8->absmin[1]) * 0.5 - pusher->origin[1];
+        v12 = 0.5 * (v8->absmax[2] + v8->absmin[2]) - pusher->origin[2];
+      }
+      else
+      {
+        v11 = v8->origin[1] - pusher->origin[1];
+        v12 = v8->origin[2] - pusher->origin[2];
+        v10 = v8->origin[0] - pusher->origin[0];
+      }
+      v13 = v36[0] * v10;
+      v14 = v36[1] * v11;
+      pusher->solid = 0;
+      v15 = v13 + v14 + v36[2] * v12;
+      v16 = -(v37[0] * v10 + v37[1] * v11 + v37[2] * v12);
+      v17 = v38[0] * v10 + v38[1] * v11 + v38[2] * v12;
+      v42[0] = v39[1] * v16 + v39[0] * v15 + v39[2] * v17 - v10;
+      v42[1] = v40[1] * v16 + v40[0] * v15 + v40[2] * v17 - v11;
+      v42[2] = v17 * v41[2] + v16 * v41[1] + v15 * v41[0] - v12;
+      SV_PushEntity(&v35, v8, v42);
+      pusher->solid = 4;
+      if ( v8->movetype != 13 )
+      {
+        v18 = v24;
+        if ( (v8->flags & 8) != 0 )
+        {
+          v19 = v18 + v8->avelocity[1];
+          v8->fixangle = 2;
+          v8->avelocity[1] = v19;
+        }
+        else
+        {
+          v8->angles[1] = v18 + v8->angles[1];
+        }
+      }
+      if ( !SV_TestEntityPosition(v8) || v8->maxs[0] == v8->mins[0] )
+        goto LABEL_37;
+      if ( v8->solid > 1u )
+        break;
+      v8->mins[1] = 0.0;
+      v8->mins[0] = 0.0;
+      v8->maxs[0] = 0.0;
+      v8->maxs[1] = 0.0;
+      v8->maxs[2] = v8->mins[2];
+  LABEL_37:
+      v6 = i + 804;
+      if ( ++v26 >= dword_9588580 )
+        return 1;
+    }
+    v8->origin[0] = v29;
+    v8->origin[1] = v30;
+    v8->origin[2] = v31;
+    SV_LinkEdict(v8, 1);
+    pusher->angles[0] = v32;
+    pusher->angles[1] = v33;
+    pusher->angles[2] = v34;
+    SV_LinkEdict(pusher, 0);
+    pusher->ltime = pusher->ltime - movetime;
+    dword_95D2254(pusher, v8);
+    v20 = 0;
+    if ( v5 > 0 )
+    {
+      for ( j = 0; ; j += 12 )
+      {
+        *(float *)(*((_DWORD *)dword_95D12E8 + v20) + 136) = *(float *)((char *)dword_95D12EC + j);
+        *(float *)(*((_DWORD *)dword_95D12E8 + v20) + 140) = *(float *)((char *)dword_95D12EC + j + 4);
+        *(float *)(*((_DWORD *)dword_95D12E8 + v20) + 144) = *(float *)((char *)dword_95D12EC + j + 8);
+        v22 = (edict_t **)dword_95D12E8;
+        v23 = *((_DWORD *)dword_95D12E8 + v20);
+        if ( (*(_BYTE *)(v23 + 548) & 8) != 0 )
+          break;
+        if ( *(_DWORD *)(v23 + 392) != 13 )
+        {
+          *(float *)(*((_DWORD *)dword_95D12E8 + v20) + 212) = *(float *)(*((_DWORD *)dword_95D12E8 + v20) + 212) - v24;
+          goto LABEL_45;
+        }
+  LABEL_46:
+        SV_LinkEdict(v22[v20++], 0);
+        if ( v20 >= v5 )
+          return 0;
+      }
+      *(float *)(v23 + 224) = 0.0;
+  LABEL_45:
+      v22 = (edict_t **)dword_95D12E8;
+      goto LABEL_46;
+    }
+    return 0;
+  }

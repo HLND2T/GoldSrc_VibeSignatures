@@ -1,0 +1,47 @@
+func_name: "SV_ClipMoveToEntity"
+func_va: "0x1dc7280"
+disasm_code: |-
+  .text:01DC7280                 push    ebp
+  .text:01DC7281                 mov     ebp, esp
+  .text:01DC7283                 sub     esp, 38h
+  .text:01DC7286                 mov     ecx, [ebp+end]
+  .text:01DC7289                 mov     edx, [ebp+maxs]
+  .text:01DC728C                 push    esi
+  .text:01DC728D                 lea     eax, [ebp+var_38]
+  .text:01DC7290                 push    edi
+  .text:01DC7291                 push    eax
+  .text:01DC7292                 mov     eax, [ebp+mins]
+  .text:01DC7295                 push    ecx
+  .text:01DC7296                 mov     ecx, [ebp+start]
+  .text:01DC7299                 push    edx
+  .text:01DC729A                 mov     edx, [ebp+ent]
+  .text:01DC729D                 push    eax
+  .text:01DC729E                 push    ecx
+  .text:01DC729F                 push    edx
+  .text:01DC72A0                 call    SV_SingleClipMoveToEntity
+  .text:01DC72A5                 mov     eax, [ebp+result]
+  .text:01DC72A8                 mov     ecx, 0Eh
+  .text:01DC72AD                 lea     esi, [ebp+var_38]
+  .text:01DC72B0                 mov     edi, eax
+  .text:01DC72B2                 add     esp, 18h
+  .text:01DC72B5                 rep movsd
+  .text:01DC72B7                 pop     edi
+  .text:01DC72B8                 pop     esi
+  .text:01DC72B9                 mov     esp, ebp
+  .text:01DC72BB                 pop     ebp
+  .text:01DC72BC                 retn
+procedure: |-
+  gsv350_trace_t *__cdecl SV_ClipMoveToEntity(
+          gsv350_trace_t *result,
+          edict_t *ent,
+          const float *start,
+          const float *mins,
+          const float *maxs,
+          const float *end)
+  {
+    gsv350_trace_t v7; // [esp+8h] [ebp-38h] BYREF
+
+    SV_SingleClipMoveToEntity(ent, start, mins, maxs, end, &v7);
+    qmemcpy(result, &v7, sizeof(gsv350_trace_t));
+    return result;
+  }

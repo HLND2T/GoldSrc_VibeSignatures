@@ -1,0 +1,292 @@
+func_name: "SV_Physics"
+func_va: "0x1da2670"
+disasm_code: |-
+  .text:01DA2670                 push    ebp
+  .text:01DA2671                 mov     ebp, esp
+  .text:01DA2673                 sub     esp, 8
+  .text:01DA2676                 fld     sv_time
+  .text:01DA267C                 push    edi
+  .text:01DA267D                 fstp    gGlobalVariables_time
+  .text:01DA2683                 call    dword_24F5BA4
+  .text:01DA2689                 mov     eax, dword_2543D58
+  .text:01DA268E                 xor     edi, edi
+  .text:01DA2690                 test    eax, eax
+  .text:01DA2692                 mov     [ebp+var_4], edi
+  .text:01DA2695                 jle     loc_1DA287A
+  .text:01DA269B                 push    ebx
+  .text:01DA269C                 push    esi
+  .text:01DA269D                 xor     ebx, ebx
+  .text:01DA269F                 mov     eax, dword_2543D60
+  .text:01DA26A4                 lea     esi, [ebx+eax]
+  .text:01DA26A7                 mov     eax, [ebx+eax]
+  .text:01DA26AA                 test    eax, eax
+  .text:01DA26AC                 jnz     loc_1DA2861
+  .text:01DA26B2                 fld     flt_2507628
+  .text:01DA26B8                 fcomp   ds:flt_1E1D048
+  .text:01DA26BE                 fnstsw  ax
+  .text:01DA26C0                 test    ah, 44h
+  .text:01DA26C3                 jnp     short loc_1DA26D0
+  .text:01DA26C5                 push    1
+  .text:01DA26C7                 push    esi
+  .text:01DA26C8                 call    SV_LinkEdict
+  .text:01DA26CD                 add     esp, 8
+  .text:01DA26D0                 test    ebx, ebx
+  .text:01DA26D2                 jle     short loc_1DA26E0
+  .text:01DA26D4                 cmp     edi, dword_2507588
+  .text:01DA26DA                 jle     loc_1DA2861
+  .text:01DA26E0                 mov     ecx, [esi+224h]
+  .text:01DA26E6                 test    ch, 2
+  .text:01DA26E9                 jz      short loc_1DA2745
+  .text:01DA26EB                 mov     eax, [esi+21Ch]
+  .text:01DA26F1                 test    eax, eax
+  .text:01DA26F3                 jz      short loc_1DA2745
+  .text:01DA26F5                 test    byte ptr [eax+224h], 4
+  .text:01DA26FC                 jz      short loc_1DA2745
+  .text:01DA26FE                 test    ecx, 400000h
+  .text:01DA2704                 lea     ecx, [esi+0ACh]
+  .text:01DA270A                 ; int
+  .text:01DA270A                 push    ecx; int
+  .text:01DA270B                 jz      short loc_1DA2726
+  .text:01DA270D                 lea     edx, [eax+0C4h]
+  .text:01DA2713                 mov     eax, [eax+278h]
+  .text:01DA2719                 ; int
+  .text:01DA2719                 push    edx; int
+  .text:01DA271A                 ; float
+  .text:01DA271A                 push    eax; float
+  .text:01DA271B                 ; int
+  .text:01DA271B                 push    ecx; int
+  .text:01DA271C                 call    sub_1D62D40
+  .text:01DA2721                 add     esp, 10h
+  .text:01DA2724                 jmp     short loc_1DA273B
+  .text:01DA2726                 mov     edx, [eax+278h]
+  .text:01DA272C                 add     eax, 0C4h
+  .text:01DA2731                 ; float
+  .text:01DA2731                 push    edx; float
+  .text:01DA2732                 ; int
+  .text:01DA2732                 push    eax; int
+  .text:01DA2733                 call    sub_1D62F40
+  .text:01DA2738                 add     esp, 0Ch
+  .text:01DA273B                 or      dword ptr [esi+224h], 400000h
+  .text:01DA2745                 test    dword ptr [esi+224h], 400000h
+  .text:01DA274F                 jnz     short loc_1DA27A6
+  .text:01DA2751                 fld     host_frametime
+  .text:01DA2757                 fmul    ds:dbl_1E1D248
+  .text:01DA275D                 lea     eax, [esi+0A0h]
+  .text:01DA2763                 lea     edi, [esi+0ACh]
+  .text:01DA2769                 ; int
+  .text:01DA2769                 push    eax; int
+  .text:01DA276A                 ; int
+  .text:01DA276A                 push    edi; int
+  .text:01DA276B                 fadd    ds:dbl_1E1D040
+  .text:01DA2771                 push    ecx
+  .text:01DA2772                 fstp    [ebp+var_8]
+  .text:01DA2775                 fld     [ebp+var_8]
+  .text:01DA2778                 ; float
+  .text:01DA2778                 fstp    [esp+20h+var_20]; float
+  .text:01DA277B                 ; int
+  .text:01DA277B                 push    eax; int
+  .text:01DA277C                 call    sub_1D62D40
+  .text:01DA2781                 mov     eax, dword_23442AC
+  .text:01DA2786                 mov     ecx, dword_23442B0
+  .text:01DA278C                 mov     edx, dword_23442B4
+  .text:01DA2792                 mov     [edi], eax
+  .text:01DA2794                 mov     edi, [ebp+var_4]
+  .text:01DA2797                 add     esp, 10h
+  .text:01DA279A                 mov     [esi+0B0h], ecx
+  .text:01DA27A0                 mov     [esi+0B4h], edx
+  .text:01DA27A6                 mov     edx, [esi+224h]
+  .text:01DA27AC                 mov     eax, [esi+188h]
+  .text:01DA27B2                 and     edx, 0FFBFFFFFh
+  .text:01DA27B8                 cmp     eax, 7
+  .text:01DA27BB                 mov     [esi+224h], edx
+  .text:01DA27C1                 jnz     short loc_1DA27CB
+  .text:01DA27C3                 ; float
+  .text:01DA27C3                 push    esi; float
+  .text:01DA27C4                 call    SV_Physics_Pusher
+  .text:01DA27C9                 jmp     short loc_1DA2849
+  .text:01DA27CB                 test    eax, eax
+  .text:01DA27CD                 jnz     short loc_1DA27D7
+  .text:01DA27CF                 push    esi
+  .text:01DA27D0                 call    sub_1DA1840
+  .text:01DA27D5                 jmp     short loc_1DA2849
+  .text:01DA27D7                 cmp     eax, 0Ch
+  .text:01DA27DA                 jnz     short loc_1DA27E4
+  .text:01DA27DC                 push    esi
+  .text:01DA27DD                 call    sub_1DA1860
+  .text:01DA27E2                 jmp     short loc_1DA2849
+  .text:01DA27E4                 cmp     eax, 8
+  .text:01DA27E7                 jnz     short loc_1DA27F1
+  .text:01DA27E9                 push    esi
+  .text:01DA27EA                 call    sub_1DA1920
+  .text:01DA27EF                 jmp     short loc_1DA2849
+  .text:01DA27F1                 cmp     eax, 4
+  .text:01DA27F4                 jnz     short loc_1DA27FE
+  .text:01DA27F6                 ; float
+  .text:01DA27F6                 push    esi; float
+  .text:01DA27F7                 call    sub_1DA22A0
+  .text:01DA27FC                 jmp     short loc_1DA2849
+  .text:01DA27FE                 cmp     eax, 0Dh
+  .text:01DA2801                 jnz     short loc_1DA280B
+  .text:01DA2803                 ; float
+  .text:01DA2803                 push    esi; float
+  .text:01DA2804                 call    sub_1DA22A0
+  .text:01DA2809                 jmp     short loc_1DA2849
+  .text:01DA280B                 cmp     eax, 6
+  .text:01DA280E                 jz      short loc_1DA2843
+  .text:01DA2810                 cmp     eax, 0Ah
+  .text:01DA2813                 jz      short loc_1DA2843
+  .text:01DA2815                 cmp     eax, 0Bh
+  .text:01DA2818                 jz      short loc_1DA2843
+  .text:01DA281A                 cmp     eax, 5
+  .text:01DA281D                 jz      short loc_1DA2843
+  .text:01DA281F                 cmp     eax, 9
+  .text:01DA2822                 jz      short loc_1DA2843
+  .text:01DA2824                 mov     ecx, dword_25CE620
+  .text:01DA282A                 push    eax
+  .text:01DA282B                 mov     eax, [esi+80h]
+  .text:01DA2831                 add     eax, ecx
+  .text:01DA2833                 push    eax
+  .text:01DA2834                 push    offset aSvPhysicsSBadM; "SV_Physics: %s bad movetype %d"
+  .text:01DA2839                 call    Sys_Error
+  .text:01DA283E                 add     esp, 0Ch
+  .text:01DA2841                 jmp     short loc_1DA284C
+  .text:01DA2843                 ; float
+  .text:01DA2843                 push    esi; float
+  .text:01DA2844                 call    sub_1DA1B70
+  .text:01DA2849                 add     esp, 4
+  .text:01DA284C                 test    dword ptr [esi+224h], 40000000h
+  .text:01DA2856                 jz      short loc_1DA2861
+  .text:01DA2858                 push    esi
+  .text:01DA2859                 call    sub_1D71350
+  .text:01DA285E                 add     esp, 4
+  .text:01DA2861                 mov     eax, dword_2543D58
+  .text:01DA2866                 inc     edi
+  .text:01DA2867                 add     ebx, 324h
+  .text:01DA286D                 cmp     edi, eax
+  .text:01DA286F                 mov     [ebp+var_4], edi
+  .text:01DA2872                 jl      loc_1DA269F
+  .text:01DA2878                 pop     esi
+  .text:01DA2879                 pop     ebx
+  .text:01DA287A                 fld     flt_2507628
+  .text:01DA2880                 fcomp   ds:flt_1E1D048
+  .text:01DA2886                 pop     edi
+  .text:01DA2887                 fnstsw  ax
+  .text:01DA2889                 test    ah, 44h
+  .text:01DA288C                 jnp     short loc_1DA28A0
+  .text:01DA288E                 fld     flt_2507628
+  .text:01DA2894                 fsub    ds:flt_1E1D204
+  .text:01DA289A                 fstp    flt_2507628
+  .text:01DA28A0                 mov     esp, ebp
+  .text:01DA28A2                 pop     ebp
+  .text:01DA28A3                 retn
+procedure: |-
+  void __cdecl SV_Physics()
+  {
+    int v0; // edi
+    int v1; // ebx
+    float v2; // esi
+    int v3; // ecx
+    int v4; // eax
+    int v5; // ecx
+    int v6; // edx
+    int v7; // eax
+    int v8; // [esp+8h] [ebp-18h]
+    float v9; // [esp+18h] [ebp-8h]
+    int v10; // [esp+1Ch] [ebp-4h]
+
+    gGlobalVariables_time = sv_time;
+    dword_24F5BA4();
+    v0 = 0;
+    v10 = 0;
+    if ( dword_2543D58 > 0 )
+    {
+      v1 = 0;
+      do
+      {
+        LODWORD(v2) = v1 + dword_2543D60;
+        if ( !*(_DWORD *)(v1 + dword_2543D60) )
+        {
+          if ( flt_2507628 != 0.0 )
+            SV_LinkEdict((edict_t *)(v1 + dword_2543D60), 1);
+          if ( v1 <= 0 || v0 > *(int *)dword_2507588 )
+          {
+            v3 = *(_DWORD *)(LODWORD(v2) + 548);
+            if ( (v3 & 0x200) != 0 )
+            {
+              v4 = *(_DWORD *)(LODWORD(v2) + 540);
+              if ( v4 )
+              {
+                if ( (*(_BYTE *)(v4 + 548) & 4) != 0 )
+                {
+                  v8 = LODWORD(v2) + 172;
+                  if ( (v3 & 0x400000) != 0 )
+                    sub_1D62D40(LODWORD(v2) + 172, *(float *)(v4 + 632), v4 + 196, v8);
+                  else
+                    sub_1D62F40(v4 + 196, *(float *)(v4 + 632), v8);
+                  *(_DWORD *)(LODWORD(v2) + 548) |= 0x400000u;
+                }
+              }
+            }
+            if ( (*(_DWORD *)(LODWORD(v2) + 548) & 0x400000) == 0 )
+            {
+              v9 = host_frametime * 0.5 + 1.0;
+              sub_1D62D40(LODWORD(v2) + 160, v9, LODWORD(v2) + 172, LODWORD(v2) + 160);
+              v5 = dword_23442B0;
+              v6 = dword_23442B4;
+              *(_DWORD *)(LODWORD(v2) + 172) = dword_23442AC;
+              v0 = v10;
+              *(_DWORD *)(LODWORD(v2) + 176) = v5;
+              *(_DWORD *)(LODWORD(v2) + 180) = v6;
+            }
+            v7 = *(_DWORD *)(LODWORD(v2) + 392);
+            *(_DWORD *)(LODWORD(v2) + 548) &= ~0x400000u;
+            if ( v7 == 7 )
+            {
+              SV_Physics_Pusher((edict_t *)LODWORD(v2));
+            }
+            else if ( v7 )
+            {
+              switch ( v7 )
+              {
+                case 12:
+                  sub_1DA1860(LODWORD(v2));
+                  break;
+                case 8:
+                  sub_1DA1920(LODWORD(v2));
+                  break;
+                case 4:
+                case 13:
+                  sub_1DA22A0(v2);
+                  break;
+                case 6:
+                case 10:
+                case 11:
+                case 5:
+                case 9:
+                  sub_1DA1B70(v2);
+                  break;
+                default:
+                  Sys_Error(
+                    SLOBYTE(v2),
+                    "SV_Physics: %s bad movetype %d",
+                    (const char *)(dword_25CE620 + *(_DWORD *)(LODWORD(v2) + 128)),
+                    v7);
+              }
+            }
+            else
+            {
+              sub_1DA1840(LODWORD(v2));
+            }
+            if ( (*(_DWORD *)(LODWORD(v2) + 548) & 0x40000000) != 0 )
+              sub_1D71350(LODWORD(v2));
+          }
+        }
+        ++v0;
+        v1 += 804;
+        v10 = v0;
+      }
+      while ( v0 < dword_2543D58 );
+    }
+    if ( flt_2507628 != 0.0 )
+      flt_2507628 = flt_2507628 - 1.0;
+  }

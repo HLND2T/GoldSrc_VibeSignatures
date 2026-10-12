@@ -1,0 +1,620 @@
+func_name: "SV_Physics"
+func_va: "0x1dada00"
+disasm_code: |-
+  .text:01DADA00                 fld     dbl_90E7038
+  .text:01DADA06                 sub     esp, 14h
+  .text:01DADA09                 fstp    flt_90E6EE0
+  .text:01DADA0F                 push    ebp
+  .text:01DADA10                 call    dword_95D22A4
+  .text:01DADA16                 fldz
+  .text:01DADA18                 xor     ebp, ebp
+  .text:01DADA1A                 fstp    flt_90E6EE8
+  .text:01DADA20                 cmp     dword_9588580, ebp
+  .text:01DADA26                 jle     loc_1DADEFA
+  .text:01DADA2C                 push    ebx
+  .text:01DADA2D                 push    esi
+  .text:01DADA2E                 xor     ebx, ebx
+  .text:01DADA30                 push    edi
+  .text:01DADA31                 mov     [esp+24h+var_14], ebx
+  .text:01DADA35                 mov     edi, dword_9588588
+  .text:01DADA3B                 add     edi, ebx
+  .text:01DADA3D                 cmp     dword ptr [edi], 0
+  .text:01DADA40                 jnz     loc_1DADEC1
+  .text:01DADA46                 cmp     byte_95D12FC, 0
+  .text:01DADA4D                 jz      short loc_1DADA5A
+  .text:01DADA4F                 push    1
+  .text:01DADA51                 push    edi
+  .text:01DADA52                 call    SV_LinkEdict
+  .text:01DADA57                 add     esp, 8
+  .text:01DADA5A                 test    ebp, ebp
+  .text:01DADA5C                 jle     short loc_1DADA6A
+  .text:01DADA5E                 cmp     ebp, ArgList
+  .text:01DADA64                 jle     loc_1DADEC1
+  .text:01DADA6A                 mov     eax, [edi+224h]
+  .text:01DADA70                 mov     ecx, eax
+  .text:01DADA72                 test    eax, 200h
+  .text:01DADA77                 jz      short loc_1DADAD3
+  .text:01DADA79                 mov     edx, [edi+21Ch]
+  .text:01DADA7F                 test    edx, edx
+  .text:01DADA81                 jz      short loc_1DADAD3
+  .text:01DADA83                 test    byte ptr [edx+224h], 4
+  .text:01DADA8A                 jz      short loc_1DADAD3
+  .text:01DADA8C                 fld     dword ptr [edx+278h]
+  .text:01DADA92                 lea     ecx, [edi+0ACh]
+  .text:01DADA98                 lea     esi, [edx+0C4h]
+  .text:01DADA9E                 ; int
+  .text:01DADA9E                 push    ecx; int
+  .text:01DADA9F                 test    eax, 400000h
+  .text:01DADAA4                 jz      short loc_1DADAB6
+  .text:01DADAA6                 ; int
+  .text:01DADAA6                 push    esi; int
+  .text:01DADAA7                 push    ecx
+  .text:01DADAA8                 ; float
+  .text:01DADAA8                 fstp    [esp+30h+var_30]; float
+  .text:01DADAAB                 ; int
+  .text:01DADAAB                 push    ecx; int
+  .text:01DADAAC                 call    sub_1D71E80
+  .text:01DADAB1                 add     esp, 10h
+  .text:01DADAB4                 jmp     short loc_1DADAC3
+  .text:01DADAB6                 push    ecx
+  .text:01DADAB7                 ; float
+  .text:01DADAB7                 fstp    [esp+2Ch+var_2C]; float
+  .text:01DADABA                 ; int
+  .text:01DADABA                 push    esi; int
+  .text:01DADABB                 call    sub_1D72060
+  .text:01DADAC0                 add     esp, 0Ch
+  .text:01DADAC3                 or      dword ptr [edi+224h], 400000h
+  .text:01DADACD                 mov     ecx, [edi+224h]
+  .text:01DADAD3                 test    ecx, 400000h
+  .text:01DADAD9                 jnz     short loc_1DADB26
+  .text:01DADADB                 fld     dbl_8446C78
+  .text:01DADAE1                 lea     eax, [edi+0A0h]
+  .text:01DADAE7                 fmul    ds:dbl_1E629E0
+  .text:01DADAED                 lea     esi, [edi+0ACh]
+  .text:01DADAF3                 fld1
+  .text:01DADAF5                 ; int
+  .text:01DADAF5                 push    eax; int
+  .text:01DADAF6                 faddp   st(1), st
+  .text:01DADAF8                 ; int
+  .text:01DADAF8                 push    esi; int
+  .text:01DADAF9                 push    ecx
+  .text:01DADAFA                 ; float
+  .text:01DADAFA                 fstp    [esp+30h+var_30]; float
+  .text:01DADAFD                 ; int
+  .text:01DADAFD                 push    eax; int
+  .text:01DADAFE                 call    sub_1D71E80
+  .text:01DADB03                 fld     flt_8449204
+  .text:01DADB09                 add     esp, 10h
+  .text:01DADB0C                 fstp    dword ptr [esi]
+  .text:01DADB0E                 fld     flt_8449208
+  .text:01DADB14                 fstp    dword ptr [edi+0B0h]
+  .text:01DADB1A                 fld     flt_844920C
+  .text:01DADB20                 fstp    dword ptr [edi+0B4h]
+  .text:01DADB26                 and     dword ptr [edi+224h], 0FFBFFFFFh
+  .text:01DADB30                 mov     eax, [edi+188h]
+  .text:01DADB36                 cmp     eax, 7
+  .text:01DADB39                 jnz     loc_1DADD1C
+  .text:01DADB3F                 fld     dword ptr [edi+180h]
+  .text:01DADB45                 fst     [esp+24h+var_C]
+  .text:01DADB49                 fld     dword ptr [edi+184h]
+  .text:01DADB4F                 fst     [esp+24h+var_4]
+  .text:01DADB53                 fld     st(1)
+  .text:01DADB55                 fld     dbl_8446C78
+  .text:01DADB5B                 fadd    st(1), st
+  .text:01DADB5D                 fxch    st(1)
+  .text:01DADB5F                 fcomp   st(2)
+  .text:01DADB61                 fnstsw  ax
+  .text:01DADB63                 test    ah, 41h
+  .text:01DADB66                 jnz     short loc_1DADBC6
+  .text:01DADB68                 fstp    st
+  .text:01DADB6A                 fsubrp  st(1), st
+  .text:01DADB6C                 fst     [esp+24h+var_10]
+  .text:01DADB70                 fldz
+  .text:01DADB72                 fcom    st(1)
+  .text:01DADB74                 fnstsw  ax
+  .text:01DADB76                 test    ah, 41h
+  .text:01DADB79                 jnz     short loc_1DADBD0
+  .text:01DADB7B                 fstp    st(1)
+  .text:01DADB7D                 fstp    st
+  .text:01DADB7F                 lea     esi, [edi+0D0h]
+  .text:01DADB85                 mov     ebx, 3
+  .text:01DADB8A                 lea     ebx, [ebx+0]
+  .text:01DADB90                 fld     dword ptr [esi]
+  .text:01DADB92                 fld     ds:flt_1E774E8
+  .text:01DADB98                 fcomp   st(1)
+  .text:01DADB9A                 fnstsw  ax
+  .text:01DADB9C                 test    ah, 41h
+  .text:01DADB9F                 jz      short loc_1DADBB4
+  .text:01DADBA1                 fld     ds:flt_1E774DC
+  .text:01DADBA7                 fcomp   st(1)
+  .text:01DADBA9                 fnstsw  ax
+  .text:01DADBAB                 test    ah, 5
+  .text:01DADBAE                 jp      loc_1DADCB5
+  .text:01DADBB4                 fld     ds:dbl_1E77290
+  .text:01DADBBA                 call    __CIfmod
+  .text:01DADBBF                 fstp    dword ptr [esi]
+  .text:01DADBC1                 jmp     loc_1DADCB7
+  .text:01DADBC6                 fstp    st(1)
+  .text:01DADBC8                 fstp    st(1)
+  .text:01DADBCA                 fst     [esp+24h+var_10]
+  .text:01DADBCE                 fldz
+  .text:01DADBD0                 fucom   st(1)
+  .text:01DADBD2                 fnstsw  ax
+  .text:01DADBD4                 test    ah, 44h
+  .text:01DADBD7                 jnp     short loc_1DADB7B
+  .text:01DADBD9                 fld     dword ptr [edi+0DCh]
+  .text:01DADBDF                 fucomp  st(1)
+  .text:01DADBE1                 fnstsw  ax
+  .text:01DADBE3                 test    ah, 44h
+  .text:01DADBE6                 jp      short loc_1DADC1A
+  .text:01DADBE8                 fld     dword ptr [edi+0E0h]
+  .text:01DADBEE                 fucomp  st(1)
+  .text:01DADBF0                 fnstsw  ax
+  .text:01DADBF2                 test    ah, 44h
+  .text:01DADBF5                 jp      short loc_1DADC1A
+  .text:01DADBF7                 fld     dword ptr [edi+0E4h]
+  .text:01DADBFD                 fucomp  st(1)
+  .text:01DADBFF                 fnstsw  ax
+  .text:01DADC01                 test    ah, 44h
+  .text:01DADC04                 jp      short loc_1DADC1A
+  .text:01DADC06                 push    ecx
+  .text:01DADC07                 fstp    st
+  .text:01DADC09                 ; float
+  .text:01DADC09                 fstp    [esp+28h+var_28]; float
+  .text:01DADC0C                 ; int
+  .text:01DADC0C                 push    edi; int
+  .text:01DADC0D                 call    SV_PushMove
+  .text:01DADC12                 add     esp, 8
+  .text:01DADC15                 jmp     loc_1DADB7F
+  .text:01DADC1A                 fld     dword ptr [edi+0A0h]
+  .text:01DADC20                 fucomp  st(1)
+  .text:01DADC22                 fnstsw  ax
+  .text:01DADC24                 test    ah, 44h
+  .text:01DADC27                 jp      short loc_1DADC59
+  .text:01DADC29                 fld     dword ptr [edi+0A4h]
+  .text:01DADC2F                 fucomp  st(1)
+  .text:01DADC31                 fnstsw  ax
+  .text:01DADC33                 test    ah, 44h
+  .text:01DADC36                 jp      short loc_1DADC59
+  .text:01DADC38                 fld     dword ptr [edi+0A8h]
+  .text:01DADC3E                 fucompp
+  .text:01DADC40                 fnstsw  ax
+  .text:01DADC42                 test    ah, 44h
+  .text:01DADC45                 jp      short loc_1DADC5B
+  .text:01DADC47                 push    ecx
+  .text:01DADC48                 ; float
+  .text:01DADC48                 fstp    [esp+28h+var_28]; float
+  .text:01DADC4B                 ; int
+  .text:01DADC4B                 push    edi; int
+  .text:01DADC4C                 call    SV_PushRotate
+  .text:01DADC51                 add     esp, 8
+  .text:01DADC54                 jmp     loc_1DADB7F
+  .text:01DADC59                 fstp    st
+  .text:01DADC5B                 push    ecx
+  .text:01DADC5C                 ; float
+  .text:01DADC5C                 fstp    [esp+28h+var_28]; float
+  .text:01DADC5F                 ; int
+  .text:01DADC5F                 push    edi; int
+  .text:01DADC60                 call    SV_PushRotate
+  .text:01DADC65                 add     esp, 8
+  .text:01DADC68                 test    eax, eax
+  .text:01DADC6A                 jz      loc_1DADB7F
+  .text:01DADC70                 fld     dword ptr [edi+180h]
+  .text:01DADC76                 fstp    [esp+24h+var_8]
+  .text:01DADC7A                 fld     [esp+24h+var_C]
+  .text:01DADC7E                 fstp    dword ptr [edi+180h]
+  .text:01DADC84                 fld     [esp+24h+var_10]
+  .text:01DADC88                 push    ecx
+  .text:01DADC89                 ; float
+  .text:01DADC89                 fstp    [esp+28h+var_28]; float
+  .text:01DADC8C                 ; int
+  .text:01DADC8C                 push    edi; int
+  .text:01DADC8D                 call    SV_PushMove
+  .text:01DADC92                 fld     [esp+2Ch+var_8]
+  .text:01DADC96                 add     esp, 8
+  .text:01DADC99                 fcom    dword ptr [edi+180h]
+  .text:01DADC9F                 fnstsw  ax
+  .text:01DADCA1                 test    ah, 41h
+  .text:01DADCA4                 jnz     loc_1DADB7D
+  .text:01DADCAA                 fstp    dword ptr [edi+180h]
+  .text:01DADCB0                 jmp     loc_1DADB7F
+  .text:01DADCB5                 fstp    st
+  .text:01DADCB7                 add     esi, 4
+  .text:01DADCBA                 sub     ebx, 1
+  .text:01DADCBD                 jnz     loc_1DADB90
+  .text:01DADCC3                 fld     [esp+24h+var_4]
+  .text:01DADCC7                 fld     [esp+24h+var_C]
+  .text:01DADCCB                 fcomp   st(1)
+  .text:01DADCCD                 fnstsw  ax
+  .text:01DADCCF                 test    ah, 5
+  .text:01DADCD2                 jp      loc_1DADEA6
+  .text:01DADCD8                 test    dword ptr [edi+224h], 200000h
+  .text:01DADCE2                 jnz     short loc_1DADCF7
+  .text:01DADCE4                 fcomp   dword ptr [edi+180h]
+  .text:01DADCEA                 fnstsw  ax
+  .text:01DADCEC                 test    ah, 41h
+  .text:01DADCEF                 jp      loc_1DADEA8
+  .text:01DADCF5                 jmp     short loc_1DADCF9
+  .text:01DADCF7                 fstp    st
+  .text:01DADCF9                 fldz
+  .text:01DADCFB                 fstp    dword ptr [edi+184h]
+  .text:01DADD01                 fld     dbl_90E7038
+  .text:01DADD07                 push    edi
+  .text:01DADD08                 fstp    flt_90E6EE0
+  .text:01DADD0E                 call    dword_95D2248
+  .text:01DADD14                 add     esp, 4
+  .text:01DADD17                 jmp     loc_1DADEA8
+  .text:01DADD1C                 test    eax, eax
+  .text:01DADD1E                 jnz     short loc_1DADD2E
+  .text:01DADD20                 push    edi
+  .text:01DADD21                 call    sub_1DAEB80
+  .text:01DADD26                 add     esp, 4
+  .text:01DADD29                 jmp     loc_1DADEAC
+  .text:01DADD2E                 cmp     eax, 0Ch
+  .text:01DADD31                 jnz     loc_1DADDEE
+  .text:01DADD37                 push    edi
+  .text:01DADD38                 call    sub_1DAEB80
+  .text:01DADD3D                 add     esp, 4
+  .text:01DADD40                 test    eax, eax
+  .text:01DADD42                 jz      loc_1DADEAC
+  .text:01DADD48                 cmp     dword ptr [edi+188h], 0Ch
+  .text:01DADD4F                 jnz     short loc_1DADDB5
+  .text:01DADD51                 mov     eax, [edi+214h]
+  .text:01DADD57                 test    eax, eax
+  .text:01DADD59                 jz      short loc_1DADDC5
+  .text:01DADD5B                 fld     dword ptr [eax+88h]
+  .text:01DADD61                 fadd    dword ptr [edi+0F4h]
+  .text:01DADD67                 fstp    dword ptr [edi+88h]
+  .text:01DADD6D                 fld     dword ptr [eax+8Ch]
+  .text:01DADD73                 fadd    dword ptr [edi+0F8h]
+  .text:01DADD79                 fstp    dword ptr [edi+8Ch]
+  .text:01DADD7F                 fld     dword ptr [eax+90h]
+  .text:01DADD85                 fadd    dword ptr [edi+0FCh]
+  .text:01DADD8B                 fstp    dword ptr [edi+90h]
+  .text:01DADD91                 fld     dword ptr [eax+0D0h]
+  .text:01DADD97                 fstp    dword ptr [edi+0D0h]
+  .text:01DADD9D                 fld     dword ptr [eax+0D4h]
+  .text:01DADDA3                 fstp    dword ptr [edi+0D4h]
+  .text:01DADDA9                 fld     dword ptr [eax+0D8h]
+  .text:01DADDAF                 fstp    dword ptr [edi+0D8h]
+  .text:01DADDB5                 push    1
+  .text:01DADDB7                 push    edi
+  .text:01DADDB8                 call    SV_LinkEdict
+  .text:01DADDBD                 add     esp, 8
+  .text:01DADDC0                 jmp     loc_1DADEAC
+  .text:01DADDC5                 mov     eax, [edi+80h]
+  .text:01DADDCB                 add     eax, dword_90E6EDC
+  .text:01DADDD1                 ; ArgList
+  .text:01DADDD1                 push    eax; ArgList
+  .text:01DADDD2                 push    offset aSMovetypeFollo; "%s movetype FOLLOW with NULL aiment\n"
+  .text:01DADDD7                 call    Con_DPrintf
+  .text:01DADDDC                 add     esp, 8
+  .text:01DADDDF                 mov     dword ptr [edi+188h], 0
+  .text:01DADDE9                 jmp     loc_1DADEAC
+  .text:01DADDEE                 cmp     eax, 8
+  .text:01DADDF1                 jnz     short loc_1DADE50
+  .text:01DADDF3                 push    edi
+  .text:01DADDF4                 call    sub_1DAEB80
+  .text:01DADDF9                 add     esp, 4
+  .text:01DADDFC                 test    eax, eax
+  .text:01DADDFE                 jz      loc_1DADEAC
+  .text:01DADE04                 fld     dbl_8446C78
+  .text:01DADE0A                 lea     ecx, [edi+0D0h]
+  .text:01DADE10                 ; int
+  .text:01DADE10                 push    ecx; int
+  .text:01DADE11                 lea     eax, [edi+0DCh]
+  .text:01DADE17                 ; int
+  .text:01DADE17                 push    eax; int
+  .text:01DADE18                 push    ecx
+  .text:01DADE19                 ; float
+  .text:01DADE19                 fstp    [esp+30h+var_30]; float
+  .text:01DADE1C                 ; int
+  .text:01DADE1C                 push    ecx; int
+  .text:01DADE1D                 call    sub_1D71E80
+  .text:01DADE22                 fld     dbl_8446C78
+  .text:01DADE28                 lea     ecx, [edi+88h]
+  .text:01DADE2E                 add     esp, 10h
+  .text:01DADE31                 lea     eax, [edi+0A0h]
+  .text:01DADE37                 ; int
+  .text:01DADE37                 push    ecx; int
+  .text:01DADE38                 ; int
+  .text:01DADE38                 push    eax; int
+  .text:01DADE39                 push    ecx
+  .text:01DADE3A                 ; float
+  .text:01DADE3A                 fstp    [esp+30h+var_30]; float
+  .text:01DADE3D                 ; int
+  .text:01DADE3D                 push    ecx; int
+  .text:01DADE3E                 call    sub_1D71E80
+  .text:01DADE43                 push    0
+  .text:01DADE45                 push    edi
+  .text:01DADE46                 call    SV_LinkEdict
+  .text:01DADE4B                 add     esp, 18h
+  .text:01DADE4E                 jmp     short loc_1DADEAC
+  .text:01DADE50                 cmp     eax, 4
+  .text:01DADE53                 jz      short loc_1DADE9B
+  .text:01DADE55                 cmp     eax, 0Dh
+  .text:01DADE58                 jz      short loc_1DADE9B
+  .text:01DADE5A                 cmp     eax, 6
+  .text:01DADE5D                 jz      short loc_1DADE90
+  .text:01DADE5F                 cmp     eax, 0Ah
+  .text:01DADE62                 jz      short loc_1DADE90
+  .text:01DADE64                 cmp     eax, 0Bh
+  .text:01DADE67                 jz      short loc_1DADE90
+  .text:01DADE69                 cmp     eax, 5
+  .text:01DADE6C                 jz      short loc_1DADE90
+  .text:01DADE6E                 cmp     eax, 9
+  .text:01DADE71                 jz      short loc_1DADE90
+  .text:01DADE73                 push    eax
+  .text:01DADE74                 mov     eax, [edi+80h]
+  .text:01DADE7A                 add     eax, dword_90E6EDC
+  .text:01DADE80                 ; ArgList
+  .text:01DADE80                 push    eax; ArgList
+  .text:01DADE81                 push    offset aSvPhysicsSBadM; "SV_Physics: %s bad movetype %d"
+  .text:01DADE86                 call    Sys_Error
+  .text:01DADE8B                 add     esp, 0Ch
+  .text:01DADE8E                 jmp     short loc_1DADEAC
+  .text:01DADE90                 push    edi
+  .text:01DADE91                 call    sub_1DAE400
+  .text:01DADE96                 add     esp, 4
+  .text:01DADE99                 jmp     short loc_1DADEAC
+  .text:01DADE9B                 push    edi
+  .text:01DADE9C                 call    sub_1DADFB0
+  .text:01DADEA1                 add     esp, 4
+  .text:01DADEA4                 jmp     short loc_1DADEAC
+  .text:01DADEA6                 fstp    st
+  .text:01DADEA8                 mov     ebx, [esp+24h+var_14]
+  .text:01DADEAC                 test    dword ptr [edi+224h], 40000000h
+  .text:01DADEB6                 jz      short loc_1DADEC1
+  .text:01DADEB8                 push    edi
+  .text:01DADEB9                 call    sub_1D81640
+  .text:01DADEBE                 add     esp, 4
+  .text:01DADEC1                 inc     ebp
+  .text:01DADEC2                 add     ebx, 324h
+  .text:01DADEC8                 mov     [esp+24h+var_14], ebx
+  .text:01DADECC                 cmp     ebp, dword_9588580
+  .text:01DADED2                 jl      loc_1DADA35
+  .text:01DADED8                 fldz
+  .text:01DADEDA                 fcomp   flt_90E6EE8
+  .text:01DADEE0                 fnstsw  ax
+  .text:01DADEE2                 pop     edi
+  .text:01DADEE3                 pop     esi
+  .text:01DADEE4                 pop     ebx
+  .text:01DADEE5                 test    ah, 5
+  .text:01DADEE8                 jp      short loc_1DADEFA
+  .text:01DADEEA                 mov     al, 1
+  .text:01DADEEC                 mov     byte_95D12FC, al
+  .text:01DADEF1                 pop     ebp
+  .text:01DADEF2                 add     esp, 14h
+  .text:01DADEF5                 jmp     loc_1DBD160
+  .text:01DADEFA                 xor     al, al
+  .text:01DADEFC                 mov     byte_95D12FC, al
+  .text:01DADF01                 pop     ebp
+  .text:01DADF02                 add     esp, 14h
+  .text:01DADF05                 jmp     loc_1DBD160
+  .text:01DBD160                 mov     ecx, dword_95D2CAC
+  .text:01DBD166                 test    ecx, ecx
+  .text:01DBD168                 jz      short locret_1DBD16F
+  .text:01DBD16A                 mov     eax, [ecx]
+  .text:01DBD16C                 jmp     dword ptr [eax+8]
+  .text:01DBD16F                 retn
+procedure: |-
+  void __cdecl SV_Physics()
+  {
+    int v0; // ebp
+    int v1; // ebx
+    int v2; // edi
+    int v3; // eax
+    int v4; // ecx
+    int v5; // edx
+    int v6; // eax
+    double v7; // st7
+    double v8; // st6
+    double v9; // st7
+    double v10; // st6
+    float *v11; // esi
+    int v12; // ebx
+    long double v13; // st7
+    float *v14; // eax
+    float v15; // [esp+0h] [ebp-30h]
+    float v16; // [esp+0h] [ebp-30h]
+    float v17; // [esp+0h] [ebp-30h]
+    int v18; // [esp+8h] [ebp-28h]
+    float v19; // [esp+8h] [ebp-28h]
+    float v20; // [esp+8h] [ebp-28h]
+    float v21; // [esp+8h] [ebp-28h]
+    int v22; // [esp+1Ch] [ebp-14h]
+    float v23; // [esp+20h] [ebp-10h]
+    float v24; // [esp+24h] [ebp-Ch]
+    float v25; // [esp+28h] [ebp-8h]
+    float v26; // [esp+2Ch] [ebp-4h]
+
+    flt_90E6EE0 = dbl_90E7038;
+    dword_95D22A4();
+    v0 = 0;
+    flt_90E6EE8 = 0.0;
+    if ( dword_9588580 <= 0 )
+      goto LABEL_70;
+    v1 = 0;
+    v22 = 0;
+    do
+    {
+      v2 = v1 + dword_9588588;
+      if ( !*(_DWORD *)(v1 + dword_9588588) )
+      {
+        if ( byte_95D12FC )
+          SV_LinkEdict((edict_t *)(v1 + dword_9588588), 1);
+        if ( v0 <= 0 || v0 > *(int *)ArgList )
+        {
+          v3 = *(_DWORD *)(v2 + 548);
+          v4 = v3;
+          if ( (v3 & 0x200) != 0 )
+          {
+            v5 = *(_DWORD *)(v2 + 540);
+            if ( v5 )
+            {
+              if ( (*(_BYTE *)(v5 + 548) & 4) != 0 )
+              {
+                v18 = v2 + 172;
+                if ( (v3 & 0x400000) != 0 )
+                  sub_1D71E80(v2 + 172, *(float *)(v5 + 632), v5 + 196, v18);
+                else
+                  sub_1D72060(v5 + 196, *(float *)(v5 + 632), v18);
+                *(_DWORD *)(v2 + 548) |= 0x400000u;
+                v4 = *(_DWORD *)(v2 + 548);
+              }
+            }
+          }
+          if ( (v4 & 0x400000) == 0 )
+          {
+            v15 = dbl_8446C78 * 0.5 + 1.0;
+            sub_1D71E80(v2 + 160, v15, v2 + 172, v2 + 160);
+            *(float *)(v2 + 172) = flt_8449204;
+            *(float *)(v2 + 176) = flt_8449208;
+            *(float *)(v2 + 180) = flt_844920C;
+          }
+          *(_DWORD *)(v2 + 548) &= ~0x400000u;
+          v6 = *(_DWORD *)(v2 + 392);
+          if ( v6 == 7 )
+          {
+            v7 = *(float *)(v2 + 384);
+            v24 = *(float *)(v2 + 384);
+            v8 = *(float *)(v2 + 388);
+            v26 = *(float *)(v2 + 388);
+            if ( v7 + dbl_8446C78 <= v8 )
+            {
+              v9 = dbl_8446C78;
+              v23 = dbl_8446C78;
+              v10 = 0.0;
+            }
+            else
+            {
+              v9 = v8 - v7;
+              v23 = v9;
+              v10 = 0.0;
+              if ( v9 < 0.0 )
+              {
+  LABEL_20:
+                v11 = (float *)(v2 + 208);
+                v12 = 3;
+                do
+                {
+                  v13 = *v11;
+                  if ( v13 < -3600.0 || v13 > 3600.0 )
+                    *v11 = fmod(v13, 3600.0);
+                  ++v11;
+                  --v12;
+                }
+                while ( v12 );
+                if ( v24 < (double)v26 && ((*(_DWORD *)(v2 + 548) & 0x200000) != 0 || v26 <= (double)*(float *)(v2 + 384)) )
+                {
+                  *(float *)(v2 + 388) = 0.0;
+                  flt_90E6EE0 = dbl_90E7038;
+                  dword_95D2248(v2);
+                }
+                v1 = v22;
+                goto LABEL_65;
+              }
+            }
+            if ( v10 != v9 )
+            {
+              if ( *(float *)(v2 + 220) == v10 && *(float *)(v2 + 224) == v10 && *(float *)(v2 + 228) == v10 )
+              {
+                v19 = v9;
+                SV_PushMove((edict_t *)v2, v19);
+              }
+              else if ( *(float *)(v2 + 160) == v10 && *(float *)(v2 + 164) == v10 && *(float *)(v2 + 168) == v10 )
+              {
+                v20 = v9;
+                SV_PushRotate((edict_t *)v2, v20);
+              }
+              else
+              {
+                v21 = v9;
+                if ( SV_PushRotate((edict_t *)v2, v21) )
+                {
+                  v25 = *(float *)(v2 + 384);
+                  *(float *)(v2 + 384) = v24;
+                  SV_PushMove((edict_t *)v2, v23);
+                  if ( v25 > (double)*(float *)(v2 + 384) )
+                    *(float *)(v2 + 384) = v25;
+                }
+              }
+            }
+            goto LABEL_20;
+          }
+          if ( !v6 )
+          {
+            sub_1DAEB80(v2);
+            goto LABEL_65;
+          }
+          if ( v6 != 12 )
+          {
+            if ( v6 == 8 )
+            {
+              if ( sub_1DAEB80(v2) )
+              {
+                v16 = dbl_8446C78;
+                sub_1D71E80(v2 + 208, v16, v2 + 220, v2 + 208);
+                v17 = dbl_8446C78;
+                sub_1D71E80(v2 + 136, v17, v2 + 160, v2 + 136);
+                SV_LinkEdict((edict_t *)v2, 0);
+              }
+            }
+            else if ( v6 == 4 || v6 == 13 )
+            {
+              sub_1DADFB0(v2);
+            }
+            else
+            {
+              if ( v6 != 6 && v6 != 10 && v6 != 11 && v6 != 5 && v6 != 9 )
+                Sys_Error(
+                  "SV_Physics: %s bad movetype %d",
+                  (const char *)(dword_90E6EDC + *(_DWORD *)(v2 + 128)),
+                  *(_DWORD *)(v2 + 392));
+              sub_1DAE400(v2);
+            }
+            goto LABEL_65;
+          }
+          if ( sub_1DAEB80(v2) )
+          {
+            if ( *(_DWORD *)(v2 + 392) != 12 )
+            {
+  LABEL_49:
+              SV_LinkEdict((edict_t *)v2, 1);
+              goto LABEL_65;
+            }
+            v14 = *(float **)(v2 + 532);
+            if ( v14 )
+            {
+              *(float *)(v2 + 136) = v14[34] + *(float *)(v2 + 244);
+              *(float *)(v2 + 140) = v14[35] + *(float *)(v2 + 248);
+              *(float *)(v2 + 144) = v14[36] + *(float *)(v2 + 252);
+              *(float *)(v2 + 208) = v14[52];
+              *(float *)(v2 + 212) = v14[53];
+              *(float *)(v2 + 216) = v14[54];
+              goto LABEL_49;
+            }
+            Con_DPrintf("%s movetype FOLLOW with NULL aiment\n", (const char *)(dword_90E6EDC + *(_DWORD *)(v2 + 128)));
+            *(_DWORD *)(v2 + 392) = 0;
+          }
+  LABEL_65:
+          if ( (*(_DWORD *)(v2 + 548) & 0x40000000) != 0 )
+            sub_1D81640(v2);
+        }
+      }
+      ++v0;
+      v1 += 804;
+      v22 = v1;
+    }
+    while ( v0 < dword_9588580 );
+    if ( flt_90E6EE8 > 0.0 )
+    {
+      byte_95D12FC = 1;
+      goto LABEL_71;
+    }
+  LABEL_70:
+    byte_95D12FC = 0;
+  LABEL_71:
+    if ( dword_95D2CAC )
+      (*(void (__thiscall **)(int))(*(_DWORD *)dword_95D2CAC + 8))(dword_95D2CAC);
+  }
