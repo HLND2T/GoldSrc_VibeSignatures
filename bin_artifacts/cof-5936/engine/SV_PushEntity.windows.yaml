@@ -1,0 +1,5 @@
+func_name: SV_PushEntity
+func_va: '0x1de6783'
+func_rva: '0xe6783'
+func_size: '0x15a'
+func_sig: 55 8B EC 81 EC 84 00 00 00 56 57 8B 45 ?? 8B 88 ?? ?? ?? ?? 81 E1 00 00 80 00 85 C9 74 ??

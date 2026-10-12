@@ -1,0 +1,346 @@
+func_name: "SV_ClipToLinks"
+func_va: "0x10236210"
+disasm_code: |-
+  .text:10236210                 push    ebp
+  .text:10236211                 mov     ebp, esp
+  .text:10236213                 sub     esp, 74h
+  .text:10236216                 push    ebx
+  .text:10236217                 mov     ebx, [ebp+node]
+  .text:1023621A                 push    esi
+  .text:1023621B                 mov     esi, [ebp+clip]
+  .text:1023621E                 push    edi
+  .text:1023621F                 nop
+  .text:10236220                 mov     edi, [ebx+1Ch]
+  .text:10236223                 lea     eax, [ebx+18h]
+  .text:10236226                 mov     [ebp+var_4], eax
+  .text:10236229                 cmp     edi, eax
+  .text:1023622B                 jz      loc_10236489
+  .text:10236231                 mov     ebx, [edi+4]
+  .text:10236234                 add     edi, 0FFFFFFF8h
+  .text:10236237                 mov     ecx, [edi+2C0h]
+  .text:1023623D                 test    ecx, ecx
+  .text:1023623F                 jz      short loc_10236276
+  .text:10236241                 mov     eax, [esi+7Ch]
+  .text:10236244                 test    eax, eax
+  .text:10236246                 jz      short loc_10236276
+  .text:10236248                 mov     eax, [eax+2C0h]
+  .text:1023624E                 test    eax, eax
+  .text:10236250                 jz      short loc_10236276
+  .text:10236252                 cmp     dword_104D13F0, 0
+  .text:10236259                 jnz     short loc_10236265
+  .text:1023625B                 test    ecx, eax
+  .text:1023625D                 jz      loc_1023647B
+  .text:10236263                 jmp     short loc_10236276
+  .text:10236265                 cmp     dword_104D13F0, 1
+  .text:1023626C                 jnz     short loc_10236276
+  .text:1023626E                 test    ecx, eax
+  .text:10236270                 jnz     loc_1023647B
+  .text:10236276                 mov     eax, [edi+18Ch]
+  .text:1023627C                 test    eax, eax
+  .text:1023627E                 jz      loc_1023647B
+  .text:10236284                 cmp     edi, [esi+7Ch]
+  .text:10236287                 jz      loc_1023647B
+  .text:1023628D                 cmp     eax, 1
+  .text:10236290                 jnz     short loc_1023629F
+  .text:10236292                 push    offset aTriggerInClipp; "Trigger in clipping list"
+  .text:10236297                 call    Sys_Error
+  .text:1023629C                 add     esp, 4
+  .text:1023629F                 mov     eax, dword ptr xmmword_10F77360+8
+  .text:102362A4                 test    eax, eax
+  .text:102362A6                 jz      short loc_102362B9
+  .text:102362A8                 push    dword ptr [esi+7Ch]
+  .text:102362AB                 push    edi
+  .text:102362AC                 call    eax
+  .text:102362AE                 add     esp, 8
+  .text:102362B1                 test    eax, eax
+  .text:102362B3                 jz      loc_1023647B
+  .text:102362B9                 mov     eax, [edi+18Ch]
+  .text:102362BF                 cmp     eax, 4
+  .text:102362C2                 jnz     short loc_102362DF
+  .text:102362C4                 test    dword ptr [edi+224h], 800000h
+  .text:102362CE                 jz      short loc_102362F3
+  .text:102362D0                 cmp     dword ptr [esi+80h], 0
+  .text:102362D7                 jz      loc_1023647B
+  .text:102362DD                 jmp     short loc_102362F3
+  .text:102362DF                 cmp     word ptr [esi+78h], 1
+  .text:102362E4                 jnz     short loc_102362F3
+  .text:102362E6                 cmp     dword ptr [edi+188h], 0Dh
+  .text:102362ED                 jnz     loc_1023647B
+  .text:102362F3                 cmp     word ptr [esi+7Ah], 0
+  .text:102362F8                 jz      short loc_10236313
+  .text:102362FA                 cmp     dword ptr [edi+1C8h], 0
+  .text:10236301                 jz      short loc_10236313
+  .text:10236303                 test    dword ptr [edi+224h], 2000000h
+  .text:1023630D                 jz      loc_1023647B
+  .text:10236313                 movss   xmm0, dword ptr [esi]
+  .text:10236317                 comiss  xmm0, dword ptr [edi+150h]
+  .text:1023631E                 ja      loc_1023647B
+  .text:10236324                 movss   xmm0, dword ptr [esi+4]
+  .text:10236329                 comiss  xmm0, dword ptr [edi+154h]
+  .text:10236330                 ja      loc_1023647B
+  .text:10236336                 movss   xmm0, dword ptr [esi+8]
+  .text:1023633B                 comiss  xmm0, dword ptr [edi+158h]
+  .text:10236342                 ja      loc_1023647B
+  .text:10236348                 movss   xmm0, dword ptr [edi+144h]
+  .text:10236350                 comiss  xmm0, dword ptr [esi+0Ch]
+  .text:10236354                 ja      loc_1023647B
+  .text:1023635A                 movss   xmm0, dword ptr [edi+148h]
+  .text:10236362                 comiss  xmm0, dword ptr [esi+10h]
+  .text:10236366                 ja      loc_1023647B
+  .text:1023636C                 movss   xmm0, dword ptr [edi+14Ch]
+  .text:10236374                 comiss  xmm0, dword ptr [esi+14h]
+  .text:10236378                 ja      loc_1023647B
+  .text:1023637E                 cmp     eax, 3
+  .text:10236381                 jz      short loc_1023639A
+  .text:10236383                 push    dword ptr [esi+3Ch]
+  .text:10236386                 push    dword ptr [esi+38h]
+  .text:10236389                 push    edi
+  .text:1023638A                 call    sub_101FA140
+  .text:1023638F                 add     esp, 0Ch
+  .text:10236392                 test    eax, eax
+  .text:10236394                 jz      loc_1023647B
+  .text:1023639A                 mov     ecx, [esi+7Ch]
+  .text:1023639D                 test    ecx, ecx
+  .text:1023639F                 jz      short loc_102363CA
+  .text:102363A1                 movss   xmm0, dword ptr [ecx+174h]
+  .text:102363A9                 xorps   xmm1, xmm1
+  .text:102363AC                 ucomiss xmm0, xmm1
+  .text:102363AF                 lahf
+  .text:102363B0                 test    ah, 44h
+  .text:102363B3                 jnp     short loc_102363CA
+  .text:102363B5                 movss   xmm0, dword ptr [edi+174h]
+  .text:102363BD                 ucomiss xmm0, xmm1
+  .text:102363C0                 lahf
+  .text:102363C1                 test    ah, 44h
+  .text:102363C4                 jnp     loc_1023647B
+  .text:102363CA                 cmp     dword ptr [esi+40h], 0
+  .text:102363CE                 jnz     loc_102364C4
+  .text:102363D4                 test    ecx, ecx
+  .text:102363D6                 jz      short loc_102363F0
+  .text:102363D8                 cmp     [edi+218h], ecx
+  .text:102363DE                 jz      loc_1023647B
+  .text:102363E4                 cmp     [ecx+218h], edi
+  .text:102363EA                 jz      loc_1023647B
+  .text:102363F0                 test    byte ptr [edi+224h], 20h
+  .text:102363F7                 mov     eax, [esi+3Ch]
+  .text:102363FA                 mov     ecx, [esi+38h]
+  .text:102363FD                 ; int
+  .text:102363FD                 push    eax; int
+  .text:102363FE                 jz      short loc_1023640A
+  .text:10236400                 lea     eax, [esi+2Ch]
+  .text:10236403                 push    eax
+  .text:10236404                 lea     eax, [esi+20h]
+  .text:10236407                 push    eax
+  .text:10236408                 jmp     short loc_10236410
+  .text:1023640A                 ; int
+  .text:1023640A                 push    dword ptr [esi+1Ch]; int
+  .text:1023640D                 ; int
+  .text:1023640D                 push    dword ptr [esi+18h]; int
+  .text:10236410                 ; int
+  .text:10236410                 push    ecx; int
+  .text:10236411                 lea     eax, [ebp+var_74]
+  .text:10236414                 ; int
+  .text:10236414                 push    edi; int
+  .text:10236415                 ; void *
+  .text:10236415                 push    eax; void *
+  .text:10236416                 call    SV_ClipMoveToEntity
+  .text:1023641B                 add     esp, 18h
+  .text:1023641E                 movups  xmm1, xmmword ptr [eax]
+  .text:10236421                 movq    xmm0, qword ptr [eax+30h]
+  .text:10236426                 movups  xmm3, xmmword ptr [eax+20h]
+  .text:1023642A                 movups  xmm2, xmmword ptr [eax+10h]
+  .text:1023642E                 movd    eax, xmm1
+  .text:10236432                 movq    [ebp+var_C], xmm0
+  .text:10236437                 test    eax, eax
+  .text:10236439                 jnz     short loc_10236455
+  .text:1023643B                 movaps  xmm0, xmm1
+  .text:1023643E                 psrldq  xmm0, 4
+  .text:10236443                 movd    eax, xmm0
+  .text:10236447                 test    eax, eax
+  .text:10236449                 jnz     short loc_10236455
+  .text:1023644B                 movss   xmm0, dword ptr [esi+50h]
+  .text:10236450                 comiss  xmm0, xmm2
+  .text:10236453                 jbe     short loc_1023647B
+  .text:10236455                 cmp     dword ptr [esi+44h], 0
+  .text:10236459                 movups  xmmword ptr [esi+40h], xmm1
+  .text:1023645D                 mov     dword ptr [ebp+var_C], edi
+  .text:10236460                 movq    xmm0, [ebp+var_C]
+  .text:10236465                 movups  xmmword ptr [esi+50h], xmm2
+  .text:10236469                 movups  xmmword ptr [esi+60h], xmm3
+  .text:1023646D                 movq    qword ptr [esi+70h], xmm0
+  .text:10236472                 jz      short loc_1023647B
+  .text:10236474                 mov     dword ptr [esi+44h], 1
+  .text:1023647B                 mov     edi, ebx
+  .text:1023647D                 cmp     ebx, [ebp+var_4]
+  .text:10236480                 jnz     loc_10236231
+  .text:10236486                 mov     ebx, [ebp+node]
+  .text:10236489                 mov     eax, [ebx]
+  .text:1023648B                 cmp     eax, 0FFFFFFFFh
+  .text:1023648E                 jz      short loc_102364C4
+  .text:10236490                 movss   xmm1, dword ptr [ebx+4]
+  .text:10236495                 movss   xmm0, dword ptr [esi+eax*4+0Ch]
+  .text:1023649B                 comiss  xmm0, xmm1
+  .text:1023649E                 jbe     short loc_102364B3
+  .text:102364A0                 push    esi
+  .text:102364A1                 push    dword ptr [ebx+8]
+  .text:102364A4                 call    SV_ClipToLinks
+  .text:102364A9                 mov     eax, [ebx]
+  .text:102364AB                 add     esp, 8
+  .text:102364AE                 movss   xmm1, dword ptr [ebx+4]
+  .text:102364B3                 comiss  xmm1, dword ptr [esi+eax*4]
+  .text:102364B7                 jbe     short loc_102364C4
+  .text:102364B9                 mov     ebx, [ebx+0Ch]
+  .text:102364BC                 mov     [ebp+node], ebx
+  .text:102364BF                 jmp     loc_10236220
+  .text:102364C4                 pop     edi
+  .text:102364C5                 pop     esi
+  .text:102364C6                 pop     ebx
+  .text:102364C7                 mov     esp, ebp
+  .text:102364C9                 pop     ebp
+  .text:102364CA                 retn
+procedure: |-
+  void __cdecl SV_ClipToLinks(gsv350_areanode_t *node, gsv350_moveclip_t *clip)
+  {
+    gsv350_areanode_t *i; // ebx
+    struct gsv350_link_s *next; // edi
+    struct gsv350_link_s *v4; // ebx
+    edict_t *v5; // edi
+    int groupinfo; // ecx
+    edict_t *passedict; // eax
+    int v8; // eax
+    int solid; // eax
+    int v10; // eax
+    edict_t *v11; // ecx
+    const float *start; // ecx
+    gsv350_trace_t *v13; // eax
+    __m128i v14; // xmm1
+    __int64 v15; // xmm0_8
+    gsv350_plane_t plane; // xmm3
+    __int128 v17; // xmm2
+    int v18; // eax
+    bool v19; // zf
+    __int64 v20; // xmm0_8
+    int axis; // eax
+    float dist; // xmm1_4
+    const float *end; // [esp-4h] [ebp-84h]
+    gsv350_trace_t v24; // [esp+Ch] [ebp-74h] BYREF
+    __int64 v25; // [esp+74h] [ebp-Ch]
+    gsv350_link_t *p_solid_edicts; // [esp+7Ch] [ebp-4h]
+
+    for ( i = node; ; node = i )
+    {
+      next = i->solid_edicts.next;
+      p_solid_edicts = &i->solid_edicts;
+      if ( next != &i->solid_edicts )
+      {
+        while ( 1 )
+        {
+          v4 = next->next;
+          v5 = (edict_t *)&next[-1];
+          groupinfo = v5->groupinfo;
+          if ( groupinfo )
+          {
+            passedict = clip->passedict;
+            if ( passedict )
+            {
+              v8 = passedict->groupinfo;
+              if ( v8 )
+              {
+                if ( dword_104D13F0 )
+                {
+                  if ( dword_104D13F0 == 1 && (v8 & groupinfo) != 0 )
+                    goto LABEL_49;
+                }
+                else if ( (v8 & groupinfo) == 0 )
+                {
+                  goto LABEL_49;
+                }
+              }
+            }
+          }
+          solid = v5->solid;
+          if ( solid && v5 != clip->passedict )
+          {
+            if ( solid == 1 )
+              Sys_Error("Trigger in clipping list");
+            if ( !DWORD2(xmmword_10F77360)
+              || ((int (__cdecl *)(edict_t *, edict_t *))DWORD2(xmmword_10F77360))(v5, clip->passedict) )
+            {
+              v10 = v5->solid;
+              if ( v10 == 4 )
+              {
+                if ( (v5->flags & 0x800000) == 0 || clip->monsterClipBrush )
+                  goto LABEL_23;
+              }
+              else if ( clip->type != 1 || v5->movetype == 13 )
+              {
+  LABEL_23:
+                if ( (!clip->ignoretrans || !v5->rendermode || (v5->flags & 0x2000000) != 0)
+                  && clip->boxmins[0] <= v5->absmax[0]
+                  && clip->boxmins[1] <= v5->absmax[1]
+                  && clip->boxmins[2] <= v5->absmax[2]
+                  && v5->absmin[0] <= clip->boxmaxs[0]
+                  && v5->absmin[1] <= clip->boxmaxs[1]
+                  && v5->absmin[2] <= clip->boxmaxs[2]
+                  && (v10 == 3 || sub_101FA140(v5, clip->start, clip->end)) )
+                {
+                  v11 = clip->passedict;
+                  if ( !v11 || v11->size[0] == 0.0 || v5->size[0] != 0.0 )
+                  {
+                    if ( clip->trace.allsolid )
+                      return;
+                    if ( !v11 || v5->owner != v11 && v11->owner != v5 )
+                    {
+                      start = clip->start;
+                      end = clip->end;
+                      v13 = (v5->flags & 0x20) != 0
+                          ? SV_ClipMoveToEntity(&v24, v5, start, clip->mins2, clip->maxs2, end)
+                          : SV_ClipMoveToEntity(&v24, v5, start, clip->mins, clip->maxs, end);
+                      v14 = *(__m128i *)&v13->allsolid;
+                      v15 = *(_QWORD *)&v13->ent;
+                      plane = v13->plane;
+                      v17 = *(_OWORD *)&v13->fraction;
+                      v18 = _mm_cvtsi128_si32(*(__m128i *)&v13->allsolid);
+                      v25 = v15;
+                      if ( v18 || v14.m128i_i32[1] || clip->trace.fraction > *(float *)&v17 )
+                      {
+                        v19 = clip->trace.startsolid == 0;
+                        *(__m128i *)&clip->trace.allsolid = v14;
+                        LODWORD(v25) = v5;
+                        v20 = v25;
+                        *(_OWORD *)&clip->trace.fraction = v17;
+                        clip->trace.plane = plane;
+                        *(_QWORD *)&clip->trace.ent = v20;
+                        if ( !v19 )
+                          clip->trace.startsolid = 1;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+  LABEL_49:
+          next = v4;
+          if ( v4 == p_solid_edicts )
+          {
+            i = node;
+            break;
+          }
+        }
+      }
+      axis = i->axis;
+      if ( i->axis == -1 )
+        break;
+      dist = i->dist;
+      if ( clip->boxmaxs[axis] > dist )
+      {
+        SV_ClipToLinks(i->children[0], clip);
+        axis = i->axis;
+        dist = i->dist;
+      }
+      if ( dist <= clip->boxmins[axis] )
+        break;
+      i = i->children[1];
+    }
+  }

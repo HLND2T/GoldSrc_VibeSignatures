@@ -1,0 +1,326 @@
+func_name: "SV_ClipToLinks"
+func_va: "0x1dd39f0"
+disasm_code: |-
+  .text:01DD39F0                 sub     esp, 7Ch
+  .text:01DD39F3                 push    ebx
+  .text:01DD39F4                 push    ebp
+  .text:01DD39F5                 mov     ebp, [esp+84h+clip]
+  .text:01DD39FC                 push    esi
+  .text:01DD39FD                 mov     esi, [esp+88h+node]
+  .text:01DD3A04                 ; ArgList
+  .text:01DD3A04                 push    edi; ArgList
+  .text:01DD3A05                 mov     ebx, [esi+1Ch]
+  .text:01DD3A08                 lea     eax, [esi+18h]
+  .text:01DD3A0B                 mov     [esp+8Ch+var_7C], esi
+  .text:01DD3A0F                 mov     [esp+8Ch+var_74], eax
+  .text:01DD3A13                 cmp     ebx, eax
+  .text:01DD3A15                 jz      loc_1DD3C82
+  .text:01DD3A1B                 jmp     short loc_1DD3A20
+  .text:01DD3A20                 mov     eax, [ebx+4]
+  .text:01DD3A23                 add     ebx, 0FFFFFFF8h
+  .text:01DD3A26                 mov     [esp+8Ch+var_78], eax
+  .text:01DD3A2A                 mov     ecx, [ebx+2C0h]
+  .text:01DD3A30                 test    ecx, ecx
+  .text:01DD3A32                 jz      short loc_1DD3A69
+  .text:01DD3A34                 mov     eax, [ebp+7Ch]
+  .text:01DD3A37                 test    eax, eax
+  .text:01DD3A39                 jz      short loc_1DD3A69
+  .text:01DD3A3B                 mov     eax, [eax+2C0h]
+  .text:01DD3A41                 test    eax, eax
+  .text:01DD3A43                 jz      short loc_1DD3A69
+  .text:01DD3A45                 cmp     dword_855B6BC, 0
+  .text:01DD3A4C                 jnz     short loc_1DD3A58
+  .text:01DD3A4E                 test    ecx, eax
+  .text:01DD3A50                 jz      loc_1DD3C6E
+  .text:01DD3A56                 jmp     short loc_1DD3A69
+  .text:01DD3A58                 cmp     dword_855B6BC, 1
+  .text:01DD3A5F                 jnz     short loc_1DD3A69
+  .text:01DD3A61                 test    ecx, eax
+  .text:01DD3A63                 jnz     loc_1DD3C6E
+  .text:01DD3A69                 mov     eax, [ebx+18Ch]
+  .text:01DD3A6F                 test    eax, eax
+  .text:01DD3A71                 jz      loc_1DD3C6E
+  .text:01DD3A77                 cmp     ebx, [ebp+7Ch]
+  .text:01DD3A7A                 jz      loc_1DD3C6E
+  .text:01DD3A80                 cmp     eax, 1
+  .text:01DD3A83                 jnz     short loc_1DD3A92
+  .text:01DD3A85                 push    offset aTriggerInClipp; "Trigger in clipping list"
+  .text:01DD3A8A                 call    Sys_Error
+  .text:01DD3A8F                 add     esp, 4
+  .text:01DD3A92                 cmp     dword ptr [ebx+18Ch], 4
+  .text:01DD3A99                 jnz     short loc_1DD3AB6
+  .text:01DD3A9B                 test    dword ptr [ebx+224h], 800000h
+  .text:01DD3AA5                 jz      short loc_1DD3ACA
+  .text:01DD3AA7                 cmp     dword ptr [ebp+80h], 0
+  .text:01DD3AAE                 jz      loc_1DD3C6E
+  .text:01DD3AB4                 jmp     short loc_1DD3ACA
+  .text:01DD3AB6                 cmp     word ptr [ebp+78h], 1
+  .text:01DD3ABB                 jnz     short loc_1DD3ACA
+  .text:01DD3ABD                 cmp     dword ptr [ebx+188h], 0Dh
+  .text:01DD3AC4                 jnz     loc_1DD3C6E
+  .text:01DD3ACA                 cmp     word ptr [ebp+7Ah], 0
+  .text:01DD3ACF                 jz      short loc_1DD3AEA
+  .text:01DD3AD1                 cmp     dword ptr [ebx+1C8h], 0
+  .text:01DD3AD8                 jz      short loc_1DD3AEA
+  .text:01DD3ADA                 test    dword ptr [ebx+224h], offset unk_2000000
+  .text:01DD3AE4                 jz      loc_1DD3C6E
+  .text:01DD3AEA                 fld     dword ptr [ebx+150h]
+  .text:01DD3AF0                 fcomp   dword ptr [ebp+0]
+  .text:01DD3AF3                 fnstsw  ax
+  .text:01DD3AF5                 test    ah, 5
+  .text:01DD3AF8                 jnp     loc_1DD3C6E
+  .text:01DD3AFE                 fld     dword ptr [ebx+154h]
+  .text:01DD3B04                 fcomp   dword ptr [ebp+4]
+  .text:01DD3B07                 fnstsw  ax
+  .text:01DD3B09                 test    ah, 5
+  .text:01DD3B0C                 jnp     loc_1DD3C6E
+  .text:01DD3B12                 fld     dword ptr [ebx+158h]
+  .text:01DD3B18                 fcomp   dword ptr [ebp+8]
+  .text:01DD3B1B                 fnstsw  ax
+  .text:01DD3B1D                 test    ah, 5
+  .text:01DD3B20                 jnp     loc_1DD3C6E
+  .text:01DD3B26                 fld     dword ptr [ebx+144h]
+  .text:01DD3B2C                 fcomp   dword ptr [ebp+0Ch]
+  .text:01DD3B2F                 fnstsw  ax
+  .text:01DD3B31                 test    ah, 41h
+  .text:01DD3B34                 jz      loc_1DD3C6E
+  .text:01DD3B3A                 fld     dword ptr [ebx+148h]
+  .text:01DD3B40                 fcomp   dword ptr [ebp+10h]
+  .text:01DD3B43                 fnstsw  ax
+  .text:01DD3B45                 test    ah, 41h
+  .text:01DD3B48                 jz      loc_1DD3C6E
+  .text:01DD3B4E                 fld     dword ptr [ebx+14Ch]
+  .text:01DD3B54                 fcomp   dword ptr [ebp+14h]
+  .text:01DD3B57                 fnstsw  ax
+  .text:01DD3B59                 test    ah, 41h
+  .text:01DD3B5C                 jz      loc_1DD3C6E
+  .text:01DD3B62                 cmp     dword ptr [ebx+18Ch], 3
+  .text:01DD3B69                 jz      short loc_1DD3B82
+  .text:01DD3B6B                 push    dword ptr [ebp+3Ch]
+  .text:01DD3B6E                 push    dword ptr [ebp+38h]
+  .text:01DD3B71                 push    ebx
+  .text:01DD3B72                 call    sub_1D8E2B0
+  .text:01DD3B77                 add     esp, 0Ch
+  .text:01DD3B7A                 test    eax, eax
+  .text:01DD3B7C                 jz      loc_1DD3C6E
+  .text:01DD3B82                 mov     ecx, [ebp+7Ch]
+  .text:01DD3B85                 test    ecx, ecx
+  .text:01DD3B87                 jz      short loc_1DD3BB3
+  .text:01DD3B89                 fld     dword ptr [ecx+174h]
+  .text:01DD3B8F                 fldz
+  .text:01DD3B91                 fucom   st(1)
+  .text:01DD3B93                 fnstsw  ax
+  .text:01DD3B95                 fstp    st(1)
+  .text:01DD3B97                 test    ah, 44h
+  .text:01DD3B9A                 jnp     short loc_1DD3BB1
+  .text:01DD3B9C                 fld     dword ptr [ebx+174h]
+  .text:01DD3BA2                 fucompp
+  .text:01DD3BA4                 fnstsw  ax
+  .text:01DD3BA6                 test    ah, 44h
+  .text:01DD3BA9                 jnp     loc_1DD3C6E
+  .text:01DD3BAF                 jmp     short loc_1DD3BB3
+  .text:01DD3BB1                 fstp    st
+  .text:01DD3BB3                 cmp     dword ptr [ebp+40h], 0
+  .text:01DD3BB7                 jnz     loc_1DD3CBB
+  .text:01DD3BBD                 test    ecx, ecx
+  .text:01DD3BBF                 jz      short loc_1DD3BF1
+  .text:01DD3BC1                 cmp     [ebx+218h], ecx
+  .text:01DD3BC7                 jz      loc_1DD3C6E
+  .text:01DD3BCD                 cmp     [ecx+218h], ebx
+  .text:01DD3BD3                 jz      loc_1DD3C6E
+  .text:01DD3BD9                 mov     eax, dword_95D2310
+  .text:01DD3BDE                 test    eax, eax
+  .text:01DD3BE0                 jz      short loc_1DD3BF1
+  .text:01DD3BE2                 push    ecx
+  .text:01DD3BE3                 push    ebx
+  .text:01DD3BE4                 call    eax ; dword_95D2310
+  .text:01DD3BE6                 add     esp, 8
+  .text:01DD3BE9                 test    eax, eax
+  .text:01DD3BEB                 jz      loc_1DD3C6E
+  .text:01DD3BF1                 test    byte ptr [ebx+224h], 20h
+  .text:01DD3BF8                 mov     eax, [ebp+7Ch]
+  .text:01DD3BFB                 mov     ecx, [ebp+3Ch]
+  .text:01DD3BFE                 mov     edx, [ebp+38h]
+  .text:01DD3C01                 push    eax
+  .text:01DD3C02                 lea     eax, [esp+90h+var_38]
+  .text:01DD3C06                 push    eax
+  .text:01DD3C07                 push    ecx
+  .text:01DD3C08                 jz      short loc_1DD3C14
+  .text:01DD3C0A                 lea     eax, [ebp+2Ch]
+  .text:01DD3C0D                 push    eax
+  .text:01DD3C0E                 lea     eax, [ebp+20h]
+  .text:01DD3C11                 push    eax
+  .text:01DD3C12                 jmp     short loc_1DD3C1A
+  .text:01DD3C14                 push    dword ptr [ebp+1Ch]
+  .text:01DD3C17                 push    dword ptr [ebp+18h]
+  .text:01DD3C1A                 push    edx
+  .text:01DD3C1B                 push    ebx
+  .text:01DD3C1C                 call    SV_SingleClipMoveToEntity
+  .text:01DD3C21                 mov     ecx, 0Eh
+  .text:01DD3C26                 lea     edi, [esp+0A8h+var_70]
+  .text:01DD3C2A                 lea     esi, [esp+0A8h+var_38]
+  .text:01DD3C2E                 add     esp, 1Ch
+  .text:01DD3C31                 rep movsd
+  .text:01DD3C33                 cmp     [esp+8Ch+var_70], 0
+  .text:01DD3C38                 jnz     short loc_1DD3C4F
+  .text:01DD3C3A                 cmp     [esp+8Ch+var_6C], 0
+  .text:01DD3C3F                 jnz     short loc_1DD3C4F
+  .text:01DD3C41                 fld     dword ptr [ebp+50h]
+  .text:01DD3C44                 fcomp   [esp+8Ch+var_60]
+  .text:01DD3C48                 fnstsw  ax
+  .text:01DD3C4A                 test    ah, 41h
+  .text:01DD3C4D                 jnz     short loc_1DD3C6E
+  .text:01DD3C4F                 cmp     dword ptr [ebp+44h], 0
+  .text:01DD3C53                 lea     edi, [ebp+40h]
+  .text:01DD3C56                 mov     ecx, 0Eh
+  .text:01DD3C5B                 mov     [esp+8Ch+var_40], ebx
+  .text:01DD3C5F                 lea     esi, [esp+8Ch+var_70]
+  .text:01DD3C63                 rep movsd
+  .text:01DD3C65                 jz      short loc_1DD3C6E
+  .text:01DD3C67                 mov     dword ptr [ebp+44h], 1
+  .text:01DD3C6E                 mov     eax, [esp+8Ch+var_78]
+  .text:01DD3C72                 mov     ebx, eax
+  .text:01DD3C74                 cmp     eax, [esp+8Ch+var_74]
+  .text:01DD3C78                 jnz     loc_1DD3A20
+  .text:01DD3C7E                 mov     esi, [esp+8Ch+var_7C]
+  .text:01DD3C82                 mov     eax, [esi]
+  .text:01DD3C84                 cmp     eax, 0FFFFFFFFh
+  .text:01DD3C87                 jz      short loc_1DD3CBB
+  .text:01DD3C89                 fld     dword ptr [esi+4]
+  .text:01DD3C8C                 fcomp   dword ptr [ebp+eax*4+0Ch]
+  .text:01DD3C90                 fnstsw  ax
+  .text:01DD3C92                 test    ah, 5
+  .text:01DD3C95                 jp      short loc_1DD3CA3
+  .text:01DD3C97                 push    ebp
+  .text:01DD3C98                 push    dword ptr [esi+8]
+  .text:01DD3C9B                 call    SV_ClipToLinks
+  .text:01DD3CA0                 add     esp, 8
+  .text:01DD3CA3                 mov     eax, [esi]
+  .text:01DD3CA5                 fld     dword ptr [esi+4]
+  .text:01DD3CA8                 fcomp   dword ptr [ebp+eax*4+0]
+  .text:01DD3CAC                 fnstsw  ax
+  .text:01DD3CAE                 test    ah, 41h
+  .text:01DD3CB1                 jnz     short loc_1DD3CBB
+  .text:01DD3CB3                 mov     esi, [esi+0Ch]
+  .text:01DD3CB6                 jmp     loc_1DD3A05
+  .text:01DD3CBB                 pop     edi
+  .text:01DD3CBC                 pop     esi
+  .text:01DD3CBD                 pop     ebp
+  .text:01DD3CBE                 pop     ebx
+  .text:01DD3CBF                 add     esp, 7Ch
+  .text:01DD3CC2                 retn
+procedure: |-
+  void __cdecl SV_ClipToLinks(gsv350_areanode_t *node, gsv350_moveclip_t *clip)
+  {
+    struct gsv350_link_s *next; // ebx
+    struct gsv350_link_s *v4; // eax
+    edict_t *v5; // ebx
+    int groupinfo; // ecx
+    edict_t *passedict; // eax
+    int v8; // eax
+    int solid; // eax
+    edict_t *v10; // ecx
+    const float *start; // edx
+    bool v12; // zf
+    const float *end; // [esp-Ch] [ebp-98h]
+    edict_t *v14; // [esp-4h] [ebp-90h]
+    gsv350_areanode_t *v15; // [esp+14h] [ebp-78h]
+    _DWORD v16[14]; // [esp+1Ch] [ebp-70h] BYREF
+    gsv350_trace_t v17; // [esp+54h] [ebp-38h] BYREF
+
+    while ( 1 )
+    {
+      next = node->solid_edicts.next;
+      if ( next != &node->solid_edicts )
+      {
+        do
+        {
+          v4 = next->next;
+          v5 = (edict_t *)&next[-1];
+          v15 = (gsv350_areanode_t *)v4;
+          groupinfo = v5->groupinfo;
+          if ( groupinfo )
+          {
+            passedict = clip->passedict;
+            if ( passedict )
+            {
+              v8 = passedict->groupinfo;
+              if ( v8 )
+              {
+                if ( dword_855B6BC )
+                {
+                  if ( dword_855B6BC == 1 && (v8 & groupinfo) != 0 )
+                    goto LABEL_48;
+                }
+                else if ( (v8 & groupinfo) == 0 )
+                {
+                  goto LABEL_48;
+                }
+              }
+            }
+          }
+          solid = v5->solid;
+          if ( solid && v5 != clip->passedict )
+          {
+            if ( solid == 1 )
+              Sys_Error("Trigger in clipping list");
+            if ( v5->solid == 4 )
+            {
+              if ( (v5->flags & 0x800000) == 0 || clip->monsterClipBrush )
+                goto LABEL_20;
+            }
+            else if ( clip->type != 1 || v5->movetype == 13 )
+            {
+  LABEL_20:
+              if ( (!clip->ignoretrans || !v5->rendermode || ((unsigned int)&unk_2000000 & v5->flags) != 0)
+                && v5->absmax[0] >= (double)clip->boxmins[0]
+                && v5->absmax[1] >= (double)clip->boxmins[1]
+                && v5->absmax[2] >= (double)clip->boxmins[2]
+                && v5->absmin[0] <= (double)clip->boxmaxs[0]
+                && v5->absmin[1] <= (double)clip->boxmaxs[1]
+                && v5->absmin[2] <= (double)clip->boxmaxs[2]
+                && (v5->solid == 3 || sub_1D8E2B0((int)v5, (float *)clip->start, (float *)clip->end)) )
+              {
+                v10 = clip->passedict;
+                if ( !v10 || 0.0 == v10->size[0] || v5->size[0] != 0.0 )
+                {
+                  if ( clip->trace.allsolid )
+                    return;
+                  if ( !v10
+                    || v5->owner != v10 && v10->owner != v5 && (!dword_95D2310 || dword_95D2310(v5, clip->passedict)) )
+                  {
+                    start = clip->start;
+                    v14 = clip->passedict;
+                    end = clip->end;
+                    if ( (v5->flags & 0x20) != 0 )
+                      SV_SingleClipMoveToEntity(v5, start, clip->mins2, clip->maxs2, end, &v17, v14);
+                    else
+                      SV_SingleClipMoveToEntity(v5, start, clip->mins, clip->maxs, end, &v17, v14);
+                    qmemcpy(v16, &v17, sizeof(v16));
+                    if ( v16[0] || v16[1] || clip->trace.fraction > (double)*(float *)&v16[4] )
+                    {
+                      v12 = clip->trace.startsolid == 0;
+                      v16[12] = v5;
+                      qmemcpy(&clip->trace, v16, sizeof(clip->trace));
+                      if ( !v12 )
+                        clip->trace.startsolid = 1;
+                    }
+                  }
+                }
+              }
+            }
+          }
+  LABEL_48:
+          next = (struct gsv350_link_s *)v15;
+        }
+        while ( v15 != (gsv350_areanode_t *)&node->solid_edicts );
+      }
+      if ( node->axis == -1 )
+        break;
+      if ( node->dist < (double)clip->boxmaxs[node->axis] )
+        SV_ClipToLinks(node->children[0], clip);
+      if ( node->dist <= (double)clip->boxmins[node->axis] )
+        break;
+      node = node->children[1];
+    }
+  }
