@@ -3936,6 +3936,12 @@ modules:
           - CASPersistence_KeepIfPrevious.linux.yaml
         expected_output_linux:
           - CASBaseManager_GetTypeInfoByName.linux.yaml
+      - name: find-CASPersistence_KeepIfPrevious-manager-decompiles
+        expected_input:
+          - CASPersistence_KeepIfPrevious.{platform}.yaml
+        expected_output:
+          - g_pServerManager.{platform}.yaml
+          - CASServerManager_scriptEngine.{platform}.yaml
       - name: find-CASDocumentation-registration-callers
         expected_output:
           - RegisterSCScriptCustomEntityDependencies.{platform}.yaml
@@ -3990,6 +3996,11 @@ modules:
           - CASBaseManager_OnMapEnd.{platform}.yaml
         expected_output:
           - CASHook_Call.{platform}.yaml
+      - name: find-CASBaseManager_OnMapEnd-structmembers
+        expected_input:
+          - CASBaseManager_OnMapEnd.{platform}.yaml
+        expected_output:
+          - CASServerManager_curModule.{platform}.yaml
       - name: find-AS-reference-counted-callable-bodies
         expected_output:
           - CASRefCountedBaseClass_InternalRelease.{platform}.yaml
@@ -4130,6 +4141,18 @@ modules:
         category: func
       - name: CASHook_Call
         category: func
+      - name: g_pServerManager
+        category: gv
+      - name: CASServerManager
+        category: struct
+      - name: CASServerManager_scriptEngine
+        category: structmember
+        struct: CASServerManager
+        member: scriptEngine
+      - name: CASServerManager_curModule
+        category: structmember
+        struct: CASServerManager
+        member: curModule
       - name: CASRefCountedBaseClass_InternalRelease
         category: func
       - name: CScriptAny_Release

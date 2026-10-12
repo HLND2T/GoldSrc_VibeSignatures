@@ -24,7 +24,7 @@ disasm_code: |-
   .text:001167A1                 mov     [esp+5Ch+var_5C], ebp; void *
   .text:001167A4                 call    __ZdlPv; operator delete(void *)
   .text:001167A9                 mov     dword ptr [esi+14h], 0
-  .text:001167B0                 mov     ecx, [esi+18h]
+  .text:001167B0                 mov     ecx, [esi+18h]; (structmember, struct=CASServerManager, member=curModule); inherited CASBaseManager activeModule field
   .text:001167B3                 test    ecx, ecx
   .text:001167B5                 jz      short loc_1167E8
   .text:001167B7                 mov     ebp, ds:(CASLog_pInstance - 0B14000h)[edi]
@@ -36,7 +36,7 @@ disasm_code: |-
   .text:001167D7                 mov     [esp+5Ch+var_5C], ebp
   .text:001167DA                 mov     ebx, edi
   .text:001167DC                 call    CASLog__Error
-  .text:001167E1                 mov     dword ptr [esi+18h], 0
+  .text:001167E1                 mov     dword ptr [esi+18h], 0; (structmember, struct=CASServerManager, member=curModule); inherited CASBaseManager activeModule field
   .text:001167E8                 mov     ebp, [esi+1Ch]
   .text:001167EB                 cmp     ebp, [esi+20h]
   .text:001167EE                 jz      short loc_116803
@@ -143,7 +143,7 @@ procedure: |-
       operator delete(moduleHandle);
     }
     self->moduleHandle = nullptr;
-    if ( self->activeModule )
+    if ( self->activeModule ) // (structmember, struct=CASServerManager, member=curModule); inherited activeModule is the consumer curModule field.
     {
       v3 = CASLog_pInstance;
       if ( !CASLog_pInstance )
@@ -153,7 +153,7 @@ procedure: |-
         CASLog_pInstance = v3;
       }
       CASLog::Error(v3, 0, "Active module was not set to null!\n");
-      self->activeModule = nullptr;
+      self->activeModule = nullptr; // (structmember, struct=CASServerManager, member=curModule); inherited activeModule is the consumer curModule field.
     }
     for ( i = self->listenersBegin; self->listenersEnd != i; ++i )
       (*(void (__cdecl **)(void *))(*(_DWORD *)*i + 12))(*i);

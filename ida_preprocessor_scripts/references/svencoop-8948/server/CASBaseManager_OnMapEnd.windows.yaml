@@ -34,7 +34,7 @@ disasm_code: |-
   .text:100A3AA1                 push    esi; Block
   .text:100A3AA2                 call    sub_1034E488
   .text:100A3AA7                 add     esp, 8
-  .text:100A3AAA                 cmp     dword ptr [edi+18h], 0
+  .text:100A3AAA                 cmp     dword ptr [edi+18h], 0; (structmember, struct=CASServerManager, member=curModule); inherited CASBaseManager activeModule field
   .text:100A3AAE                 mov     dword ptr [edi+14h], 0
   .text:100A3AB5                 jz      short loc_100A3B06
   .text:100A3AB7                 mov     eax, CASLog_pInstance
@@ -60,7 +60,7 @@ disasm_code: |-
   .text:100A3AF6                 push    eax
   .text:100A3AF7                 call    CASLog__Error
   .text:100A3AFC                 add     esp, 0Ch
-  .text:100A3AFF                 mov     dword ptr [edi+18h], 0
+  .text:100A3AFF                 mov     dword ptr [edi+18h], 0; (structmember, struct=CASServerManager, member=curModule); inherited CASBaseManager activeModule field
   .text:100A3B06                 mov     esi, [edi+1Ch]
   .text:100A3B09                 cmp     esi, [edi+20h]
   .text:100A3B0C                 jz      short loc_100A3B1F
@@ -208,7 +208,7 @@ procedure: |-
       CASModuleHandle_dtor();
       sub_1034E488(moduleHandle);
     }
-    v3 = self->activeModule == nullptr;
+    v3 = self->activeModule == nullptr; // (structmember, struct=CASServerManager, member=curModule); inherited activeModule is the consumer curModule field.
     self->moduleHandle = nullptr;
     if ( !v3 )
     {
@@ -223,7 +223,7 @@ procedure: |-
         CASLog_pInstance = v4;
       }
       CASLog::Error(v4, 0, "Active module was not set to null!\n");
-      self->activeModule = nullptr;
+      self->activeModule = nullptr; // (structmember, struct=CASServerManager, member=curModule); inherited activeModule is the consumer curModule field.
     }
     for ( i = self->listenersBegin; i != self->listenersEnd; ++i )
       (*(void (__thiscall **)(void *))(*(_DWORD *)*i + 8))(*i);

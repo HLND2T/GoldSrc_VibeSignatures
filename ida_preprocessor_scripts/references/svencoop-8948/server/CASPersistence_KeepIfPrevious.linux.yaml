@@ -18,13 +18,13 @@ disasm_code: |-
   .text:001D8B80                 mov     ebx, esi
   .text:001D8B82                 call    CScriptArray__GetSize_plt
   .text:001D8B87                 mov     [ebp+var_40], eax
-  .text:001D8B8A                 mov     edx, ds:(_ZZN16CASServerManager11GetInstanceEvE9pInstance_ptr - 8B0000h)[esi]
+  .text:001D8B8A                 mov     edx, ds:(_ZZN16CASServerManager11GetInstanceEvE9pInstance_ptr - 8B0000h)[esi]; g_pServerManager (gv): address materialized through the GOT slot; output the pInstance storage, not this slot
   .text:001D8B90                 mov     [ebp+var_3C], edx
   .text:001D8B93                 mov     edi, [edx]
   .text:001D8B95                 add     esp, 10h
   .text:001D8B98                 test    edi, edi
   .text:001D8B9A                 jz      loc_1D8E3A
-  .text:001D8BA0                 mov     ecx, [edi+0Ch]
+  .text:001D8BA0                 mov     ecx, [edi+0Ch]; (structmember, struct=CASServerManager, member=scriptEngine)
   .text:001D8BA3                 mov     [ebp+var_3C], ecx
   .text:001D8BA6                 lea     eax, [ebp+var_30]
   .text:001D8BA9                 lea     edx, [ebp+var_28]
@@ -378,14 +378,14 @@ procedure: |
       goto LABEL_10;
     }
     arraySize = CScriptArray__GetSize_plt(array);
-    manager = CASServerManager::GetInstance(void)::pInstance;
-    if ( !CASServerManager::GetInstance(void)::pInstance )
+    manager = CASServerManager::GetInstance(void)::pInstance; // g_pServerManager (gv): CASServerManager::GetInstance()::pInstance, the singleton pointer storage.
+    if ( !CASServerManager::GetInstance(void)::pInstance ) // g_pServerManager (gv): CASServerManager::GetInstance()::pInstance, the singleton pointer storage.
     {
       manager = (CASManagerTypeQueryView *)operator new(0x54u);
       CASServerManager::CASServerManager(manager);
-      CASServerManager::GetInstance(void)::pInstance = manager;
+      CASServerManager::GetInstance(void)::pInstance = manager; // g_pServerManager (gv): CASServerManager::GetInstance()::pInstance, the singleton pointer storage.
     }
-    scriptEngine = manager->scriptEngine;
+    scriptEngine = manager->scriptEngine; // (structmember, struct=CASServerManager, member=scriptEngine); CASManagerTypeQueryView is the verified manager prefix.
     typeName.data = typeName.storage.local;
     strcpy(typeName.storage.local, "string");
     typeName.length = 6;
