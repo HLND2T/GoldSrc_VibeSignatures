@@ -1,0 +1,12 @@
+func_name: "DestructASString"
+func_va: "0x100b9a30"
+disasm_code: |-
+  .text:100B9A30                 ; this
+  .text:100B9A30                 mov     ecx, [esp+string]; this
+  .text:100B9A34                 ; (call, CString_dtor) native non-deleting destructor, ECX=this; tail jump, not ClearMemory.
+  .text:100B9A34                 jmp     CString_dtor; (call, CString_dtor) native non-deleting destructor, ECX=this; tail jump, not ClearMemory.
+procedure: |-
+  void __cdecl DestructASString(CString *string)
+  {
+    CString_dtor(string);                        // (call, CString_dtor) native non-deleting destructor, ECX=this; tail jump, not ClearMemory.
+  }

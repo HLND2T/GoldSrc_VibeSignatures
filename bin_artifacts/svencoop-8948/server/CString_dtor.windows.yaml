@@ -1,0 +1,5 @@
+func_name: CString::~CString()
+func_va: '0x100d85a0'
+func_rva: '0xd85a0'
+func_size: '0x23'
+func_sig: 8B 51 ?? 3B D1 74 ?? 8B 49 ?? 8B C1 C1 E8 1F 84 C0 75 ?? F7 C1 FF FF FF 7F 74 ?? 52 E8 ?? ?? ?? ?? 59 C3

@@ -1,0 +1,1414 @@
+func_name: "RegisterSCScriptASString"
+func_va: "0x100b8d60"
+disasm_code: |-
+  .text:100B8D60                 sub     esp, 2Ch
+  .text:100B8D63                 mov     eax, ___security_cookie
+  .text:100B8D68                 xor     eax, esp
+  .text:100B8D6A                 mov     [esp+2Ch+var_4], eax
+  .text:100B8D6E                 push    esi
+  .text:100B8D6F                 mov     esi, [esp+30h+engine]
+  .text:100B8D73                 push    edi
+  .text:100B8D74                 mov     edi, [esp+34h+documentation]
+  .text:100B8D78                 push    edi
+  .text:100B8D79                 call    sub_100BEB50
+  .text:100B8D7E                 add     esp, 4
+  .text:100B8D81                 mov     ecx, edi
+  .text:100B8D83                 push    offset aString_2; "String"
+  .text:100B8D88                 call    sub_100AB830
+  .text:100B8D8D                 push    0
+  .text:100B8D8F                 push    offset aComparetype; "CompareType"
+  .text:100B8D94                 push    offset aCompareType; "Compare type."
+  .text:100B8D99                 mov     ecx, edi
+  .text:100B8D9B                 call    sub_100ABCA0
+  .text:100B8DA0                 push    0
+  .text:100B8DA2                 push    offset aCasesensitive; "CaseSensitive"
+  .text:100B8DA7                 push    offset aComparetype; "CompareType"
+  .text:100B8DAC                 push    offset Src
+  .text:100B8DB1                 mov     ecx, edi
+  .text:100B8DB3                 call    sub_100ABD00
+  .text:100B8DB8                 push    1
+  .text:100B8DBA                 push    offset aCaseinsensitiv; "CaseInsensitive"
+  .text:100B8DBF                 push    offset aComparetype; "CompareType"
+  .text:100B8DC4                 push    offset Src
+  .text:100B8DC9                 mov     ecx, edi
+  .text:100B8DCB                 call    sub_100ABD00
+  .text:100B8DD0                 push    offset unk_103DE794
+  .text:100B8DD5                 push    offset aConstComparety; "const CompareType DEFAULT_COMPARE"
+  .text:100B8DDA                 push    offset aDefaultCompari; "Default comparison type."
+  .text:100B8DDF                 mov     ecx, edi
+  .text:100B8DE1                 call    sub_100AB8B0
+  .text:100B8DE6                 push    offset unk_104DF248
+  .text:100B8DEB                 push    offset aConstStringEmp; "const string EMPTY_STRING"
+  .text:100B8DF0                 push    offset aEmptyStringUse; "Empty string. Useful when a reference t"...
+  .text:100B8DF5                 mov     ecx, edi
+  .text:100B8DF7                 call    sub_100AB8B0
+  .text:100B8DFC                 push    offset unk_104DF26C
+  .text:100B8E01                 push    offset aConstStringWhi; "const string WHITESPACE_CHARACTERS"
+  .text:100B8E06                 push    offset aAStringThatCon; "A string that contains one instance of "...
+  .text:100B8E0B                 mov     ecx, edi
+  .text:100B8E0D                 call    sub_100AB8B0
+  .text:100B8E12                 push    offset dword_103EAFBC
+  .text:100B8E17                 push    offset aConstSizeTInva; "const size_t INVALID_INDEX"
+  .text:100B8E1C                 push    offset aSentinelValueU; "Sentinel value used by string methods."
+  .text:100B8E21                 mov     ecx, edi
+  .text:100B8E23                 call    sub_100AB8B0
+  .text:100B8E28                 push    offset dword_103EAFC0
+  .text:100B8E2D                 push    offset aConstSizeTNoMo; "const size_t NO_MORE_TOKENS"
+  .text:100B8E32                 push    offset aSentinelValueU_0; "Sentinel value used by string tokenizat"...
+  .text:100B8E37                 mov     ecx, edi
+  .text:100B8E39                 call    sub_100AB8B0
+  .text:100B8E3E                 push    offset Src
+  .text:100B8E43                 mov     ecx, edi
+  .text:100B8E45                 call    sub_100AB830
+  .text:100B8E4A                 mov     eax, [esi]
+  .text:100B8E4C                 mov     ecx, esi
+  .text:100B8E4E                 push    offset off_104DF0DC
+  .text:100B8E53                 push    offset aString; "string"
+  .text:100B8E58                 call    dword ptr [eax+6Ch]
+  .text:100B8E5B                 ; int
+  .text:100B8E5B                 push    0; int
+  .text:100B8E5D                 ; int
+  .text:100B8E5D                 push    4; int
+  .text:100B8E5F                 lea     eax, [esp+3Ch+result]
+  .text:100B8E63                 ; function
+  .text:100B8E63                 push    offset sub_100B9990; function
+  .text:100B8E68                 ; result
+  .text:100B8E68                 push    eax; result
+  .text:100B8E69                 call    asFunctionPtr_Global; Verified x86 asSFuncPtr conversion: flag 2 at +32; member/global/generic pointer materialization.
+  .text:100B8E6E                 add     esp, 8
+  .text:100B8E71                 mov     ecx, edi
+  .text:100B8E73                 ; int
+  .text:100B8E73                 push    eax; int
+  .text:100B8E74                 push    offset aVoidString; "void string()"
+  .text:100B8E79                 ; int
+  .text:100B8E79                 push    0; int
+  .text:100B8E7B                 push    offset aString; "string"
+  .text:100B8E80                 push    offset aConstructor_0; "Constructor"
+  .text:100B8E85                 call    sub_100ABB60
+  .text:100B8E8A                 ; int
+  .text:100B8E8A                 push    0; int
+  .text:100B8E8C                 ; int
+  .text:100B8E8C                 push    4; int
+  .text:100B8E8E                 lea     eax, [esp+3Ch+result]
+  .text:100B8E92                 ; function
+  .text:100B8E92                 push    offset sub_100B99A0; function
+  .text:100B8E97                 ; result
+  .text:100B8E97                 push    eax; result
+  .text:100B8E98                 call    asFunctionPtr_Global; Verified x86 asSFuncPtr conversion: flag 2 at +32; member/global/generic pointer materialization.
+  .text:100B8E9D                 add     esp, 8
+  .text:100B8EA0                 ; int
+  .text:100B8EA0                 push    eax; int
+  .text:100B8EA1                 push    offset aVoidStringCons; "void string(const string& in szString)"
+  .text:100B8EA6                 ; int
+  .text:100B8EA6                 push    0; int
+  .text:100B8EA8                 push    offset aString; "string"
+  .text:100B8EAD                 push    offset aCopyConstructo; "Copy constructor"
+  .text:100B8EB2                 mov     ecx, edi
+  .text:100B8EB4                 call    sub_100ABB60
+  .text:100B8EB9                 ; int
+  .text:100B8EB9                 push    0; int
+  .text:100B8EBB                 ; int
+  .text:100B8EBB                 push    4; int
+  .text:100B8EBD                 lea     eax, [esp+3Ch+result]
+  .text:100B8EC1                 ; function
+  .text:100B8EC1                 push    offset sub_100B99B0; function
+  .text:100B8EC6                 ; result
+  .text:100B8EC6                 push    eax; result
+  .text:100B8EC7                 call    asFunctionPtr_Global; Verified x86 asSFuncPtr conversion: flag 2 at +32; member/global/generic pointer materialization.
+  .text:100B8ECC                 add     esp, 8
+  .text:100B8ECF                 mov     ecx, edi
+  .text:100B8ED1                 ; int
+  .text:100B8ED1                 push    eax; int
+  .text:100B8ED2                 push    offset aVoidStringDoub; "void string(double flValue)"
+  .text:100B8ED7                 ; int
+  .text:100B8ED7                 push    0; int
+  .text:100B8ED9                 push    offset aString; "string"
+  .text:100B8EDE                 push    offset aConstructAStri; "Construct a string from a double."
+  .text:100B8EE3                 call    sub_100ABB60
+  .text:100B8EE8                 ; int
+  .text:100B8EE8                 push    0; int
+  .text:100B8EEA                 ; int
+  .text:100B8EEA                 push    4; int
+  .text:100B8EEC                 lea     eax, [esp+3Ch+result]
+  .text:100B8EF0                 ; function
+  .text:100B8EF0                 push    offset sub_100B99D0; function
+  .text:100B8EF5                 ; result
+  .text:100B8EF5                 push    eax; result
+  .text:100B8EF6                 call    asFunctionPtr_Global; Verified x86 asSFuncPtr conversion: flag 2 at +32; member/global/generic pointer materialization.
+  .text:100B8EFB                 add     esp, 8
+  .text:100B8EFE                 mov     ecx, edi
+  .text:100B8F00                 ; int
+  .text:100B8F00                 push    eax; int
+  .text:100B8F01                 push    offset aVoidStringInt6; "void string(int64 iValue)"
+  .text:100B8F06                 ; int
+  .text:100B8F06                 push    0; int
+  .text:100B8F08                 push    offset aString; "string"
+  .text:100B8F0D                 push    offset aConstructAStri_0; "Construct a string from a 64 bit intege"...
+  .text:100B8F12                 call    sub_100ABB60
+  .text:100B8F17                 ; int
+  .text:100B8F17                 push    0; int
+  .text:100B8F19                 ; int
+  .text:100B8F19                 push    4; int
+  .text:100B8F1B                 lea     eax, [esp+3Ch+result]
+  .text:100B8F1F                 ; function
+  .text:100B8F1F                 push    offset sub_100B99F0; function
+  .text:100B8F24                 ; result
+  .text:100B8F24                 push    eax; result
+  .text:100B8F25                 call    asFunctionPtr_Global; Verified x86 asSFuncPtr conversion: flag 2 at +32; member/global/generic pointer materialization.
+  .text:100B8F2A                 add     esp, 8
+  .text:100B8F2D                 mov     ecx, edi
+  .text:100B8F2F                 ; int
+  .text:100B8F2F                 push    eax; int
+  .text:100B8F30                 push    offset aVoidStringUint; "void string(uint64 uiValue)"
+  .text:100B8F35                 ; int
+  .text:100B8F35                 push    0; int
+  .text:100B8F37                 push    offset aString; "string"
+  .text:100B8F3C                 push    offset aConstructAStri_1; "Construct a string from a 64 bit unsign"...
+  .text:100B8F41                 call    sub_100ABB60
+  .text:100B8F46                 ; int
+  .text:100B8F46                 push    0; int
+  .text:100B8F48                 ; int
+  .text:100B8F48                 push    4; int
+  .text:100B8F4A                 lea     eax, [esp+3Ch+result]
+  .text:100B8F4E                 ; function
+  .text:100B8F4E                 push    offset sub_100B9A10; function
+  .text:100B8F53                 ; result
+  .text:100B8F53                 push    eax; result
+  .text:100B8F54                 call    asFunctionPtr_Global; Verified x86 asSFuncPtr conversion: flag 2 at +32; member/global/generic pointer materialization.
+  .text:100B8F59                 add     esp, 8
+  .text:100B8F5C                 mov     ecx, edi
+  .text:100B8F5E                 ; int
+  .text:100B8F5E                 push    eax; int
+  .text:100B8F5F                 push    offset aVoidStringBool; "void string(bool bValue)"
+  .text:100B8F64                 ; int
+  .text:100B8F64                 push    0; int
+  .text:100B8F66                 push    offset aString; "string"
+  .text:100B8F6B                 push    offset aConstructAStri_2; "Construct a string from a boolean."
+  .text:100B8F70                 call    sub_100ABB60
+  .text:100B8F75                 ; int
+  .text:100B8F75                 push    0; int
+  .text:100B8F77                 ; int
+  .text:100B8F77                 push    4; int
+  .text:100B8F79                 lea     eax, [esp+3Ch+result]
+  .text:100B8F7D                 ; function
+  .text:100B8F7D                 push    offset sub_100B9A20; function
+  .text:100B8F82                 ; result
+  .text:100B8F82                 push    eax; result
+  .text:100B8F83                 call    asFunctionPtr_Global; Verified x86 asSFuncPtr conversion: flag 2 at +32; member/global/generic pointer materialization.
+  .text:100B8F88                 add     esp, 8
+  .text:100B8F8B                 mov     ecx, edi
+  .text:100B8F8D                 ; int
+  .text:100B8F8D                 push    eax; int
+  .text:100B8F8E                 push    offset aVoidStringChar; "void string(char character)"
+  .text:100B8F93                 ; int
+  .text:100B8F93                 push    0; int
+  .text:100B8F95                 push    offset aString; "string"
+  .text:100B8F9A                 push    offset aConstructAStri_3; "Construct a string from a char."
+  .text:100B8F9F                 call    sub_100ABB60
+  .text:100B8FA4                 ; int
+  .text:100B8FA4                 push    0; int
+  .text:100B8FA6                 ; int
+  .text:100B8FA6                 push    4; int
+  .text:100B8FA8                 ; (funcptr, DestructASString) string destructor behaviour 2, void Destructstring(), asCALL_CDECL_OBJLAST=4. Recover the adapter, then its native destructor tail jump.
+  .text:100B8FA8                 push    offset DestructASString; (funcptr, DestructASString) string destructor behaviour 2, void Destructstring(), asCALL_CDECL_OBJLAST=4. Recover the adapter, then its native destructor tail jump.
+  .text:100B8FAD                 lea     eax, [esp+40h+result]
+  .text:100B8FB1                 ; result
+  .text:100B8FB1                 push    eax; result
+  .text:100B8FB2                 call    asFunctionPtr_Global; Verified x86 asSFuncPtr conversion: flag 2 at +32; member/global/generic pointer materialization.
+  .text:100B8FB7                 add     esp, 8
+  .text:100B8FBA                 mov     ecx, edi
+  .text:100B8FBC                 ; int
+  .text:100B8FBC                 push    eax; int
+  .text:100B8FBD                 push    offset aVoidDestructst; "void Destructstring()"
+  .text:100B8FC2                 ; int
+  .text:100B8FC2                 push    2; int
+  .text:100B8FC4                 push    offset aString; "string"
+  .text:100B8FC9                 push    offset aDestructor_0; "Destructor"
+  .text:100B8FCE                 call    sub_100ABB60
+  .text:100B8FD3                 ; int
+  .text:100B8FD3                 push    3; int
+  .text:100B8FD5                 lea     eax, [esp+38h+result]
+  .text:100B8FD9                 ; function
+  .text:100B8FD9                 push    offset sub_100D9D70; function
+  .text:100B8FDE                 ; result
+  .text:100B8FDE                 push    eax; result
+  .text:100B8FDF                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B8FE4                 add     esp, 8
+  .text:100B8FE7                 mov     ecx, edi
+  .text:100B8FE9                 ; int
+  .text:100B8FE9                 push    eax; int
+  .text:100B8FEA                 push    offset aStringAssignCo; "string& Assign(const string& in szStrin"...
+  .text:100B8FEF                 push    offset aString; "string"
+  .text:100B8FF4                 push    offset aAssignsAString; "Assigns a string to this, copying up to"...
+  .text:100B8FF9                 call    sub_100ABAD0
+  .text:100B8FFE                 ; int
+  .text:100B8FFE                 push    3; int
+  .text:100B9000                 lea     eax, [esp+38h+result]
+  .text:100B9004                 ; (funcptr, CString_opAssign) string& opAssign(const string& in szString), asCALL_THISCALL=3. Select this CString-reference overload.
+  .text:100B9004                 push    offset CString_opAssign; (funcptr, CString_opAssign) string& opAssign(const string& in szString), asCALL_THISCALL=3. Select this CString-reference overload.
+  .text:100B9009                 ; result
+  .text:100B9009                 push    eax; result
+  .text:100B900A                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B900F                 add     esp, 8
+  .text:100B9012                 mov     ecx, edi
+  .text:100B9014                 ; int
+  .text:100B9014                 push    eax; int
+  .text:100B9015                 push    offset aStringOpassign; "string& opAssign(const string& in szStr"...
+  .text:100B901A                 push    offset aString; "string"
+  .text:100B901F                 push    offset aAssignsAString_0; "Assigns a string to this one."
+  .text:100B9024                 call    sub_100ABAD0
+  .text:100B9029                 ; int
+  .text:100B9029                 push    3; int
+  .text:100B902B                 lea     eax, [esp+38h+result]
+  .text:100B902F                 ; function
+  .text:100B902F                 push    offset sub_100DA010; function
+  .text:100B9034                 ; result
+  .text:100B9034                 push    eax; result
+  .text:100B9035                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B903A                 add     esp, 8
+  .text:100B903D                 mov     ecx, edi
+  .text:100B903F                 ; int
+  .text:100B903F                 push    eax; int
+  .text:100B9040                 push    offset aStringOpassign_0; "string& opAssign(double flValue)"
+  .text:100B9045                 push    offset aString; "string"
+  .text:100B904A                 push    offset aAssignsADouble; "Assigns a double to this string."
+  .text:100B904F                 call    sub_100ABAD0
+  .text:100B9054                 ; int
+  .text:100B9054                 push    3; int
+  .text:100B9056                 lea     eax, [esp+38h+result]
+  .text:100B905A                 ; function
+  .text:100B905A                 push    offset sub_100D9F10; function
+  .text:100B905F                 ; result
+  .text:100B905F                 push    eax; result
+  .text:100B9060                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B9065                 add     esp, 8
+  .text:100B9068                 mov     ecx, edi
+  .text:100B906A                 ; int
+  .text:100B906A                 push    eax; int
+  .text:100B906B                 push    offset aStringOpassign_1; "string& opAssign(int64 iValue)"
+  .text:100B9070                 push    offset aString; "string"
+  .text:100B9075                 push    offset aAssignsA64BitI; "Assigns a 64 bit integer to this string"...
+  .text:100B907A                 call    sub_100ABAD0
+  .text:100B907F                 ; int
+  .text:100B907F                 push    3; int
+  .text:100B9081                 lea     eax, [esp+38h+result]
+  .text:100B9085                 ; function
+  .text:100B9085                 push    offset sub_100D9F80; function
+  .text:100B908A                 ; result
+  .text:100B908A                 push    eax; result
+  .text:100B908B                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B9090                 add     esp, 8
+  .text:100B9093                 mov     ecx, edi
+  .text:100B9095                 ; int
+  .text:100B9095                 push    eax; int
+  .text:100B9096                 push    offset aStringOpassign_2; "string& opAssign(uint64 uiValue)"
+  .text:100B909B                 push    offset aString; "string"
+  .text:100B90A0                 push    offset aAssignsA64BitU; "Assigns a 64 bit unsigned int to this s"...
+  .text:100B90A5                 call    sub_100ABAD0
+  .text:100B90AA                 ; int
+  .text:100B90AA                 push    3; int
+  .text:100B90AC                 lea     eax, [esp+38h+result]
+  .text:100B90B0                 ; function
+  .text:100B90B0                 push    offset sub_100D9DD0; function
+  .text:100B90B5                 ; result
+  .text:100B90B5                 push    eax; result
+  .text:100B90B6                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B90BB                 add     esp, 8
+  .text:100B90BE                 mov     ecx, edi
+  .text:100B90C0                 ; int
+  .text:100B90C0                 push    eax; int
+  .text:100B90C1                 push    offset aStringOpassign_3; "string& opAssign(bool bValue)"
+  .text:100B90C6                 push    offset aString; "string"
+  .text:100B90CB                 push    offset aAssignsABoolea; "Assigns a boolean to this string."
+  .text:100B90D0                 call    sub_100ABAD0
+  .text:100B90D5                 ; int
+  .text:100B90D5                 push    3; int
+  .text:100B90D7                 lea     eax, [esp+38h+result]
+  .text:100B90DB                 ; function
+  .text:100B90DB                 push    offset sub_100D9E10; function
+  .text:100B90E0                 ; result
+  .text:100B90E0                 push    eax; result
+  .text:100B90E1                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B90E6                 add     esp, 8
+  .text:100B90E9                 mov     ecx, edi
+  .text:100B90EB                 ; int
+  .text:100B90EB                 push    eax; int
+  .text:100B90EC                 push    offset aStringOpassign_4; "string& opAssign(char character)"
+  .text:100B90F1                 push    offset aString; "string"
+  .text:100B90F6                 push    offset aAssignsACharac; "Assigns a character to this string."
+  .text:100B90FB                 call    sub_100ABAD0
+  .text:100B9100                 ; int
+  .text:100B9100                 push    3; int
+  .text:100B9102                 lea     eax, [esp+38h+result]
+  .text:100B9106                 ; function
+  .text:100B9106                 push    offset sub_1009A510; function
+  .text:100B910B                 ; result
+  .text:100B910B                 push    eax; result
+  .text:100B910C                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B9111                 add     esp, 8
+  .text:100B9114                 mov     ecx, edi
+  .text:100B9116                 ; int
+  .text:100B9116                 push    eax; int
+  .text:100B9117                 push    offset aUintLengthCons; "uint Length() const"
+  .text:100B911C                 push    offset aString; "string"
+  .text:100B9121                 push    offset aGetsTheLengthO_0; "Gets the length of this string."
+  .text:100B9126                 call    sub_100ABAD0
+  .text:100B912B                 ; int
+  .text:100B912B                 push    3; int
+  .text:100B912D                 lea     eax, [esp+38h+result]
+  .text:100B9131                 ; function
+  .text:100B9131                 push    offset sub_100BEB20; function
+  .text:100B9136                 ; result
+  .text:100B9136                 push    eax; result
+  .text:100B9137                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B913C                 add     esp, 8
+  .text:100B913F                 mov     ecx, edi
+  .text:100B9141                 ; int
+  .text:100B9141                 push    eax; int
+  .text:100B9142                 push    offset aBoolIsemptyCon; "bool IsEmpty() const"
+  .text:100B9147                 push    offset aString; "string"
+  .text:100B914C                 push    offset aReturnsWhether_40; "Returns whether this string is empty."
+  .text:100B9151                 call    sub_100ABAD0
+  .text:100B9156                 ; int
+  .text:100B9156                 push    3; int
+  .text:100B9158                 lea     eax, [esp+38h+result]
+  .text:100B915C                 ; function
+  .text:100B915C                 push    offset sub_100DA150; function
+  .text:100B9161                 ; result
+  .text:100B9161                 push    eax; result
+  .text:100B9162                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B9167                 add     esp, 8
+  .text:100B916A                 mov     ecx, edi
+  .text:100B916C                 ; int
+  .text:100B916C                 push    eax; int
+  .text:100B916D                 push    offset aVoidResizeUint; "void Resize(uint uiSize, bool bKeepData"...
+  .text:100B9172                 push    offset aString; "string"
+  .text:100B9177                 push    offset aShrinksThisStr; "Shrinks this string to uiSize. If bKeep"...
+  .text:100B917C                 call    sub_100ABAD0
+  .text:100B9181                 ; int
+  .text:100B9181                 push    3; int
+  .text:100B9183                 lea     eax, [esp+38h+result]
+  .text:100B9187                 ; function
+  .text:100B9187                 push    offset sub_100DA1D0; function
+  .text:100B918C                 ; result
+  .text:100B918C                 push    eax; result
+  .text:100B918D                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B9192                 add     esp, 8
+  .text:100B9195                 mov     ecx, edi
+  .text:100B9197                 ; int
+  .text:100B9197                 push    eax; int
+  .text:100B9198                 push    offset aVoidReserveUin; "void Reserve(uint iMinimum, bool bKeepD"...
+  .text:100B919D                 push    offset aString; "string"
+  .text:100B91A2                 push    offset aReservesAtLeas; "Reserves at least iMinimum characters w"...
+  .text:100B91A7                 call    sub_100ABAD0
+  .text:100B91AC                 ; int
+  .text:100B91AC                 push    3; int
+  .text:100B91AE                 lea     eax, [esp+38h+result]
+  .text:100B91B2                 ; function
+  .text:100B91B2                 push    offset sub_100DA260; function
+  .text:100B91B7                 ; result
+  .text:100B91B7                 push    eax; result
+  .text:100B91B8                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B91BD                 add     esp, 8
+  .text:100B91C0                 mov     ecx, edi
+  .text:100B91C2                 ; int
+  .text:100B91C2                 push    eax; int
+  .text:100B91C3                 push    offset aVoidClear; "void Clear()"
+  .text:100B91C8                 push    offset aString; "string"
+  .text:100B91CD                 push    offset aClearsTheConte; "Clears the contents of this string."
+  .text:100B91D2                 call    sub_100ABAD0
+  .text:100B91D7                 ; int
+  .text:100B91D7                 push    3; int
+  .text:100B91D9                 lea     eax, [esp+38h+result]
+  .text:100B91DD                 ; function
+  .text:100B91DD                 push    offset sub_100DA310; function
+  .text:100B91E2                 ; result
+  .text:100B91E2                 push    eax; result
+  .text:100B91E3                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B91E8                 add     esp, 8
+  .text:100B91EB                 ; int
+  .text:100B91EB                 push    eax; int
+  .text:100B91EC                 push    offset aCharOpindexUin; "char opIndex(uint uiIndex) const"
+  .text:100B91F1                 push    offset aString; "string"
+  .text:100B91F6                 push    offset aGetsACharacter; "Gets a character by index."
+  .text:100B91FB                 mov     ecx, edi
+  .text:100B91FD                 call    sub_100ABAD0
+  .text:100B9202                 ; int
+  .text:100B9202                 push    3; int
+  .text:100B9204                 lea     eax, [esp+38h+result]
+  .text:100B9208                 ; function
+  .text:100B9208                 push    offset sub_100DA330; function
+  .text:100B920D                 ; result
+  .text:100B920D                 push    eax; result
+  .text:100B920E                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B9213                 add     esp, 8
+  .text:100B9216                 mov     ecx, edi
+  .text:100B9218                 ; int
+  .text:100B9218                 push    eax; int
+  .text:100B9219                 push    offset aVoidSetcharatU; "void SetCharAt(uint uiIndex, char chara"...
+  .text:100B921E                 push    offset aString; "string"
+  .text:100B9223                 push    offset aSetsACharacter; "Sets a character by index."
+  .text:100B9228                 call    sub_100ABAD0
+  .text:100B922D                 ; int
+  .text:100B922D                 push    3; int
+  .text:100B922F                 lea     eax, [esp+38h+result]
+  .text:100B9233                 ; function
+  .text:100B9233                 push    offset sub_100DA470; function
+  .text:100B9238                 ; result
+  .text:100B9238                 push    eax; result
+  .text:100B9239                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B923E                 add     esp, 8
+  .text:100B9241                 mov     ecx, edi
+  .text:100B9243                 ; int
+  .text:100B9243                 push    eax; int
+  .text:100B9244                 push    offset aStringOpaddass; "string& opAddAssign(const string& in sz"...
+  .text:100B9249                 push    offset aString; "string"
+  .text:100B924E                 push    offset aAppendsTheGive; "Appends the given string to this one."
+  .text:100B9253                 call    sub_100ABAD0
+  .text:100B9258                 ; int
+  .text:100B9258                 push    3; int
+  .text:100B925A                 lea     eax, [esp+38h+result]
+  .text:100B925E                 ; function
+  .text:100B925E                 push    offset sub_100DA800; function
+  .text:100B9263                 ; result
+  .text:100B9263                 push    eax; result
+  .text:100B9264                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B9269                 add     esp, 8
+  .text:100B926C                 mov     ecx, edi
+  .text:100B926E                 ; int
+  .text:100B926E                 push    eax; int
+  .text:100B926F                 push    offset aStringOpaddass_0; "string& opAddAssign(double flValue)"
+  .text:100B9274                 push    offset aString; "string"
+  .text:100B9279                 push    offset aAppendsTheGive_0; "Appends the given double to this string"...
+  .text:100B927E                 call    sub_100ABAD0
+  .text:100B9283                 ; int
+  .text:100B9283                 push    3; int
+  .text:100B9285                 lea     eax, [esp+38h+result]
+  .text:100B9289                 ; function
+  .text:100B9289                 push    offset sub_100DA680; function
+  .text:100B928E                 ; result
+  .text:100B928E                 push    eax; result
+  .text:100B928F                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B9294                 add     esp, 8
+  .text:100B9297                 mov     ecx, edi
+  .text:100B9299                 ; int
+  .text:100B9299                 push    eax; int
+  .text:100B929A                 push    offset aStringOpaddass_1; "string& opAddAssign(int64 iValue)"
+  .text:100B929F                 push    offset aString; "string"
+  .text:100B92A4                 push    offset aAppendsTheGive_1; "Appends the given 64 bit integer to thi"...
+  .text:100B92A9                 call    sub_100ABAD0
+  .text:100B92AE                 ; int
+  .text:100B92AE                 push    3; int
+  .text:100B92B0                 lea     eax, [esp+38h+result]
+  .text:100B92B4                 ; function
+  .text:100B92B4                 push    offset sub_100DA730; function
+  .text:100B92B9                 ; result
+  .text:100B92B9                 push    eax; result
+  .text:100B92BA                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B92BF                 add     esp, 8
+  .text:100B92C2                 mov     ecx, edi
+  .text:100B92C4                 ; int
+  .text:100B92C4                 push    eax; int
+  .text:100B92C5                 push    offset aStringOpaddass_2; "string& opAddAssign(uint64 uiValue)"
+  .text:100B92CA                 push    offset aString; "string"
+  .text:100B92CF                 push    offset aAppendsTheGive_2; "Appends the given 64 bit unsigned integ"...
+  .text:100B92D4                 call    sub_100ABAD0
+  .text:100B92D9                 ; int
+  .text:100B92D9                 push    3; int
+  .text:100B92DB                 lea     eax, [esp+38h+result]
+  .text:100B92DF                 ; function
+  .text:100B92DF                 push    offset sub_100DA4C0; function
+  .text:100B92E4                 ; result
+  .text:100B92E4                 push    eax; result
+  .text:100B92E5                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B92EA                 add     esp, 8
+  .text:100B92ED                 mov     ecx, edi
+  .text:100B92EF                 ; int
+  .text:100B92EF                 push    eax; int
+  .text:100B92F0                 push    offset aStringOpaddass_3; "string& opAddAssign(bool bValue)"
+  .text:100B92F5                 push    offset aString; "string"
+  .text:100B92FA                 push    offset aAppendsTheGive_3; "Appends the given boolean to this strin"...
+  .text:100B92FF                 call    sub_100ABAD0
+  .text:100B9304                 ; int
+  .text:100B9304                 push    3; int
+  .text:100B9306                 lea     eax, [esp+38h+result]
+  .text:100B930A                 ; function
+  .text:100B930A                 push    offset sub_100DA4E0; function
+  .text:100B930F                 ; result
+  .text:100B930F                 push    eax; result
+  .text:100B9310                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B9315                 add     esp, 8
+  .text:100B9318                 mov     ecx, edi
+  .text:100B931A                 ; int
+  .text:100B931A                 push    eax; int
+  .text:100B931B                 push    offset aStringOpaddass_4; "string& opAddAssign(char character)"
+  .text:100B9320                 push    offset aString; "string"
+  .text:100B9325                 push    offset aAppendsTheGive_4; "Appends the given character to this str"...
+  .text:100B932A                 call    sub_100ABAD0
+  .text:100B932F                 ; int
+  .text:100B932F                 push    3; int
+  .text:100B9331                 lea     eax, [esp+38h+result]
+  .text:100B9335                 ; function
+  .text:100B9335                 push    offset sub_100DA940; function
+  .text:100B933A                 ; result
+  .text:100B933A                 push    eax; result
+  .text:100B933B                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B9340                 add     esp, 8
+  .text:100B9343                 mov     ecx, edi
+  .text:100B9345                 ; int
+  .text:100B9345                 push    eax; int
+  .text:100B9346                 push    offset aIntOpcmpConstS; "int opCmp(const string& in szString) co"...
+  .text:100B934B                 push    offset aString; "string"
+  .text:100B9350                 push    offset aComparesString; "Compares strings."
+  .text:100B9355                 call    sub_100ABAD0
+  .text:100B935A                 ; int
+  .text:100B935A                 push    3; int
+  .text:100B935C                 lea     eax, [esp+38h+result]
+  .text:100B9360                 ; function
+  .text:100B9360                 push    offset sub_100DA940; function
+  .text:100B9365                 ; result
+  .text:100B9365                 push    eax; result
+  .text:100B9366                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B936B                 add     esp, 8
+  .text:100B936E                 mov     ecx, edi
+  .text:100B9370                 ; int
+  .text:100B9370                 push    eax; int
+  .text:100B9371                 push    offset aIntCompareCons_0; "int Compare(const string& in szString) "...
+  .text:100B9376                 push    offset aString; "string"
+  .text:100B937B                 push    offset aComparesString; "Compares strings."
+  .text:100B9380                 call    sub_100ABAD0
+  .text:100B9385                 ; int
+  .text:100B9385                 push    3; int
+  .text:100B9387                 lea     eax, [esp+38h+result]
+  .text:100B938B                 ; function
+  .text:100B938B                 push    offset sub_100DA9A0; function
+  .text:100B9390                 ; result
+  .text:100B9390                 push    eax; result
+  .text:100B9391                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B9396                 add     esp, 8
+  .text:100B9399                 mov     ecx, edi
+  .text:100B939B                 ; int
+  .text:100B939B                 push    eax; int
+  .text:100B939C                 push    offset aIntComparenCon; "int CompareN(const string& in szString,"...
+  .text:100B93A1                 push    offset aString; "string"
+  .text:100B93A6                 push    offset aComparesString_0; "Compares strings up to amount character"...
+  .text:100B93AB                 call    sub_100ABAD0
+  .text:100B93B0                 ; int
+  .text:100B93B0                 push    3; int
+  .text:100B93B2                 lea     eax, [esp+38h+result]
+  .text:100B93B6                 ; function
+  .text:100B93B6                 push    offset sub_100DA9E0; function
+  .text:100B93BB                 ; result
+  .text:100B93BB                 push    eax; result
+  .text:100B93BC                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B93C1                 add     esp, 8
+  .text:100B93C4                 mov     ecx, edi
+  .text:100B93C6                 ; int
+  .text:100B93C6                 push    eax; int
+  .text:100B93C7                 push    offset aIntIcompareCon; "int ICompare(const string& in szString)"...
+  .text:100B93CC                 push    offset aString; "string"
+  .text:100B93D1                 push    offset aComparesString_1; "Compares strings case-insensitively."
+  .text:100B93D6                 call    sub_100ABAD0
+  .text:100B93DB                 ; int
+  .text:100B93DB                 push    3; int
+  .text:100B93DD                 lea     eax, [esp+38h+result]
+  .text:100B93E1                 ; function
+  .text:100B93E1                 push    offset sub_100DAA20; function
+  .text:100B93E6                 ; result
+  .text:100B93E6                 push    eax; result
+  .text:100B93E7                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B93EC                 add     esp, 8
+  .text:100B93EF                 mov     ecx, edi
+  .text:100B93F1                 ; int
+  .text:100B93F1                 push    eax; int
+  .text:100B93F2                 push    offset aIntIcomparenCo; "int ICompareN(const string& in szString"...
+  .text:100B93F7                 push    offset aString; "string"
+  .text:100B93FC                 push    offset aComparesString_2; "Compares strings up to amount character"...
+  .text:100B9401                 call    sub_100ABAD0
+  .text:100B9406                 ; int
+  .text:100B9406                 push    3; int
+  .text:100B9408                 lea     eax, [esp+38h+result]
+  .text:100B940C                 ; function
+  .text:100B940C                 push    offset sub_100DAA80; function
+  .text:100B9411                 ; result
+  .text:100B9411                 push    eax; result
+  .text:100B9412                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B9417                 add     esp, 8
+  .text:100B941A                 mov     ecx, edi
+  .text:100B941C                 ; int
+  .text:100B941C                 push    eax; int
+  .text:100B941D                 push    offset aBoolOpequalsCo_0; "bool opEquals(const string& in szString"...
+  .text:100B9422                 push    offset aString; "string"
+  .text:100B9427                 push    offset aReturnsWhether_41; "Returns whether strings are equal."
+  .text:100B942C                 call    sub_100ABAD0
+  .text:100B9431                 ; int
+  .text:100B9431                 push    5; int
+  .text:100B9433                 ; function
+  .text:100B9433                 push    offset sub_100B9C90; function
+  .text:100B9438                 lea     eax, [esp+3Ch+result]
+  .text:100B943C                 ; result
+  .text:100B943C                 push    eax; result
+  .text:100B943D                 call    asFunctionPtr_Global; Verified x86 asSFuncPtr conversion: flag 2 at +32; member/global/generic pointer materialization.
+  .text:100B9442                 add     esp, 8
+  .text:100B9445                 mov     ecx, edi
+  .text:100B9447                 ; int
+  .text:100B9447                 push    eax; int
+  .text:100B9448                 push    offset aVoidTrimConstS; "void Trim(const string& in szCharacter "...
+  .text:100B944D                 push    offset aString; "string"
+  .text:100B9452                 push    offset aTrimsLeadingAn; "Trims leading and trailing whitespace, "...
+  .text:100B9457                 call    sub_100ABAD0
+  .text:100B945C                 ; int
+  .text:100B945C                 push    3; int
+  .text:100B945E                 lea     eax, [esp+38h+result]
+  .text:100B9462                 ; function
+  .text:100B9462                 push    offset sub_100DAC40; function
+  .text:100B9467                 ; result
+  .text:100B9467                 push    eax; result
+  .text:100B9468                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B946D                 add     esp, 8
+  .text:100B9470                 mov     ecx, edi
+  .text:100B9472                 ; int
+  .text:100B9472                 push    eax; int
+  .text:100B9473                 push    offset aBoolStartswith; "bool StartsWith(const string& in szStri"...
+  .text:100B9478                 push    offset aString; "string"
+  .text:100B947D                 push    offset aReturnsTrueIfT; "Returns true if the string starts with "...
+  .text:100B9482                 call    sub_100ABAD0
+  .text:100B9487                 ; int
+  .text:100B9487                 push    3; int
+  .text:100B9489                 lea     eax, [esp+38h+result]
+  .text:100B948D                 ; function
+  .text:100B948D                 push    offset sub_100DACE0; function
+  .text:100B9492                 ; result
+  .text:100B9492                 push    eax; result
+  .text:100B9493                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B9498                 add     esp, 8
+  .text:100B949B                 mov     ecx, edi
+  .text:100B949D                 ; int
+  .text:100B949D                 push    eax; int
+  .text:100B949E                 push    offset aBoolEndswithCo; "bool EndsWith(const string& in szString"...
+  .text:100B94A3                 push    offset aString; "string"
+  .text:100B94A8                 push    offset aReturnsTrueIfT_0; "Returns true if the string ends with th"...
+  .text:100B94AD                 call    sub_100ABAD0
+  .text:100B94B2                 ; int
+  .text:100B94B2                 push    3; int
+  .text:100B94B4                 lea     eax, [esp+38h+result]
+  .text:100B94B8                 ; function
+  .text:100B94B8                 push    offset sub_100DAE20; function
+  .text:100B94BD                 ; result
+  .text:100B94BD                 push    eax; result
+  .text:100B94BE                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B94C3                 add     esp, 8
+  .text:100B94C6                 mov     ecx, edi
+  .text:100B94C8                 ; int
+  .text:100B94C8                 push    eax; int
+  .text:100B94C9                 push    offset aUintFindConstS; "uint Find(const string& in szString, co"...
+  .text:100B94CE                 push    offset aString; "string"
+  .text:100B94D3                 push    offset aFindTheFirstIn; "Find the first instance of the given st"...
+  .text:100B94D8                 call    sub_100ABAD0
+  .text:100B94DD                 ; int
+  .text:100B94DD                 push    3; int
+  .text:100B94DF                 lea     eax, [esp+38h+result]
+  .text:100B94E3                 ; function
+  .text:100B94E3                 push    offset sub_100DAFB0; function
+  .text:100B94E8                 ; result
+  .text:100B94E8                 push    eax; result
+  .text:100B94E9                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B94EE                 add     esp, 8
+  .text:100B94F1                 mov     ecx, edi
+  .text:100B94F3                 ; int
+  .text:100B94F3                 push    eax; int
+  .text:100B94F4                 push    offset aUintRfindConst; "uint RFind(const string& in szString, u"...
+  .text:100B94F9                 push    offset aString; "string"
+  .text:100B94FE                 push    offset aFindTheFirstIn_0; "Find the first instance of the given st"...
+  .text:100B9503                 call    sub_100ABAD0
+  .text:100B9508                 ; int
+  .text:100B9508                 push    3; int
+  .text:100B950A                 lea     eax, [esp+38h+result]
+  .text:100B950E                 ; function
+  .text:100B950E                 push    offset sub_100DB100; function
+  .text:100B9513                 ; result
+  .text:100B9513                 push    eax; result
+  .text:100B9514                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B9519                 add     esp, 8
+  .text:100B951C                 mov     ecx, edi
+  .text:100B951E                 ; int
+  .text:100B951E                 push    eax; int
+  .text:100B951F                 push    offset aUintFindfirsto; "uint FindFirstOf(const string& in szStr"...
+  .text:100B9524                 push    offset aString; "string"
+  .text:100B9529                 push    offset aFindTheFirstIn_1; "Find the first instance of any characte"...
+  .text:100B952E                 call    sub_100ABAD0
+  .text:100B9533                 ; int
+  .text:100B9533                 push    3; int
+  .text:100B9535                 lea     eax, [esp+38h+result]
+  .text:100B9539                 ; function
+  .text:100B9539                 push    offset sub_100DB230; function
+  .text:100B953E                 ; result
+  .text:100B953E                 push    eax; result
+  .text:100B953F                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B9544                 add     esp, 8
+  .text:100B9547                 mov     ecx, edi
+  .text:100B9549                 ; int
+  .text:100B9549                 push    eax; int
+  .text:100B954A                 push    offset aUintFindlastof; "uint FindLastOf(const string& in szStri"...
+  .text:100B954F                 push    offset aString; "string"
+  .text:100B9554                 push    offset aFindTheLastIns; "Find the last instance of any character"...
+  .text:100B9559                 call    sub_100ABAD0
+  .text:100B955E                 ; int
+  .text:100B955E                 push    3; int
+  .text:100B9560                 lea     eax, [esp+38h+result]
+  .text:100B9564                 ; function
+  .text:100B9564                 push    offset sub_100DB4A0; function
+  .text:100B9569                 ; result
+  .text:100B9569                 push    eax; result
+  .text:100B956A                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B956F                 add     esp, 8
+  .text:100B9572                 mov     ecx, edi
+  .text:100B9574                 ; int
+  .text:100B9574                 push    eax; int
+  .text:100B9575                 push    offset aUintFindfirstn; "uint FindFirstNotOf(const string& in sz"...
+  .text:100B957A                 push    offset aString; "string"
+  .text:100B957F                 push    offset aFindTheFirstIn; "Find the first instance of the given st"...
+  .text:100B9584                 call    sub_100ABAD0
+  .text:100B9589                 ; int
+  .text:100B9589                 push    3; int
+  .text:100B958B                 lea     eax, [esp+38h+result]
+  .text:100B958F                 ; function
+  .text:100B958F                 push    offset sub_100DB830; function
+  .text:100B9594                 ; result
+  .text:100B9594                 push    eax; result
+  .text:100B9595                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B959A                 add     esp, 8
+  .text:100B959D                 mov     ecx, edi
+  .text:100B959F                 ; int
+  .text:100B959F                 push    eax; int
+  .text:100B95A0                 push    offset aUintFindlastno; "uint FindLastNotOf(const string& in szS"...
+  .text:100B95A5                 push    offset aString; "string"
+  .text:100B95AA                 push    offset aFindTheFirstIn_0; "Find the first instance of the given st"...
+  .text:100B95AF                 call    sub_100ABAD0
+  .text:100B95B4                 ; int
+  .text:100B95B4                 push    3; int
+  .text:100B95B6                 lea     eax, [esp+38h+result]
+  .text:100B95BA                 ; function
+  .text:100B95BA                 push    offset sub_100DBC40; function
+  .text:100B95BF                 ; result
+  .text:100B95BF                 push    eax; result
+  .text:100B95C0                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B95C5                 add     esp, 8
+  .text:100B95C8                 mov     ecx, edi
+  .text:100B95CA                 ; int
+  .text:100B95CA                 push    eax; int
+  .text:100B95CB                 push    offset aStringTokenize; "string Tokenize(const string& in delimi"...
+  .text:100B95D0                 push    offset aString; "string"
+  .text:100B95D5                 push    offset aGetTheNextToke; "Get the next token of the given string."...
+  .text:100B95DA                 call    sub_100ABAD0
+  .text:100B95DF                 ; int
+  .text:100B95DF                 push    3; int
+  .text:100B95E1                 lea     eax, [esp+38h+result]
+  .text:100B95E5                 ; function
+  .text:100B95E5                 push    offset sub_100DBF10; function
+  .text:100B95EA                 ; result
+  .text:100B95EA                 push    eax; result
+  .text:100B95EB                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B95F0                 add     esp, 8
+  .text:100B95F3                 mov     ecx, edi
+  .text:100B95F5                 ; int
+  .text:100B95F5                 push    eax; int
+  .text:100B95F6                 push    offset aStringTolowerc; "string& ToLowercase()"
+  .text:100B95FB                 push    offset aString; "string"
+  .text:100B9600                 push    offset aConvertsThisSt; "Converts this string to lower case."
+  .text:100B9605                 call    sub_100ABAD0
+  .text:100B960A                 ; int
+  .text:100B960A                 push    3; int
+  .text:100B960C                 lea     eax, [esp+38h+result]
+  .text:100B9610                 ; function
+  .text:100B9610                 push    offset sub_100DBF40; function
+  .text:100B9615                 ; result
+  .text:100B9615                 push    eax; result
+  .text:100B9616                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B961B                 add     esp, 8
+  .text:100B961E                 mov     ecx, edi
+  .text:100B9620                 ; int
+  .text:100B9620                 push    eax; int
+  .text:100B9621                 push    offset aStringToupperc; "string& ToUppercase()"
+  .text:100B9626                 push    offset aString; "string"
+  .text:100B962B                 push    offset aConvertsThisSt_0; "Converts this string to upper case."
+  .text:100B9630                 call    sub_100ABAD0
+  .text:100B9635                 ; int
+  .text:100B9635                 push    3; int
+  .text:100B9637                 lea     eax, [esp+38h+result]
+  .text:100B963B                 ; function
+  .text:100B963B                 push    offset sub_100DBF70; function
+  .text:100B9640                 ; result
+  .text:100B9640                 push    eax; result
+  .text:100B9641                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B9646                 add     esp, 8
+  .text:100B9649                 mov     ecx, edi
+  .text:100B964B                 ; int
+  .text:100B964B                 push    eax; int
+  .text:100B964C                 push    offset aStringSubstrin; "string SubString(uint startIndex = 0, u"...
+  .text:100B9651                 push    offset aString; "string"
+  .text:100B9656                 push    offset aReturnsASubstr; "Returns a substring of this string."
+  .text:100B965B                 call    sub_100ABAD0
+  .text:100B9660                 ; int
+  .text:100B9660                 push    3; int
+  .text:100B9662                 lea     eax, [esp+38h+result]
+  .text:100B9666                 ; function
+  .text:100B9666                 push    offset sub_100DC1A0; function
+  .text:100B966B                 ; result
+  .text:100B966B                 push    eax; result
+  .text:100B966C                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B9671                 add     esp, 8
+  .text:100B9674                 ; int
+  .text:100B9674                 push    eax; int
+  .text:100B9675                 push    offset aStringReplaceC_0; "string& Replace(const string& in szSubs"...
+  .text:100B967A                 push    offset aString; "string"
+  .text:100B967F                 push    offset aReplacesTheGiv; "Replaces the given substring with the g"...
+  .text:100B9684                 mov     ecx, edi
+  .text:100B9686                 call    sub_100ABAD0
+  .text:100B968B                 ; int
+  .text:100B968B                 push    3; int
+  .text:100B968D                 lea     eax, [esp+38h+result]
+  .text:100B9691                 ; function
+  .text:100B9691                 push    offset sub_100DC320; function
+  .text:100B9696                 ; result
+  .text:100B9696                 push    eax; result
+  .text:100B9697                 call    asSMethodPtr_4_Convert; Verified x86 asSFuncPtr conversion: flag 3 at +32; member/global/generic pointer materialization.
+  .text:100B969C                 add     esp, 8
+  .text:100B969F                 mov     ecx, edi
+  .text:100B96A1                 ; int
+  .text:100B96A1                 push    eax; int
+  .text:100B96A2                 push    offset aVoidTruncateCo; "void Truncate(const size_t uiMaxLength)"
+  .text:100B96A7                 push    offset aString; "string"
+  .text:100B96AC                 push    offset aTruncatesTheSt; "Truncates the string to uiMaxLength cha"...
+  .text:100B96B1                 call    sub_100ABAD0
+  .text:100B96B6                 ; int
+  .text:100B96B6                 push    5; int
+  .text:100B96B8                 lea     eax, [esp+38h+result]
+  .text:100B96BC                 ; function
+  .text:100B96BC                 push    offset sub_100DC570; function
+  .text:100B96C1                 ; result
+  .text:100B96C1                 push    eax; result
+  .text:100B96C2                 call    asFunctionPtr_Global; Verified x86 asSFuncPtr conversion: flag 2 at +32; member/global/generic pointer materialization.
+  .text:100B96C7                 add     esp, 8
+  .text:100B96CA                 mov     ecx, edi
+  .text:100B96CC                 ; int
+  .text:100B96CC                 push    eax; int
+  .text:100B96CD                 push    offset aStringOpaddCon; "string opAdd(const string& in szString)"...
+  .text:100B96D2                 push    offset aString; "string"
+  .text:100B96D7                 push    offset aReturnsACopyOf; "Returns a copy of this string with the "...
+  .text:100B96DC                 call    sub_100ABAD0
+  .text:100B96E1                 ; int
+  .text:100B96E1                 push    5; int
+  .text:100B96E3                 lea     eax, [esp+38h+result]
+  .text:100B96E7                 ; function
+  .text:100B96E7                 push    offset sub_100DCF30; function
+  .text:100B96EC                 ; result
+  .text:100B96EC                 push    eax; result
+  .text:100B96ED                 call    asFunctionPtr_Global; Verified x86 asSFuncPtr conversion: flag 2 at +32; member/global/generic pointer materialization.
+  .text:100B96F2                 add     esp, 8
+  .text:100B96F5                 mov     ecx, edi
+  .text:100B96F7                 ; int
+  .text:100B96F7                 push    eax; int
+  .text:100B96F8                 push    offset aStringOpaddDou; "string opAdd(double flValue) const"
+  .text:100B96FD                 push    offset aString; "string"
+  .text:100B9702                 push    offset aReturnsACopyOf_0; "Returns a copy of this string with the "...
+  .text:100B9707                 call    sub_100ABAD0
+  .text:100B970C                 ; int
+  .text:100B970C                 push    5; int
+  .text:100B970E                 lea     eax, [esp+38h+result]
+  .text:100B9712                 ; function
+  .text:100B9712                 push    offset sub_100DCB50; function
+  .text:100B9717                 ; result
+  .text:100B9717                 push    eax; result
+  .text:100B9718                 call    asFunctionPtr_Global; Verified x86 asSFuncPtr conversion: flag 2 at +32; member/global/generic pointer materialization.
+  .text:100B971D                 add     esp, 8
+  .text:100B9720                 mov     ecx, edi
+  .text:100B9722                 ; int
+  .text:100B9722                 push    eax; int
+  .text:100B9723                 push    offset aStringOpaddInt; "string opAdd(int64 iValue) const"
+  .text:100B9728                 push    offset aString; "string"
+  .text:100B972D                 push    offset aReturnsACopyOf_1; "Returns a copy of this string with the "...
+  .text:100B9732                 call    sub_100ABAD0
+  .text:100B9737                 ; int
+  .text:100B9737                 push    5; int
+  .text:100B9739                 lea     eax, [esp+38h+result]
+  .text:100B973D                 ; function
+  .text:100B973D                 push    offset sub_100DCCC0; function
+  .text:100B9742                 ; result
+  .text:100B9742                 push    eax; result
+  .text:100B9743                 call    asFunctionPtr_Global; Verified x86 asSFuncPtr conversion: flag 2 at +32; member/global/generic pointer materialization.
+  .text:100B9748                 add     esp, 8
+  .text:100B974B                 mov     ecx, edi
+  .text:100B974D                 ; int
+  .text:100B974D                 push    eax; int
+  .text:100B974E                 push    offset aStringOpaddUin; "string opAdd(uint64 uiValue) const"
+  .text:100B9753                 push    offset aString; "string"
+  .text:100B9758                 push    offset aReturnsACopyOf_2; "Returns a copy of this string with the "...
+  .text:100B975D                 call    sub_100ABAD0
+  .text:100B9762                 ; int
+  .text:100B9762                 push    5; int
+  .text:100B9764                 lea     eax, [esp+38h+result]
+  .text:100B9768                 ; function
+  .text:100B9768                 push    offset sub_100DC690; function
+  .text:100B976D                 ; result
+  .text:100B976D                 push    eax; result
+  .text:100B976E                 call    asFunctionPtr_Global; Verified x86 asSFuncPtr conversion: flag 2 at +32; member/global/generic pointer materialization.
+  .text:100B9773                 add     esp, 8
+  .text:100B9776                 mov     ecx, edi
+  .text:100B9778                 ; int
+  .text:100B9778                 push    eax; int
+  .text:100B9779                 push    offset aStringOpaddBoo; "string opAdd(bool bValue) const"
+  .text:100B977E                 push    offset aString; "string"
+  .text:100B9783                 push    offset aReturnsACopyOf_3; "Returns a copy of this string with the "...
+  .text:100B9788                 call    sub_100ABAD0
+  .text:100B978D                 ; int
+  .text:100B978D                 push    5; int
+  .text:100B978F                 lea     eax, [esp+38h+result]
+  .text:100B9793                 ; function
+  .text:100B9793                 push    offset sub_100DC780; function
+  .text:100B9798                 ; result
+  .text:100B9798                 push    eax; result
+  .text:100B9799                 call    asFunctionPtr_Global; Verified x86 asSFuncPtr conversion: flag 2 at +32; member/global/generic pointer materialization.
+  .text:100B979E                 add     esp, 8
+  .text:100B97A1                 mov     ecx, edi
+  .text:100B97A3                 ; int
+  .text:100B97A3                 push    eax; int
+  .text:100B97A4                 push    offset aStringOpaddCha; "string opAdd(char character) const"
+  .text:100B97A9                 push    offset aString; "string"
+  .text:100B97AE                 push    offset aReturnsACopyOf_4; "Returns a copy of this string with the "...
+  .text:100B97B3                 call    sub_100ABAD0
+  .text:100B97B8                 ; int
+  .text:100B97B8                 push    4; int
+  .text:100B97BA                 lea     eax, [esp+38h+result]
+  .text:100B97BE                 ; function
+  .text:100B97BE                 push    offset sub_100B8C00; function
+  .text:100B97C3                 ; result
+  .text:100B97C3                 push    eax; result
+  .text:100B97C4                 call    asFunctionPtr_Global; Verified x86 asSFuncPtr conversion: flag 2 at +32; member/global/generic pointer materialization.
+  .text:100B97C9                 add     esp, 8
+  .text:100B97CC                 mov     ecx, edi
+  .text:100B97CE                 ; int
+  .text:100B97CE                 push    eax; int
+  .text:100B97CF                 push    offset aArrayStringSpl; "array<string>@ Split(const string& in s"...
+  .text:100B97D4                 push    offset aString; "string"
+  .text:100B97D9                 push    offset aSplitsThisStri; "Splits this string by the given delimit"...
+  .text:100B97DE                 call    sub_100ABAD0
+  .text:100B97E3                 mov     ecx, [esp+34h+var_4]
+  .text:100B97E7                 pop     edi
+  .text:100B97E8                 pop     esi
+  .text:100B97E9                 ; StackCookie
+  .text:100B97E9                 xor     ecx, esp; StackCookie
+  .text:100B97EB                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:100B97F0                 add     esp, 2Ch
+  .text:100B97F3                 retn
+procedure: |-
+  void __cdecl RegisterSCScriptASString(asIScriptEngine *engine, CASDocumentation *documentation)
+  {
+    asSFuncPtr *v2; // eax
+    asSFuncPtr *v3; // eax
+    asSFuncPtr *v4; // eax
+    asSFuncPtr *v5; // eax
+    asSFuncPtr *v6; // eax
+    asSFuncPtr *v7; // eax
+    asSFuncPtr *v8; // eax
+    asSFuncPtr *v9; // eax
+    asSFuncPtr *v10; // eax
+    asSFuncPtr *v11; // eax
+    asSFuncPtr *v12; // eax
+    asSFuncPtr *v13; // eax
+    asSFuncPtr *v14; // eax
+    asSFuncPtr *v15; // eax
+    asSFuncPtr *v16; // eax
+    asSFuncPtr *v17; // eax
+    asSFuncPtr *v18; // eax
+    asSFuncPtr *v19; // eax
+    asSFuncPtr *v20; // eax
+    asSFuncPtr *v21; // eax
+    asSFuncPtr *v22; // eax
+    asSFuncPtr *v23; // eax
+    asSFuncPtr *v24; // eax
+    asSFuncPtr *v25; // eax
+    asSFuncPtr *v26; // eax
+    asSFuncPtr *v27; // eax
+    asSFuncPtr *v28; // eax
+    asSFuncPtr *v29; // eax
+    asSFuncPtr *v30; // eax
+    asSFuncPtr *v31; // eax
+    asSFuncPtr *v32; // eax
+    asSFuncPtr *v33; // eax
+    asSFuncPtr *v34; // eax
+    asSFuncPtr *v35; // eax
+    asSFuncPtr *v36; // eax
+    asSFuncPtr *v37; // eax
+    asSFuncPtr *v38; // eax
+    asSFuncPtr *v39; // eax
+    asSFuncPtr *v40; // eax
+    asSFuncPtr *v41; // eax
+    asSFuncPtr *v42; // eax
+    asSFuncPtr *v43; // eax
+    asSFuncPtr *v44; // eax
+    asSFuncPtr *v45; // eax
+    asSFuncPtr *v46; // eax
+    asSFuncPtr *v47; // eax
+    asSFuncPtr *v48; // eax
+    asSFuncPtr *v49; // eax
+    asSFuncPtr *v50; // eax
+    asSFuncPtr *v51; // eax
+    asSFuncPtr *v52; // eax
+    asSFuncPtr *v53; // eax
+    asSFuncPtr *v54; // eax
+    asSFuncPtr *v55; // eax
+    asSFuncPtr *v56; // eax
+    asSFuncPtr *v57; // eax
+    asSFuncPtr result; // [esp+8h] [ebp-2Ch] BYREF
+
+    sub_100BEB50(documentation);
+    sub_100AB830("String");
+    sub_100ABCA0("Compare type.", "CompareType", 0);
+    sub_100ABD00(Src, "CompareType", "CaseSensitive", 0);
+    sub_100ABD00(Src, "CompareType", "CaseInsensitive", 1);
+    sub_100AB8B0("Default comparison type.", "const CompareType DEFAULT_COMPARE", &unk_103DE794);
+    sub_100AB8B0(
+      "Empty string. Useful when a reference to a string is needed.",
+      "const string EMPTY_STRING",
+      &unk_104DF248);
+    sub_100AB8B0(
+      "A string that contains one instance of every whitespace character.",
+      "const string WHITESPACE_CHARACTERS",
+      &unk_104DF26C);
+    sub_100AB8B0("Sentinel value used by string methods.", "const size_t INVALID_INDEX", &dword_103EAFBC);
+    sub_100AB8B0(
+      "Sentinel value used by string tokenization when there are no tokens remaining.",
+      "const size_t NO_MORE_TOKENS",
+      dword_103EAFC0);
+    sub_100AB830(Src);
+    ((void (__thiscall *)(asIScriptEngine *, const char *, void ***))engine->vtable->unknown_23_to_73[4])(
+      engine,
+      "string",
+      &off_104DF0DC);
+    v2 = asFunctionPtr_Global(&result, sub_100B9990);
+    sub_100ABB60((int)"Constructor", "string", 0, (int)"void string()", (int)v2, 4, 0);
+    v3 = asFunctionPtr_Global(&result, sub_100B99A0);
+    sub_100ABB60((int)"Copy constructor", "string", 0, (int)"void string(const string& in szString)", (int)v3, 4, 0);
+    v4 = asFunctionPtr_Global(&result, sub_100B99B0);
+    sub_100ABB60((int)"Construct a string from a double.", "string", 0, (int)"void string(double flValue)", (int)v4, 4, 0);
+    v5 = asFunctionPtr_Global(&result, sub_100B99D0);
+    sub_100ABB60(
+      (int)"Construct a string from a 64 bit integer.",
+      "string",
+      0,
+      (int)"void string(int64 iValue)",
+      (int)v5,
+      4,
+      0);
+    v6 = asFunctionPtr_Global(&result, sub_100B99F0);
+    sub_100ABB60(
+      (int)"Construct a string from a 64 bit unsigned integer.",
+      "string",
+      0,
+      (int)"void string(uint64 uiValue)",
+      (int)v6,
+      4,
+      0);
+    v7 = asFunctionPtr_Global(&result, sub_100B9A10);
+    sub_100ABB60((int)"Construct a string from a boolean.", "string", 0, (int)"void string(bool bValue)", (int)v7, 4, 0);
+    v8 = asFunctionPtr_Global(&result, sub_100B9A20);
+    sub_100ABB60((int)"Construct a string from a char.", "string", 0, (int)"void string(char character)", (int)v8, 4, 0);
+    v9 = asFunctionPtr_Global(&result, DestructASString);// (funcptr, DestructASString) string destructor behaviour 2, void Destructstring(), asCALL_CDECL_OBJLAST=4. Recover the adapter, then its native destructor tail jump.
+    sub_100ABB60((int)"Destructor", "string", 2, (int)"void Destructstring()", (int)v9, 4, 0);
+    v10 = asSMethodPtr_4_Convert(&result, sub_100D9D70);
+    sub_100ABAD0(
+      (int)"Assigns a string to this, copying up to uiCount characters.",
+      "string",
+      (int)"string& Assign(const string& in szString, uint uiBegin, uint uiCount)",
+      (int)v10,
+      3);
+    v11 = asSMethodPtr_4_Convert(&result, CString_opAssign);// (funcptr, CString_opAssign) string& opAssign(const string& in szString), asCALL_THISCALL=3. Select this CString-reference overload.
+    sub_100ABAD0(
+      (int)"Assigns a string to this one.",
+      "string",
+      (int)"string& opAssign(const string& in szString)",
+      (int)v11,
+      3);
+    v12 = asSMethodPtr_4_Convert(&result, sub_100DA010);
+    sub_100ABAD0((int)"Assigns a double to this string.", "string", (int)"string& opAssign(double flValue)", (int)v12, 3);
+    v13 = asSMethodPtr_4_Convert(&result, sub_100D9F10);
+    sub_100ABAD0(
+      (int)"Assigns a 64 bit integer to this string.",
+      "string",
+      (int)"string& opAssign(int64 iValue)",
+      (int)v13,
+      3);
+    v14 = asSMethodPtr_4_Convert(&result, sub_100D9F80);
+    sub_100ABAD0(
+      (int)"Assigns a 64 bit unsigned int to this string.",
+      "string",
+      (int)"string& opAssign(uint64 uiValue)",
+      (int)v14,
+      3);
+    v15 = asSMethodPtr_4_Convert(&result, sub_100D9DD0);
+    sub_100ABAD0((int)"Assigns a boolean to this string.", "string", (int)"string& opAssign(bool bValue)", (int)v15, 3);
+    v16 = asSMethodPtr_4_Convert(&result, sub_100D9E10);
+    sub_100ABAD0(
+      (int)"Assigns a character to this string.",
+      "string",
+      (int)"string& opAssign(char character)",
+      (int)v16,
+      3);
+    v17 = asSMethodPtr_4_Convert(&result, sub_1009A510);
+    sub_100ABAD0((int)"Gets the length of this string.", "string", (int)"uint Length() const", (int)v17, 3);
+    v18 = asSMethodPtr_4_Convert(&result, sub_100BEB20);
+    sub_100ABAD0((int)"Returns whether this string is empty.", "string", (int)"bool IsEmpty() const", (int)v18, 3);
+    v19 = asSMethodPtr_4_Convert(&result, sub_100DA150);
+    sub_100ABAD0(
+      (int)"Shrinks this string to uiSize. If bKeepData is true, the original string is kept.",
+      "string",
+      (int)"void Resize(uint uiSize, bool bKeepData = true)",
+      (int)v19,
+      3);
+    v20 = asSMethodPtr_4_Convert(&result, sub_100DA1D0);
+    sub_100ABAD0(
+      (int)"Reserves at least iMinimum characters worth of capacity. If bKeepData is true, the original string is kept.",
+      "string",
+      (int)"void Reserve(uint iMinimum, bool bKeepData = true)",
+      (int)v20,
+      3);
+    v21 = asSMethodPtr_4_Convert(&result, sub_100DA260);
+    sub_100ABAD0((int)"Clears the contents of this string.", "string", (int)"void Clear()", (int)v21, 3);
+    v22 = asSMethodPtr_4_Convert(&result, sub_100DA310);
+    sub_100ABAD0((int)"Gets a character by index.", "string", (int)"char opIndex(uint uiIndex) const", (int)v22, 3);
+    v23 = asSMethodPtr_4_Convert(&result, sub_100DA330);
+    sub_100ABAD0(
+      (int)"Sets a character by index.",
+      "string",
+      (int)"void SetCharAt(uint uiIndex, char character)",
+      (int)v23,
+      3);
+    v24 = asSMethodPtr_4_Convert(&result, sub_100DA470);
+    sub_100ABAD0(
+      (int)"Appends the given string to this one.",
+      "string",
+      (int)"string& opAddAssign(const string& in szString)",
+      (int)v24,
+      3);
+    v25 = asSMethodPtr_4_Convert(&result, sub_100DA800);
+    sub_100ABAD0(
+      (int)"Appends the given double to this string.",
+      "string",
+      (int)"string& opAddAssign(double flValue)",
+      (int)v25,
+      3);
+    v26 = asSMethodPtr_4_Convert(&result, sub_100DA680);
+    sub_100ABAD0(
+      (int)"Appends the given 64 bit integer to this string.",
+      "string",
+      (int)"string& opAddAssign(int64 iValue)",
+      (int)v26,
+      3);
+    v27 = asSMethodPtr_4_Convert(&result, sub_100DA730);
+    sub_100ABAD0(
+      (int)"Appends the given 64 bit unsigned integer to this string.",
+      "string",
+      (int)"string& opAddAssign(uint64 uiValue)",
+      (int)v27,
+      3);
+    v28 = asSMethodPtr_4_Convert(&result, sub_100DA4C0);
+    sub_100ABAD0(
+      (int)"Appends the given boolean to this string.",
+      "string",
+      (int)"string& opAddAssign(bool bValue)",
+      (int)v28,
+      3);
+    v29 = asSMethodPtr_4_Convert(&result, sub_100DA4E0);
+    sub_100ABAD0(
+      (int)"Appends the given character to this string.",
+      "string",
+      (int)"string& opAddAssign(char character)",
+      (int)v29,
+      3);
+    v30 = asSMethodPtr_4_Convert(&result, sub_100DA940);
+    sub_100ABAD0((int)"Compares strings.", "string", (int)"int opCmp(const string& in szString) const", (int)v30, 3);
+    v31 = asSMethodPtr_4_Convert(&result, sub_100DA940);
+    sub_100ABAD0((int)"Compares strings.", "string", (int)"int Compare(const string& in szString) const", (int)v31, 3);
+    v32 = asSMethodPtr_4_Convert(&result, sub_100DA9A0);
+    sub_100ABAD0(
+      (int)"Compares strings up to amount characters.",
+      "string",
+      (int)"int CompareN(const string& in szString, const uint amount) const",
+      (int)v32,
+      3);
+    v33 = asSMethodPtr_4_Convert(&result, sub_100DA9E0);
+    sub_100ABAD0(
+      (int)"Compares strings case-insensitively.",
+      "string",
+      (int)"int ICompare(const string& in szString) const",
+      (int)v33,
+      3);
+    v34 = asSMethodPtr_4_Convert(&result, sub_100DAA20);
+    sub_100ABAD0(
+      (int)"Compares strings up to amount characters case-insensitively.",
+      "string",
+      (int)"int ICompareN(const string& in szString, const uint amount) const",
+      (int)v34,
+      3);
+    v35 = asSMethodPtr_4_Convert(&result, sub_100DAA80);
+    sub_100ABAD0(
+      (int)"Returns whether strings are equal.",
+      "string",
+      (int)"bool opEquals(const string& in szString) const",
+      (int)v35,
+      3);
+    v36 = asFunctionPtr_Global(&result, sub_100B9C90);
+    sub_100ABAD0(
+      (int)"Trims leading and trailing whitespace, or a given character.",
+      "string",
+      (int)"void Trim(const string& in szCharacter = ' ')",
+      (int)v36,
+      5);
+    v37 = asSMethodPtr_4_Convert(&result, sub_100DAC40);
+    sub_100ABAD0(
+      (int)"Returns true if the string starts with the given string.",
+      "string",
+      (int)"bool StartsWith(const string& in szString, const String::CompareType compareType = String::DEFAULT_COMPARE) const",
+      (int)v37,
+      3);
+    v38 = asSMethodPtr_4_Convert(&result, sub_100DACE0);
+    sub_100ABAD0(
+      (int)"Returns true if the string ends with the given string.",
+      "string",
+      (int)"bool EndsWith(const string& in szString, const String::CompareType compareType = String::DEFAULT_COMPARE) const",
+      (int)v38,
+      3);
+    v39 = asSMethodPtr_4_Convert(&result, sub_100DAE20);
+    sub_100ABAD0(
+      (int)"Find the first instance of the given string.\nReturns String::INVALID_INDEX if not found.",
+      "string",
+      (int)"uint Find(const string& in szString, const uint startIndex = 0, const String::CompareType compareType = String:"
+           ":DEFAULT_COMPARE) const",
+      (int)v39,
+      3);
+    v40 = asSMethodPtr_4_Convert(&result, sub_100DAFB0);
+    sub_100ABAD0(
+      (int)"Find the first instance of the given string, searching in reverse.\n"
+           "Returns String::INVALID_INDEX if not found.",
+      "string",
+      (int)"uint RFind(const string& in szString, uint startIndex = String::INVALID_INDEX, const String::CompareType compar"
+           "eType = String::DEFAULT_COMPARE) const",
+      (int)v40,
+      3);
+    v41 = asSMethodPtr_4_Convert(&result, sub_100DB100);
+    sub_100ABAD0(
+      (int)"Find the first instance of any character in the given string.\nReturns String::INVALID_INDEX if not found.",
+      "string",
+      (int)"uint FindFirstOf(const string& in szString, const uint startIndex = 0, const String::CompareType compareType = "
+           "String::DEFAULT_COMPARE) const",
+      (int)v41,
+      3);
+    v42 = asSMethodPtr_4_Convert(&result, sub_100DB230);
+    sub_100ABAD0(
+      (int)"Find the last instance of any character in the given string.\nReturns String::INVALID_INDEX if not found.",
+      "string",
+      (int)"uint FindLastOf(const string& in szString, const uint startIndex = 0, const String::CompareType compareType = S"
+           "tring::DEFAULT_COMPARE) const",
+      (int)v42,
+      3);
+    v43 = asSMethodPtr_4_Convert(&result, sub_100DB4A0);
+    sub_100ABAD0(
+      (int)"Find the first instance of the given string.\nReturns String::INVALID_INDEX if not found.",
+      "string",
+      (int)"uint FindFirstNotOf(const string& in szString, uint startIndex = 0, const String::CompareType compareType = Str"
+           "ing::DEFAULT_COMPARE) const",
+      (int)v43,
+      3);
+    v44 = asSMethodPtr_4_Convert(&result, sub_100DB830);
+    sub_100ABAD0(
+      (int)"Find the first instance of the given string, searching in reverse.\n"
+           "Returns String::INVALID_INDEX if not found.",
+      "string",
+      (int)"uint FindLastNotOf(const string& in szString, uint startIndex = String::INVALID_INDEX, const String::CompareTyp"
+           "e compareType = String::DEFAULT_COMPARE) const",
+      (int)v44,
+      3);
+    v45 = asSMethodPtr_4_Convert(&result, sub_100DBC40);
+    sub_100ABAD0(
+      (int)"Get the next token of the given string.\nReturns String::NO_MORE_TOKENS if none remaining.",
+      "string",
+      (int)"string Tokenize(const string& in delimiter) const",
+      (int)v45,
+      3);
+    v46 = asSMethodPtr_4_Convert(&result, sub_100DBF10);
+    sub_100ABAD0((int)"Converts this string to lower case.", "string", (int)"string& ToLowercase()", (int)v46, 3);
+    v47 = asSMethodPtr_4_Convert(&result, sub_100DBF40);
+    sub_100ABAD0((int)"Converts this string to upper case.", "string", (int)"string& ToUppercase()", (int)v47, 3);
+    v48 = asSMethodPtr_4_Convert(&result, sub_100DBF70);
+    sub_100ABAD0(
+      (int)"Returns a substring of this string.",
+      "string",
+      (int)"string SubString(uint startIndex = 0, uint count = String::INVALID_INDEX) const",
+      (int)v48,
+      3);
+    v49 = asSMethodPtr_4_Convert(&result, sub_100DC1A0);
+    sub_100ABAD0(
+      (int)"Replaces the given substring with the given replacement string.",
+      "string",
+      (int)"string& Replace(const string& in szSubstring, const string& in szReplacement, const String::CompareType compare"
+           "Type = String::DEFAULT_COMPARE)",
+      (int)v49,
+      3);
+    v50 = asSMethodPtr_4_Convert(&result, sub_100DC320);
+    sub_100ABAD0(
+      (int)"Truncates the string to uiMaxLength characters.",
+      "string",
+      (int)"void Truncate(const size_t uiMaxLength)",
+      (int)v50,
+      3);
+    v51 = asFunctionPtr_Global(&result, sub_100DC570);
+    sub_100ABAD0(
+      (int)"Returns a copy of this string with the given string appended.",
+      "string",
+      (int)"string opAdd(const string& in szString) const",
+      (int)v51,
+      5);
+    v52 = asFunctionPtr_Global(&result, sub_100DCF30);
+    sub_100ABAD0(
+      (int)"Returns a copy of this string with the given double appended.",
+      "string",
+      (int)"string opAdd(double flValue) const",
+      (int)v52,
+      5);
+    v53 = asFunctionPtr_Global(&result, sub_100DCB50);
+    sub_100ABAD0(
+      (int)"Returns a copy of this string with the given 64 bit integer appended.",
+      "string",
+      (int)"string opAdd(int64 iValue) const",
+      (int)v53,
+      5);
+    v54 = asFunctionPtr_Global(&result, sub_100DCCC0);
+    sub_100ABAD0(
+      (int)"Returns a copy of this string with the given 64 bit unsigned integer appended.",
+      "string",
+      (int)"string opAdd(uint64 uiValue) const",
+      (int)v54,
+      5);
+    v55 = asFunctionPtr_Global(&result, sub_100DC690);
+    sub_100ABAD0(
+      (int)"Returns a copy of this string with the given boolean appended.",
+      "string",
+      (int)"string opAdd(bool bValue) const",
+      (int)v55,
+      5);
+    v56 = asFunctionPtr_Global(&result, sub_100DC780);
+    sub_100ABAD0(
+      (int)"Returns a copy of this string with the given character appended.",
+      "string",
+      (int)"string opAdd(char character) const",
+      (int)v56,
+      5);
+    v57 = asFunctionPtr_Global(&result, sub_100B8C00);
+    sub_100ABAD0(
+      (int)"Splits this string by the given delimiter.",
+      "string",
+      (int)"array<string>@ Split(const string& in szDelimiter) const",
+      (int)v57,
+      4);
+  }

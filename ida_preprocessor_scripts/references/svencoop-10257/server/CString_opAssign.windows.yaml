@@ -1,0 +1,21 @@
+func_name: "CString_opAssign"
+func_va: "0x100d9db0"
+disasm_code: |-
+  .text:100D9DB0                 mov     eax, [esp+source]
+  .text:100D9DB4                 push    esi
+  .text:100D9DB5                 mov     esi, ecx
+  .text:100D9DB7                 ; length
+  .text:100D9DB7                 push    dword ptr [eax+18h]; length
+  .text:100D9DBA                 ; source
+  .text:100D9DBA                 push    dword ptr [eax+14h]; source
+  .text:100D9DBD                 ; (call, CString_Assign) source->buffer +20 and source->length +24 passed to native Assign(const char*, unsigned int).
+  .text:100D9DBD                 call    CString_Assign; (call, CString_Assign) source->buffer +20 and source->length +24 passed to native Assign(const char*, unsigned int).
+  .text:100D9DC2                 mov     eax, esi
+  .text:100D9DC4                 pop     esi
+  .text:100D9DC5                 retn    4
+procedure: |-
+  CString *__thiscall CString__operator_assign(CString *this, const CString *source)
+  {
+    CString_Assign(this, source->buffer, source->length);// (call, CString_Assign) source->buffer +20 and source->length +24 passed to native Assign(const char*, unsigned int).
+    return this;
+  }

@@ -1,0 +1,20 @@
+func_name: "DestructASString"
+func_va: "0x156a7a"
+disasm_code: |-
+  .text:00156A7A                 push    ebx
+  .text:00156A7B                 sub     esp, 18h
+  .text:00156A7E                 call    sub_D3A80
+  .text:00156A83                 add     ebx, (offset qword_B14000 - $)
+  .text:00156A89                 mov     eax, [esp+1Ch+string]
+  .text:00156A8D                 ; this
+  .text:00156A8D                 mov     [esp+1Ch+var_1C], eax; this
+  .text:00156A90                 ; (call, CString_dtor) native non-deleting destructor; not ClearMemory at 0x1787A2.
+  .text:00156A90                 call    CString_dtor; (call, CString_dtor) native non-deleting destructor; not ClearMemory at 0x1787A2.
+  .text:00156A95                 add     esp, 18h
+  .text:00156A98                 pop     ebx
+  .text:00156A99                 retn
+procedure: |-
+  void __cdecl DestructASString(CString *string)
+  {
+    CString_dtor(string);                        // (call, CString_dtor) native non-deleting destructor; not ClearMemory at 0x1787A2.
+  }

@@ -4017,6 +4017,31 @@ modules:
       - name: find-asGetActiveContext
         expected_output:
           - asGetActiveContext.{platform}.yaml
+      - name: find-CString-CScriptBuilder-predecessors
+        expected_output:
+          - RegisterSCScriptASString.{platform}.yaml
+          - CASModuleBuilder_CASModuleBuilder.{platform}.yaml
+      - name: find-RegisterSCScriptASString-decompiles
+        expected_input:
+          - RegisterSCScriptASString.{platform}.yaml
+        expected_output:
+          - CString_opAssign.{platform}.yaml
+          - DestructASString.{platform}.yaml
+      - name: find-CString_opAssign-decompiles
+        expected_input:
+          - CString_opAssign.{platform}.yaml
+        expected_output:
+          - CString_Assign.{platform}.yaml
+      - name: find-DestructASString-decompiles
+        expected_input:
+          - DestructASString.{platform}.yaml
+        expected_output:
+          - CString_dtor.{platform}.yaml
+      - name: find-CASModuleBuilder_CASModuleBuilder-decompiles
+        expected_input:
+          - CASModuleBuilder_CASModuleBuilder.{platform}.yaml
+        expected_output:
+          - CScriptBuilder_DefineWord.{platform}.yaml
     symbols:
       - name: RegisterScriptDictionary
         category: func
@@ -4124,6 +4149,20 @@ modules:
         category: func
         platform: linux
       - name: asGetActiveContext
+        category: func
+      - name: RegisterSCScriptASString
+        category: func
+      - name: CASModuleBuilder_CASModuleBuilder
+        category: func
+      - name: CString_opAssign
+        category: func
+      - name: DestructASString
+        category: func
+      - name: CString_Assign
+        category: func
+      - name: CString_dtor
+        category: func
+      - name: CScriptBuilder_DefineWord
         category: func
   - name: serverbrowser
     module_windows: serverbrowser.dll
