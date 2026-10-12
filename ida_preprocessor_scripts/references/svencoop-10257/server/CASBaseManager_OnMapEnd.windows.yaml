@@ -53,7 +53,7 @@ disasm_code: |-
   .text:100A1E72                 push    esi; Block
   .text:100A1E73                 call    sub_1038EE37
   .text:100A1E78                 add     esp, 8
-  .text:100A1E7B                 cmp     dword ptr [edi+18h], 0
+  .text:100A1E7B                 cmp     dword ptr [edi+18h], 0; (structmember, struct=CASServerManager, member=curModule); inherited CASBaseManager activeModule field
   .text:100A1E7F                 mov     dword ptr [edi+14h], 0
   .text:100A1E86                 jz      short loc_100A1ED7
   .text:100A1E88                 mov     eax, CASLog_pInstance
@@ -81,7 +81,7 @@ disasm_code: |-
   .text:100A1EC7                 push    eax; log
   .text:100A1EC8                 call    CASLog__Error
   .text:100A1ECD                 add     esp, 0Ch
-  .text:100A1ED0                 mov     dword ptr [edi+18h], 0
+  .text:100A1ED0                 mov     dword ptr [edi+18h], 0; (structmember, struct=CASServerManager, member=curModule); inherited CASBaseManager activeModule field
   .text:100A1ED7                 mov     esi, [edi+1Ch]
   .text:100A1EDA                 cmp     esi, [edi+20h]
   .text:100A1EDD                 jz      short loc_100A1EEF
@@ -251,7 +251,7 @@ procedure: |-
       CASModuleHandle::dtor(moduleHandle);
       sub_1038EE37(moduleHandle);
     }
-    v4 = self->activeModule == nullptr;
+    v4 = self->activeModule == nullptr; // (structmember, struct=CASServerManager, member=curModule); inherited activeModule is the consumer curModule field.
     self->moduleHandle = nullptr;
     if ( !v4 )
     {
@@ -268,7 +268,7 @@ procedure: |-
         CASLog_pInstance = v5;
       }
       CASLog::Error(v5, 0, "Active module was not set to null!\n");
-      self->activeModule = nullptr;
+      self->activeModule = nullptr; // (structmember, struct=CASServerManager, member=curModule); inherited activeModule is the consumer curModule field.
     }
     for ( i = self->listenersBegin; i != self->listenersEnd; ++i )
       (*(void (__thiscall **)(void *))(*(_DWORD *)*i + 8))(*i);

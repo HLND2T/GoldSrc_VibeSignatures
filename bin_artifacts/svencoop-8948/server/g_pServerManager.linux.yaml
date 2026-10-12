@@ -1,0 +1,11 @@
+gv_name: CASServerManager::GetInstance()::pInstance
+gv_va: '0x99e284'
+gv_rva: '0x99e284'
+gv_sig: 55 89 E5 57 56 53 83 EC ?? E8 ?? ?? ?? ?? 81 C6 ?? ?? ?? ?? 8B 4D ?? 85 C9 0F 84 ?? ?? ?? ?? 83 EC ?? 8B 45 ?? 50
+  89 F3
+gv_sig_va: '0x1d8b5a'
+gv_inst_offset: '0x30'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'
+gv_pic_addend: '0x9a0e9c'
+gv_sig_allow_across_function_boundary: true

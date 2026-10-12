@@ -63,7 +63,7 @@ Windows两个版本及10257 Linux：字符串/220→PlayStepSound→PM_PlaySound
 
 ### Verification (2026-10-12)
 
-空输出目录 `.tmp/part_i/fresh_artifacts` 定向重跑3个finder、两tag、全部声明平台：9个节点成功、0失败、0跳过；最终9份YAML复制到bin_artifacts。独立原始文件验证13份（含复用Color24）VA/RVA、PE32/ELF32映射和每个func_sig唯一匹配。完整server调度两tag均0失败、各56缓存节点跳过，不能宣称重新执行了全部既有finder。
+空输出目录 `.tmp/part_i/fresh_artifacts` 定向重跑3个finder、两tag、全部声明平台：9个节点成功、0失败、0跳过；最终9份YAML复制到bin_artifacts。独立原始文件验证13份（含复用Color24）VA/RVA、PE32/ELF32映射和每个func_sig唯一匹配。初次完整server调度两tag均0失败、各56缓存节点跳过。同步main的Part J之后再次调度，两tag均0失败、各60缓存节点跳过，不能宣称重新执行了全部既有finder。
 
 - `uv run python tests/run_test_suite.py unit -b --durations 30`：1494 tests，OK，12 skipped。
 - `uv run python tests/run_test_suite.py repository-contract -b --durations 30`：15 tests，OK。
