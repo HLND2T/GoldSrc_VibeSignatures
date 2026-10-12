@@ -1,0 +1,433 @@
+func_name: "SV_Physics_Pusher"
+func_va: "0x1556d0"
+disasm_code: |-
+  .text:001556D0                 push    ebx
+  .text:001556D1                 sub     esp, 48h
+  .text:001556D4                 mov     ebx, [esp+4Ch+ent]
+  .text:001556D8                 fld     dword ptr [ebx+180h]
+  .text:001556DE                 fld     dword ptr [ebx+184h]
+  .text:001556E4                 fld     ds:host_frametime
+  .text:001556EA                 fld     st(1)
+  .text:001556EC                 fld     st(1)
+  .text:001556EE                 fadd    st, st(4)
+  .text:001556F0                 fucomip st, st(1)
+  .text:001556F2                 fstp    st
+  .text:001556F4                 jbe     loc_155860
+  .text:001556FA                 fstp    st
+  .text:001556FC                 fld     st
+  .text:001556FE                 fsub    st, st(2)
+  .text:00155700                 fldz
+  .text:00155702                 fucomip st, st(1)
+  .text:00155704                 jbe     loc_155868
+  .text:0015570A                 fstp    st
+  .text:0015570C                 fxch    st(1)
+  .text:0015570E                 jmp     short loc_155730
+  .text:00155710                 fstp    st(2)
+  .text:00155712                 fxch    st(1)
+  .text:00155714                 jmp     short loc_155730
+  .text:00155720                 fstp    st(2)
+  .text:00155722                 fxch    st(1)
+  .text:00155724                 lea     esi, [esi+0]
+  .text:0015572A                 lea     edi, [edi+0]
+  .text:00155730                 fld     dword ptr [ebx+0D0h]
+  .text:00155736                 fld     ds:flt_275F88
+  .text:0015573C                 fucomip st, st(1)
+  .text:0015573E                 ja      short loc_15574E
+  .text:00155740                 fld     ds:flt_275CA4
+  .text:00155746                 fxch    st(1)
+  .text:00155748                 fucomi  st, st(1)
+  .text:0015574A                 fstp    st(1)
+  .text:0015574C                 jbe     short loc_155778
+  .text:0015574E                 fld     ds:dbl_275F70
+  .text:00155754                 fld     st(1)
+  .text:00155756                 fprem
+  .text:00155758                 fnstsw  ax
+  .text:0015575A                 sahf
+  .text:0015575B                 jp      short loc_155756
+  .text:0015575D                 fstp    st(1)
+  .text:0015575F                 fucomi  st, st
+  .text:00155761                 jp      loc_155A59
+  .text:00155767                 fstp    st(1)
+  .text:00155769                 fstp    dword ptr [ebx+0D0h]
+  .text:0015576F                 jmp     short loc_15577A
+  .text:00155778                 fstp    st
+  .text:0015577A                 fld     dword ptr [ebx+0D4h]
+  .text:00155780                 fld     ds:flt_275F88
+  .text:00155786                 fucomip st, st(1)
+  .text:00155788                 ja      short loc_155798
+  .text:0015578A                 fld     ds:flt_275CA4
+  .text:00155790                 fxch    st(1)
+  .text:00155792                 fucomi  st, st(1)
+  .text:00155794                 fstp    st(1)
+  .text:00155796                 jbe     short loc_1557C0
+  .text:00155798                 fld     ds:dbl_275F70
+  .text:0015579E                 fld     st(1)
+  .text:001557A0                 fprem
+  .text:001557A2                 fnstsw  ax
+  .text:001557A4                 sahf
+  .text:001557A5                 jp      short loc_1557A0
+  .text:001557A7                 fstp    st(1)
+  .text:001557A9                 fucomi  st, st
+  .text:001557AB                 jp      loc_155A8B
+  .text:001557B1                 fstp    st(1)
+  .text:001557B3                 fstp    dword ptr [ebx+0D4h]
+  .text:001557B9                 jmp     short loc_1557C2
+  .text:001557C0                 fstp    st
+  .text:001557C2                 fld     dword ptr [ebx+0D8h]
+  .text:001557C8                 fld     ds:flt_275F88
+  .text:001557CE                 fucomip st, st(1)
+  .text:001557D0                 ja      short loc_1557E0
+  .text:001557D2                 fld     ds:flt_275CA4
+  .text:001557D8                 fxch    st(1)
+  .text:001557DA                 fucomi  st, st(1)
+  .text:001557DC                 fstp    st(1)
+  .text:001557DE                 jbe     short loc_155808
+  .text:001557E0                 fld     ds:dbl_275F70
+  .text:001557E6                 fld     st(1)
+  .text:001557E8                 fprem
+  .text:001557EA                 fnstsw  ax
+  .text:001557EC                 sahf
+  .text:001557ED                 jp      short loc_1557E8
+  .text:001557EF                 fstp    st(1)
+  .text:001557F1                 fucomi  st, st
+  .text:001557F3                 jp      loc_155A27
+  .text:001557F9                 fstp    st(1)
+  .text:001557FB                 fstp    dword ptr [ebx+0D8h]
+  .text:00155801                 fxch    st(1)
+  .text:00155803                 jmp     short loc_15580C
+  .text:00155808                 fstp    st
+  .text:0015580A                 fxch    st(1)
+  .text:0015580C                 fucomi  st, st(1)
+  .text:0015580E                 fstp    st(1)
+  .text:00155810                 jbe     loc_155980
+  .text:00155816                 test    byte ptr [ebx+226h], 20h
+  .text:0015581D                 jnz     short loc_155830
+  .text:0015581F                 fld     dword ptr [ebx+180h]
+  .text:00155825                 fucomip st, st(1)
+  .text:00155827                 fstp    st
+  .text:00155829                 jnb     short loc_155832
+  .text:0015582B                 jmp     loc_155982
+  .text:00155830                 fstp    st
+  .text:00155832                 fld     qword ptr ds:sv.active+0Ch
+  .text:00155838                 mov     dword ptr [ebx+184h], 0
+  .text:00155842                 mov     eax, ds:gEntityInterface.pfnGameInit+8
+  .text:00155847                 fstp    ds:gGlobalVariables.time
+  .text:0015584D                 mov     [esp+4Ch+ent], ebx
+  .text:00155851                 add     esp, 48h
+  .text:00155854                 pop     ebx
+  .text:00155855                 jmp     eax
+  .text:00155860                 fstp    [esp+4Ch+var_10]
+  .text:00155864                 fld     [esp+4Ch+var_10]
+  .text:00155868                 fldz
+  .text:0015586A                 fxch    st(1)
+  .text:0015586C                 fucomi  st, st(1)
+  .text:0015586E                 fstp    st(1)
+  .text:00155870                 jnp     loc_1559E8
+  .text:00155876                 fld     dword ptr [ebx+0DCh]
+  .text:0015587C                 fldz
+  .text:0015587E                 fxch    st(1)
+  .text:00155880                 fucomip st, st(1)
+  .text:00155882                 jnp     loc_155990
+  .text:00155888                 fstp    st
+  .text:0015588A                 jmp     short loc_1558B0
+  .text:00155890                 fstp    st
+  .text:00155892                 jmp     short loc_1558B0
+  .text:00155898                 fstp    st
+  .text:0015589A                 jmp     short loc_1558B0
+  .text:001558A0                 fstp    st
+  .text:001558A2                 lea     esi, [esi+0]
+  .text:001558A9                 lea     edi, [edi+0]
+  .text:001558B0                 fld     dword ptr [ebx+0A0h]
+  .text:001558B6                 fldz
+  .text:001558B8                 fxch    st(1)
+  .text:001558BA                 fucomip st, st(1)
+  .text:001558BC                 jp      short loc_1558E0
+  .text:001558BE                 jnz     short loc_1558E8
+  .text:001558C0                 fld     dword ptr [ebx+0A4h]
+  .text:001558C6                 fucomip st, st(1)
+  .text:001558C8                 jp      short loc_1558F0
+  .text:001558CA                 jnz     short loc_1558F8
+  .text:001558CC                 fld     dword ptr [ebx+0A8h]
+  .text:001558D2                 fucomip st, st(1)
+  .text:001558D4                 fstp    st
+  .text:001558D6                 jp      short loc_155900
+  .text:001558D8                 jmp     loc_155A00
+  .text:001558E0                 fstp    st
+  .text:001558E2                 jmp     short loc_155900
+  .text:001558E8                 fstp    st
+  .text:001558EA                 jmp     short loc_155900
+  .text:001558F0                 fstp    st
+  .text:001558F2                 jmp     short loc_155900
+  .text:001558F8                 fstp    st
+  .text:001558FA                 lea     esi, [esi+0]
+  .text:00155900                 ; movetime
+  .text:00155900                 fst     [esp+4Ch+pusher+4]; movetime
+  .text:00155904                 fstp    [esp+4Ch+var_1C]
+  .text:00155908                 fstp    [esp+4Ch+var_3C]
+  .text:0015590C                 fstp    [esp+4Ch+var_2C]
+  .text:00155910                 ; pusher
+  .text:00155910                 mov     [esp+4Ch+pusher], ebx; pusher
+  .text:00155913                 call    SV_PushRotate
+  .text:00155918                 fld     [esp+4Ch+var_1C]
+  .text:0015591C                 fld     [esp+4Ch+var_3C]
+  .text:00155920                 test    eax, eax
+  .text:00155922                 fld     [esp+4Ch+var_2C]
+  .text:00155926                 jz      loc_155710
+  .text:0015592C                 fld     dword ptr [ebx+180h]
+  .text:00155932                 fxch    st(1)
+  .text:00155934                 fst     dword ptr [ebx+180h]
+  .text:0015593A                 fxch    st(3)
+  .text:0015593C                 ; movetime
+  .text:0015593C                 fstp    [esp+4Ch+pusher+4]; movetime
+  .text:00155940                 fstp    [esp+4Ch+var_1C]
+  .text:00155944                 fstp    [esp+4Ch+var_3C]
+  .text:00155948                 fstp    [esp+4Ch+var_2C]
+  .text:0015594C                 ; pusher
+  .text:0015594C                 mov     [esp+4Ch+pusher], ebx; pusher
+  .text:0015594F                 call    SV_PushMove
+  .text:00155954                 fld     dword ptr [ebx+180h]
+  .text:0015595A                 fld     [esp+4Ch+var_1C]
+  .text:0015595E                 fucomi  st, st(1)
+  .text:00155960                 fstp    st(1)
+  .text:00155962                 fld     [esp+4Ch+var_3C]
+  .text:00155966                 fld     [esp+4Ch+var_2C]
+  .text:0015596A                 jbe     loc_155720
+  .text:00155970                 fxch    st(2)
+  .text:00155972                 fstp    dword ptr [ebx+180h]
+  .text:00155978                 fxch    st(1)
+  .text:0015597A                 jmp     loc_155730
+  .text:00155980                 fstp    st
+  .text:00155982                 add     esp, 48h
+  .text:00155985                 pop     ebx
+  .text:00155986                 retn
+  .text:00155990                 jnz     loc_155890
+  .text:00155996                 fld     dword ptr [ebx+0E0h]
+  .text:0015599C                 fucomip st, st(1)
+  .text:0015599E                 jp      loc_155898
+  .text:001559A4                 jnz     loc_1558A0
+  .text:001559AA                 fld     dword ptr [ebx+0E4h]
+  .text:001559B0                 fucomip st, st(1)
+  .text:001559B2                 fstp    st
+  .text:001559B4                 jp      loc_1558B0
+  .text:001559BA                 jnz     loc_1558B0
+  .text:001559C0                 ; movetime
+  .text:001559C0                 fstp    [esp+4Ch+pusher+4]; movetime
+  .text:001559C4                 fstp    [esp+4Ch+var_3C]
+  .text:001559C8                 fstp    [esp+4Ch+var_2C]
+  .text:001559CC                 ; pusher
+  .text:001559CC                 mov     [esp+4Ch+pusher], ebx; pusher
+  .text:001559CF                 call    SV_PushMove
+  .text:001559D4                 fld     [esp+4Ch+var_3C]
+  .text:001559D8                 fld     [esp+4Ch+var_2C]
+  .text:001559DC                 jmp     loc_155730
+  .text:001559E8                 jnz     loc_155876
+  .text:001559EE                 fstp    st
+  .text:001559F0                 fxch    st(1)
+  .text:001559F2                 jmp     loc_155730
+  .text:00155A00                 jnz     loc_155900
+  .text:00155A06                 ; movetime
+  .text:00155A06                 fstp    [esp+4Ch+pusher+4]; movetime
+  .text:00155A0A                 fstp    [esp+4Ch+var_3C]
+  .text:00155A0E                 fstp    [esp+4Ch+var_2C]
+  .text:00155A12                 ; pusher
+  .text:00155A12                 mov     [esp+4Ch+pusher], ebx; pusher
+  .text:00155A15                 call    SV_PushRotate
+  .text:00155A1A                 fld     [esp+4Ch+var_3C]
+  .text:00155A1E                 fld     [esp+4Ch+var_2C]
+  .text:00155A22                 jmp     loc_155730
+  .text:00155A27                 fstp    st
+  .text:00155A29                 ; x
+  .text:00155A29                 fstp    qword ptr [esp+4Ch+pusher]; x
+  .text:00155A2C                 fxch    st(1)
+  .text:00155A2E                 xor     ecx, ecx
+  .text:00155A30                 mov     eax, 40AC2000h
+  .text:00155A35                 ; y
+  .text:00155A35                 mov     dword ptr [esp+4Ch+y], ecx; y
+  .text:00155A39                 fstp    [esp+4Ch+var_3C]
+  .text:00155A3D                 fstp    [esp+4Ch+var_2C]
+  .text:00155A41                 mov     dword ptr [esp+4Ch+y+4], eax
+  .text:00155A45                 call    fmod
+  .text:00155A4A                 fld     [esp+4Ch+var_2C]
+  .text:00155A4E                 fld     [esp+4Ch+var_3C]
+  .text:00155A52                 fxch    st(2)
+  .text:00155A54                 jmp     loc_1557FB
+  .text:00155A59                 fstp    st
+  .text:00155A5B                 ; x
+  .text:00155A5B                 fstp    qword ptr [esp+4Ch+pusher]; x
+  .text:00155A5E                 fxch    st(1)
+  .text:00155A60                 xor     eax, eax
+  .text:00155A62                 ; y
+  .text:00155A62                 mov     dword ptr [esp+4Ch+y], eax; y
+  .text:00155A66                 mov     eax, 40AC2000h
+  .text:00155A6B                 fstp    [esp+4Ch+var_3C]
+  .text:00155A6F                 fstp    [esp+4Ch+var_2C]
+  .text:00155A73                 mov     dword ptr [esp+4Ch+y+4], eax
+  .text:00155A77                 call    fmod
+  .text:00155A7C                 fld     [esp+4Ch+var_2C]
+  .text:00155A80                 fld     [esp+4Ch+var_3C]
+  .text:00155A84                 fxch    st(2)
+  .text:00155A86                 jmp     loc_155769
+  .text:00155A8B                 fstp    st
+  .text:00155A8D                 ; x
+  .text:00155A8D                 fstp    qword ptr [esp+4Ch+pusher]; x
+  .text:00155A90                 fxch    st(1)
+  .text:00155A92                 xor     eax, eax
+  .text:00155A94                 ; y
+  .text:00155A94                 mov     dword ptr [esp+4Ch+y], eax; y
+  .text:00155A98                 mov     eax, 40AC2000h
+  .text:00155A9D                 fstp    [esp+4Ch+var_3C]
+  .text:00155AA1                 fstp    [esp+4Ch+var_2C]
+  .text:00155AA5                 mov     dword ptr [esp+4Ch+y+4], eax
+  .text:00155AA9                 call    fmod
+  .text:00155AAE                 fld     [esp+4Ch+var_2C]
+  .text:00155AB2                 fld     [esp+4Ch+var_3C]
+  .text:00155AB6                 fxch    st(2)
+  .text:00155AB8                 jmp     loc_1557B3
+procedure: |-
+  void __cdecl SV_Physics_Pusher(edict_t_0 *ent)
+  {
+    long double ltime; // fst7
+    long double nextthink; // fst6
+    long double v3; // fst5
+    long double v4; // fst6
+    long double v5; // fst7
+    long double v6; // fst5
+    long double v7; // fst3
+    char v9; // c2
+    long double v10; // fst5
+    long double v11; // fst3
+    char v13; // c2
+    long double v14; // fst5
+    long double v15; // fst3
+    char v17; // c2
+    long double v18; // rt2
+    long double v19; // fst6
+    long double v20; // fst7
+    long double v21; // rtt
+    long double time; // fst7
+    void (*pfnThink)(edict_t *); // eax
+    long double v24; // fst5
+    float pusher_4; // [esp+4h] [ebp-48h]
+    float pusher_4a; // [esp+4h] [ebp-48h]
+    float pusher_4b; // [esp+4h] [ebp-48h]
+    float pusher_4c; // [esp+4h] [ebp-48h]
+    float v29; // [esp+10h] [ebp-3Ch]
+    float v30; // [esp+10h] [ebp-3Ch]
+    float v31; // [esp+10h] [ebp-3Ch]
+    float v32; // [esp+20h] [ebp-2Ch]
+    float v33; // [esp+20h] [ebp-2Ch]
+    float v34; // [esp+20h] [ebp-2Ch]
+    float v35; // [esp+30h] [ebp-1Ch]
+    float v36; // [esp+30h] [ebp-1Ch]
+    float v37; // [esp+3Ch] [ebp-10h]
+
+    ltime = ent->v.ltime;
+    nextthink = ent->v.nextthink;
+    if ( host_frametime + ltime <= nextthink )
+    {
+      v37 = host_frametime;
+      v3 = v37;
+    }
+    else
+    {
+      v3 = nextthink - ltime;
+      if ( nextthink - ltime < 0.0 )
+      {
+        v4 = ent->v.ltime;
+        v5 = ent->v.nextthink;
+        goto LABEL_6;
+      }
+    }
+    if ( v3 == 0.0 )
+    {
+      v4 = ent->v.ltime;
+      v5 = ent->v.nextthink;
+    }
+    else if ( ent->v.avelocity[0] == 0.0 && ent->v.avelocity[1] == 0.0 && ent->v.avelocity[2] == 0.0 )
+    {
+      pusher_4b = v3;
+      v30 = ent->v.nextthink;
+      v33 = ent->v.ltime;
+      SV_PushMove(ent, pusher_4b);
+      v5 = v30;
+      v4 = v33;
+    }
+    else if ( ent->v.velocity[0] == 0.0 && ent->v.velocity[1] == 0.0 && ent->v.velocity[2] == 0.0 )
+    {
+      pusher_4c = v3;
+      v31 = ent->v.nextthink;
+      v34 = ent->v.ltime;
+      SV_PushRotate(ent, pusher_4c);
+      v5 = v31;
+      v4 = v34;
+    }
+    else
+    {
+      pusher_4 = v3;
+      v35 = v3;
+      v29 = ent->v.nextthink;
+      v32 = ent->v.ltime;
+      if ( SV_PushRotate(ent, pusher_4) )
+      {
+        v24 = ent->v.ltime;
+        ent->v.ltime = v32;
+        pusher_4a = v35;
+        v36 = v24;
+        SV_PushMove(ent, pusher_4a);
+        if ( v36 > (long double)ent->v.ltime )
+          ent->v.ltime = v36;
+        v4 = v32;
+        v5 = v29;
+      }
+      else
+      {
+        v4 = v32;
+        v5 = v29;
+      }
+    }
+  LABEL_6:
+    v6 = ent->v.angles[0];
+    if ( v6 < -3600.0 || v6 > 3600.0 )
+    {
+      v7 = ent->v.angles[0];
+      do
+        v7 = __FPREM__(v7, 3600.0);
+      while ( v9 );
+      ent->v.angles[0] = v7;
+    }
+    v10 = ent->v.angles[1];
+    if ( v10 < -3600.0 || v10 > 3600.0 )
+    {
+      v11 = ent->v.angles[1];
+      do
+        v11 = __FPREM__(v11, 3600.0);
+      while ( v13 );
+      ent->v.angles[1] = v11;
+    }
+    v14 = ent->v.angles[2];
+    if ( v14 >= -3600.0 && v14 <= 3600.0 )
+    {
+      v21 = v4;
+      v19 = v5;
+      v20 = v21;
+    }
+    else
+    {
+      v15 = ent->v.angles[2];
+      do
+        v15 = __FPREM__(v15, 3600.0);
+      while ( v17 );
+      ent->v.angles[2] = v15;
+      v18 = v4;
+      v19 = v5;
+      v20 = v18;
+    }
+    if ( v19 > v20 && ((ent->v.flags & 0x200000) != 0 || ent->v.ltime >= v19) )
+    {
+      time = sv.time;
+      ent->v.nextthink = 0.0;
+      pfnThink = gEntityInterface.pfnThink;
+      gGlobalVariables.time = time;
+      pfnThink((edict_t *)ent);
+    }
+  }

@@ -1,0 +1,732 @@
+func_name: "SV_Physics"
+func_va: "0xd0b30"
+disasm_code: |-
+  .text:000D0B30                 push    ebp
+  .text:000D0B31                 push    edi
+  .text:000D0B32                 push    esi
+  .text:000D0B33                 push    ebx
+  .text:000D0B34                 call    __x86_get_pc_thunk_bx
+  .text:000D0B39                 add     ebx, (offset dbl_2EE000 - $)
+  .text:000D0B3F                 sub     esp, 3Ch
+  .text:000D0B42                 lea     ecx, (dword_F9FF80 - 2EE000h)[ebx]
+  .text:000D0B48                 lea     eax, (flt_F1AD80 - 2EE000h)[ebx]
+  .text:000D0B4E                 fld     qword ptr [ecx+0Ch]
+  .text:000D0B51                 mov     edi, eax
+  .text:000D0B53                 mov     [esp+4Ch+var_34], eax
+  .text:000D0B57                 fstp    dword ptr [eax]
+  .text:000D0B59                 lea     eax, (unk_D3EE00 - 2EE000h)[ebx]
+  .text:000D0B5F                 mov     [esp+4Ch+var_38], ecx
+  .text:000D0B63                 mov     [esp+4Ch+var_30], eax
+  .text:000D0B67                 call    dword ptr [eax+64h]
+  .text:000D0B6A                 mov     ecx, [esp+4Ch+var_38]
+  .text:000D0B6E                 mov     dword ptr [edi+8], 0
+  .text:000D0B75                 mov     eax, ds:dword_4A1550[ecx]
+  .text:000D0B7B                 test    eax, eax
+  .text:000D0B7D                 jle     loc_D113B
+  .text:000D0B83                 lea     edx, (dword_F1AE30 - 2EE000h)[ebx]
+  .text:000D0B89                 xor     ebp, ebp
+  .text:000D0B8B                 xor     edi, edi
+  .text:000D0B8D                 mov     [esp+4Ch+var_2C], edx
+  .text:000D0B91                 lea     edx, (dbl_30A4B8 - 2EE000h)[ebx]
+  .text:000D0B97                 mov     [esp+4Ch+var_28], edx
+  .text:000D0B9B                 nop
+  .text:000D0B9C                 lea     esi, [esi+0]
+  .text:000D0BA0                 mov     esi, ds:dword_4A1558[ecx]
+  .text:000D0BA6                 add     esi, ebp
+  .text:000D0BA8                 mov     edx, [esi]
+  .text:000D0BAA                 test    edx, edx
+  .text:000D0BAC                 jnz     loc_D0CF6
+  .text:000D0BB2                 cmp     ds:(byte_1488038 - 2EE000h)[ebx], 0
+  .text:000D0BB9                 jnz     loc_D0D50
+  .text:000D0BBF                 test    edi, edi
+  .text:000D0BC1                 jz      short loc_D0BD2
+  .text:000D0BC3                 lea     eax, (dword_F9FEE0 - 2EE000h)[ebx]
+  .text:000D0BC9                 cmp     [eax+8], edi
+  .text:000D0BCC                 jge     loc_D0CF0
+  .text:000D0BD2                 mov     edx, [esi+224h]
+  .text:000D0BD8                 test    dh, 2
+  .text:000D0BDB                 jz      short loc_D0C3B
+  .text:000D0BDD                 mov     eax, [esi+21Ch]
+  .text:000D0BE3                 test    eax, eax
+  .text:000D0BE5                 jz      short loc_D0C3B
+  .text:000D0BE7                 test    byte ptr [eax+224h], 4
+  .text:000D0BEE                 jz      short loc_D0C3B
+  .text:000D0BF0                 and     edx, 400000h
+  .text:000D0BF6                 mov     [esp+4Ch+var_38], ecx
+  .text:000D0BFA                 lea     edx, [esi+0ACh]
+  .text:000D0C00                 jnz     loc_D0EB8
+  .text:000D0C06                 ; int
+  .text:000D0C06                 mov     [esp+4Ch+var_44], edx; int
+  .text:000D0C0A                 add     eax, 0C4h
+  .text:000D0C0F                 movss   xmm4, dword ptr [eax+1B4h]
+  .text:000D0C17                 ; int
+  .text:000D0C17                 mov     [esp+4Ch+fmt], eax; int
+  .text:000D0C1A                 ; float
+  .text:000D0C1A                 movss   [esp+4Ch+touch_triggers], xmm4; float
+  .text:000D0C20                 call    sub_8C3E0
+  .text:000D0C25                 mov     ecx, [esp+4Ch+var_38]
+  .text:000D0C29                 mov     edx, [esi+224h]
+  .text:000D0C2F                 or      edx, 400000h
+  .text:000D0C35                 mov     [esi+224h], edx
+  .text:000D0C3B                 test    edx, 400000h
+  .text:000D0C41                 jz      loc_D0D70
+  .text:000D0C47                 mov     eax, edx
+  .text:000D0C49                 and     eax, 0FFBFFFFFh
+  .text:000D0C4E                 mov     [esi+224h], eax
+  .text:000D0C54                 mov     eax, [esi+188h]
+  .text:000D0C5A                 cmp     eax, 7
+  .text:000D0C5D                 jz      loc_D0EE8
+  .text:000D0C63                 test    eax, eax
+  .text:000D0C65                 jz      loc_D0E10
+  .text:000D0C6B                 cmp     eax, 0Ch
+  .text:000D0C6E                 jz      loc_D0F38
+  .text:000D0C74                 cmp     eax, 8
+  .text:000D0C77                 jz      loc_D0FC0
+  .text:000D0C7D                 cmp     eax, 4
+  .text:000D0C80                 jz      loc_D0F10
+  .text:000D0C86                 cmp     eax, 0Dh
+  .text:000D0C89                 jz      loc_D0F10
+  .text:000D0C8F                 lea     edx, [eax-5]
+  .text:000D0C92                 cmp     edx, 1
+  .text:000D0C95                 mov     [esp+4Ch+var_38], ecx
+  .text:000D0C99                 jbe     loc_D0DE8
+  .text:000D0C9F                 lea     edx, [eax-9]
+  .text:000D0CA2                 cmp     edx, 2
+  .text:000D0CA5                 jbe     loc_D0DE8
+  .text:000D0CAB                 mov     edx, [esp+4Ch+var_2C]
+  .text:000D0CAF                 mov     [esp+4Ch+var_44], eax
+  .text:000D0CB3                 mov     eax, [esi+80h]
+  .text:000D0CB9                 mov     ecx, [edx]
+  .text:000D0CBB                 add     eax, ecx
+  .text:000D0CBD                 mov     [esp+4Ch+touch_triggers], eax
+  .text:000D0CC1                 lea     eax, (aSvPhysicsSBadM - 2EE000h)[ebx]; "SV_Physics: %s bad movetype %d"
+  .text:000D0CC7                 ; fmt
+  .text:000D0CC7                 mov     [esp+4Ch+fmt], eax; fmt
+  .text:000D0CCA                 call    Sys_Error
+  .text:000D0CCF                 mov     ecx, [esp+4Ch+var_38]
+  .text:000D0CD3                 test    byte ptr [esi+227h], 40h
+  .text:000D0CDA                 jnz     short loc_D0D30
+  .text:000D0CDC                 jmp     short loc_D0CF0
+  .text:000D0CDE                 fstp    st
+  .text:000D0CE0                 jmp     short loc_D0CF0
+  .text:000D0CE8                 fstp    st
+  .text:000D0CEA                 fstp    st
+  .text:000D0CEC                 fstp    st
+  .text:000D0CEE                 xchg    ax, ax
+  .text:000D0CF0                 mov     eax, ds:dword_4A1550[ecx]
+  .text:000D0CF6                 inc     edi
+  .text:000D0CF7                 add     ebp, 324h
+  .text:000D0CFD                 cmp     edi, eax
+  .text:000D0CFF                 jl      loc_D0BA0
+  .text:000D0D05                 mov     eax, [esp+4Ch+var_34]
+  .text:000D0D09                 fld     dword ptr [eax+8]
+  .text:000D0D0C                 fldz
+  .text:000D0D0E                 fst     [esp+4Ch+var_38]
+  .text:000D0D12                 fxch    st(1)
+  .text:000D0D14                 fucomip st, st(1)
+  .text:000D0D16                 fstp    st
+  .text:000D0D18                 setnbe  al
+  .text:000D0D1B                 mov     ds:(byte_1488038 - 2EE000h)[ebx], al
+  .text:000D0D21                 call    sub_B20D0
+  .text:000D0D26                 add     esp, 3Ch
+  .text:000D0D29                 pop     ebx
+  .text:000D0D2A                 pop     esi
+  .text:000D0D2B                 pop     edi
+  .text:000D0D2C                 pop     ebp
+  .text:000D0D2D                 retn
+  .text:000D0D30                 mov     [esp+4Ch+fmt], esi
+  .text:000D0D33                 mov     [esp+4Ch+var_38], ecx
+  .text:000D0D37                 call    sub_9E4F0
+  .text:000D0D3C                 mov     ecx, [esp+4Ch+var_38]
+  .text:000D0D40                 mov     eax, ds:dword_4A1550[ecx]
+  .text:000D0D46                 jmp     short loc_D0CF6
+  .text:000D0D50                 mov     eax, 1
+  .text:000D0D55                 ; touch_triggers
+  .text:000D0D55                 mov     [esp+4Ch+touch_triggers], eax; touch_triggers
+  .text:000D0D59                 ; ent
+  .text:000D0D59                 mov     [esp+4Ch+fmt], esi; ent
+  .text:000D0D5C                 mov     [esp+4Ch+var_38], ecx
+  .text:000D0D60                 call    SV_LinkEdict
+  .text:000D0D65                 mov     ecx, [esp+4Ch+var_38]
+  .text:000D0D69                 jmp     loc_D0BBF
+  .text:000D0D70                 lea     edx, [esi+0ACh]
+  .text:000D0D76                 fld     ds:(flt_260074 - 2EE000h)[ebx]
+  .text:000D0D7C                 ; int
+  .text:000D0D7C                 mov     [esp+4Ch+var_44], edx; int
+  .text:000D0D80                 lea     edx, (dbl_30A4B8 - 2EE000h)[ebx]
+  .text:000D0D86                 lea     eax, [esi+0A0h]
+  .text:000D0D8C                 ; int
+  .text:000D0D8C                 mov     [esp+4Ch+var_40], eax; int
+  .text:000D0D90                 mov     [esp+4Ch+var_38], ecx
+  .text:000D0D94                 fmul    qword ptr [edx]
+  .text:000D0D96                 ; int
+  .text:000D0D96                 mov     [esp+4Ch+fmt], eax; int
+  .text:000D0D99                 fadd    ds:(flt_260068 - 2EE000h)[ebx]
+  .text:000D0D9F                 ; float
+  .text:000D0D9F                 fstp    [esp+4Ch+touch_triggers]; float
+  .text:000D0DA3                 call    sub_8C1C0
+  .text:000D0DA8                 lea     eax, (unk_45F4B4 - 2EE000h)[ebx]
+  .text:000D0DAE                 mov     edx, [esi+224h]
+  .text:000D0DB4                 mov     ecx, [esp+4Ch+var_38]
+  .text:000D0DB8                 movss   xmm0, dword ptr [eax]
+  .text:000D0DBC                 movss   xmm1, dword ptr [eax+4]
+  .text:000D0DC1                 movss   xmm2, dword ptr [eax+8]
+  .text:000D0DC6                 movss   dword ptr [esi+0ACh], xmm0
+  .text:000D0DCE                 movss   dword ptr [esi+0B0h], xmm1
+  .text:000D0DD6                 movss   dword ptr [esi+0B4h], xmm2
+  .text:000D0DDE                 jmp     loc_D0C47
+  .text:000D0DE8                 mov     [esp+4Ch+fmt], esi
+  .text:000D0DEB                 call    sub_CF3C0
+  .text:000D0DF0                 mov     ecx, [esp+4Ch+var_38]
+  .text:000D0DF4                 test    byte ptr [esi+227h], 40h
+  .text:000D0DFB                 jz      loc_D0CF0
+  .text:000D0E01                 jmp     loc_D0D30
+  .text:000D0E10                 and     edx, 40000000h
+  .text:000D0E16                 jnz     short loc_D0E90
+  .text:000D0E18                 fld     dword ptr [esi+184h]
+  .text:000D0E1E                 fldz
+  .text:000D0E20                 fst     [esp+4Ch+var_38]
+  .text:000D0E24                 fucomip st, st(1)
+  .text:000D0E26                 jnb     loc_D0CDE
+  .text:000D0E2C                 lea     eax, (dbl_30A4B8 - 2EE000h)[ebx]
+  .text:000D0E32                 fld     st
+  .text:000D0E34                 fld     qword ptr [ecx+0Ch]
+  .text:000D0E37                 fld     qword ptr [eax]
+  .text:000D0E39                 fadd    st, st(1)
+  .text:000D0E3B                 fxch    st(2)
+  .text:000D0E3D                 fucomi  st, st(2)
+  .text:000D0E3F                 fstp    st(2)
+  .text:000D0E41                 ja      loc_D0CE8
+  .text:000D0E47                 fucomi  st, st(1)
+  .text:000D0E49                 fstp    st(1)
+  .text:000D0E4B                 jbe     short loc_D0E59
+  .text:000D0E4D                 fstp    st(1)
+  .text:000D0E4F                 fstp    [esp+4Ch+var_20]
+  .text:000D0E53                 fld     [esp+4Ch+var_20]
+  .text:000D0E57                 jmp     short loc_D0E5B
+  .text:000D0E59                 fstp    st
+  .text:000D0E5B                 mov     eax, [esp+4Ch+var_34]
+  .text:000D0E5F                 mov     dword ptr [esi+184h], 0
+  .text:000D0E69                 mov     [esp+4Ch+var_38], ecx
+  .text:000D0E6D                 fstp    dword ptr [eax]
+  .text:000D0E6F                 mov     eax, [esp+4Ch+var_30]
+  .text:000D0E73                 mov     [esp+4Ch+fmt], esi
+  .text:000D0E76                 call    dword ptr [eax+8]
+  .text:000D0E79                 mov     ecx, [esp+4Ch+var_38]
+  .text:000D0E7D                 test    byte ptr [esi+227h], 40h
+  .text:000D0E84                 jz      loc_D0CF0
+  .text:000D0E8A                 lea     esi, [esi+0]
+  .text:000D0E90                 mov     [esp+4Ch+fmt], esi
+  .text:000D0E93                 mov     [esp+4Ch+var_38], ecx
+  .text:000D0E97                 call    sub_9E4F0
+  .text:000D0E9C                 mov     ecx, [esp+4Ch+var_38]
+  .text:000D0EA0                 test    byte ptr [esi+227h], 40h
+  .text:000D0EA7                 jz      loc_D0CF0
+  .text:000D0EAD                 jmp     loc_D0D30
+  .text:000D0EB8                 lea     ecx, [eax+0C4h]
+  .text:000D0EBE                 ; int
+  .text:000D0EBE                 mov     [esp+4Ch+var_44], ecx; int
+  .text:000D0EC2                 ; int
+  .text:000D0EC2                 mov     [esp+4Ch+var_40], edx; int
+  .text:000D0EC6                 movss   xmm3, dword ptr [eax+278h]
+  .text:000D0ECE                 ; int
+  .text:000D0ECE                 mov     [esp+4Ch+fmt], edx; int
+  .text:000D0ED1                 ; float
+  .text:000D0ED1                 movss   [esp+4Ch+touch_triggers], xmm3; float
+  .text:000D0ED7                 call    sub_8C1C0
+  .text:000D0EDC                 mov     ecx, [esp+4Ch+var_38]
+  .text:000D0EE0                 jmp     loc_D0C29
+  .text:000D0EE8                 ; pusher
+  .text:000D0EE8                 mov     [esp+4Ch+fmt], esi; pusher
+  .text:000D0EEB                 mov     [esp+4Ch+var_38], ecx
+  .text:000D0EEF                 call    SV_Physics_Pusher
+  .text:000D0EF4                 mov     ecx, [esp+4Ch+var_38]
+  .text:000D0EF8                 test    byte ptr [esi+227h], 40h
+  .text:000D0EFF                 jz      loc_D0CF0
+  .text:000D0F05                 jmp     loc_D0D30
+  .text:000D0F10                 mov     [esp+4Ch+fmt], esi
+  .text:000D0F13                 mov     [esp+4Ch+var_38], ecx
+  .text:000D0F17                 call    sub_D0530
+  .text:000D0F1C                 mov     ecx, [esp+4Ch+var_38]
+  .text:000D0F20                 test    byte ptr [esi+227h], 40h
+  .text:000D0F27                 jz      loc_D0CF0
+  .text:000D0F2D                 jmp     loc_D0D30
+  .text:000D0F38                 and     edx, 40000000h
+  .text:000D0F3E                 jnz     loc_D1050
+  .text:000D0F44                 fld     dword ptr [esi+184h]
+  .text:000D0F4A                 fldz
+  .text:000D0F4C                 fst     [esp+4Ch+var_38]
+  .text:000D0F50                 fucomip st, st(1)
+  .text:000D0F52                 jnb     loc_D1142
+  .text:000D0F58                 lea     eax, (dbl_30A4B8 - 2EE000h)[ebx]
+  .text:000D0F5E                 fld     st
+  .text:000D0F60                 fld     qword ptr [ecx+0Ch]
+  .text:000D0F63                 fld     qword ptr [eax]
+  .text:000D0F65                 fadd    st, st(1)
+  .text:000D0F67                 fxch    st(2)
+  .text:000D0F69                 fucomi  st, st(2)
+  .text:000D0F6B                 fstp    st(2)
+  .text:000D0F6D                 ja      loc_D1146
+  .text:000D0F73                 fucomi  st, st(1)
+  .text:000D0F75                 fstp    st(1)
+  .text:000D0F77                 ja      loc_D11C5
+  .text:000D0F7D                 fstp    st
+  .text:000D0F7F                 mov     eax, [esp+4Ch+var_34]
+  .text:000D0F83                 mov     dword ptr [esi+184h], 0
+  .text:000D0F8D                 mov     [esp+4Ch+var_38], ecx
+  .text:000D0F91                 fstp    dword ptr [eax]
+  .text:000D0F93                 mov     eax, [esp+4Ch+var_30]
+  .text:000D0F97                 mov     [esp+4Ch+fmt], esi
+  .text:000D0F9A                 call    dword ptr [eax+8]
+  .text:000D0F9D                 mov     ecx, [esp+4Ch+var_38]
+  .text:000D0FA1                 test    byte ptr [esi+227h], 40h
+  .text:000D0FA8                 jnz     loc_D1050
+  .text:000D0FAE                 mov     edx, [esi]
+  .text:000D0FB0                 test    edx, edx
+  .text:000D0FB2                 jz      loc_D106A
+  .text:000D0FB8                 jmp     loc_D0CF0
+  .text:000D0FC0                 and     edx, 40000000h
+  .text:000D0FC6                 jnz     loc_D10A8
+  .text:000D0FCC                 fld     dword ptr [esi+184h]
+  .text:000D0FD2                 fldz
+  .text:000D0FD4                 fst     [esp+4Ch+var_38]
+  .text:000D0FD8                 fucomip st, st(1)
+  .text:000D0FDA                 jnb     loc_D10C4
+  .text:000D0FE0                 mov     eax, [esp+4Ch+var_28]
+  .text:000D0FE4                 fld     st
+  .text:000D0FE6                 fld     qword ptr [ecx+0Ch]
+  .text:000D0FE9                 fld     qword ptr [eax]
+  .text:000D0FEB                 fld     st(1)
+  .text:000D0FED                 fadd    st, st(1)
+  .text:000D0FEF                 fxch    st(3)
+  .text:000D0FF1                 mov     [esp+4Ch+var_38], eax
+  .text:000D0FF5                 fucomi  st, st(3)
+  .text:000D0FF7                 fstp    st(3)
+  .text:000D0FF9                 ja      loc_D10D4
+  .text:000D0FFF                 fstp    st
+  .text:000D1001                 fucomi  st, st(1)
+  .text:000D1003                 fstp    st(1)
+  .text:000D1005                 ja      loc_D11D4
+  .text:000D100B                 fstp    st
+  .text:000D100D                 mov     eax, [esp+4Ch+var_34]
+  .text:000D1011                 mov     dword ptr [esi+184h], 0
+  .text:000D101B                 mov     [esp+4Ch+var_24], ecx
+  .text:000D101F                 fstp    dword ptr [eax]
+  .text:000D1021                 mov     eax, [esp+4Ch+var_30]
+  .text:000D1025                 mov     [esp+4Ch+fmt], esi
+  .text:000D1028                 call    dword ptr [eax+8]
+  .text:000D102B                 mov     ecx, [esp+4Ch+var_24]
+  .text:000D102F                 test    byte ptr [esi+227h], 40h
+  .text:000D1036                 jnz     short loc_D10A8
+  .text:000D1038                 mov     eax, [esi]
+  .text:000D103A                 test    eax, eax
+  .text:000D103C                 jnz     loc_D0CF0
+  .text:000D1042                 mov     eax, [esp+4Ch+var_28]
+  .text:000D1046                 fld     qword ptr [eax]
+  .text:000D1048                 jmp     loc_D10DA
+  .text:000D1050                 mov     [esp+4Ch+fmt], esi
+  .text:000D1053                 mov     [esp+4Ch+var_38], ecx
+  .text:000D1057                 call    sub_9E4F0
+  .text:000D105C                 mov     eax, [esi]
+  .text:000D105E                 mov     ecx, [esp+4Ch+var_38]
+  .text:000D1062                 test    eax, eax
+  .text:000D1064                 jnz     loc_D0CD3
+  .text:000D106A                 cmp     dword ptr [esi+188h], 0Ch
+  .text:000D1071                 jz      loc_D114C
+  .text:000D1077                 mov     eax, 1
+  .text:000D107C                 ; touch_triggers
+  .text:000D107C                 mov     [esp+4Ch+touch_triggers], eax; touch_triggers
+  .text:000D1080                 ; ent
+  .text:000D1080                 mov     [esp+4Ch+fmt], esi; ent
+  .text:000D1083                 mov     [esp+4Ch+var_38], ecx
+  .text:000D1087                 call    SV_LinkEdict
+  .text:000D108C                 mov     ecx, [esp+4Ch+var_38]
+  .text:000D1090                 test    byte ptr [esi+227h], 40h
+  .text:000D1097                 jz      loc_D0CF0
+  .text:000D109D                 jmp     loc_D0D30
+  .text:000D10A8                 mov     [esp+4Ch+fmt], esi
+  .text:000D10AB                 mov     [esp+4Ch+var_38], ecx
+  .text:000D10AF                 call    sub_9E4F0
+  .text:000D10B4                 mov     eax, [esi]
+  .text:000D10B6                 mov     ecx, [esp+4Ch+var_38]
+  .text:000D10BA                 test    eax, eax
+  .text:000D10BC                 jnz     loc_D0CD3
+  .text:000D10C2                 jmp     short loc_D10C6
+  .text:000D10C4                 fstp    st
+  .text:000D10C6                 lea     eax, (dbl_30A4B8 - 2EE000h)[ebx]
+  .text:000D10CC                 mov     [esp+4Ch+var_38], eax
+  .text:000D10D0                 fld     qword ptr [eax]
+  .text:000D10D2                 jmp     short loc_D10DA
+  .text:000D10D4                 fstp    st(2)
+  .text:000D10D6                 fstp    st
+  .text:000D10D8                 fstp    st(1)
+  .text:000D10DA                 lea     eax, [esi+0D0h]
+  .text:000D10E0                 lea     edx, [esi+0DCh]
+  .text:000D10E6                 ; float
+  .text:000D10E6                 fstp    [esp+4Ch+touch_triggers]; float
+  .text:000D10EA                 ; int
+  .text:000D10EA                 mov     [esp+4Ch+var_40], eax; int
+  .text:000D10EE                 ; int
+  .text:000D10EE                 mov     [esp+4Ch+var_44], edx; int
+  .text:000D10F2                 ; int
+  .text:000D10F2                 mov     [esp+4Ch+fmt], eax; int
+  .text:000D10F5                 mov     [esp+4Ch+var_24], ecx
+  .text:000D10F9                 call    sub_8C1C0
+  .text:000D10FE                 lea     edx, [esi+0A0h]
+  .text:000D1104                 ; int
+  .text:000D1104                 mov     [esp+4Ch+var_44], edx; int
+  .text:000D1108                 mov     edx, [esp+4Ch+var_38]
+  .text:000D110C                 lea     eax, [esi+88h]
+  .text:000D1112                 ; int
+  .text:000D1112                 mov     [esp+4Ch+var_40], eax; int
+  .text:000D1116                 fld     qword ptr [edx]
+  .text:000D1118                 ; float
+  .text:000D1118                 fstp    [esp+4Ch+touch_triggers]; float
+  .text:000D111C                 ; int
+  .text:000D111C                 mov     [esp+4Ch+fmt], eax; int
+  .text:000D111F                 call    sub_8C1C0
+  .text:000D1124                 xor     eax, eax
+  .text:000D1126                 ; touch_triggers
+  .text:000D1126                 mov     [esp+4Ch+touch_triggers], eax; touch_triggers
+  .text:000D112A                 ; ent
+  .text:000D112A                 mov     [esp+4Ch+fmt], esi; ent
+  .text:000D112D                 call    SV_LinkEdict
+  .text:000D1132                 mov     ecx, [esp+4Ch+var_24]
+  .text:000D1136                 jmp     loc_D0CD3
+  .text:000D113B                 xor     eax, eax
+  .text:000D113D                 jmp     loc_D0D1B
+  .text:000D1142                 fstp    st
+  .text:000D1144                 jmp     short loc_D114C
+  .text:000D1146                 fstp    st
+  .text:000D1148                 fstp    st
+  .text:000D114A                 fstp    st
+  .text:000D114C                 mov     eax, [esi+214h]
+  .text:000D1152                 test    eax, eax
+  .text:000D1154                 jz      loc_D11E3
+  .text:000D115A                 fld     dword ptr [eax+88h]
+  .text:000D1160                 fadd    dword ptr [esi+0F4h]
+  .text:000D1166                 fstp    dword ptr [esi+88h]
+  .text:000D116C                 fld     dword ptr [eax+8Ch]
+  .text:000D1172                 fadd    dword ptr [esi+0F8h]
+  .text:000D1178                 fstp    dword ptr [esi+8Ch]
+  .text:000D117E                 fld     dword ptr [eax+90h]
+  .text:000D1184                 fadd    dword ptr [esi+0FCh]
+  .text:000D118A                 fstp    dword ptr [esi+90h]
+  .text:000D1190                 movss   xmm5, dword ptr [eax+0D0h]
+  .text:000D1198                 movss   dword ptr [esi+0D0h], xmm5
+  .text:000D11A0                 movss   xmm6, dword ptr [eax+0D4h]
+  .text:000D11A8                 movss   dword ptr [esi+0D4h], xmm6
+  .text:000D11B0                 movss   xmm7, dword ptr [eax+0D8h]
+  .text:000D11B8                 movss   dword ptr [esi+0D8h], xmm7
+  .text:000D11C0                 jmp     loc_D1077
+  .text:000D11C5                 fstp    st(1)
+  .text:000D11C7                 fstp    [esp+4Ch+var_20]
+  .text:000D11CB                 fld     [esp+4Ch+var_20]
+  .text:000D11CF                 jmp     loc_D0F7F
+  .text:000D11D4                 fstp    st(1)
+  .text:000D11D6                 fstp    [esp+4Ch+var_20]
+  .text:000D11DA                 fld     [esp+4Ch+var_20]
+  .text:000D11DE                 jmp     loc_D100D
+  .text:000D11E3                 lea     edx, (dword_F1AE30 - 2EE000h)[ebx]
+  .text:000D11E9                 mov     eax, [esi+80h]
+  .text:000D11EF                 mov     [esp+4Ch+var_38], ecx
+  .text:000D11F3                 mov     ecx, [edx]
+  .text:000D11F5                 add     eax, ecx
+  .text:000D11F7                 mov     [esp+4Ch+touch_triggers], eax
+  .text:000D11FB                 lea     eax, (aSMovetypeFollo - 2EE000h)[ebx]; "%s movetype FOLLOW with NULL aiment\n"
+  .text:000D1201                 ; fmt
+  .text:000D1201                 mov     [esp+4Ch+fmt], eax; fmt
+  .text:000D1204                 call    Con_DPrintf
+  .text:000D1209                 xor     eax, eax
+  .text:000D120B                 mov     ecx, [esp+4Ch+var_38]
+  .text:000D120F                 mov     [esi+188h], eax
+  .text:000D1215                 jmp     loc_D0CD3
+procedure: |-
+  void __cdecl SV_Physics()
+  {
+    int *v0; // ecx
+    int v1; // eax
+    int v2; // ebp
+    int v3; // edi
+    int v4; // esi
+    int v5; // edx
+    int v6; // eax
+    int v7; // eax
+    bool v8; // al
+    int v9; // xmm1_4
+    int v10; // xmm2_4
+    long double v11; // fst7
+    long double v12; // fst5
+    long double v13; // fst7
+    long double v14; // fst5
+    long double v15; // fst7
+    long double v16; // fst7
+    int v17; // eax
+    float touch_triggers; // [esp+4h] [ebp-48h]
+    float touch_triggersa; // [esp+4h] [ebp-48h]
+    float touch_triggersb; // [esp+4h] [ebp-48h]
+    int *v21; // [esp+14h] [ebp-38h]
+    int *v22; // [esp+14h] [ebp-38h]
+    int *v23; // [esp+14h] [ebp-38h]
+    int *v24; // [esp+14h] [ebp-38h]
+    int *v25; // [esp+14h] [ebp-38h]
+    int *v26; // [esp+14h] [ebp-38h]
+    int *v27; // [esp+14h] [ebp-38h]
+    int *v28; // [esp+14h] [ebp-38h]
+    int *v29; // [esp+14h] [ebp-38h]
+    int *v30; // [esp+14h] [ebp-38h]
+    int *v31; // [esp+14h] [ebp-38h]
+    int *v32; // [esp+14h] [ebp-38h]
+    int *v33; // [esp+14h] [ebp-38h]
+    int *v34; // [esp+14h] [ebp-38h]
+    int *v35; // [esp+28h] [ebp-24h]
+    int *v36; // [esp+28h] [ebp-24h]
+    float v37; // [esp+2Ch] [ebp-20h]
+    float v38; // [esp+2Ch] [ebp-20h]
+    float v39; // [esp+2Ch] [ebp-20h]
+
+    flt_F1AD80 = dbl_F9FF8C;
+    unk_D3EE64();
+    v0 = dword_F9FF80;
+    flt_F1AD88 = 0.0;
+    v1 = dword_14414D0;
+    if ( dword_14414D0 <= 0 )
+    {
+      v8 = 0;
+      goto LABEL_29;
+    }
+    v2 = 0;
+    v3 = 0;
+    do
+    {
+      v4 = v2 + *(int *)((char *)&dword_4A1558 + (_DWORD)v0);
+      if ( *(_DWORD *)v4 )
+        goto LABEL_27;
+      if ( byte_1488038 )
+      {
+        v24 = v0;
+        SV_LinkEdict((edict_t *)v4, 1);
+        v0 = v24;
+      }
+      if ( v3 && dword_F9FEE8 >= v3 )
+      {
+  LABEL_26:
+        v1 = *(int *)((char *)&dword_4A1550 + (_DWORD)v0);
+        goto LABEL_27;
+      }
+      v5 = *(_DWORD *)(v4 + 548);
+      if ( (v5 & 0x200) != 0 )
+      {
+        v6 = *(_DWORD *)(v4 + 540);
+        if ( v6 )
+        {
+          if ( (*(_BYTE *)(v6 + 548) & 4) != 0 )
+          {
+            v21 = v0;
+            if ( (v5 & 0x400000) != 0 )
+              sub_8C1C0(v4 + 172, *(float *)(v6 + 632), v6 + 196, v4 + 172);
+            else
+              sub_8C3E0(v6 + 196, *(float *)(v6 + 632), v4 + 172);
+            v0 = v21;
+            v5 = *(_DWORD *)(v4 + 548) | 0x400000;
+            *(_DWORD *)(v4 + 548) = v5;
+          }
+        }
+      }
+      if ( (v5 & 0x400000) == 0 )
+      {
+        v25 = v0;
+        touch_triggers = 0.5 * dbl_30A4B8 + 1.0;
+        sub_8C1C0(v4 + 160, touch_triggers, v4 + 172, v4 + 160);
+        v5 = *(_DWORD *)(v4 + 548);
+        v0 = v25;
+        v9 = unk_45F4B8;
+        v10 = unk_45F4BC;
+        *(_DWORD *)(v4 + 172) = unk_45F4B4;
+        *(_DWORD *)(v4 + 176) = v9;
+        *(_DWORD *)(v4 + 180) = v10;
+      }
+      *(_DWORD *)(v4 + 548) = v5 & 0xFFBFFFFF;
+      v7 = *(_DWORD *)(v4 + 392);
+      if ( v7 == 7 )
+      {
+        v28 = v0;
+        SV_Physics_Pusher((edict_t *)v4);
+        v0 = v28;
+        if ( (*(_BYTE *)(v4 + 551) & 0x40) == 0 )
+          goto LABEL_26;
+        goto LABEL_30;
+      }
+      if ( v7 )
+      {
+        if ( v7 != 12 )
+        {
+          if ( v7 != 8 )
+          {
+            if ( v7 == 4 || v7 == 13 )
+            {
+              v29 = v0;
+              sub_D0530((edict_t *)v4);
+              v0 = v29;
+              if ( (*(_BYTE *)(v4 + 551) & 0x40) == 0 )
+                goto LABEL_26;
+            }
+            else
+            {
+              v22 = v0;
+              if ( (unsigned int)(v7 - 5) > 1 && (unsigned int)(v7 - 9) > 2 )
+                Sys_Error("SV_Physics: %s bad movetype %d", dword_F1AE30 + *(_DWORD *)(v4 + 128), v7);
+              sub_CF3C0(v4);
+              v0 = v22;
+              if ( (*(_BYTE *)(v4 + 551) & 0x40) == 0 )
+                goto LABEL_26;
+            }
+            goto LABEL_30;
+          }
+          if ( (v5 & 0x40000000) == 0 )
+          {
+            v15 = *(float *)(v4 + 388);
+            if ( v15 <= 0.0 )
+            {
+  LABEL_67:
+              v16 = dbl_30A4B8;
+  LABEL_69:
+              touch_triggersa = v16;
+              v36 = v0;
+              sub_8C1C0(v4 + 208, touch_triggersa, v4 + 220, v4 + 208);
+              touch_triggersb = dbl_30A4B8;
+              sub_8C1C0(v4 + 136, touch_triggersb, v4 + 160, v4 + 136);
+              SV_LinkEdict((edict_t *)v4, 0);
+              v0 = v36;
+              goto LABEL_25;
+            }
+            if ( v15 > *(double *)(v0 + 3) + dbl_30A4B8 )
+            {
+              v16 = dbl_30A4B8;
+              goto LABEL_69;
+            }
+            if ( *(double *)(v0 + 3) > v15 )
+            {
+              v39 = *(double *)(v0 + 3);
+              v15 = v39;
+            }
+            *(_DWORD *)(v4 + 388) = 0;
+            v35 = v0;
+            flt_F1AD80 = v15;
+            unk_D3EE08(v4);
+            v0 = v35;
+            if ( (*(_BYTE *)(v4 + 551) & 0x40) == 0 )
+            {
+              if ( *(_DWORD *)v4 )
+                goto LABEL_26;
+              v16 = dbl_30A4B8;
+              goto LABEL_69;
+            }
+          }
+          v33 = v0;
+          sub_9E4F0(v4);
+          v0 = v33;
+          if ( *(_DWORD *)v4 )
+            goto LABEL_25;
+          goto LABEL_67;
+        }
+        if ( (v5 & 0x40000000) != 0 )
+          goto LABEL_62;
+        v13 = *(float *)(v4 + 388);
+        if ( v13 <= 0.0 || (v14 = *(double *)(v0 + 3), v13 > dbl_30A4B8 + v14) )
+        {
+  LABEL_71:
+          v17 = *(_DWORD *)(v4 + 532);
+          if ( !v17 )
+          {
+            v34 = v0;
+            Con_DPrintf("%s movetype FOLLOW with NULL aiment\n", dword_F1AE30 + *(_DWORD *)(v4 + 128));
+            v0 = v34;
+            *(_DWORD *)(v4 + 392) = 0;
+  LABEL_25:
+            if ( (*(_BYTE *)(v4 + 551) & 0x40) == 0 )
+              goto LABEL_26;
+            goto LABEL_30;
+          }
+          *(float *)(v4 + 136) = *(float *)(v17 + 136) + *(float *)(v4 + 244);
+          *(float *)(v4 + 140) = *(float *)(v17 + 140) + *(float *)(v4 + 248);
+          *(float *)(v4 + 144) = *(float *)(v17 + 144) + *(float *)(v4 + 252);
+          *(_DWORD *)(v4 + 208) = *(_DWORD *)(v17 + 208);
+          *(_DWORD *)(v4 + 212) = *(_DWORD *)(v17 + 212);
+          *(_DWORD *)(v4 + 216) = *(_DWORD *)(v17 + 216);
+  LABEL_64:
+          v32 = v0;
+          SV_LinkEdict((edict_t *)v4, 1);
+          v0 = v32;
+          if ( (*(_BYTE *)(v4 + 551) & 0x40) == 0 )
+            goto LABEL_26;
+          goto LABEL_30;
+        }
+        if ( v14 > v13 )
+        {
+          v38 = *(double *)(v0 + 3);
+          v13 = v38;
+        }
+        *(_DWORD *)(v4 + 388) = 0;
+        v30 = v0;
+        flt_F1AD80 = v13;
+        unk_D3EE08(v4);
+        v0 = v30;
+        if ( (*(_BYTE *)(v4 + 551) & 0x40) != 0 )
+        {
+  LABEL_62:
+          v31 = v0;
+          sub_9E4F0(v4);
+          v0 = v31;
+          if ( *(_DWORD *)v4 )
+            goto LABEL_25;
+        }
+        else if ( *(_DWORD *)v4 )
+        {
+          goto LABEL_26;
+        }
+        if ( *(_DWORD *)(v4 + 392) != 12 )
+          goto LABEL_64;
+        goto LABEL_71;
+      }
+      if ( (v5 & 0x40000000) == 0 )
+      {
+        v11 = *(float *)(v4 + 388);
+        if ( v11 <= 0.0 )
+          goto LABEL_26;
+        v12 = *(double *)(v0 + 3);
+        if ( v11 > dbl_30A4B8 + v12 )
+          goto LABEL_26;
+        if ( v12 > v11 )
+        {
+          v37 = *(double *)(v0 + 3);
+          v11 = v37;
+        }
+        *(_DWORD *)(v4 + 388) = 0;
+        v26 = v0;
+        flt_F1AD80 = v11;
+        unk_D3EE08(v4);
+        v0 = v26;
+        if ( (*(_BYTE *)(v4 + 551) & 0x40) == 0 )
+          goto LABEL_26;
+      }
+      v27 = v0;
+      sub_9E4F0(v4);
+      v0 = v27;
+      if ( (*(_BYTE *)(v4 + 551) & 0x40) == 0 )
+        goto LABEL_26;
+  LABEL_30:
+      v23 = v0;
+      sub_9E4F0(v4);
+      v0 = v23;
+      v1 = *(int *)((char *)&dword_4A1550 + (_DWORD)v23);
+  LABEL_27:
+      ++v3;
+      v2 += 804;
+    }
+    while ( v3 < v1 );
+    v8 = flt_F1AD88 > 0.0;
+  LABEL_29:
+    byte_1488038 = v8;
+    sub_B20D0();
+  }

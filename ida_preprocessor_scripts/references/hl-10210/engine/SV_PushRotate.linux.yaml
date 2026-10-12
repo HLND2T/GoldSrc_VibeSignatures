@@ -1,0 +1,644 @@
+func_name: "SV_PushRotate"
+func_va: "0xf6760"
+disasm_code: |-
+  .text:000F6760                 push    ebp
+  .text:000F6761                 push    edi
+  .text:000F6762                 push    esi
+  .text:000F6763                 push    ebx
+  .text:000F6764                 sub     esp, 0ECh
+  .text:000F676A                 mov     ebp, [esp+0FCh+pusher]
+  .text:000F6771                 fld     dword ptr [ebp+0DCh]
+  .text:000F6777                 fldz
+  .text:000F6779                 fxch    st(1)
+  .text:000F677B                 fucomip st, st(1)
+  .text:000F677D                 jp      short loc_F6789
+  .text:000F677F                 jz      loc_F6930
+  .text:000F6785                 fstp    st
+  .text:000F6787                 jmp     short loc_F6790
+  .text:000F6789                 fstp    st
+  .text:000F678B                 nop
+  .text:000F678C                 lea     esi, [esi+0]
+  .text:000F6790                 fld     [esp+0FCh+movetime]
+  .text:000F6797                 lea     eax, [esp+0FCh+upNow]
+  .text:000F679E                 xor     esi, esi
+  .text:000F67A0                 fmul    dword ptr [ebp+0DCh]
+  .text:000F67A6                 lea     ebx, [ebp+0D0h]
+  .text:000F67AC                 fstp    [esp+0FCh+start_2]
+  .text:000F67B0                 fld     [esp+0FCh+movetime]
+  .text:000F67B7                 fmul    dword ptr [ebp+0E0h]
+  .text:000F67BD                 fstp    [esp+0FCh+var_E0]
+  .text:000F67C1                 fld     [esp+0FCh+movetime]
+  .text:000F67C8                 fmul    dword ptr [ebp+0E4h]
+  .text:000F67CE                 ; up
+  .text:000F67CE                 mov     [esp+0FCh+var_F0], eax; up
+  .text:000F67D2                 lea     eax, [esp+0FCh+rightNow]
+  .text:000F67D9                 ; right
+  .text:000F67D9                 mov     [esp+0FCh+push], eax; right
+  .text:000F67DD                 lea     eax, [esp+0FCh+forwardNow]
+  .text:000F67E4                 ; forward
+  .text:000F67E4                 mov     [esp+0FCh+check], eax; forward
+  .text:000F67E8                 ; angles
+  .text:000F67E8                 mov     [esp+0FCh+angles], ebx; angles
+  .text:000F67EB                 fstp    [esp+0FCh+num_moved]
+  .text:000F67EF                 call    AngleVectors
+  .text:000F67F4                 lea     eax, [esp+0FCh+up]
+  .text:000F67FB                 fld     dword ptr [ebp+0D0h]
+  .text:000F6801                 fst     [esp+0FCh+pushorig_0]
+  .text:000F6805                 fld     dword ptr [ebp+0D4h]
+  .text:000F680B                 fst     [esp+0FCh+pushorig_1]
+  .text:000F680F                 fld     dword ptr [ebp+0D8h]
+  .text:000F6815                 fst     [esp+0FCh+pushorig_2]
+  .text:000F6819                 fld     [esp+0FCh+start_2]
+  .text:000F681D                 faddp   st(3), st
+  .text:000F681F                 fxch    st(2)
+  .text:000F6821                 fstp    dword ptr [ebp+0D0h]
+  .text:000F6827                 fld     [esp+0FCh+var_E0]
+  .text:000F682B                 faddp   st(1), st
+  .text:000F682D                 fstp    dword ptr [ebp+0D4h]
+  .text:000F6833                 fld     [esp+0FCh+num_moved]
+  .text:000F6837                 faddp   st(1), st
+  .text:000F6839                 fstp    dword ptr [ebp+0D8h]
+  .text:000F683F                 ; up
+  .text:000F683F                 mov     [esp+0FCh+var_F0], eax; up
+  .text:000F6843                 lea     eax, [esp+0FCh+right]
+  .text:000F684A                 ; right
+  .text:000F684A                 mov     [esp+0FCh+push], eax; right
+  .text:000F684E                 lea     eax, [esp+0FCh+forward]
+  .text:000F6855                 ; forward
+  .text:000F6855                 mov     [esp+0FCh+check], eax; forward
+  .text:000F6859                 ; angles
+  .text:000F6859                 mov     [esp+0FCh+angles], ebx; angles
+  .text:000F685C                 call    AngleVectorsTranspose
+  .text:000F6861                 fld     dword ptr [ebp+180h]
+  .text:000F6867                 fadd    [esp+0FCh+movetime]
+  .text:000F686E                 fstp    dword ptr [ebp+180h]
+  .text:000F6874                 ; touch_triggers
+  .text:000F6874                 mov     [esp+0FCh+check], esi; touch_triggers
+  .text:000F6878                 ; ent
+  .text:000F6878                 mov     [esp+0FCh+angles], ebp; ent
+  .text:000F687B                 call    SV_LinkEdict
+  .text:000F6880                 mov     edi, [ebp+18Ch]
+  .text:000F6886                 test    edi, edi
+  .text:000F6888                 jz      loc_F691B
+  .text:000F688E                 mov     edx, ds:sv.num_edicts
+  .text:000F6894                 cmp     edx, 1
+  .text:000F6897                 jle     loc_F691B
+  .text:000F689D                 xor     ebx, ebx
+  .text:000F689F                 mov     esi, 324h
+  .text:000F68A4                 mov     [esp+0FCh+num_moved], ebx
+  .text:000F68A8                 mov     edi, 1
+  .text:000F68AD                 lea     esi, [esi+0]
+  .text:000F68B0                 mov     ebx, ds:sv.edicts
+  .text:000F68B6                 add     ebx, esi
+  .text:000F68B8                 mov     ecx, [check_0]
+  .text:000F68BA                 test    ecx, ecx
+  .text:000F68BC                 jnz     short loc_F6910
+  .text:000F68BE                 mov     ecx, [check_0+188h]
+  .text:000F68C4                 cmp     ecx, 0Ch
+  .text:000F68C7                 jbe     loc_F6980
+  .text:000F68CD                 test    byte ptr [check_0+225h], 2
+  .text:000F68D4                 jz      short loc_F68E2
+  .text:000F68D6                 cmp     ebp, [check_0+21Ch]
+  .text:000F68DC                 jz      loc_F6A30
+  .text:000F68E2                 fld     dword ptr [check_0+144h]
+  .text:000F68E8                 fld     dword ptr [ebp+150h]
+  .text:000F68EE                 fxch    st(1)
+  .text:000F68F0                 fucomip st, st(1)
+  .text:000F68F2                 fstp    st
+  .text:000F68F4                 jnb     short loc_F6910
+  .text:000F68F6                 fld     dword ptr [check_0+148h]
+  .text:000F68FC                 fld     dword ptr [ebp+154h]
+  .text:000F6902                 fxch    st(1)
+  .text:000F6904                 fucomip st, st(1)
+  .text:000F6906                 fstp    st
+  .text:000F6908                 jb      loc_F69B0
+  .text:000F690E                 xchg    ax, ax
+  .text:000F6910                 inc     e
+  .text:000F6911                 add     esi, 324h
+  .text:000F6917                 cmp     e, edx
+  .text:000F6919                 jl      short loc_F68B0
+  .text:000F691B                 mov     eax, 1
+  .text:000F6920                 add     esp, 0ECh
+  .text:000F6926                 pop     ebx
+  .text:000F6927                 pop     esi
+  .text:000F6928                 pop     edi
+  .text:000F6929                 pop     ebp
+  .text:000F692A                 retn
+  .text:000F6930                 fld     dword ptr [ebp+0E0h]
+  .text:000F6936                 fucomip st, st(1)
+  .text:000F6938                 fstp    st
+  .text:000F693A                 jp      loc_F6790
+  .text:000F6940                 jnz     loc_F6790
+  .text:000F6946                 fld     dword ptr [ebp+0E4h]
+  .text:000F694C                 fldz
+  .text:000F694E                 fxch    st(1)
+  .text:000F6950                 fucomip st, st(1)
+  .text:000F6952                 fstp    st
+  .text:000F6954                 jp      loc_F6790
+  .text:000F695A                 jnz     loc_F6790
+  .text:000F6960                 fld     dword ptr [ebp+180h]
+  .text:000F6966                 mov     eax, 1
+  .text:000F696B                 fadd    [esp+0FCh+movetime]
+  .text:000F6972                 fstp    dword ptr [ebp+180h]
+  .text:000F6978                 jmp     short loc_F6920
+  .text:000F6980                 mov     eax, 1181h
+  .text:000F6985                 shr     eax, cl
+  .text:000F6987                 and     eax, 1
+  .text:000F698A                 xor     eax, 1
+  .text:000F698D                 and     al, 1
+  .text:000F698F                 test    al, al
+  .text:000F6991                 jnz     loc_F68CD
+  .text:000F6997                 inc     e
+  .text:000F6998                 add     esi, 324h
+  .text:000F699E                 cmp     e, edx
+  .text:000F69A0                 jl      loc_F68B0
+  .text:000F69A6                 jmp     loc_F691B
+  .text:000F69B0                 fld     dword ptr [check_0+14Ch]
+  .text:000F69B6                 fld     dword ptr [ebp+158h]
+  .text:000F69BC                 fxch    st(1)
+  .text:000F69BE                 fucomip st, st(1)
+  .text:000F69C0                 fstp    st
+  .text:000F69C2                 jnb     loc_F6910
+  .text:000F69C8                 fld     dword ptr [ebp+144h]
+  .text:000F69CE                 fld     dword ptr [check_0+150h]
+  .text:000F69D4                 fxch    st(1)
+  .text:000F69D6                 fucomip st, st(1)
+  .text:000F69D8                 fstp    st
+  .text:000F69DA                 jnb     loc_F6910
+  .text:000F69E0                 fld     dword ptr [ebp+148h]
+  .text:000F69E6                 fld     dword ptr [check_0+154h]
+  .text:000F69EC                 fxch    st(1)
+  .text:000F69EE                 fucomip st, st(1)
+  .text:000F69F0                 fstp    st
+  .text:000F69F2                 jnb     loc_F6910
+  .text:000F69F8                 fld     dword ptr [ebp+14Ch]
+  .text:000F69FE                 fld     dword ptr [check_0+158h]
+  .text:000F6A04                 fxch    st(1)
+  .text:000F6A06                 fucomip st, st(1)
+  .text:000F6A08                 fstp    st
+  .text:000F6A0A                 jnb     loc_F6910
+  .text:000F6A10                 ; ent
+  .text:000F6A10                 mov     [esp+0FCh+angles], check_0; ent
+  .text:000F6A13                 call    SV_TestEntityPosition
+  .text:000F6A18                 test    eax, eax
+  .text:000F6A1A                 jz      loc_F6DC9
+  .text:000F6A20                 mov     ecx, [check_0+188h]
+  .text:000F6A26                 lea     esi, [esi+0]
+  .text:000F6A29                 lea     e, [e+0]
+  .text:000F6A30                 cmp     ecx, 3
+  .text:000F6A33                 jz      short loc_F6A3F
+  .text:000F6A35                 and     dword ptr [check_0+224h], 0FFFFFDFFh
+  .text:000F6A3F                 fld     dword ptr [check_0+88h]
+  .text:000F6A45                 mov     ecx, [esp+0FCh+num_moved]
+  .text:000F6A49                 mov     edx, ds:g_moved_from
+  .text:000F6A4F                 fstp    [esp+0FCh+var_C8]
+  .text:000F6A53                 fld     dword ptr [check_0+8Ch]
+  .text:000F6A59                 movss   xmm2, [esp+0FCh+var_C8]
+  .text:000F6A5F                 lea     eax, [ecx+ecx*2]
+  .text:000F6A62                 shl     eax, 2
+  .text:000F6A65                 fstp    [esp+0FCh+entorig_1]
+  .text:000F6A69                 fld     dword ptr [check_0+90h]
+  .text:000F6A6F                 movss   dword ptr [edx+eax], xmm2
+  .text:000F6A74                 fstp    [esp+0FCh+var_C0]
+  .text:000F6A78                 mov     edx, ds:g_moved_from
+  .text:000F6A7E                 movss   xmm3, dword ptr [check_0+8Ch]
+  .text:000F6A86                 add     eax, edx
+  .text:000F6A88                 mov     edx, ecx
+  .text:000F6A8A                 movss   dword ptr [eax+4], xmm3
+  .text:000F6A8F                 inc     edx
+  .text:000F6A90                 mov     [esp+0FCh+num_moved], edx
+  .text:000F6A94                 movss   xmm4, dword ptr [check_0+90h]
+  .text:000F6A9C                 movss   dword ptr [eax+8], xmm4
+  .text:000F6AA1                 mov     eax, ds:g_moved_edict
+  .text:000F6AA6                 mov     [eax+ecx*4], check_0
+  .text:000F6AA9                 cmp     num_moved_0, ds:sv.max_edicts
+  .text:000F6AAF                 jge     loc_F6E05
+  .text:000F6AB5                 cmp     dword ptr [check_0+188h], 0Dh
+  .text:000F6ABC                 jz      loc_F6E16
+  .text:000F6AC2                 fld     dword ptr [check_0+88h]
+  .text:000F6AC8                 fsub    dword ptr [ebp+88h]
+  .text:000F6ACE                 fld     dword ptr [check_0+8Ch]
+  .text:000F6AD4                 fsub    dword ptr [ebp+8Ch]
+  .text:000F6ADA                 fld     dword ptr [check_0+90h]
+  .text:000F6AE0                 fsub    dword ptr [ebp+90h]
+  .text:000F6AE6                 fstp    [esp+0FCh+start_2]
+  .text:000F6AEA                 fld     [esp+0FCh+forwardNow]
+  .text:000F6AF1                 xor     eax, eax
+  .text:000F6AF3                 fmul    st, st(2)
+  .text:000F6AF5                 mov     [ebp+18Ch], eax
+  .text:000F6AFB                 lea     eax, [esp+0FCh+move]
+  .text:000F6B02                 ; push
+  .text:000F6B02                 mov     [esp+0FCh+push], eax; push
+  .text:000F6B06                 lea     eax, [esp+0FCh+var_BC]
+  .text:000F6B0A                 fld     [esp+0FCh+forwardNow+4]
+  .text:000F6B11                 fmul    st, st(2)
+  .text:000F6B13                 ; retstr
+  .text:000F6B13                 mov     [esp+0FCh+angles], eax; retstr
+  .text:000F6B16                 ; ent
+  .text:000F6B16                 mov     [esp+0FCh+check], check_0; ent
+  .text:000F6B1A                 faddp   st(1), st
+  .text:000F6B1C                 fld     [esp+0FCh+start_2]
+  .text:000F6B20                 fld     [esp+0FCh+forwardNow+8]
+  .text:000F6B27                 fmul    st, st(1)
+  .text:000F6B29                 faddp   st(2), st
+  .text:000F6B2B                 fld     [esp+0FCh+rightNow]
+  .text:000F6B32                 fmul    st, st(4)
+  .text:000F6B34                 fld     [esp+0FCh+rightNow+4]
+  .text:000F6B3B                 fmul    st, st(4)
+  .text:000F6B3D                 faddp   st(1), st
+  .text:000F6B3F                 fld     [esp+0FCh+rightNow+8]
+  .text:000F6B46                 fmul    st, st(2)
+  .text:000F6B48                 faddp   st(1), st
+  .text:000F6B4A                 fchs
+  .text:000F6B4C                 fld     [esp+0FCh+upNow]
+  .text:000F6B53                 fmul    st, st(5)
+  .text:000F6B55                 fld     [esp+0FCh+upNow+4]
+  .text:000F6B5C                 fmul    st, st(5)
+  .text:000F6B5E                 faddp   st(1), st
+  .text:000F6B60                 fld     [esp+0FCh+upNow+8]
+  .text:000F6B67                 fmulp   st(3), st
+  .text:000F6B69                 faddp   st(2), st
+  .text:000F6B6B                 fld     [esp+0FCh+right]
+  .text:000F6B72                 fmul    st, st(3)
+  .text:000F6B74                 fld     [esp+0FCh+right+4]
+  .text:000F6B7B                 fmul    st, st(2)
+  .text:000F6B7D                 faddp   st(1), st
+  .text:000F6B7F                 fld     [esp+0FCh+right+8]
+  .text:000F6B86                 fmul    st, st(3)
+  .text:000F6B88                 faddp   st(1), st
+  .text:000F6B8A                 fld     [esp+0FCh+up]
+  .text:000F6B91                 fmul    st, st(4)
+  .text:000F6B93                 fld     [esp+0FCh+up+4]
+  .text:000F6B9A                 fmul    st, st(3)
+  .text:000F6B9C                 faddp   st(1), st
+  .text:000F6B9E                 fld     [esp+0FCh+up+8]
+  .text:000F6BA5                 fmul    st, st(4)
+  .text:000F6BA7                 faddp   st(1), st
+  .text:000F6BA9                 fxch    st(4)
+  .text:000F6BAB                 fmul    [esp+0FCh+forward]
+  .text:000F6BB2                 fxch    st(2)
+  .text:000F6BB4                 fmul    [esp+0FCh+forward+4]
+  .text:000F6BBB                 faddp   st(2), st
+  .text:000F6BBD                 fxch    st(2)
+  .text:000F6BBF                 fmul    [esp+0FCh+forward+8]
+  .text:000F6BC6                 faddp   st(1), st
+  .text:000F6BC8                 fsubrp  st(4), st
+  .text:000F6BCA                 fxch    st(3)
+  .text:000F6BCC                 fstp    [esp+0FCh+move]
+  .text:000F6BD3                 fxch    st(1)
+  .text:000F6BD5                 fsubp   st(2), st
+  .text:000F6BD7                 fxch    st(1)
+  .text:000F6BD9                 fstp    [esp+0FCh+move+4]
+  .text:000F6BE0                 fsub    [esp+0FCh+start_2]
+  .text:000F6BE4                 fstp    [esp+0FCh+move+8]
+  .text:000F6BEB                 call    SV_PushEntity
+  .text:000F6BF0                 mov     eax, 4
+  .text:000F6BF5                 mov     [ebp+18Ch], eax
+  .text:000F6BFB                 sub     esp, 4
+  .text:000F6BFE                 cmp     dword ptr [check_0+188h], 0Dh
+  .text:000F6C05                 jz      short loc_F6C2F
+  .text:000F6C07                 test    byte ptr [check_0+224h], 8
+  .text:000F6C0E                 jz      loc_F6DD4
+  .text:000F6C14                 fld     [esp+0FCh+var_E0]
+  .text:000F6C18                 mov     eax, 2
+  .text:000F6C1D                 fadd    dword ptr [check_0+0E0h]
+  .text:000F6C23                 mov     [check_0+120h], eax
+  .text:000F6C29                 fstp    dword ptr [check_0+0E0h]
+  .text:000F6C2F                 ; ent
+  .text:000F6C2F                 mov     [esp+0FCh+angles], check_0; ent
+  .text:000F6C32                 call    SV_TestEntityPosition
+  .text:000F6C37                 test    eax, eax
+  .text:000F6C39                 jz      loc_F6DC9
+  .text:000F6C3F                 fld     dword ptr [check_0+15Ch]
+  .text:000F6C45                 fld     dword ptr [check_0+168h]
+  .text:000F6C4B                 fxch    st(1)
+  .text:000F6C4D                 fucomip st, st(1)
+  .text:000F6C4F                 fstp    st
+  .text:000F6C51                 jp      short loc_F6C59
+  .text:000F6C53                 jz      loc_F6DC9
+  .text:000F6C59                 cmp     dword ptr [check_0+18Ch], 1
+  .text:000F6C60                 jbe     loc_F6D91
+  .text:000F6C66                 movss   xmm6, [esp+0FCh+var_C8]
+  .text:000F6C6C                 mov     eax, 1
+  .text:000F6C71                 movss   xmm7, [esp+0FCh+entorig_1]
+  .text:000F6C77                 xor     esi, esi
+  .text:000F6C79                 movss   xmm5, [esp+0FCh+var_C0]
+  .text:000F6C7F                 movss   dword ptr [check_0+88h], xmm6
+  .text:000F6C87                 movss   dword ptr [check_0+8Ch], xmm7
+  .text:000F6C8F                 movss   dword ptr [check_0+90h], xmm5
+  .text:000F6C97                 ; touch_triggers
+  .text:000F6C97                 mov     [esp+0FCh+check], eax; touch_triggers
+  .text:000F6C9B                 ; ent
+  .text:000F6C9B                 mov     [esp+0FCh+angles], check_0; ent
+  .text:000F6C9E                 call    SV_LinkEdict
+  .text:000F6CA3                 xor     eax, eax
+  .text:000F6CA5                 movss   xmm6, [esp+0FCh+pushorig_0]
+  .text:000F6CAB                 movss   xmm7, [esp+0FCh+pushorig_1]
+  .text:000F6CB1                 movss   xmm5, [esp+0FCh+pushorig_2]
+  .text:000F6CB7                 movss   dword ptr [ebp+0D0h], xmm6
+  .text:000F6CBF                 movss   dword ptr [ebp+0D4h], xmm7
+  .text:000F6CC7                 movss   dword ptr [ebp+0D8h], xmm5
+  .text:000F6CCF                 ; touch_triggers
+  .text:000F6CCF                 mov     [esp+0FCh+check], eax; touch_triggers
+  .text:000F6CD3                 ; ent
+  .text:000F6CD3                 mov     [esp+0FCh+angles], ebp; ent
+  .text:000F6CD6                 call    SV_LinkEdict
+  .text:000F6CDB                 fld     dword ptr [ebp+180h]
+  .text:000F6CE1                 fsub    [esp+0FCh+movetime]
+  .text:000F6CE8                 fstp    dword ptr [ebp+180h]
+  .text:000F6CEE                 mov     [esp+0FCh+check], check_0
+  .text:000F6CF2                 xor     check_0, check_0
+  .text:000F6CF4                 mov     [esp+0FCh+angles], ebp
+  .text:000F6CF7                 call    ds:gEntityInterface.pfnBlocked
+  .text:000F6CFD                 mov     e, [esp+0FCh+num_moved]
+  .text:000F6D01                 jmp     short loc_F6D2E
+  .text:000F6D08                 mov     dword ptr [eax+0E0h], 0
+  .text:000F6D12                 mov     eax, [edx]
+  .text:000F6D14                 xor     edx, edx
+  .text:000F6D16                 inc     i
+  .text:000F6D17                 ; touch_triggers
+  .text:000F6D17                 mov     [esp+0FCh+check], edx; touch_triggers
+  .text:000F6D1B                 add     ebx, 4
+  .text:000F6D1E                 ; ent
+  .text:000F6D1E                 mov     [esp+0FCh+angles], eax; ent
+  .text:000F6D21                 call    SV_LinkEdict
+  .text:000F6D26                 cmp     edi, i
+  .text:000F6D28                 jz      loc_F6E67
+  .text:000F6D2E                 mov     edx, ds:g_moved_edict
+  .text:000F6D34                 lea     eax, [ebx+ebx*2]
+  .text:000F6D37                 mov     ebp, ds:g_moved_from
+  .text:000F6D3D                 add     edx, ebx
+  .text:000F6D3F                 add     eax, ebp
+  .text:000F6D41                 mov     ecx, [edx]
+  .text:000F6D43                 movss   xmm0, dword ptr [eax]
+  .text:000F6D47                 movss   dword ptr [ecx+88h], xmm0
+  .text:000F6D4F                 mov     ecx, [edx]
+  .text:000F6D51                 movss   xmm1, dword ptr [eax+4]
+  .text:000F6D56                 movss   dword ptr [ecx+8Ch], xmm1
+  .text:000F6D5E                 mov     ecx, [edx]
+  .text:000F6D60                 fld     dword ptr [eax+8]
+  .text:000F6D63                 fstp    dword ptr [ecx+90h]
+  .text:000F6D69                 mov     eax, [edx]
+  .text:000F6D6B                 test    byte ptr [eax+224h], 8
+  .text:000F6D72                 jnz     short loc_F6D08
+  .text:000F6D74                 cmp     dword ptr [eax+188h], 0Dh
+  .text:000F6D7B                 jz      short loc_F6D14
+  .text:000F6D7D                 fld     [esp+0FCh+var_E0]
+  .text:000F6D81                 fsubr   dword ptr [eax+0D4h]
+  .text:000F6D87                 fstp    dword ptr [eax+0D4h]
+  .text:000F6D8D                 mov     eax, [edx]
+  .text:000F6D8F                 jmp     short loc_F6D14
+  .text:000F6D91                 movss   xmm5, dword ptr [check_0+164h]
+  .text:000F6D99                 mov     dword ptr [check_0+160h], 0
+  .text:000F6DA3                 mov     dword ptr [check_0+15Ch], 0
+  .text:000F6DAD                 movss   dword ptr [check_0+170h], xmm5
+  .text:000F6DB5                 mov     dword ptr [check_0+168h], 0
+  .text:000F6DBF                 mov     dword ptr [check_0+16Ch], 0
+  .text:000F6DC9                 mov     edx, ds:sv.num_edicts
+  .text:000F6DCF                 jmp     loc_F6910
+  .text:000F6DD4                 fldz
+  .text:000F6DD6                 fadd    dword ptr [check_0+0D0h]
+  .text:000F6DDC                 fstp    dword ptr [check_0+0D0h]
+  .text:000F6DE2                 fld     [esp+0FCh+var_E0]
+  .text:000F6DE6                 fadd    dword ptr [check_0+0D4h]
+  .text:000F6DEC                 fstp    dword ptr [check_0+0D4h]
+  .text:000F6DF2                 fldz
+  .text:000F6DF4                 fadd    dword ptr [check_0+0D8h]
+  .text:000F6DFA                 fstp    dword ptr [check_0+0D8h]
+  .text:000F6E00                 jmp     loc_F6C2F
+  .text:000F6E05                 mov     [esp+0FCh+angles], offset aOutOfEdictsInS; "Out of edicts in simulator!\n"
+  .text:000F6E0C                 call    Sys_Error
+  .text:000F6E11                 jmp     loc_F6AB5
+  .text:000F6E16                 fld     dword ptr [check_0+144h]
+  .text:000F6E1C                 fadd    dword ptr [check_0+150h]
+  .text:000F6E22                 fmul    ds:flt_248810
+  .text:000F6E28                 fsub    dword ptr [ebp+88h]
+  .text:000F6E2E                 fld     dword ptr [check_0+148h]
+  .text:000F6E34                 fadd    dword ptr [check_0+154h]
+  .text:000F6E3A                 fmul    ds:flt_248810
+  .text:000F6E40                 fsub    dword ptr [ebp+8Ch]
+  .text:000F6E46                 fld     dword ptr [check_0+14Ch]
+  .text:000F6E4C                 fadd    dword ptr [check_0+158h]
+  .text:000F6E52                 fmul    ds:flt_248810
+  .text:000F6E58                 fsub    dword ptr [ebp+90h]
+  .text:000F6E5E                 fstp    [esp+0FCh+start_2]
+  .text:000F6E62                 jmp     loc_F6AEA
+  .text:000F6E67                 xor     eax, eax
+  .text:000F6E69                 jmp     loc_F6920
+procedure: |-
+  int __cdecl SV_PushRotate(edict_t_0 *pusher, float movetime)
+  {
+    long double v2; // fst6
+    int num_edicts; // edx
+    int v4; // esi
+    int v5; // edi
+    edict_t_0 *v6; // ebx
+    unsigned int movetype; // ecx
+    int v9; // ecx
+    long double v10; // fst7
+    vec_t *v11; // eax
+    long double v12; // fst7
+    long double v13; // fst6
+    long double v14; // fst5
+    long double v15; // fst5
+    long double v16; // fst5
+    long double v17; // fst3
+    long double v18; // fst4
+    long double v19; // fst7
+    int v20; // esi
+    int v21; // ebx
+    edict_t_0 *v22; // eax
+    edict_t_0 **v23; // edx
+    vec_t *v24; // eax
+    vec_t v25; // xmm5_4
+    edict_t *check; // [esp+4h] [ebp-F8h]
+    float v27; // [esp+1Ch] [ebp-E0h]
+    float num_moveda; // [esp+20h] [ebp-DCh]
+    int num_moved; // [esp+20h] [ebp-DCh]
+    vec_t start_2; // [esp+24h] [ebp-D8h]
+    vec_t start_2a; // [esp+24h] [ebp-D8h]
+    float pushorig_0; // [esp+28h] [ebp-D4h]
+    float pushorig_1; // [esp+2Ch] [ebp-D0h]
+    float pushorig_2; // [esp+30h] [ebp-CCh]
+    float v35; // [esp+34h] [ebp-C8h]
+    float entorig_1; // [esp+38h] [ebp-C4h]
+    float v37; // [esp+3Ch] [ebp-C0h]
+    trace_t v38; // [esp+40h] [ebp-BCh] BYREF
+    vec3_t move; // [esp+8Ch] [ebp-70h] BYREF
+    vec3_t forward; // [esp+98h] [ebp-64h] BYREF
+    vec3_t right; // [esp+A4h] [ebp-58h] BYREF
+    vec3_t up; // [esp+B0h] [ebp-4Ch] BYREF
+    vec3_t forwardNow; // [esp+BCh] [ebp-40h] BYREF
+    vec3_t rightNow; // [esp+C8h] [ebp-34h] BYREF
+    vec_t upNow[10]; // [esp+D4h] [ebp-28h] BYREF
+
+    if ( pusher->v.avelocity[0] == 0.0 && pusher->v.avelocity[1] == 0.0 && pusher->v.avelocity[2] == 0.0 )
+    {
+      pusher->v.ltime = pusher->v.ltime + movetime;
+      return 1;
+    }
+    start_2 = movetime * pusher->v.avelocity[0];
+    v27 = movetime * pusher->v.avelocity[1];
+    num_moveda = movetime * pusher->v.avelocity[2];
+    AngleVectors(pusher->v.angles, forwardNow, rightNow, upNow);
+    pushorig_0 = pusher->v.angles[0];
+    v2 = pusher->v.angles[1];
+    pushorig_1 = pusher->v.angles[1];
+    pushorig_2 = pusher->v.angles[2];
+    pusher->v.angles[0] = pushorig_0 + start_2;
+    pusher->v.angles[1] = v2 + v27;
+    pusher->v.angles[2] = pushorig_2 + num_moveda;
+    AngleVectorsTranspose(pusher->v.angles, forward, right, up);
+    pusher->v.ltime = pusher->v.ltime + movetime;
+    SV_LinkEdict(pusher, false);
+    if ( !pusher->v.solid )
+      return 1;
+    num_edicts = sv.num_edicts;
+    if ( sv.num_edicts <= 1 )
+      return 1;
+    v4 = 1;
+    num_moved = 0;
+    v5 = 1;
+    while ( 1 )
+    {
+      while ( 1 )
+      {
+        v6 = &sv.edicts[v4];
+        if ( sv.edicts[v4].free == false )
+          break;
+  LABEL_11:
+        ++v5;
+        ++v4;
+        if ( v5 >= num_edicts )
+          return 1;
+      }
+      movetype = v6->v.movetype;
+      if ( movetype > 0xC || ((0x1181u >> movetype) & 1) == 0 )
+        break;
+      ++v5;
+      ++v4;
+      if ( v5 >= num_edicts )
+        return 1;
+    }
+    if ( (v6->v.flags & 0x200) == 0 || pusher != (edict_t_0 *)v6->v.groundentity )
+    {
+      if ( v6->v.absmin[0] >= (long double)pusher->v.absmax[0]
+        || v6->v.absmin[1] >= (long double)pusher->v.absmax[1]
+        || v6->v.absmin[2] >= (long double)pusher->v.absmax[2]
+        || pusher->v.absmin[0] >= (long double)v6->v.absmax[0]
+        || pusher->v.absmin[1] >= (long double)v6->v.absmax[1]
+        || pusher->v.absmin[2] >= (long double)v6->v.absmax[2] )
+      {
+        goto LABEL_11;
+      }
+      if ( !SV_TestEntityPosition(&sv.edicts[v4]) )
+        goto LABEL_43;
+      movetype = v6->v.movetype;
+    }
+    if ( movetype != 3 )
+      v6->v.flags &= ~0x200u;
+    v9 = num_moved;
+    v35 = v6->v.origin[0];
+    entorig_1 = v6->v.origin[1];
+    v10 = v6->v.origin[2];
+    g_moved_from[num_moved][0] = v35;
+    v37 = v10;
+    v11 = g_moved_from[num_moved];
+    v11[1] = v6->v.origin[1];
+    ++num_moved;
+    v11[2] = v6->v.origin[2];
+    g_moved_edict[v9] = v6;
+    if ( v9 + 1 >= sv.max_edicts )
+      Sys_Error("Out of edicts in simulator!\n");
+    if ( v6->v.movetype == 13 )
+    {
+      v12 = (v6->v.absmin[0] + v6->v.absmax[0]) * 0.5 - pusher->v.origin[0];
+      v13 = (v6->v.absmin[1] + v6->v.absmax[1]) * 0.5 - pusher->v.origin[1];
+      v14 = (v6->v.absmin[2] + v6->v.absmax[2]) * 0.5 - pusher->v.origin[2];
+    }
+    else
+    {
+      v12 = v6->v.origin[0] - pusher->v.origin[0];
+      v13 = v6->v.origin[1] - pusher->v.origin[1];
+      v14 = v6->v.origin[2] - pusher->v.origin[2];
+    }
+    start_2a = v14;
+    v15 = forwardNow[0] * v12;
+    pusher->v.solid = 0;
+    v16 = v15 + forwardNow[1] * v13 + forwardNow[2] * start_2a;
+    v17 = -(rightNow[0] * v12 + rightNow[1] * v13 + rightNow[2] * start_2a);
+    v18 = start_2a * upNow[2] + upNow[0] * v12 + upNow[1] * v13;
+    move[0] = v16 * forward[0] + v17 * forward[1] + v18 * forward[2] - v12;
+    move[1] = right[0] * v16 + right[1] * v17 + right[2] * v18 - v13;
+    move[2] = up[0] * v16 + up[1] * v17 + up[2] * v18 - start_2a;
+    SV_PushEntity(&v38, v6, move);
+    pusher->v.solid = 4;
+    if ( v6->v.movetype != 13 )
+    {
+      if ( (v6->v.flags & 8) != 0 )
+      {
+        v19 = v27 + v6->v.avelocity[1];
+        v6->v.fixangle = 2;
+        v6->v.avelocity[1] = v19;
+      }
+      else
+      {
+        v6->v.angles[0] = v6->v.angles[0] + 0.0;
+        v6->v.angles[1] = v27 + v6->v.angles[1];
+        v6->v.angles[2] = v6->v.angles[2] + 0.0;
+      }
+    }
+    if ( !SV_TestEntityPosition(v6) || v6->v.mins[0] == v6->v.maxs[0] )
+    {
+  LABEL_43:
+      num_edicts = sv.num_edicts;
+      goto LABEL_11;
+    }
+    if ( v6->v.solid <= 1u )
+    {
+      v25 = v6->v.mins[2];
+      v6->v.mins[1] = 0.0;
+      v6->v.mins[0] = 0.0;
+      v6->v.maxs[2] = v25;
+      v6->v.maxs[0] = 0.0;
+      v6->v.maxs[1] = 0.0;
+      goto LABEL_43;
+    }
+    v20 = 0;
+    v6->v.origin[0] = v35;
+    v6->v.origin[1] = entorig_1;
+    v6->v.origin[2] = v37;
+    SV_LinkEdict(v6, true);
+    pusher->v.angles[0] = pushorig_0;
+    pusher->v.angles[1] = pushorig_1;
+    pusher->v.angles[2] = pushorig_2;
+    SV_LinkEdict(pusher, false);
+    pusher->v.ltime = pusher->v.ltime - movetime;
+    check = (edict_t *)v6;
+    v21 = 0;
+    gEntityInterface.pfnBlocked((edict_t *)pusher, check);
+    do
+    {
+      v23 = &g_moved_edict[v21];
+      v24 = g_moved_from[v21];
+      g_moved_edict[v21]->v.origin[0] = *v24;
+      (*v23)->v.origin[1] = v24[1];
+      (*v23)->v.origin[2] = v24[2];
+      v22 = *v23;
+      if ( ((*v23)->v.flags & 8) != 0 )
+      {
+        v22->v.avelocity[1] = 0.0;
+        v22 = *v23;
+      }
+      else if ( v22->v.movetype != 13 )
+      {
+        v22->v.angles[1] = v22->v.angles[1] - v27;
+        v22 = *v23;
+      }
+      ++v20;
+      ++v21;
+      SV_LinkEdict(v22, false);
+    }
+    while ( num_moved != v20 );
+    return 0;
+  }

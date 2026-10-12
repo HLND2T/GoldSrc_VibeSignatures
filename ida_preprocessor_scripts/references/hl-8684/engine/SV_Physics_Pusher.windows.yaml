@@ -1,0 +1,239 @@
+func_name: "SV_Physics_Pusher"
+func_va: "0x1da1330"
+disasm_code: |-
+  .text:01DA1330                 push    ebp
+  .text:01DA1331                 mov     ebp, esp
+  .text:01DA1333                 sub     esp, 8
+  .text:01DA1336                 push    ebx
+  .text:01DA1337                 push    esi
+  .text:01DA1338                 mov     esi, [ebp+ent]
+  .text:01DA133B                 push    edi
+  .text:01DA133C                 mov     ecx, [esi+184h]
+  .text:01DA1342                 mov     eax, [esi+180h]
+  .text:01DA1348                 mov     [ebp+var_4], ecx
+  .text:01DA134B                 mov     [ebp+var_8], eax
+  .text:01DA134E                 fld     [ebp+var_4]
+  .text:01DA1351                 fld     dword ptr [esi+180h]
+  .text:01DA1357                 fadd    host_frametime
+  .text:01DA135D                 fcompp
+  .text:01DA135F                 fnstsw  ax
+  .text:01DA1361                 and     eax, 4100h
+  .text:01DA1366                 jnz     short loc_1DA138A
+  .text:01DA1368                 fld     [ebp+var_4]
+  .text:01DA136B                 fsub    dword ptr [esi+180h]
+  .text:01DA1371                 fstp    [ebp+ent]
+  .text:01DA1374                 fld     [ebp+ent]
+  .text:01DA1377                 fcomp   ds:flt_1E1D048
+  .text:01DA137D                 fnstsw  ax
+  .text:01DA137F                 test    ah, 5
+  .text:01DA1382                 jnp     loc_1DA147D
+  .text:01DA1388                 jmp     short loc_1DA1393
+  .text:01DA138A                 fld     host_frametime
+  .text:01DA1390                 fstp    [ebp+ent]
+  .text:01DA1393                 fld     [ebp+ent]
+  .text:01DA1396                 fcomp   ds:flt_1E1D048
+  .text:01DA139C                 fnstsw  ax
+  .text:01DA139E                 test    ah, 44h
+  .text:01DA13A1                 jnp     loc_1DA147D
+  .text:01DA13A7                 fld     dword ptr [esi+0DCh]
+  .text:01DA13AD                 fcomp   ds:flt_1E1D048
+  .text:01DA13B3                 fnstsw  ax
+  .text:01DA13B5                 test    ah, 44h
+  .text:01DA13B8                 jp      short loc_1DA13F2
+  .text:01DA13BA                 fld     dword ptr [esi+0E0h]
+  .text:01DA13C0                 fcomp   ds:flt_1E1D048
+  .text:01DA13C6                 fnstsw  ax
+  .text:01DA13C8                 test    ah, 44h
+  .text:01DA13CB                 jp      short loc_1DA13F2
+  .text:01DA13CD                 fld     dword ptr [esi+0E4h]
+  .text:01DA13D3                 fcomp   ds:flt_1E1D048
+  .text:01DA13D9                 fnstsw  ax
+  .text:01DA13DB                 test    ah, 44h
+  .text:01DA13DE                 jp      short loc_1DA13F2
+  .text:01DA13E0                 mov     edx, [ebp+ent]
+  .text:01DA13E3                 ; movetime
+  .text:01DA13E3                 push    edx; movetime
+  .text:01DA13E4                 ; pusher
+  .text:01DA13E4                 push    esi; pusher
+  .text:01DA13E5                 call    SV_PushMove
+  .text:01DA13EA                 add     esp, 8
+  .text:01DA13ED                 jmp     loc_1DA147D
+  .text:01DA13F2                 fld     dword ptr [esi+0A0h]
+  .text:01DA13F8                 fcomp   ds:flt_1E1D048
+  .text:01DA13FE                 fnstsw  ax
+  .text:01DA1400                 test    ah, 44h
+  .text:01DA1403                 jp      short loc_1DA143A
+  .text:01DA1405                 fld     dword ptr [esi+0A4h]
+  .text:01DA140B                 fcomp   ds:flt_1E1D048
+  .text:01DA1411                 fnstsw  ax
+  .text:01DA1413                 test    ah, 44h
+  .text:01DA1416                 jp      short loc_1DA143A
+  .text:01DA1418                 fld     dword ptr [esi+0A8h]
+  .text:01DA141E                 fcomp   ds:flt_1E1D048
+  .text:01DA1424                 fnstsw  ax
+  .text:01DA1426                 test    ah, 44h
+  .text:01DA1429                 jp      short loc_1DA143A
+  .text:01DA142B                 mov     eax, [ebp+ent]
+  .text:01DA142E                 ; movetime
+  .text:01DA142E                 push    eax; movetime
+  .text:01DA142F                 ; pusher
+  .text:01DA142F                 push    esi; pusher
+  .text:01DA1430                 call    SV_PushRotate
+  .text:01DA1435                 add     esp, 8
+  .text:01DA1438                 jmp     short loc_1DA147D
+  .text:01DA143A                 mov     ebx, [ebp+ent]
+  .text:01DA143D                 ; movetime
+  .text:01DA143D                 push    ebx; movetime
+  .text:01DA143E                 ; pusher
+  .text:01DA143E                 push    esi; pusher
+  .text:01DA143F                 call    SV_PushRotate
+  .text:01DA1444                 add     esp, 8
+  .text:01DA1447                 test    eax, eax
+  .text:01DA1449                 jz      short loc_1DA147D
+  .text:01DA144B                 mov     edi, [esi+180h]
+  .text:01DA1451                 mov     ecx, [ebp+var_8]
+  .text:01DA1454                 ; movetime
+  .text:01DA1454                 push    ebx; movetime
+  .text:01DA1455                 ; pusher
+  .text:01DA1455                 push    esi; pusher
+  .text:01DA1456                 mov     [ebp+ent], edi
+  .text:01DA1459                 mov     [esi+180h], ecx
+  .text:01DA145F                 call    SV_PushMove
+  .text:01DA1464                 fld     dword ptr [esi+180h]
+  .text:01DA146A                 fcomp   [ebp+ent]
+  .text:01DA146D                 add     esp, 8
+  .text:01DA1470                 fnstsw  ax
+  .text:01DA1472                 test    ah, 5
+  .text:01DA1475                 jp      short loc_1DA147D
+  .text:01DA1477                 mov     [esi+180h], edi
+  .text:01DA147D                 lea     edi, [esi+0D0h]
+  .text:01DA1483                 mov     ebx, 3
+  .text:01DA1488                 fld     dword ptr [edi]
+  .text:01DA148A                 fcomp   ds:flt_1E1DDD0
+  .text:01DA1490                 fnstsw  ax
+  .text:01DA1492                 test    ah, 5
+  .text:01DA1495                 jnp     short loc_1DA14A8
+  .text:01DA1497                 fld     dword ptr [edi]
+  .text:01DA1499                 fcomp   ds:flt_1E1DDAC
+  .text:01DA149F                 fnstsw  ax
+  .text:01DA14A1                 and     eax, 4100h
+  .text:01DA14A6                 jnz     short loc_1DA14C1
+  .text:01DA14A8                 fld     dword ptr [edi]
+  .text:01DA14AA                 push    40AC2000h
+  .text:01DA14AF                 ; Y
+  .text:01DA14AF                 push    0; Y
+  .text:01DA14B1                 sub     esp, 8
+  .text:01DA14B4                 ; X
+  .text:01DA14B4                 fstp    [esp+24h+X]; X
+  .text:01DA14B7                 call    _fmod
+  .text:01DA14BC                 fstp    dword ptr [edi]
+  .text:01DA14BE                 add     esp, 10h
+  .text:01DA14C1                 add     edi, 4
+  .text:01DA14C4                 dec     ebx
+  .text:01DA14C5                 jnz     short loc_1DA1488
+  .text:01DA14C7                 fld     [ebp+var_4]
+  .text:01DA14CA                 fcomp   [ebp+var_8]
+  .text:01DA14CD                 fnstsw  ax
+  .text:01DA14CF                 and     eax, 4100h
+  .text:01DA14D4                 jnz     short loc_1DA1512
+  .text:01DA14D6                 test    dword ptr [esi+224h], 200000h
+  .text:01DA14E0                 jnz     short loc_1DA14F2
+  .text:01DA14E2                 fld     [ebp+var_4]
+  .text:01DA14E5                 fcomp   dword ptr [esi+180h]
+  .text:01DA14EB                 fnstsw  ax
+  .text:01DA14ED                 test    ah, 41h
+  .text:01DA14F0                 jp      short loc_1DA1512
+  .text:01DA14F2                 fld     sv_time
+  .text:01DA14F8                 push    esi
+  .text:01DA14F9                 mov     dword ptr [esi+184h], 0
+  .text:01DA1503                 fstp    gGlobalVariables_time
+  .text:01DA1509                 call    dword_24F5B48
+  .text:01DA150F                 add     esp, 4
+  .text:01DA1512                 pop     edi
+  .text:01DA1513                 pop     esi
+  .text:01DA1514                 pop     ebx
+  .text:01DA1515                 mov     esp, ebp
+  .text:01DA1517                 pop     ebp
+  .text:01DA1518                 retn
+procedure: |-
+  void __cdecl SV_Physics_Pusher(edict_t *ent)
+  {
+    __int16 v2; // fps
+    double v3; // st6
+    bool v4; // c0
+    char v5; // c2
+    bool v6; // c3
+    float v7; // edi
+    float *angles; // edi
+    int v9; // ebx
+    __int16 v10; // fps
+    double v11; // st7
+    bool v12; // c0
+    char v13; // c2
+    bool v14; // c3
+    __int16 v15; // fps
+    bool v16; // c0
+    char v17; // c2
+    bool v18; // c3
+    double v19; // st7
+    float ltime; // [esp+1Ch] [ebp-8h]
+    float nextthink; // [esp+20h] [ebp-4h]
+    float enta; // [esp+2Ch] [ebp+8h]
+
+    nextthink = ent->nextthink;
+    ltime = ent->ltime;
+    v3 = ltime + host_frametime;
+    v4 = v3 < nextthink;
+    v5 = 0;
+    v6 = v3 == nextthink;
+    if ( (v2 & 0x4100) != 0 )
+    {
+      enta = host_frametime;
+    }
+    else
+    {
+      enta = nextthink - ent->ltime;
+      if ( enta < 0.0 )
+        goto LABEL_17;
+    }
+    if ( enta != 0.0 )
+    {
+      if ( ent->avelocity[0] == 0.0 && ent->avelocity[1] == 0.0 && ent->avelocity[2] == 0.0 )
+      {
+        SV_PushMove(ent, enta);
+      }
+      else if ( ent->velocity[0] == 0.0 && ent->velocity[1] == 0.0 && ent->velocity[2] == 0.0 )
+      {
+        SV_PushRotate(ent, enta);
+      }
+      else if ( SV_PushRotate(ent, enta) )
+      {
+        v7 = ent->ltime;
+        ent->ltime = ltime;
+        SV_PushMove(ent, enta);
+        if ( ent->ltime < (double)v7 )
+          ent->ltime = v7;
+      }
+    }
+  LABEL_17:
+    angles = ent->angles;
+    v9 = 3;
+    do
+    {
+      if ( *angles < -3600.0 || (v11 = *angles, v12 = v11 < 3600.0, v13 = 0, v14 = v11 == 3600.0, (v10 & 0x4100) == 0) )
+        *angles = fmod(*angles, 3600.0);
+      ++angles;
+      --v9;
+    }
+    while ( v9 );
+    v16 = nextthink < (double)ltime;
+    v17 = 0;
+    v18 = nextthink == ltime;
+    if ( (v15 & 0x4100) == 0 && ((ent->flags & 0x200000) != 0 || nextthink <= (double)ent->ltime) )
+    {
+      v19 = sv_time;
+      ent->nextthink = 0.0;
+      gGlobalVariables_time = v19;
+      dword_24F5B48(ent);
+    }
+  }

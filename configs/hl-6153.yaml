@@ -2,6 +2,46 @@ modules:
   - name: engine
     module_windows: hw.dll
     skills:
+      - name: find-SV_Physics-decompiles
+        expected_input:
+          - SV_Physics.{platform}.yaml
+        expected_output:
+          - SV_Physics_Pusher.{platform}.yaml
+      - name: find-SV_Physics_Pusher-decompiles
+        expected_input:
+          - SV_Physics_Pusher.{platform}.yaml
+        expected_output:
+          - SV_PushMove.{platform}.yaml
+      - name: find-SV_PushRotate-decompiles
+        expected_input:
+          - SV_PushRotate.{platform}.yaml
+        expected_output:
+          - SV_PushEntity.{platform}.yaml
+      - name: find-SV_SendServerinfo-movevars-decompiles
+        expected_input:
+          - SV_SendServerinfo.{platform}.yaml
+        expected_output:
+          - SV_WriteMovevarsToClient.{platform}.yaml
+      - name: find-SV_ClipToLinks-decompiles
+        expected_input:
+          - SV_ClipToLinks.{platform}.yaml
+        expected_output:
+          - SV_ClipMoveToEntity.{platform}.yaml
+      - name: find-SV_ClipMoveToEntity-decompiles
+        platform: windows
+        expected_input:
+          - SV_ClipMoveToEntity.{platform}.yaml
+        expected_output:
+          - SV_SingleClipMoveToEntity.{platform}.yaml
+      - name: find-SV_Physics
+        expected_output:
+          - SV_Physics.{platform}.yaml
+      - name: find-SV_Physics-diagnostics
+        expected_input:
+          - Sys_Error.{platform}.yaml
+        expected_output:
+          - SV_PushRotate.{platform}.yaml
+          - SV_ClipToLinks.{platform}.yaml
       - name: find-server-physics-layout
         expected_input:
           - ModelFrames.{platform}.yaml
@@ -2219,6 +2259,25 @@ modules:
         category: func
       - name: modelorg
         category: gv
+      - name: SV_PushMove
+        category: func
+      - name: SV_PushEntity
+        category: func
+      - name: SV_WriteMovevarsToClient
+        category: func
+      - name: SV_Physics_Pusher
+        category: func
+      - name: SV_ClipMoveToEntity
+        category: func
+        platform: windows
+      - name: SV_SingleClipMoveToEntity
+        category: func
+      - name: SV_Physics
+        category: func
+      - name: SV_PushRotate
+        category: func
+      - name: SV_ClipToLinks
+        category: func
       - name: SV_SendServerinfo
         category: func
       - name: build_number

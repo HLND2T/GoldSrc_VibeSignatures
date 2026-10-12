@@ -1,0 +1,5 @@
+func_name: SV_ClipMoveToEntity
+func_va: '0xe0220'
+func_rva: '0xe0220'
+func_size: '0x49'
+func_sig: 53 83 EC ?? 8B 44 24 ?? 8B 5C 24 ?? 89 44 24 ?? 8B 44 24 ?? 89 5C 24 ?? 89 44 24 ?? 8B 44 24 ??
