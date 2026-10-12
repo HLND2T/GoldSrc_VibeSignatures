@@ -1,0 +1,6 @@
+func_name: PM_PlaySoundFX_SERVER
+func_va: '0x10249390'
+func_rva: '0x249390'
+func_size: '0x11d'
+func_sig: 83 EC 08 53 55 8B 6C 24 ?? 56 57 8B 7C 24 ?? 83 CD 08 57 E8 ?? ?? ?? ?? 8B D8 83 C4 04 85 DB
+func_sig_resolve_jmp_thunk: true

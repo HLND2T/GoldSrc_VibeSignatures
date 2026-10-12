@@ -1,0 +1,1493 @@
+func_name: "CPlayerMove_PlayStepSound"
+func_va: "0x100e75a0"
+disasm_code: |-
+  .text:100E75A0                 ; Reference reconstruction: private Sven server source is unavailable. Source roles and ABI were recovered from this PE32 body and the symbolized 5.15 ELF peer; the partial structures include only fields used here. The fastcall consumer adapter supplies an unused EDX; the actual method receives this in ECX. Sound emission calls identify PM_PlaySoundFX_SERVER, not the string-reference address.
+  .text:100E75A0                 sub     esp, 0Ch; Reference reconstruction: private Sven server source is unavailable. Source roles and ABI were recovered from this PE32 body and the symbolized 5.15 ELF peer; the partial structures include only fields used here. The fastcall consumer adapter supplies an unused EDX; the actual method receives this in ECX. Sound emission calls identify PM_PlaySoundFX_SERVER, not the string-reference address.
+  .text:100E75A3                 xor     eax, eax
+  .text:100E75A5                 push    esi
+  .text:100E75A6                 mov     esi, ecx
+  .text:100E75A8                 push    edi
+  .text:100E75A9                 mov     edx, [esi+460h]
+  .text:100E75AF                 cmp     [edx+98h], eax
+  .text:100E75B5                 setz    al
+  .text:100E75B8                 mov     [edx+98h], eax
+  .text:100E75BE                 mov     eax, [esi+460h]
+  .text:100E75C4                 cmp     dword ptr [eax+4F5B0h], 0
+  .text:100E75CB                 jz      loc_100E7FF7
+  .text:100E75D1                 push    ebx
+  .text:100E75D2                 mov     ebx, eax
+  .text:100E75D4                 mov     eax, [eax+4F588h]
+  .text:100E75DA                 push    1
+  .text:100E75DC                 push    0
+  .text:100E75DE                 call    eax
+  .text:100E75E0                 mov     ecx, [ebx+98h]
+  .text:100E75E6                 add     esp, 8
+  .text:100E75E9                 cmp     dword ptr [ebx+8], 0
+  .text:100E75ED                 lea     edi, [eax+ecx*2]
+  .text:100E75F0                 jz      short loc_100E7602
+  .text:100E75F2                 mov     eax, [ebx+4F4F0h]
+  .text:100E75F8                 cmp     dword ptr [eax+40h], 0
+  .text:100E75FC                 jz      def_100E7677; jumptable 100E7677 default case
+  .text:100E7602                 movss   xmm0, dword ptr [ebx+5Ch]
+  .text:100E7607                 movss   [esp+18h+vector], xmm0
+  .text:100E760D                 movss   xmm0, dword ptr [ebx+60h]
+  .text:100E7612                 movss   [esp+18h+var_8], xmm0
+  .text:100E7618                 mov     [esp+18h+var_4], 0
+  .text:100E7620                 cmp     dword ptr [ebx+8], 0
+  .text:100E7624                 jz      short loc_100E765A
+  .text:100E7626                 cmp     dword ptr [esi+464h], 0
+  .text:100E762D                 jnz     short loc_100E765A
+  .text:100E762F                 cmp     [esp+18h+isJump], 0
+  .text:100E7634                 jnz     short loc_100E765A
+  .text:100E7636                 lea     eax, [esp+18h+vector]
+  .text:100E763A                 ; vector
+  .text:100E763A                 push    eax; vector
+  .text:100E763B                 call    Length
+  .text:100E7640                 movss   xmm0, ds:dword_1039EC50
+  .text:100E7648                 add     esp, 4
+  .text:100E764B                 fstp    dword ptr [esp+18h+isJump]
+  .text:100E764F                 comiss  xmm0, dword ptr [esp+18h+isJump]
+  .text:100E7654                 jnb     def_100E7677; jumptable 100E7677 default case
+  .text:100E765A                 mov     eax, [esp+18h+stepType]
+  .text:100E765E                 ; switch 12 cases
+  .text:100E765E                 cmp     eax, 0Bh; switch 12 cases
+  .text:100E7661                 ja      def_100E7667; jumptable 100E7667 default case, case 0
+  .text:100E7667                 ; switch jump
+  .text:100E7667                 jmp     ds:jpt_100E7667[eax*4]; switch jump
+  .text:100E766E                 ; jumptable 100E7667 case 1
+  .text:100E766E                 cmp     edi, 3; jumptable 100E7667 case 1
+  .text:100E7671                 ja      def_100E7677; jumptable 100E7677 default case
+  .text:100E7677                 ; switch jump
+  .text:100E7677                 jmp     ds:jpt_100E7677[edi*4]; switch jump
+  .text:100E767E                 ; jumptable 100E7677 case 0
+  .text:100E767E                 movss   xmm0, [esp+18h+volume]; jumptable 100E7677 case 0
+  .text:100E7684                 push    64h ; 'd'
+  .text:100E7686                 push    0
+  .text:100E7688                 sub     esp, 8
+  .text:100E768B                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7693                 movss   [esp+28h+var_28], xmm0
+  .text:100E7698                 push    offset aPlayerPlMetal1; "player/pl_metal1.wav"
+  .text:100E769D                 jmp     loc_100E7FDE
+  .text:100E76A2                 ; jumptable 100E7677 case 1
+  .text:100E76A2                 movss   xmm0, [esp+18h+volume]; jumptable 100E7677 case 1
+  .text:100E76A8                 push    64h ; 'd'
+  .text:100E76AA                 push    0
+  .text:100E76AC                 sub     esp, 8
+  .text:100E76AF                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E76B7                 movss   [esp+28h+var_28], xmm0
+  .text:100E76BC                 push    offset aPlayerPlMetal3; "player/pl_metal3.wav"
+  .text:100E76C1                 jmp     loc_100E7FDE
+  .text:100E76C6                 ; jumptable 100E7677 case 2
+  .text:100E76C6                 movss   xmm0, [esp+18h+volume]; jumptable 100E7677 case 2
+  .text:100E76CC                 push    64h ; 'd'
+  .text:100E76CE                 push    0
+  .text:100E76D0                 sub     esp, 8
+  .text:100E76D3                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E76DB                 movss   [esp+28h+var_28], xmm0
+  .text:100E76E0                 push    offset aPlayerPlMetal2; "player/pl_metal2.wav"
+  .text:100E76E5                 jmp     loc_100E7FDE
+  .text:100E76EA                 ; jumptable 100E7677 case 3
+  .text:100E76EA                 movss   xmm0, [esp+18h+volume]; jumptable 100E7677 case 3
+  .text:100E76F0                 push    64h ; 'd'
+  .text:100E76F2                 push    0
+  .text:100E76F4                 sub     esp, 8
+  .text:100E76F7                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E76FF                 movss   [esp+28h+var_28], xmm0
+  .text:100E7704                 push    offset aPlayerPlMetal4; "player/pl_metal4.wav"
+  .text:100E7709                 jmp     loc_100E7FDE
+  .text:100E770E                 ; jumptable 100E7667 case 2
+  .text:100E770E                 cmp     edi, 3; jumptable 100E7667 case 2
+  .text:100E7711                 ja      def_100E7677; jumptable 100E7677 default case
+  .text:100E7717                 ; switch jump
+  .text:100E7717                 jmp     ds:jpt_100E7717[edi*4]; switch jump
+  .text:100E771E                 ; jumptable 100E7717 case 0
+  .text:100E771E                 movss   xmm0, [esp+18h+volume]; jumptable 100E7717 case 0
+  .text:100E7724                 push    64h ; 'd'
+  .text:100E7726                 push    0
+  .text:100E7728                 sub     esp, 8
+  .text:100E772B                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7733                 movss   [esp+28h+var_28], xmm0
+  .text:100E7738                 push    offset aPlayerPlDirt1W; "player/pl_dirt1.wav"
+  .text:100E773D                 jmp     loc_100E7FDE
+  .text:100E7742                 ; jumptable 100E7717 case 1
+  .text:100E7742                 movss   xmm0, [esp+18h+volume]; jumptable 100E7717 case 1
+  .text:100E7748                 push    64h ; 'd'
+  .text:100E774A                 push    0
+  .text:100E774C                 sub     esp, 8
+  .text:100E774F                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7757                 movss   [esp+28h+var_28], xmm0
+  .text:100E775C                 push    offset aPlayerPlDirt3W; "player/pl_dirt3.wav"
+  .text:100E7761                 jmp     loc_100E7FDE
+  .text:100E7766                 ; jumptable 100E7717 case 2
+  .text:100E7766                 movss   xmm0, [esp+18h+volume]; jumptable 100E7717 case 2
+  .text:100E776C                 push    64h ; 'd'
+  .text:100E776E                 push    0
+  .text:100E7770                 sub     esp, 8
+  .text:100E7773                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E777B                 movss   [esp+28h+var_28], xmm0
+  .text:100E7780                 push    offset aPlayerPlDirt2W; "player/pl_dirt2.wav"
+  .text:100E7785                 jmp     loc_100E7FDE
+  .text:100E778A                 ; jumptable 100E7717 case 3
+  .text:100E778A                 movss   xmm0, [esp+18h+volume]; jumptable 100E7717 case 3
+  .text:100E7790                 push    64h ; 'd'
+  .text:100E7792                 push    0
+  .text:100E7794                 sub     esp, 8
+  .text:100E7797                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E779F                 movss   [esp+28h+var_28], xmm0
+  .text:100E77A4                 push    offset aPlayerPlDirt4W; "player/pl_dirt4.wav"
+  .text:100E77A9                 jmp     loc_100E7FDE
+  .text:100E77AE                 ; jumptable 100E7667 case 3
+  .text:100E77AE                 cmp     edi, 3; jumptable 100E7667 case 3
+  .text:100E77B1                 ja      def_100E7677; jumptable 100E7677 default case
+  .text:100E77B7                 ; switch jump
+  .text:100E77B7                 jmp     ds:jpt_100E77B7[edi*4]; switch jump
+  .text:100E77BE                 ; jumptable 100E77B7 case 0
+  .text:100E77BE                 movss   xmm0, [esp+18h+volume]; jumptable 100E77B7 case 0
+  .text:100E77C4                 push    64h ; 'd'
+  .text:100E77C6                 push    0
+  .text:100E77C8                 sub     esp, 8
+  .text:100E77CB                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E77D3                 movss   [esp+28h+var_28], xmm0
+  .text:100E77D8                 push    offset aPlayerPlDuct1W; "player/pl_duct1.wav"
+  .text:100E77DD                 jmp     loc_100E7FDE
+  .text:100E77E2                 ; jumptable 100E77B7 case 1
+  .text:100E77E2                 movss   xmm0, [esp+18h+volume]; jumptable 100E77B7 case 1
+  .text:100E77E8                 push    64h ; 'd'
+  .text:100E77EA                 push    0
+  .text:100E77EC                 sub     esp, 8
+  .text:100E77EF                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E77F7                 movss   [esp+28h+var_28], xmm0
+  .text:100E77FC                 push    offset aPlayerPlDuct3W; "player/pl_duct3.wav"
+  .text:100E7801                 jmp     loc_100E7FDE
+  .text:100E7806                 ; jumptable 100E77B7 case 2
+  .text:100E7806                 movss   xmm0, [esp+18h+volume]; jumptable 100E77B7 case 2
+  .text:100E780C                 push    64h ; 'd'
+  .text:100E780E                 push    0
+  .text:100E7810                 sub     esp, 8
+  .text:100E7813                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E781B                 movss   [esp+28h+var_28], xmm0
+  .text:100E7820                 push    offset aPlayerPlDuct2W; "player/pl_duct2.wav"
+  .text:100E7825                 jmp     loc_100E7FDE
+  .text:100E782A                 ; jumptable 100E77B7 case 3
+  .text:100E782A                 movss   xmm0, [esp+18h+volume]; jumptable 100E77B7 case 3
+  .text:100E7830                 push    64h ; 'd'
+  .text:100E7832                 push    0
+  .text:100E7834                 sub     esp, 8
+  .text:100E7837                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E783F                 movss   [esp+28h+var_28], xmm0
+  .text:100E7844                 push    offset aPlayerPlDuct4W; "player/pl_duct4.wav"
+  .text:100E7849                 jmp     loc_100E7FDE
+  .text:100E784E                 ; jumptable 100E7667 case 4
+  .text:100E784E                 cmp     edi, 3; jumptable 100E7667 case 4
+  .text:100E7851                 ja      def_100E7677; jumptable 100E7677 default case
+  .text:100E7857                 ; switch jump
+  .text:100E7857                 jmp     ds:jpt_100E7857[edi*4]; switch jump
+  .text:100E785E                 ; jumptable 100E7857 case 0
+  .text:100E785E                 movss   xmm0, [esp+18h+volume]; jumptable 100E7857 case 0
+  .text:100E7864                 push    64h ; 'd'
+  .text:100E7866                 push    0
+  .text:100E7868                 sub     esp, 8
+  .text:100E786B                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7873                 movss   [esp+28h+var_28], xmm0
+  .text:100E7878                 push    offset aPlayerPlGrate1; "player/pl_grate1.wav"
+  .text:100E787D                 jmp     loc_100E7FDE
+  .text:100E7882                 ; jumptable 100E7857 case 1
+  .text:100E7882                 movss   xmm0, [esp+18h+volume]; jumptable 100E7857 case 1
+  .text:100E7888                 push    64h ; 'd'
+  .text:100E788A                 push    0
+  .text:100E788C                 sub     esp, 8
+  .text:100E788F                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7897                 movss   [esp+28h+var_28], xmm0
+  .text:100E789C                 push    offset aPlayerPlGrate3; "player/pl_grate3.wav"
+  .text:100E78A1                 jmp     loc_100E7FDE
+  .text:100E78A6                 ; jumptable 100E7857 case 2
+  .text:100E78A6                 movss   xmm0, [esp+18h+volume]; jumptable 100E7857 case 2
+  .text:100E78AC                 push    64h ; 'd'
+  .text:100E78AE                 push    0
+  .text:100E78B0                 sub     esp, 8
+  .text:100E78B3                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E78BB                 movss   [esp+28h+var_28], xmm0
+  .text:100E78C0                 push    offset aPlayerPlGrate2; "player/pl_grate2.wav"
+  .text:100E78C5                 jmp     loc_100E7FDE
+  .text:100E78CA                 ; jumptable 100E7857 case 3
+  .text:100E78CA                 movss   xmm0, [esp+18h+volume]; jumptable 100E7857 case 3
+  .text:100E78D0                 push    64h ; 'd'
+  .text:100E78D2                 push    0
+  .text:100E78D4                 sub     esp, 8
+  .text:100E78D7                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E78DF                 movss   [esp+28h+var_28], xmm0
+  .text:100E78E4                 push    offset aPlayerPlGrate4; "player/pl_grate4.wav"
+  .text:100E78E9                 jmp     loc_100E7FDE
+  .text:100E78EE                 ; jumptable 100E7667 case 5
+  .text:100E78EE                 mov     eax, [esi+460h]; jumptable 100E7667 case 5
+  .text:100E78F4                 push    4
+  .text:100E78F6                 push    0
+  .text:100E78F8                 mov     eax, [eax+4F588h]
+  .text:100E78FE                 call    eax
+  .text:100E7900                 add     esp, 8
+  .text:100E7903                 test    eax, eax
+  .text:100E7905                 jz      loc_100E79AB; jumptable 100E7914 case 4
+  .text:100E790B                 ; switch 5 cases
+  .text:100E790B                 cmp     edi, 4; switch 5 cases
+  .text:100E790E                 ja      def_100E7677; jumptable 100E7677 default case
+  .text:100E7914                 ; switch jump
+  .text:100E7914                 jmp     ds:jpt_100E7914[edi*4]; switch jump
+  .text:100E791B                 ; jumptable 100E7914 case 0
+  .text:100E791B                 movss   xmm0, [esp+18h+volume]; jumptable 100E7914 case 0
+  .text:100E7921                 push    64h ; 'd'
+  .text:100E7923                 push    0
+  .text:100E7925                 sub     esp, 8
+  .text:100E7928                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7930                 movss   [esp+28h+var_28], xmm0
+  .text:100E7935                 push    offset aPlayerPlTile1W; "player/pl_tile1.wav"
+  .text:100E793A                 jmp     loc_100E7FDE
+  .text:100E793F                 ; jumptable 100E7914 case 1
+  .text:100E793F                 movss   xmm0, [esp+18h+volume]; jumptable 100E7914 case 1
+  .text:100E7945                 push    64h ; 'd'
+  .text:100E7947                 push    0
+  .text:100E7949                 sub     esp, 8
+  .text:100E794C                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7954                 movss   [esp+28h+var_28], xmm0
+  .text:100E7959                 push    offset aPlayerPlTile3W; "player/pl_tile3.wav"
+  .text:100E795E                 jmp     loc_100E7FDE
+  .text:100E7963                 ; jumptable 100E7914 case 2
+  .text:100E7963                 movss   xmm0, [esp+18h+volume]; jumptable 100E7914 case 2
+  .text:100E7969                 push    64h ; 'd'
+  .text:100E796B                 push    0
+  .text:100E796D                 sub     esp, 8
+  .text:100E7970                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7978                 movss   [esp+28h+var_28], xmm0
+  .text:100E797D                 push    offset aPlayerPlTile2W; "player/pl_tile2.wav"
+  .text:100E7982                 jmp     loc_100E7FDE
+  .text:100E7987                 ; jumptable 100E7914 case 3
+  .text:100E7987                 movss   xmm0, [esp+18h+volume]; jumptable 100E7914 case 3
+  .text:100E798D                 push    64h ; 'd'
+  .text:100E798F                 push    0
+  .text:100E7991                 sub     esp, 8
+  .text:100E7994                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E799C                 movss   [esp+28h+var_28], xmm0
+  .text:100E79A1                 push    offset aPlayerPlTile4W; "player/pl_tile4.wav"
+  .text:100E79A6                 jmp     loc_100E7FDE
+  .text:100E79AB                 ; jumptable 100E7914 case 4
+  .text:100E79AB                 movss   xmm0, [esp+18h+volume]; jumptable 100E7914 case 4
+  .text:100E79B1                 push    64h ; 'd'
+  .text:100E79B3                 push    0
+  .text:100E79B5                 sub     esp, 8
+  .text:100E79B8                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E79C0                 movss   [esp+28h+var_28], xmm0
+  .text:100E79C5                 push    offset aPlayerPlTile5W; "player/pl_tile5.wav"
+  .text:100E79CA                 jmp     loc_100E7FDE
+  .text:100E79CF                 ; jumptable 100E7667 case 6
+  .text:100E79CF                 cmp     edi, 3; jumptable 100E7667 case 6
+  .text:100E79D2                 ja      def_100E7677; jumptable 100E7677 default case
+  .text:100E79D8                 ; switch jump
+  .text:100E79D8                 jmp     ds:jpt_100E79D8[edi*4]; switch jump
+  .text:100E79DF                 ; jumptable 100E79D8 case 0
+  .text:100E79DF                 movss   xmm0, [esp+18h+volume]; jumptable 100E79D8 case 0
+  .text:100E79E5                 push    64h ; 'd'
+  .text:100E79E7                 push    0
+  .text:100E79E9                 sub     esp, 8
+  .text:100E79EC                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E79F4                 movss   [esp+28h+var_28], xmm0
+  .text:100E79F9                 push    offset aPlayerPlSlosh1; "player/pl_slosh1.wav"
+  .text:100E79FE                 push    0
+  .text:100E7A00                 jmp     loc_100E7FE0
+  .text:100E7A05                 ; jumptable 100E79D8 case 1
+  .text:100E7A05                 movss   xmm0, [esp+18h+volume]; jumptable 100E79D8 case 1
+  .text:100E7A0B                 push    64h ; 'd'
+  .text:100E7A0D                 push    0
+  .text:100E7A0F                 sub     esp, 8
+  .text:100E7A12                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7A1A                 movss   [esp+28h+var_28], xmm0
+  .text:100E7A1F                 push    offset aPlayerPlSlosh3; "player/pl_slosh3.wav"
+  .text:100E7A24                 push    0
+  .text:100E7A26                 jmp     loc_100E7FE0
+  .text:100E7A2B                 ; jumptable 100E79D8 case 2
+  .text:100E7A2B                 movss   xmm0, [esp+18h+volume]; jumptable 100E79D8 case 2
+  .text:100E7A31                 push    64h ; 'd'
+  .text:100E7A33                 push    0
+  .text:100E7A35                 sub     esp, 8
+  .text:100E7A38                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7A40                 movss   [esp+28h+var_28], xmm0
+  .text:100E7A45                 push    offset aPlayerPlSlosh2; "player/pl_slosh2.wav"
+  .text:100E7A4A                 push    0
+  .text:100E7A4C                 jmp     loc_100E7FE0
+  .text:100E7A51                 ; jumptable 100E79D8 case 3
+  .text:100E7A51                 movss   xmm0, [esp+18h+volume]; jumptable 100E79D8 case 3
+  .text:100E7A57                 push    64h ; 'd'
+  .text:100E7A59                 push    0
+  .text:100E7A5B                 sub     esp, 8
+  .text:100E7A5E                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7A66                 movss   [esp+28h+var_28], xmm0
+  .text:100E7A6B                 push    offset aPlayerPlSlosh4; "player/pl_slosh4.wav"
+  .text:100E7A70                 push    0
+  .text:100E7A72                 jmp     loc_100E7FE0
+  .text:100E7A77                 ; jumptable 100E7667 case 9
+  .text:100E7A77                 cmp     edi, 3; jumptable 100E7667 case 9
+  .text:100E7A7A                 ja      def_100E7677; jumptable 100E7677 default case
+  .text:100E7A80                 ; switch jump
+  .text:100E7A80                 jmp     ds:jpt_100E7A80[edi*4]; switch jump
+  .text:100E7A87                 ; jumptable 100E7A80 case 0
+  .text:100E7A87                 movss   xmm0, [esp+18h+volume]; jumptable 100E7A80 case 0
+  .text:100E7A8D                 push    64h ; 'd'
+  .text:100E7A8F                 push    0
+  .text:100E7A91                 sub     esp, 8
+  .text:100E7A94                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7A9C                 movss   [esp+28h+var_28], xmm0
+  .text:100E7AA1                 push    offset aPlayerPlWood1W; "player/pl_wood1.wav"
+  .text:100E7AA6                 push    0
+  .text:100E7AA8                 jmp     loc_100E7FE0
+  .text:100E7AAD                 ; jumptable 100E7A80 case 1
+  .text:100E7AAD                 movss   xmm0, [esp+18h+volume]; jumptable 100E7A80 case 1
+  .text:100E7AB3                 push    64h ; 'd'
+  .text:100E7AB5                 push    0
+  .text:100E7AB7                 sub     esp, 8
+  .text:100E7ABA                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7AC2                 movss   [esp+28h+var_28], xmm0
+  .text:100E7AC7                 push    offset aPlayerPlWood3W; "player/pl_wood3.wav"
+  .text:100E7ACC                 push    0
+  .text:100E7ACE                 jmp     loc_100E7FE0
+  .text:100E7AD3                 ; jumptable 100E7A80 case 2
+  .text:100E7AD3                 movss   xmm0, [esp+18h+volume]; jumptable 100E7A80 case 2
+  .text:100E7AD9                 push    64h ; 'd'
+  .text:100E7ADB                 push    0
+  .text:100E7ADD                 sub     esp, 8
+  .text:100E7AE0                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7AE8                 movss   [esp+28h+var_28], xmm0
+  .text:100E7AED                 push    offset aPlayerPlWood2W; "player/pl_wood2.wav"
+  .text:100E7AF2                 push    0
+  .text:100E7AF4                 jmp     loc_100E7FE0
+  .text:100E7AF9                 ; jumptable 100E7A80 case 3
+  .text:100E7AF9                 movss   xmm0, [esp+18h+volume]; jumptable 100E7A80 case 3
+  .text:100E7AFF                 push    64h ; 'd'
+  .text:100E7B01                 push    0
+  .text:100E7B03                 sub     esp, 8
+  .text:100E7B06                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7B0E                 movss   [esp+28h+var_28], xmm0
+  .text:100E7B13                 push    offset aPlayerPlWood4W; "player/pl_wood4.wav"
+  .text:100E7B18                 push    0
+  .text:100E7B1A                 jmp     loc_100E7FE0
+  .text:100E7B1F                 ; jumptable 100E7667 case 10
+  .text:100E7B1F                 cmp     edi, 3; jumptable 100E7667 case 10
+  .text:100E7B22                 ja      def_100E7677; jumptable 100E7677 default case
+  .text:100E7B28                 ; switch jump
+  .text:100E7B28                 jmp     ds:jpt_100E7B28[edi*4]; switch jump
+  .text:100E7B2F                 ; jumptable 100E7B28 case 0
+  .text:100E7B2F                 movss   xmm0, [esp+18h+volume]; jumptable 100E7B28 case 0
+  .text:100E7B35                 push    64h ; 'd'
+  .text:100E7B37                 push    0
+  .text:100E7B39                 sub     esp, 8
+  .text:100E7B3C                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7B44                 movss   [esp+28h+var_28], xmm0
+  .text:100E7B49                 push    offset aPlayerPlOrgani; "player/pl_organic1.wav"
+  .text:100E7B4E                 push    0
+  .text:100E7B50                 jmp     loc_100E7FE0
+  .text:100E7B55                 ; jumptable 100E7B28 case 1
+  .text:100E7B55                 movss   xmm0, [esp+18h+volume]; jumptable 100E7B28 case 1
+  .text:100E7B5B                 push    64h ; 'd'
+  .text:100E7B5D                 push    0
+  .text:100E7B5F                 sub     esp, 8
+  .text:100E7B62                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7B6A                 movss   [esp+28h+var_28], xmm0
+  .text:100E7B6F                 push    offset aPlayerPlOrgani_0; "player/pl_organic3.wav"
+  .text:100E7B74                 push    0
+  .text:100E7B76                 jmp     loc_100E7FE0
+  .text:100E7B7B                 ; jumptable 100E7B28 case 2
+  .text:100E7B7B                 movss   xmm0, [esp+18h+volume]; jumptable 100E7B28 case 2
+  .text:100E7B81                 push    64h ; 'd'
+  .text:100E7B83                 push    0
+  .text:100E7B85                 sub     esp, 8
+  .text:100E7B88                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7B90                 movss   [esp+28h+var_28], xmm0
+  .text:100E7B95                 push    offset aPlayerPlOrgani_1; "player/pl_organic2.wav"
+  .text:100E7B9A                 push    0
+  .text:100E7B9C                 jmp     loc_100E7FE0
+  .text:100E7BA1                 ; jumptable 100E7B28 case 3
+  .text:100E7BA1                 movss   xmm0, [esp+18h+volume]; jumptable 100E7B28 case 3
+  .text:100E7BA7                 push    64h ; 'd'
+  .text:100E7BA9                 push    0
+  .text:100E7BAB                 sub     esp, 8
+  .text:100E7BAE                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7BB6                 movss   [esp+28h+var_28], xmm0
+  .text:100E7BBB                 push    offset aPlayerPlOrgani_2; "player/pl_organic4.wav"
+  .text:100E7BC0                 push    0
+  .text:100E7BC2                 jmp     loc_100E7FE0
+  .text:100E7BC7                 ; jumptable 100E7667 case 11
+  .text:100E7BC7                 mov     eax, [esi+460h]; jumptable 100E7667 case 11
+  .text:100E7BCD                 push    1
+  .text:100E7BCF                 push    0
+  .text:100E7BD1                 mov     eax, [eax+4F588h]
+  .text:100E7BD7                 call    eax
+  .text:100E7BD9                 add     esp, 8
+  .text:100E7BDC                 test    eax, eax
+  .text:100E7BDE                 jz      short loc_100E7BE3
+  .text:100E7BE0                 add     edi, 4
+  .text:100E7BE3                 ; switch 8 cases
+  .text:100E7BE3                 cmp     edi, 7; switch 8 cases
+  .text:100E7BE6                 ja      def_100E7677; jumptable 100E7677 default case
+  .text:100E7BEC                 ; switch jump
+  .text:100E7BEC                 jmp     ds:jpt_100E7BEC[edi*4]; switch jump
+  .text:100E7BF3                 ; jumptable 100E7BEC case 0
+  .text:100E7BF3                 movss   xmm0, [esp+18h+volume]; jumptable 100E7BEC case 0
+  .text:100E7BF9                 push    64h ; 'd'
+  .text:100E7BFB                 push    0
+  .text:100E7BFD                 sub     esp, 8
+  .text:100E7C00                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7C08                 movss   [esp+28h+var_28], xmm0
+  .text:100E7C0D                 push    offset aPlayerPlSnow1W; "player/pl_snow1.wav"
+  .text:100E7C12                 push    0
+  .text:100E7C14                 jmp     loc_100E7FE0
+  .text:100E7C19                 ; jumptable 100E7BEC case 1
+  .text:100E7C19                 movss   xmm0, [esp+18h+volume]; jumptable 100E7BEC case 1
+  .text:100E7C1F                 push    64h ; 'd'
+  .text:100E7C21                 push    0
+  .text:100E7C23                 sub     esp, 8
+  .text:100E7C26                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7C2E                 movss   [esp+28h+var_28], xmm0
+  .text:100E7C33                 push    offset aPlayerPlSnow3W; "player/pl_snow3.wav"
+  .text:100E7C38                 push    0
+  .text:100E7C3A                 jmp     loc_100E7FE0
+  .text:100E7C3F                 ; jumptable 100E7BEC case 2
+  .text:100E7C3F                 movss   xmm0, [esp+18h+volume]; jumptable 100E7BEC case 2
+  .text:100E7C45                 push    64h ; 'd'
+  .text:100E7C47                 push    0
+  .text:100E7C49                 sub     esp, 8
+  .text:100E7C4C                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7C54                 movss   [esp+28h+var_28], xmm0
+  .text:100E7C59                 push    offset aPlayerPlSnow2W; "player/pl_snow2.wav"
+  .text:100E7C5E                 push    0
+  .text:100E7C60                 jmp     loc_100E7FE0
+  .text:100E7C65                 ; jumptable 100E7BEC case 3
+  .text:100E7C65                 movss   xmm0, [esp+18h+volume]; jumptable 100E7BEC case 3
+  .text:100E7C6B                 push    64h ; 'd'
+  .text:100E7C6D                 push    0
+  .text:100E7C6F                 sub     esp, 8
+  .text:100E7C72                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7C7A                 movss   [esp+28h+var_28], xmm0
+  .text:100E7C7F                 push    offset aPlayerPlSnow4W; "player/pl_snow4.wav"
+  .text:100E7C84                 push    0
+  .text:100E7C86                 jmp     loc_100E7FE0
+  .text:100E7C8B                 ; jumptable 100E7BEC case 4
+  .text:100E7C8B                 movss   xmm0, [esp+18h+volume]; jumptable 100E7BEC case 4
+  .text:100E7C91                 push    64h ; 'd'
+  .text:100E7C93                 push    0
+  .text:100E7C95                 sub     esp, 8
+  .text:100E7C98                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7CA0                 movss   [esp+28h+var_28], xmm0
+  .text:100E7CA5                 push    offset aPlayerPlSnow5W; "player/pl_snow5.wav"
+  .text:100E7CAA                 push    0
+  .text:100E7CAC                 jmp     loc_100E7FE0
+  .text:100E7CB1                 ; jumptable 100E7BEC case 5
+  .text:100E7CB1                 movss   xmm0, [esp+18h+volume]; jumptable 100E7BEC case 5
+  .text:100E7CB7                 push    64h ; 'd'
+  .text:100E7CB9                 push    0
+  .text:100E7CBB                 sub     esp, 8
+  .text:100E7CBE                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7CC6                 movss   [esp+28h+var_28], xmm0
+  .text:100E7CCB                 push    offset aPlayerPlSnow6W; "player/pl_snow6.wav"
+  .text:100E7CD0                 push    0
+  .text:100E7CD2                 jmp     loc_100E7FE0
+  .text:100E7CD7                 ; jumptable 100E7BEC case 6
+  .text:100E7CD7                 movss   xmm0, [esp+18h+volume]; jumptable 100E7BEC case 6
+  .text:100E7CDD                 push    64h ; 'd'
+  .text:100E7CDF                 push    0
+  .text:100E7CE1                 sub     esp, 8
+  .text:100E7CE4                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7CEC                 movss   [esp+28h+var_28], xmm0
+  .text:100E7CF1                 push    offset aPlayerPlSnow7W; "player/pl_snow7.wav"
+  .text:100E7CF6                 push    0
+  .text:100E7CF8                 jmp     loc_100E7FE0
+  .text:100E7CFD                 ; jumptable 100E7BEC case 7
+  .text:100E7CFD                 movss   xmm0, [esp+18h+volume]; jumptable 100E7BEC case 7
+  .text:100E7D03                 push    64h ; 'd'
+  .text:100E7D05                 push    0
+  .text:100E7D07                 sub     esp, 8
+  .text:100E7D0A                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7D12                 movss   [esp+28h+var_28], xmm0
+  .text:100E7D17                 push    offset aPlayerPlSnow8W; "player/pl_snow8.wav"
+  .text:100E7D1C                 push    0
+  .text:100E7D1E                 jmp     loc_100E7FE0
+  .text:100E7D23                 ; jumptable 100E7667 case 7
+  .text:100E7D23                 mov     ecx, dword_10562D9C; jumptable 100E7667 case 7
+  .text:100E7D29                 test    ecx, ecx
+  .text:100E7D2B                 jnz     short loc_100E7D40
+  .text:100E7D2D                 pop     ebx
+  .text:100E7D2E                 pop     edi
+  .text:100E7D2F                 mov     dword_10562D9C, 1
+  .text:100E7D39                 pop     esi
+  .text:100E7D3A                 add     esp, 0Ch
+  .text:100E7D3D                 retn    0Ch
+  .text:100E7D40                 mov     eax, ecx
+  .text:100E7D42                 inc     ecx
+  .text:100E7D43                 mov     dword_10562D9C, ecx
+  .text:100E7D49                 cmp     eax, 3
+  .text:100E7D4C                 jnz     short loc_100E7D58
+  .text:100E7D4E                 mov     dword_10562D9C, 0
+  .text:100E7D58                 ; switch 4 cases
+  .text:100E7D58                 cmp     edi, 3; switch 4 cases
+  .text:100E7D5B                 ja      def_100E7677; jumptable 100E7677 default case
+  .text:100E7D61                 ; switch jump
+  .text:100E7D61                 jmp     ds:jpt_100E7D61[edi*4]; switch jump
+  .text:100E7D68                 ; jumptable 100E7D61 case 0
+  .text:100E7D68                 movss   xmm0, [esp+18h+volume]; jumptable 100E7D61 case 0
+  .text:100E7D6E                 push    64h ; 'd'
+  .text:100E7D70                 push    0
+  .text:100E7D72                 sub     esp, 8
+  .text:100E7D75                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7D7D                 movss   [esp+28h+var_28], xmm0
+  .text:100E7D82                 push    offset aPlayerPlWade1W; "player/pl_wade1.wav"
+  .text:100E7D87                 push    3
+  .text:100E7D89                 jmp     loc_100E7FE0
+  .text:100E7D8E                 ; jumptable 100E7D61 case 1
+  .text:100E7D8E                 movss   xmm0, [esp+18h+volume]; jumptable 100E7D61 case 1
+  .text:100E7D94                 push    64h ; 'd'
+  .text:100E7D96                 push    0
+  .text:100E7D98                 sub     esp, 8
+  .text:100E7D9B                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7DA3                 movss   [esp+28h+var_28], xmm0
+  .text:100E7DA8                 push    offset aPlayerPlWade2W; "player/pl_wade2.wav"
+  .text:100E7DAD                 push    3
+  .text:100E7DAF                 jmp     loc_100E7FE0
+  .text:100E7DB4                 ; jumptable 100E7D61 case 2
+  .text:100E7DB4                 movss   xmm0, [esp+18h+volume]; jumptable 100E7D61 case 2
+  .text:100E7DBA                 push    64h ; 'd'
+  .text:100E7DBC                 push    0
+  .text:100E7DBE                 sub     esp, 8
+  .text:100E7DC1                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7DC9                 movss   [esp+28h+var_28], xmm0
+  .text:100E7DCE                 push    offset aPlayerPlWade3W; "player/pl_wade3.wav"
+  .text:100E7DD3                 push    3
+  .text:100E7DD5                 jmp     loc_100E7FE0
+  .text:100E7DDA                 ; jumptable 100E7D61 case 3
+  .text:100E7DDA                 movss   xmm0, [esp+18h+volume]; jumptable 100E7D61 case 3
+  .text:100E7DE0                 push    64h ; 'd'
+  .text:100E7DE2                 push    0
+  .text:100E7DE4                 sub     esp, 8
+  .text:100E7DE7                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7DEF                 movss   [esp+28h+var_28], xmm0
+  .text:100E7DF4                 push    offset aPlayerPlWade4W; "player/pl_wade4.wav"
+  .text:100E7DF9                 push    3
+  .text:100E7DFB                 jmp     loc_100E7FE0
+  .text:100E7E00                 ; jumptable 100E7667 case 8
+  .text:100E7E00                 cmp     edi, 3; jumptable 100E7667 case 8
+  .text:100E7E03                 ja      def_100E7677; jumptable 100E7677 default case
+  .text:100E7E09                 ; switch jump
+  .text:100E7E09                 jmp     ds:jpt_100E7E09[edi*4]; switch jump
+  .text:100E7E10                 ; jumptable 100E7E09 case 0
+  .text:100E7E10                 movss   xmm0, [esp+18h+volume]; jumptable 100E7E09 case 0
+  .text:100E7E16                 push    64h ; 'd'
+  .text:100E7E18                 push    0
+  .text:100E7E1A                 sub     esp, 8
+  .text:100E7E1D                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7E25                 movss   [esp+28h+var_28], xmm0
+  .text:100E7E2A                 push    offset aPlayerPlLadder; "player/pl_ladder1.wav"
+  .text:100E7E2F                 jmp     loc_100E7FDE
+  .text:100E7E34                 ; jumptable 100E7E09 case 1
+  .text:100E7E34                 movss   xmm0, [esp+18h+volume]; jumptable 100E7E09 case 1
+  .text:100E7E3A                 push    64h ; 'd'
+  .text:100E7E3C                 push    0
+  .text:100E7E3E                 sub     esp, 8
+  .text:100E7E41                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7E49                 movss   [esp+28h+var_28], xmm0
+  .text:100E7E4E                 push    offset aPlayerPlLadder_0; "player/pl_ladder3.wav"
+  .text:100E7E53                 jmp     loc_100E7FDE
+  .text:100E7E58                 ; jumptable 100E7E09 case 2
+  .text:100E7E58                 movss   xmm0, [esp+18h+volume]; jumptable 100E7E09 case 2
+  .text:100E7E5E                 push    64h ; 'd'
+  .text:100E7E60                 push    0
+  .text:100E7E62                 sub     esp, 8
+  .text:100E7E65                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7E6D                 movss   [esp+28h+var_28], xmm0
+  .text:100E7E72                 push    offset aPlayerPlLadder_1; "player/pl_ladder2.wav"
+  .text:100E7E77                 jmp     loc_100E7FDE
+  .text:100E7E7C                 ; jumptable 100E7E09 case 3
+  .text:100E7E7C                 movss   xmm0, [esp+18h+volume]; jumptable 100E7E09 case 3
+  .text:100E7E82                 push    64h ; 'd'
+  .text:100E7E84                 push    0
+  .text:100E7E86                 sub     esp, 8
+  .text:100E7E89                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7E91                 movss   [esp+28h+var_28], xmm0
+  .text:100E7E96                 push    offset aPlayerPlLadder_2; "player/pl_ladder4.wav"
+  .text:100E7E9B                 jmp     loc_100E7FDE
+  .text:100E7EA0                 ; jumptable 100E7667 default case, case 0
+  .text:100E7EA0                 mov     eax, [esi+460h]; jumptable 100E7667 default case, case 0
+  .text:100E7EA6                 push    1
+  .text:100E7EA8                 push    0
+  .text:100E7EAA                 mov     eax, [eax+4F588h]
+  .text:100E7EB0                 call    eax
+  .text:100E7EB2                 add     esp, 8
+  .text:100E7EB5                 test    eax, eax
+  .text:100E7EB7                 jz      short loc_100E7EBC
+  .text:100E7EB9                 add     edi, 4
+  .text:100E7EBC                 ; switch 8 cases
+  .text:100E7EBC                 cmp     edi, 7; switch 8 cases
+  .text:100E7EBF                 ja      def_100E7677; jumptable 100E7677 default case
+  .text:100E7EC5                 ; switch jump
+  .text:100E7EC5                 jmp     ds:jpt_100E7EC5[edi*4]; switch jump
+  .text:100E7ECC                 ; jumptable 100E7EC5 case 0
+  .text:100E7ECC                 movss   xmm0, [esp+18h+volume]; jumptable 100E7EC5 case 0
+  .text:100E7ED2                 push    64h ; 'd'
+  .text:100E7ED4                 push    0
+  .text:100E7ED6                 sub     esp, 8
+  .text:100E7ED9                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7EE1                 movss   [esp+28h+var_28], xmm0
+  .text:100E7EE6                 push    offset aPlayerPlStep1W; "player/pl_step1.wav"
+  .text:100E7EEB                 jmp     loc_100E7FDE
+  .text:100E7EF0                 ; jumptable 100E7EC5 case 1
+  .text:100E7EF0                 movss   xmm0, [esp+18h+volume]; jumptable 100E7EC5 case 1
+  .text:100E7EF6                 push    64h ; 'd'
+  .text:100E7EF8                 push    0
+  .text:100E7EFA                 sub     esp, 8
+  .text:100E7EFD                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7F05                 movss   [esp+28h+var_28], xmm0
+  .text:100E7F0A                 push    offset aPlayerPlStep3W; "player/pl_step3.wav"
+  .text:100E7F0F                 jmp     loc_100E7FDE
+  .text:100E7F14                 ; jumptable 100E7EC5 case 2
+  .text:100E7F14                 movss   xmm0, [esp+18h+volume]; jumptable 100E7EC5 case 2
+  .text:100E7F1A                 push    64h ; 'd'
+  .text:100E7F1C                 push    0
+  .text:100E7F1E                 sub     esp, 8
+  .text:100E7F21                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7F29                 movss   [esp+28h+var_28], xmm0
+  .text:100E7F2E                 push    offset aPlayerPlStep2W; "player/pl_step2.wav"
+  .text:100E7F33                 jmp     loc_100E7FDE
+  .text:100E7F38                 ; jumptable 100E7EC5 case 3
+  .text:100E7F38                 movss   xmm0, [esp+18h+volume]; jumptable 100E7EC5 case 3
+  .text:100E7F3E                 push    64h ; 'd'
+  .text:100E7F40                 push    0
+  .text:100E7F42                 sub     esp, 8
+  .text:100E7F45                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7F4D                 movss   [esp+28h+var_28], xmm0
+  .text:100E7F52                 push    offset aPlayerPlStep4W; "player/pl_step4.wav"
+  .text:100E7F57                 jmp     loc_100E7FDE
+  .text:100E7F5C                 ; jumptable 100E7EC5 case 4
+  .text:100E7F5C                 movss   xmm0, [esp+18h+volume]; jumptable 100E7EC5 case 4
+  .text:100E7F62                 push    64h ; 'd'
+  .text:100E7F64                 push    0
+  .text:100E7F66                 sub     esp, 8
+  .text:100E7F69                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7F71                 movss   [esp+28h+var_28], xmm0
+  .text:100E7F76                 push    offset aPlayerPlStep5W; "player/pl_step5.wav"
+  .text:100E7F7B                 jmp     short loc_100E7FDE
+  .text:100E7F7D                 ; jumptable 100E7EC5 case 5
+  .text:100E7F7D                 movss   xmm0, [esp+18h+volume]; jumptable 100E7EC5 case 5
+  .text:100E7F83                 push    64h ; 'd'
+  .text:100E7F85                 push    0
+  .text:100E7F87                 sub     esp, 8
+  .text:100E7F8A                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7F92                 movss   [esp+28h+var_28], xmm0
+  .text:100E7F97                 push    offset aPlayerPlStep6W; "player/pl_step6.wav"
+  .text:100E7F9C                 jmp     short loc_100E7FDE
+  .text:100E7F9E                 ; jumptable 100E7EC5 case 6
+  .text:100E7F9E                 movss   xmm0, [esp+18h+volume]; jumptable 100E7EC5 case 6
+  .text:100E7FA4                 push    64h ; 'd'
+  .text:100E7FA6                 push    0
+  .text:100E7FA8                 sub     esp, 8
+  .text:100E7FAB                 mov     [esp+28h+attenuation], 3F4CCCCDh
+  .text:100E7FB3                 movss   [esp+28h+var_28], xmm0
+  .text:100E7FB8                 push    offset aPlayerPlStep7W; "player/pl_step7.wav"
+  .text:100E7FBD                 jmp     short loc_100E7FDE
+  .text:100E7FBF                 ; jumptable 100E7EC5 case 7
+  .text:100E7FBF                 movss   xmm0, [esp+18h+volume]; jumptable 100E7EC5 case 7
+  .text:100E7FC5                 ; pitch
+  .text:100E7FC5                 push    64h ; 'd'; pitch
+  .text:100E7FC7                 ; flags
+  .text:100E7FC7                 push    0; flags
+  .text:100E7FC9                 sub     esp, 8
+  .text:100E7FCC                 ; attenuation
+  .text:100E7FCC                 mov     [esp+28h+attenuation], 3F4CCCCDh; attenuation
+  .text:100E7FD4                 ; volume
+  .text:100E7FD4                 movss   [esp+28h+var_28], xmm0; volume
+  .text:100E7FD9                 push    offset aPlayerPlStep8W; "player/pl_step8.wav"
+  .text:100E7FDE                 ; channel
+  .text:100E7FDE                 push    4; channel
+  .text:100E7FE0                 mov     ecx, [esi+460h]
+  .text:100E7FE6                 lea     eax, [ecx+38h]
+  .text:100E7FE9                 ; origin
+  .text:100E7FE9                 push    eax; origin
+  .text:100E7FEA                 mov     eax, [ecx]
+  .text:100E7FEC                 inc     eax
+  .text:100E7FED                 ; playerindex
+  .text:100E7FED                 push    eax; playerindex
+  .text:100E7FEE                 call    PM_PlaySoundFX_SERVER
+  .text:100E7FF3                 add     esp, 20h
+  .text:100E7FF6                 ; jumptable 100E7677 default case
+  jumptable 100E7717 default case
+  jumptable 100E77B7 default case
+  jumptable 100E7857 default case
+  jumptable 100E7914 default case
+  jumptable 100E79D8 default case
+  jumptable 100E7A80 default case
+  jumptable 100E7B28 default case
+  jumptable 100E7BEC default case
+  jumptable 100E7D61 default case
+  jumptable 100E7E09 default case
+  jumptable 100E7EC5 default case
+  .text:100E7FF6                 pop     ebx; jumptable 100E7677 default case
+  .text:100E7FF7                 pop     edi
+  .text:100E7FF8                 pop     esi
+  .text:100E7FF9                 add     esp, 0Ch
+  .text:100E7FFC                 retn    0Ch
+procedure: |-
+  // Reference reconstruction: private Sven server source is unavailable. Source roles and ABI were recovered from this PE32 body and the symbolized 5.15 ELF peer; the partial structures include only fields used here. The fastcall consumer adapter supplies an unused EDX; the actual method receives this in ECX. Sound emission calls identify PM_PlaySoundFX_SERVER, not the string-reference address.
+  void __thiscall CPlayerMove::PlayStepSound(CPlayerMoveReference *self, int stepType, float volume, bool isJump)
+  {
+    PlayerMovementReference *movement; // eax
+    PlayerMovementReference *v6; // ebx
+    int v7; // edi
+    int v8; // eax
+    float v9[3]; // [esp+1Ch] [ebp-Ch] BYREF
+    float isJumpa; // [esp+34h] [ebp+Ch]
+
+    self->movement->stepLeft = self->movement->stepLeft == 0;
+    movement = self->movement;
+    if ( movement->runfuncs )
+    {
+      v6 = self->movement;
+      v7 = movement->randomLong(0, 1) + 2 * movement->stepLeft;
+      if ( !v6->multiplayer || v6->movevars->footsteps )
+      {
+        v9[0] = v6->velocity[0];
+        v9[1] = v6->velocity[1];
+        v9[2] = 0.0;
+        if ( !v6->multiplayer || self->onLadder || isJump || (isJumpa = Length(v9), isJumpa > 220.0) )
+        {
+          switch ( stepType )
+          {
+            case 1:
+              switch ( v7 )
+              {
+                case 0:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    4,
+                    "player/pl_metal1.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 1:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    4,
+                    "player/pl_metal3.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 2:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    4,
+                    "player/pl_metal2.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 3:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    4,
+                    "player/pl_metal4.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                default:
+                  return;
+              }
+              break;
+            case 2:
+              switch ( v7 )
+              {
+                case 0:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    4,
+                    "player/pl_dirt1.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 1:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    4,
+                    "player/pl_dirt3.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 2:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    4,
+                    "player/pl_dirt2.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 3:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    4,
+                    "player/pl_dirt4.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                default:
+                  return;
+              }
+              break;
+            case 3:
+              switch ( v7 )
+              {
+                case 0:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    4,
+                    "player/pl_duct1.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 1:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    4,
+                    "player/pl_duct3.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 2:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    4,
+                    "player/pl_duct2.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 3:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    4,
+                    "player/pl_duct4.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                default:
+                  return;
+              }
+              break;
+            case 4:
+              switch ( v7 )
+              {
+                case 0:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    4,
+                    "player/pl_grate1.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 1:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    4,
+                    "player/pl_grate3.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 2:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    4,
+                    "player/pl_grate2.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 3:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    4,
+                    "player/pl_grate4.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                default:
+                  return;
+              }
+              break;
+            case 5:
+              if ( self->movement->randomLong(0, 4) )
+              {
+                switch ( v7 )
+                {
+                  case 0:
+                    PM_PlaySoundFX_SERVER(
+                      self->movement->playerindex + 1,
+                      self->movement->origin,
+                      4,
+                      "player/pl_tile1.wav",
+                      volume,
+                      0.80000001,
+                      0,
+                      100);
+                    break;
+                  case 1:
+                    PM_PlaySoundFX_SERVER(
+                      self->movement->playerindex + 1,
+                      self->movement->origin,
+                      4,
+                      "player/pl_tile3.wav",
+                      volume,
+                      0.80000001,
+                      0,
+                      100);
+                    break;
+                  case 2:
+                    PM_PlaySoundFX_SERVER(
+                      self->movement->playerindex + 1,
+                      self->movement->origin,
+                      4,
+                      "player/pl_tile2.wav",
+                      volume,
+                      0.80000001,
+                      0,
+                      100);
+                    break;
+                  case 3:
+                    PM_PlaySoundFX_SERVER(
+                      self->movement->playerindex + 1,
+                      self->movement->origin,
+                      4,
+                      "player/pl_tile4.wav",
+                      volume,
+                      0.80000001,
+                      0,
+                      100);
+                    break;
+                  case 4:
+                    goto LABEL_35;
+                  default:
+                    return;
+                }
+              }
+              else
+              {
+  LABEL_35:
+                PM_PlaySoundFX_SERVER(
+                  self->movement->playerindex + 1,
+                  self->movement->origin,
+                  4,
+                  "player/pl_tile5.wav",
+                  volume,
+                  0.80000001,
+                  0,
+                  100);
+              }
+              break;
+            case 6:
+              switch ( v7 )
+              {
+                case 0:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    0,
+                    "player/pl_slosh1.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 1:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    0,
+                    "player/pl_slosh3.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 2:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    0,
+                    "player/pl_slosh2.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 3:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    0,
+                    "player/pl_slosh4.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                default:
+                  return;
+              }
+              break;
+            case 7:
+              if ( dword_10562D9C )
+              {
+                v8 = dword_10562D9C++;
+                if ( v8 == 3 )
+                  dword_10562D9C = 0;
+                switch ( v7 )
+                {
+                  case 0:
+                    PM_PlaySoundFX_SERVER(
+                      self->movement->playerindex + 1,
+                      self->movement->origin,
+                      3,
+                      "player/pl_wade1.wav",
+                      volume,
+                      0.80000001,
+                      0,
+                      100);
+                    break;
+                  case 1:
+                    PM_PlaySoundFX_SERVER(
+                      self->movement->playerindex + 1,
+                      self->movement->origin,
+                      3,
+                      "player/pl_wade2.wav",
+                      volume,
+                      0.80000001,
+                      0,
+                      100);
+                    break;
+                  case 2:
+                    PM_PlaySoundFX_SERVER(
+                      self->movement->playerindex + 1,
+                      self->movement->origin,
+                      3,
+                      "player/pl_wade3.wav",
+                      volume,
+                      0.80000001,
+                      0,
+                      100);
+                    break;
+                  case 3:
+                    PM_PlaySoundFX_SERVER(
+                      self->movement->playerindex + 1,
+                      self->movement->origin,
+                      3,
+                      "player/pl_wade4.wav",
+                      volume,
+                      0.80000001,
+                      0,
+                      100);
+                    break;
+                  default:
+                    return;
+                }
+              }
+              else
+              {
+                dword_10562D9C = 1;
+              }
+              break;
+            case 8:
+              switch ( v7 )
+              {
+                case 0:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    4,
+                    "player/pl_ladder1.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 1:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    4,
+                    "player/pl_ladder3.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 2:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    4,
+                    "player/pl_ladder2.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 3:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    4,
+                    "player/pl_ladder4.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                default:
+                  return;
+              }
+              break;
+            case 9:
+              switch ( v7 )
+              {
+                case 0:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    0,
+                    "player/pl_wood1.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 1:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    0,
+                    "player/pl_wood3.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 2:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    0,
+                    "player/pl_wood2.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 3:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    0,
+                    "player/pl_wood4.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                default:
+                  return;
+              }
+              break;
+            case 10:
+              switch ( v7 )
+              {
+                case 0:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    0,
+                    "player/pl_organic1.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 1:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    0,
+                    "player/pl_organic3.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 2:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    0,
+                    "player/pl_organic2.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 3:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    0,
+                    "player/pl_organic4.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                default:
+                  return;
+              }
+              break;
+            case 11:
+              if ( self->movement->randomLong(0, 1) )
+                v7 += 4;
+              switch ( v7 )
+              {
+                case 0:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    0,
+                    "player/pl_snow1.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 1:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    0,
+                    "player/pl_snow3.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 2:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    0,
+                    "player/pl_snow2.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 3:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    0,
+                    "player/pl_snow4.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 4:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    0,
+                    "player/pl_snow5.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 5:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    0,
+                    "player/pl_snow6.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 6:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    0,
+                    "player/pl_snow7.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 7:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    0,
+                    "player/pl_snow8.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                default:
+                  return;
+              }
+              break;
+            default:
+              if ( self->movement->randomLong(0, 1) )
+                v7 += 4;
+              switch ( v7 )
+              {
+                case 0:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    4,
+                    "player/pl_step1.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 1:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    4,
+                    "player/pl_step3.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 2:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    4,
+                    "player/pl_step2.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 3:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    4,
+                    "player/pl_step4.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 4:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    4,
+                    "player/pl_step5.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 5:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    4,
+                    "player/pl_step6.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 6:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    4,
+                    "player/pl_step7.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                case 7:
+                  PM_PlaySoundFX_SERVER(
+                    self->movement->playerindex + 1,
+                    self->movement->origin,
+                    4,
+                    "player/pl_step8.wav",
+                    volume,
+                    0.80000001,
+                    0,
+                    100);
+                  break;
+                default:
+                  return;
+              }
+              break;
+          }
+        }
+      }
+    }
+  }

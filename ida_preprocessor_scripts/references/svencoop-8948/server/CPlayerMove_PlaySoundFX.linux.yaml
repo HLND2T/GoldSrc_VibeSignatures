@@ -1,0 +1,52 @@
+func_name: "CPlayerMove_PlaySoundFX"
+func_va: "0x23cf36"
+disasm_code: |-
+  .text:0023CF36                 ; Forwarding wrapper: ignore this, increment playerindex once, forward origin/channel/sound/volume/attenuation/flags/pitch unchanged. The PIC thunk is compiler support, not PM_PlaySoundFX_SERVER. The PLT call resolves to the real PM function.
+  .text:0023CF36                 push    ebx; Forwarding wrapper: ignore this, increment playerindex once, forward origin/channel/sound/volume/attenuation/flags/pitch unchanged. The PIC thunk is compiler support, not PM_PlaySoundFX_SERVER. The PLT call resolves to the real PM function.
+  .text:0023CF37                 sub     esp, 8
+  .text:0023CF3A                 call    __x86_get_pc_thunk_bx
+  .text:0023CF3F                 add     ebx, (offset _GLOBAL_OFFSET_TABLE_ - $)
+  .text:0023CF45                 mov     eax, [esp+0Ch+pitch]
+  .text:0023CF49                 ; pitch
+  .text:0023CF49                 push    eax; pitch
+  .text:0023CF4A                 mov     edx, [esp+10h+flags]
+  .text:0023CF4E                 ; flags
+  .text:0023CF4E                 push    edx; flags
+  .text:0023CF4F                 mov     ecx, [esp+14h+attenuation]
+  .text:0023CF53                 ; attenuation
+  .text:0023CF53                 push    ecx; attenuation
+  .text:0023CF54                 mov     eax, [esp+18h+volume]
+  .text:0023CF58                 ; volume
+  .text:0023CF58                 push    eax; volume
+  .text:0023CF59                 mov     edx, [esp+1Ch+sound]
+  .text:0023CF5D                 ; sound
+  .text:0023CF5D                 push    edx; sound
+  .text:0023CF5E                 mov     ecx, [esp+20h+arg_C]
+  .text:0023CF62                 ; channel
+  .text:0023CF62                 push    ecx; channel
+  .text:0023CF63                 mov     eax, [esp+24h+origin]
+  .text:0023CF67                 ; origin
+  .text:0023CF67                 push    eax; origin
+  .text:0023CF68                 mov     edx, [esp+28h+playerindex]
+  .text:0023CF6C                 inc     edx
+  .text:0023CF6D                 ; playerindex
+  .text:0023CF6D                 push    edx; playerindex
+  .text:0023CF6E                 call    _PM_PlaySoundFX_SERVER
+  .text:0023CF73                 add     esp, 28h
+  .text:0023CF76                 pop     ebx
+  .text:0023CF77                 retn
+procedure: |-
+  // Forwarding wrapper: ignore this, increment playerindex once, forward origin/channel/sound/volume/attenuation/flags/pitch unchanged. The PIC thunk is compiler support, not PM_PlaySoundFX_SERVER. The PLT call resolves to the real PM function.
+  void __cdecl CPlayerMove::PlaySoundFX(
+          CPlayerMoveReference *self,
+          int playerindex,
+          const float *origin,
+          int channel,
+          const char *sound,
+          float volume,
+          float attenuation,
+          int flags,
+          int pitch)
+  {
+    PM_PlaySoundFX_SERVER(playerindex + 1, origin, channel, sound, volume, attenuation, flags, pitch);
+  }

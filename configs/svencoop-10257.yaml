@@ -4042,6 +4042,14 @@ modules:
           - CASModuleBuilder_CASModuleBuilder.{platform}.yaml
         expected_output:
           - CScriptBuilder_DefineWord.{platform}.yaml
+      - name: find-CPlayerMove_PlayStepSound
+        expected_output:
+          - CPlayerMove_PlayStepSound.{platform}.yaml
+      - name: find-CPlayerMove_PlayStepSound-decompiles
+        expected_input:
+          - CPlayerMove_PlayStepSound.{platform}.yaml
+        expected_output:
+          - PM_PlaySoundFX_SERVER.{platform}.yaml
     symbols:
       - name: RegisterScriptDictionary
         category: func
@@ -4163,6 +4171,10 @@ modules:
       - name: CString_dtor
         category: func
       - name: CScriptBuilder_DefineWord
+        category: func
+      - name: CPlayerMove_PlayStepSound
+        category: func
+      - name: PM_PlaySoundFX_SERVER
         category: func
   - name: serverbrowser
     module_windows: serverbrowser.dll
