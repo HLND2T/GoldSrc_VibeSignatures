@@ -3906,6 +3906,24 @@ modules:
           - ScriptDictionaryFactory_Generic.linux.yaml
         expected_output:
           - CScriptDictionary_Create.{platform}.yaml
+      - name: find-CASEntityFuncs_InitializeEntity
+        expected_output:
+          - CASEntityFuncs_InitializeEntity.{platform}.yaml
+      - name: find-CScriptDictionary-CIterator
+        expected_output:
+          - CScriptDictionary_begin.{platform}.yaml
+          - CScriptDictionary_end.{platform}.yaml
+          - CScriptDictionary_CIterator_GetKey.{platform}.yaml
+          - CScriptDictionary_CIterator_operator_NE.{platform}.yaml
+          - CScriptDictionary_CIterator_GetValue.{platform}.yaml
+        expected_output_windows:
+          - CScriptDictionary_CIterator_operator_PP.windows.yaml
+      - name: find-CScriptDictionary-CIterator-pp-decompiles
+        platform: linux
+        expected_input_linux:
+          - CASEntityFuncs_InitializeEntity.linux.yaml
+        expected_output_linux:
+          - CScriptDictionary_CIterator_operator_PP.linux.yaml
       - name: find-CASDirectoryList-CASBaseManager
         expected_output:
           - CASDirectoryList_CreateDirectory.{platform}.yaml
@@ -4028,6 +4046,20 @@ modules:
       - name: CScriptDictionary_Delete
         category: func
       - name: CScriptDictionary_DeleteAll
+        category: func
+      - name: CASEntityFuncs_InitializeEntity
+        category: func
+      - name: CScriptDictionary_begin
+        category: func
+      - name: CScriptDictionary_end
+        category: func
+      - name: CScriptDictionary_CIterator_GetKey
+        category: func
+      - name: CScriptDictionary_CIterator_operator_NE
+        category: func
+      - name: CScriptDictionary_CIterator_GetValue
+        category: func
+      - name: CScriptDictionary_CIterator_operator_PP
         category: func
       - name: CASDirectoryList_CreateDirectory
         category: func

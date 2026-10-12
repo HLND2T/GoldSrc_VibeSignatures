@@ -1,0 +1,5 @@
+func_name: CScriptDictionary::end() const
+func_va: '0x10334310'
+func_rva: '0x334310'
+func_size: '0xf'
+func_sig: 8B 44 24 ?? 8B 51 ?? 89 10 89 48 ?? C2 04 00

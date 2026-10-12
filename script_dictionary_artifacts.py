@@ -25,8 +25,37 @@ FUNCTION_IDENTITIES = {
     "CScriptDictionary_GetSize": "CScriptDictionary::GetSize() const",
     "CScriptDictionary_Delete": "CScriptDictionary::Delete(const CString&)",
     "CScriptDictionary_DeleteAll": "CScriptDictionary::DeleteAll()",
+    "CScriptDictionary_begin": "CScriptDictionary::begin() const",
+    "CScriptDictionary_end": "CScriptDictionary::end() const",
+    "CScriptDictionary_CIterator_GetKey": "CScriptDictionary::CIterator::GetKey() const",
+    "CScriptDictionary_CIterator_operator_NE": "CScriptDictionary::CIterator::operator!=(const CIterator&) const",
+    "CScriptDictionary_CIterator_GetValue": "CScriptDictionary::CIterator::GetValue(void*, int) const",
+    "CScriptDictionary_CIterator_operator_PP": "CScriptDictionary::CIterator::operator++()",
 }
 BODY_SIGNATURE_BYTE_LIMIT = 256
+
+
+async def inspect_dictionary_function(session, entry, image_base, symbol):
+    """Validate a known callable entry and build its real-identity artifact."""
+    identity = FUNCTION_IDENTITIES[symbol]
+    payload = await _inspect_function_via_mcp(
+        session, entry, image_base, identity, signature_byte_limit=BODY_SIGNATURE_BYTE_LIMIT
+    )
+    if payload is None:
+        payload = await _inspect_function_via_mcp(
+            session,
+            entry,
+            image_base,
+            identity,
+            allow_across_function_boundary=True,
+            signature_byte_limit=BODY_SIGNATURE_BYTE_LIMIT,
+        )
+        if payload is not None:
+            payload["func_sig_allow_across_function_boundary"] = True
+    if payload is None or int(payload["func_va"], 0) != entry:
+        return None
+    payload.pop("_pointer_size", None)
+    return payload
 
 
 async def publish_dictionary_identities(session, expected_outputs, platform, image_base):
@@ -35,25 +64,10 @@ async def publish_dictionary_identities(session, expected_outputs, platform, ima
         symbol = path.name.removesuffix(f".{platform}.yaml")
         old = yaml.safe_load(path.read_text(encoding="utf-8"))
         entry = int(old["func_va"], 0)
-        identity = FUNCTION_IDENTITIES[symbol]
         # Include actual body statements beyond SEH/PIC headers. Output-only
         # validation stays separate from string/registration/body discovery.
-        payload = await _inspect_function_via_mcp(
-            session, entry, image_base, identity, signature_byte_limit=BODY_SIGNATURE_BYTE_LIMIT
-        )
+        payload = await inspect_dictionary_function(session, entry, image_base, symbol)
         if payload is None:
-            payload = await _inspect_function_via_mcp(
-                session,
-                entry,
-                image_base,
-                identity,
-                allow_across_function_boundary=True,
-                signature_byte_limit=BODY_SIGNATURE_BYTE_LIMIT,
-            )
-            if payload is not None:
-                payload["func_sig_allow_across_function_boundary"] = True
-        if payload is None or int(payload["func_va"], 0) != entry:
             return False
-        payload.pop("_pointer_size", None)
         write_func_yaml(path, payload)
     return True

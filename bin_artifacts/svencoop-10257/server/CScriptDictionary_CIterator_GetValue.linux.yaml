@@ -1,0 +1,6 @@
+func_name: CScriptDictionary::CIterator::GetValue(void*, int) const
+func_va: '0xf58f8'
+func_rva: '0xf58f8'
+func_size: '0x32'
+func_sig: 83 EC ?? 8B 44 24 ?? 8B 54 24 ?? 89 54 24 ?? 8B 4C 24 ?? 89 4C 24 ?? 8B 50 ?? 8B 4A ?? 89 4C 24 ?? 8B 00 83 C0 ??
+  89 04 24 E8 ?? ?? ?? ?? 83 C4 ?? C3

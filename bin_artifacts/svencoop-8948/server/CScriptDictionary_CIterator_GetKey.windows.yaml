@@ -1,0 +1,5 @@
+func_name: CScriptDictionary::CIterator::GetKey() const
+func_va: '0x10334230'
+func_rva: '0x334230'
+func_size: '0x6'
+func_sig: 8B 01 83 C0 08 C3

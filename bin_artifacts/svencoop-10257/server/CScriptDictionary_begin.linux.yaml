@@ -1,0 +1,5 @@
+func_name: CScriptDictionary::begin() const
+func_va: '0xf5808'
+func_rva: '0xf5808'
+func_size: '0x13'
+func_sig: 8B 44 24 ?? 8B 54 24 ?? 8B 4A ?? 89 08 89 50 ?? C2 ?? ??

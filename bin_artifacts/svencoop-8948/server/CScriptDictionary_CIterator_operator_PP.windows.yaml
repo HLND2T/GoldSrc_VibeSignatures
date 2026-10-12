@@ -1,0 +1,5 @@
+func_name: CScriptDictionary::CIterator::operator++()
+func_va: '0x103341e0'
+func_rva: '0x3341e0'
+func_size: '0x7'
+func_sig: 8B 01 8B 00 89 01 C3
