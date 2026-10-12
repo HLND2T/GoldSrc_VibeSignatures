@@ -1,0 +1,280 @@
+func_name: "SV_LinkEdict"
+func_va: "0x104f90"
+disasm_code: |-
+  .text:00104F90                 push    ebx
+  .text:00104F91                 sub     esp, 28h
+  .text:00104F94                 mov     ebx, [esp+2Ch+ent]
+  .text:00104F98                 mov     eax, [ebx+8]
+  .text:00104F9B                 test    eax, eax
+  .text:00104F9D                 jz      short loc_104FBB
+  .text:00104F9F                 mov     edx, [ebx+0Ch]
+  .text:00104FA2                 mov     [edx], eax
+  .text:00104FA4                 mov     eax, [ebx+8]
+  .text:00104FA7                 mov     edx, [ebx+0Ch]
+  .text:00104FAA                 mov     [eax+4], edx
+  .text:00104FAD                 mov     dword ptr [ebx+0Ch], 0
+  .text:00104FB4                 mov     dword ptr [ebx+8], 0
+  .text:00104FBB                 cmp     ebx, ds:sv.edicts
+  .text:00104FC1                 jz      short loc_104FC9
+  .text:00104FC3                 mov     ecx, [ebx]
+  .text:00104FC5                 test    ecx, ecx
+  .text:00104FC7                 jz      short loc_104FD0
+  .text:00104FC9                 add     esp, 28h
+  .text:00104FCC                 pop     ebx
+  .text:00104FCD                 retn
+  .text:00104FD0                 mov     [esp+2Ch+var_2C], ebx
+  .text:00104FD3                 call    ds:gEntityInterface.pfnSetAbsBox
+  .text:00104FD9                 cmp     dword ptr [ebx+188h], 0Ch
+  .text:00104FE0                 jz      loc_1050C0
+  .text:00104FE6                 mov     eax, 0FFFFFFFFh
+  .text:00104FEB                 mov     [esp+2Ch+topnode], eax
+  .text:00104FEF                 mov     eax, [ebx+134h]
+  .text:00104FF5                 mov     dword ptr [ebx+14h], 0
+  .text:00104FFC                 mov     dword ptr [ebx+10h], 0FFFFFFFFh
+  .text:00105003                 test    eax, eax
+  .text:00105005                 jnz     loc_105170
+  .text:0010500B                 mov     ecx, [ebx+18Ch]
+  .text:00105011                 test    ecx, ecx
+  .text:00105013                 jnz     loc_105120
+  .text:00105019                 cmp     dword ptr [ebx+190h], 0FFFFFFFFh
+  .text:00105020                 jge     short loc_104FC9
+  .text:00105022                 mov     eax, offset sv_areanodes
+  .text:00105027                 mov     esi, esi
+  .text:00105029                 lea     edi, [edi+0]
+  .text:00105030                 mov     edx, [node]
+  .text:00105032                 cmp     edx, 0FFFFFFFFh
+  .text:00105035                 jz      short loc_105057
+  .text:00105037                 lea     edx, [ebx+edx*4]
+  .text:0010503A                 fld     dword ptr [node+4]
+  .text:0010503D                 fld     dword ptr [edx+144h]
+  .text:00105043                 fucomip st, st(1)
+  .text:00105045                 jbe     loc_105100
+  .text:0010504B                 fstp    st
+  .text:0010504D                 mov     node, [node+8]
+  .text:00105050                 mov     edx, [node]
+  .text:00105052                 cmp     edx, 0FFFFFFFFh
+  .text:00105055                 jnz     short loc_105037
+  .text:00105057                 dec     ecx
+  .text:00105058                 lea     edx, [ebx+8]
+  .text:0010505B                 jz      loc_1051D0
+  .text:00105061                 lea     ecx, [node+18h]
+  .text:00105064                 mov     [ebx+0Ch], ecx
+  .text:00105067                 mov     node, [node+18h]
+  .text:0010506A                 mov     [ebx+8], eax
+  .text:0010506D                 mov     [eax+4], edx
+  .text:00105070                 mov     eax, [ebx+0Ch]
+  .text:00105073                 mov     [eax], edx
+  .text:00105075                 mov     eax, [esp+2Ch+touch_triggers]
+  .text:00105079                 test    eax, eax
+  .text:0010507B                 jz      loc_104FC9
+  .text:00105081                 mov     eax, ds:iTouchLinkSemaphore_10352
+  .text:00105086                 test    eax, eax
+  .text:00105088                 jnz     loc_104FC9
+  .text:0010508E                 mov     edx, offset sv_areanodes
+  .text:00105093                 mov     eax, 1
+  .text:00105098                 ; node
+  .text:00105098                 mov     [esp+2Ch+var_28], edx; node
+  .text:0010509C                 ; ent
+  .text:0010509C                 mov     [esp+2Ch+var_2C], ebx; ent
+  .text:0010509F                 mov     ds:iTouchLinkSemaphore_10352, eax
+  .text:001050A4                 call    SV_TouchLinks
+  .text:001050A9                 xor     ecx, ecx
+  .text:001050AB                 mov     ds:iTouchLinkSemaphore_10352, ecx
+  .text:001050B1                 jmp     loc_104FC9
+  .text:001050C0                 mov     eax, [ebx+214h]
+  .text:001050C6                 test    eax, eax
+  .text:001050C8                 jz      loc_104FE6
+  .text:001050CE                 mov     edx, [eax+10h]
+  .text:001050D1                 add     eax, 18h
+  .text:001050D4                 mov     [ebx+10h], edx
+  .text:001050D7                 mov     edx, [eax-4]
+  .text:001050DA                 mov     [ebx+14h], edx
+  .text:001050DD                 mov     edx, 60h ; '`'
+  .text:001050E2                 ; src
+  .text:001050E2                 mov     [esp+2Ch+var_28], eax; src
+  .text:001050E6                 lea     eax, [ebx+18h]
+  .text:001050E9                 ; count
+  .text:001050E9                 mov     [esp+2Ch+count], edx; count
+  .text:001050ED                 ; dest
+  .text:001050ED                 mov     [esp+2Ch+var_2C], eax; dest
+  .text:001050F0                 call    Q_memcpy
+  .text:001050F5                 jmp     loc_10500B
+  .text:00105100                 fld     dword ptr [edx+150h]
+  .text:00105106                 fxch    st(1)
+  .text:00105108                 fucomip st, st(1)
+  .text:0010510A                 fstp    st
+  .text:0010510C                 jbe     loc_105057
+  .text:00105112                 mov     node, [node+0Ch]
+  .text:00105115                 jmp     loc_105030
+  .text:00105120                 cmp     ecx, 4
+  .text:00105123                 jnz     loc_105022
+  .text:00105129                 mov     eax, [ebx+134h]
+  .text:0010512F                 mov     eax, ds:sv.models[eax*4]
+  .text:00105136                 test    eax, eax
+  .text:00105138                 jnz     loc_105022
+  .text:0010513E                 mov     eax, [ebx+138h]
+  .text:00105144                 mov     ecx, ds:pr_strings
+  .text:0010514A                 add     eax, ecx
+  .text:0010514C                 ; str
+  .text:0010514C                 mov     [esp+2Ch+var_2C], eax; str
+  .text:0010514F                 call    Q_strlen
+  .text:00105154                 test    eax, eax
+  .text:00105156                 jz      loc_1051E9
+  .text:0010515C                 mov     ecx, [ebx+18Ch]
+  .text:00105162                 jmp     loc_105022
+  .text:00105170                 lea     eax, [esp+2Ch+topnode]
+  .text:00105174                 ; topnode
+  .text:00105174                 mov     [esp+2Ch+count], eax; topnode
+  .text:00105178                 mov     eax, ds:sv.worldmodel
+  .text:0010517D                 mov     eax, [eax+0A4h]
+  .text:00105183                 ; ent
+  .text:00105183                 mov     [esp+2Ch+var_2C], ebx; ent
+  .text:00105186                 ; node
+  .text:00105186                 mov     [esp+2Ch+var_28], eax; node
+  .text:0010518A                 call    SV_FindTouchedLeafs
+  .text:0010518F                 cmp     dword ptr [ebx+14h], 30h ; '0'
+  .text:00105193                 jle     loc_10500B
+  .text:00105199                 mov     eax, [esp+2Ch+topnode]
+  .text:0010519D                 mov     dword ptr [ebx+14h], 0
+  .text:001051A4                 mov     [ebx+10h], eax
+  .text:001051A7                 mov     eax, 60h ; '`'
+  .text:001051AC                 ; count
+  .text:001051AC                 mov     [esp+2Ch+count], eax; count
+  .text:001051B0                 mov     eax, 0FFh
+  .text:001051B5                 ; fill
+  .text:001051B5                 mov     [esp+2Ch+var_28], eax; fill
+  .text:001051B9                 lea     eax, [ebx+18h]
+  .text:001051BC                 ; dest
+  .text:001051BC                 mov     [esp+2Ch+var_2C], eax; dest
+  .text:001051BF                 call    Q_memset
+  .text:001051C4                 jmp     loc_10500B
+  .text:001051D0                 lea     ecx, [node+10h]
+  .text:001051D3                 mov     [ebx+0Ch], ecx
+  .text:001051D6                 mov     node, [node+10h]
+  .text:001051D9                 mov     [ebx+8], eax
+  .text:001051DC                 mov     [eax+4], edx
+  .text:001051DF                 mov     eax, [ebx+0Ch]
+  .text:001051E2                 mov     [eax], edx
+  .text:001051E4                 jmp     loc_105075
+  .text:001051E9                 mov     eax, [ebx+80h]
+  .text:001051EF                 mov     edx, ds:pr_strings
+  .text:001051F5                 mov     [esp+2Ch+var_2C], offset aInsertedSWithN; "Inserted %s with no model\n"
+  .text:001051FC                 add     eax, edx
+  .text:001051FE                 mov     [esp+2Ch+var_28], eax
+  .text:00105202                 call    Con_DPrintf
+  .text:00105207                 jmp     loc_104FC9
+procedure: |-
+  void __cdecl SV_LinkEdict(edict_t *ent, int touch_triggers)
+  {
+    link_s *prev; // eax
+    int modelindex; // eax
+    int solid; // ecx
+    areanode_t *i; // eax
+    int axis; // edx
+    float *v7; // edx
+    link_t *p_area; // edx
+    link_s *v9; // eax
+    edict_t *aiment; // eax
+    int headnode; // edx
+    __int16 *leafnums; // eax
+    int v13; // eax
+    int topnode[4]; // [esp+1Ch] [ebp-10h] BYREF
+
+    prev = ent->area.prev;
+    if ( prev )
+    {
+      ent->area.next->prev = prev;
+      ent->area.prev->next = ent->area.next;
+      ent->area.next = nullptr;
+      ent->area.prev = nullptr;
+    }
+    if ( ent != (edict_t *)sv.edicts && !ent->free )
+    {
+      gEntityInterface.pfnSetAbsBox(ent);
+      if ( ent->v.movetype == 12 && (aiment = ent->v.aiment) != nullptr )
+      {
+        headnode = aiment->headnode;
+        leafnums = aiment->leafnums;
+        ent->headnode = headnode;
+        ent->num_leafs = *((_DWORD *)leafnums - 1);
+        Q_memcpy(ent->leafnums, leafnums, 96);
+      }
+      else
+      {
+        topnode[0] = -1;
+        modelindex = ent->v.modelindex;
+        ent->num_leafs = 0;
+        ent->headnode = -1;
+        if ( modelindex )
+        {
+          SV_FindTouchedLeafs((edict_t_0 *)ent, sv.worldmodel->nodes, topnode);
+          if ( ent->num_leafs > 48 )
+          {
+            v13 = topnode[0];
+            ent->num_leafs = 0;
+            ent->headnode = v13;
+            Q_memset(ent->leafnums, 255, 96);
+          }
+        }
+      }
+      solid = ent->v.solid;
+      if ( solid )
+      {
+        if ( solid == 4 && !sv.models[ent->v.modelindex] )
+        {
+          if ( !Q_strlen(&pr_strings[ent->v.model]) )
+          {
+            Con_DPrintf("Inserted %s with no model\n", &pr_strings[ent->v.classname]);
+            return;
+          }
+          solid = ent->v.solid;
+        }
+      }
+      else if ( ent->v.skin >= -1 )
+      {
+        return;
+      }
+      for ( i = sv_areanodes; ; i = i->children[1] )
+      {
+        axis = i->axis;
+        if ( i->axis == -1 )
+          break;
+        while ( 1 )
+        {
+          v7 = (float *)(&ent->free + axis);
+          if ( v7[81] <= (long double)i->dist )
+            break;
+          i = i->children[0];
+          axis = i->axis;
+          if ( i->axis == -1 )
+            goto LABEL_14;
+        }
+        if ( i->dist <= (long double)v7[84] )
+          break;
+      }
+  LABEL_14:
+      p_area = &ent->area;
+      if ( solid == 1 )
+      {
+        ent->area.next = &i->trigger_edicts;
+        v9 = i->trigger_edicts.prev;
+      }
+      else
+      {
+        ent->area.next = &i->solid_edicts;
+        v9 = i->solid_edicts.prev;
+      }
+      ent->area.prev = v9;
+      v9->next = p_area;
+      ent->area.next->prev = p_area;
+      if ( touch_triggers )
+      {
+        if ( !iTouchLinkSemaphore_10352 )
+        {
+          iTouchLinkSemaphore_10352 = 1;
+          SV_TouchLinks((edict_t_0 *)ent, sv_areanodes);
+          iTouchLinkSemaphore_10352 = 0;
+        }
+      }
+    }
+  }

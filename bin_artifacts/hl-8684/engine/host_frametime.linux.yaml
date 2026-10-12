@@ -1,0 +1,8 @@
+gv_name: host_frametime
+gv_va: '0x963960'
+gv_rva: '0x963960'
+gv_sig: DD 1D ?? ?? ?? ?? B8 ?? ?? ?? ?? EB ?? DD D8 83 C4 ?? C3
+gv_sig_va: '0x10f113'
+gv_inst_offset: '0x0'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'

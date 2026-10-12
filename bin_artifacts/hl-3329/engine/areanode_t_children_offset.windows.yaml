@@ -1,0 +1,4 @@
+struct_name: areanode_t
+member_name: children
+offset: '0x8'
+size: 8

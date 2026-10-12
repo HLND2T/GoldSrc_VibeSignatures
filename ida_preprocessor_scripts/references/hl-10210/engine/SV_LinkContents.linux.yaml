@@ -1,0 +1,373 @@
+func_name: "SV_LinkContents"
+func_va: "0x1052a0"
+disasm_code: |-
+  .text:001052A0                 push    ebp
+  .text:001052A1                 push    edi
+  .text:001052A2                 push    esi
+  .text:001052A3                 push    ebx
+  .text:001052A4                 sub     esp, 4Ch
+  .text:001052A7                 mov     ebp, [esp+5Ch+node]
+  .text:001052AB                 mov     ecx, [esp+5Ch+pos]
+  .text:001052AF                 mov     ebx, [ebp+1Ch]
+  .text:001052B2                 lea     edi, [ebp+18h]
+  .text:001052B5                 cmp     l_0, edi
+  .text:001052B7                 jz      loc_10550A
+  .text:001052BD                 lea     esi, [esi+0]
+  .text:001052C0                 mov     eax, [l_0+184h]
+  .text:001052C6                 mov     esi, [l_0+4]
+  .text:001052C9                 test    eax, eax
+  .text:001052CB                 jnz     loc_105500
+  .text:001052D1                 mov     eax, [l_0+2B8h]
+  .text:001052D7                 test    eax, eax
+  .text:001052D9                 jz      short loc_105300
+  .text:001052DB                 mov     edx, ds:g_groupop
+  .text:001052E1                 test    edx, edx
+  .text:001052E3                 jnz     loc_1054B0
+  .text:001052E9                 test    ds:g_groupmask, eax
+  .text:001052EF                 jz      loc_105500
+  .text:001052F5                 lea     next, [next+0]
+  .text:001052F9                 lea     edi, [edi+0]
+  .text:00105300                 mov     eax, [l_0+12Ch]
+  .text:00105306                 mov     eax, ds:sv.models[eax*4]
+  .text:0010530D                 test    pModel, pModel
+  .text:0010530F                 jz      loc_105500
+  .text:00105315                 mov     ebp, [pModel+44h]
+  .text:00105318                 test    ebp, ebp
+  .text:0010531A                 jnz     loc_105500
+  .text:00105320                 fld     dword ptr [ecx]
+  .text:00105322                 fld     dword ptr [l_0+148h]
+  .text:00105328                 fxch    st(1)
+  .text:0010532A                 fucomi  st, st(1)
+  .text:0010532C                 fstp    st(1)
+  .text:0010532E                 ja      loc_1054C8
+  .text:00105334                 fld     dword ptr [ecx+4]
+  .text:00105337                 fld     dword ptr [l_0+14Ch]
+  .text:0010533D                 fxch    st(1)
+  .text:0010533F                 fucomi  st, st(1)
+  .text:00105341                 fstp    st(1)
+  .text:00105343                 ja      loc_1054D0
+  .text:00105349                 fld     dword ptr [ecx+8]
+  .text:0010534C                 fld     dword ptr [l_0+150h]
+  .text:00105352                 fxch    st(1)
+  .text:00105354                 fucomi  st, st(1)
+  .text:00105356                 fstp    st(1)
+  .text:00105358                 ja      loc_1054E0
+  .text:0010535E                 fld     dword ptr [l_0+13Ch]
+  .text:00105364                 fucomip st, st(3)
+  .text:00105366                 fstp    st(2)
+  .text:00105368                 ja      loc_1054F0
+  .text:0010536E                 fld     dword ptr [l_0+140h]
+  .text:00105374                 fucomip st, st(1)
+  .text:00105376                 fstp    st
+  .text:00105378                 ja      loc_1054F6
+  .text:0010537E                 fld     dword ptr [l_0+144h]
+  .text:00105384                 fucomip st, st(1)
+  .text:00105386                 fstp    st
+  .text:00105388                 ja      loc_105500
+  .text:0010538E                 mov     pModel, [l_0+188h]
+  .text:00105394                 add     eax, 64h ; 'd'
+  .text:00105397                 cmp     eax, 0C8h
+  .text:0010539C                 ja      loc_105578
+  .text:001053A2                 lea     eax, [esp+5Ch+offset]
+  .text:001053A6                 mov     edx, offset vec3_origin
+  .text:001053AB                 ; offset
+  .text:001053AB                 mov     [esp+5Ch+var_50], eax; offset
+  .text:001053AF                 mov     eax, offset vec3_origin
+  .text:001053B4                 ; maxs
+  .text:001053B4                 mov     [esp+5Ch+maxs], eax; maxs
+  .text:001053B8                 lea     eax, [l_0-8]
+  .text:001053BB                 ; mins
+  .text:001053BB                 mov     [esp+5Ch+mins], edx; mins
+  .text:001053BF                 ; ent
+  .text:001053BF                 mov     [esp+5Ch+ent], eax; ent
+  .text:001053C2                 mov     [esp+5Ch+var_4C], ecx
+  .text:001053C6                 call    SV_HullForBsp
+  .text:001053CB                 mov     ecx, [esp+5Ch+var_4C]
+  .text:001053CF                 fld     dword ptr [ecx]
+  .text:001053D1                 fsub    [esp+5Ch+offset]
+  .text:001053D5                 mov     ebp, [hull+8]
+  .text:001053D8                 test    ebp, ebp
+  .text:001053DA                 fstp    [esp+5Ch+var_4C]
+  .text:001053DE                 fld     dword ptr [ecx+4]
+  .text:001053E1                 fsub    [esp+5Ch+offset+4]
+  .text:001053E5                 movss   xmm0, [esp+5Ch+var_4C]
+  .text:001053EB                 movss   [esp+5Ch+localPosition], xmm0
+  .text:001053F1                 fstp    [esp+5Ch+var_48]
+  .text:001053F5                 fld     dword ptr [ecx+8]
+  .text:001053F8                 fsub    [esp+5Ch+offset+8]
+  .text:001053FC                 movss   xmm1, [esp+5Ch+var_48]
+  .text:00105402                 movss   [esp+5Ch+localPosition+4], xmm1
+  .text:00105408                 fstp    [esp+5Ch+var_44]
+  .text:0010540C                 movss   xmm2, [esp+5Ch+var_44]
+  .text:00105412                 movss   [esp+5Ch+localPosition+8], xmm2
+  .text:00105418                 js      loc_10556D
+  .text:0010541E                 mov     edx, ebp
+  .text:00105420                 mov     [esp+5Ch+l], l_0
+  .text:00105424                 mov     l_0, ebp
+  .text:00105426                 mov     ebp, hull
+  .text:00105428                 mov     [esp+5Ch+pos], ecx
+  .text:0010542C                 jmp     short loc_10544E
+  .text:00105430                 fld     [esp+edx*4+5Ch+localPosition]
+  .text:00105434                 fsub    dword ptr [ecx+0Ch]
+  .text:00105437                 fldz
+  .text:00105439                 fucomip st, st(1)
+  .text:0010543B                 fstp    st
+  .text:0010543D                 ja      short loc_1054A0
+  .text:0010543F                 movsx   ebx, word ptr [eax+4]
+  .text:00105443                 test    ebx, ebx
+  .text:00105445                 js      loc_105563
+  .text:0010544B                 mov     edx, [hull+8]
+  .text:0010544E                 cmp     ebx, edx
+  .text:00105450                 jl      short loc_105457
+  .text:00105452                 cmp     [hull+0Ch], ebx
+  .text:00105455                 jge     short loc_105463
+  .text:00105457                 mov     [esp+5Ch+ent], offset aSvHullpointcon; "SV_HullPointContents: bad node number"
+  .text:0010545E                 call    Sys_Error
+  .text:00105463                 mov     edx, [hull+0]
+  .text:00105466                 lea     eax, [edx+ebx*8]
+  .text:00105469                 mov     edx, [eax]
+  .text:0010546B                 lea     ecx, [edx+edx*4]
+  .text:0010546E                 mov     edx, [hull+4]
+  .text:00105471                 lea     ecx, [edx+ecx*4]
+  .text:00105474                 movzx   edx, byte ptr [ecx+10h]
+  .text:00105478                 cmp     dl, 2
+  .text:0010547B                 jbe     short loc_105430
+  .text:0010547D                 fld     [esp+5Ch+var_4C]
+  .text:00105481                 fmul    dword ptr [ecx]
+  .text:00105483                 fld     [esp+5Ch+var_48]
+  .text:00105487                 fmul    dword ptr [ecx+4]
+  .text:0010548A                 faddp   st(1), st
+  .text:0010548C                 fld     [esp+5Ch+var_44]
+  .text:00105490                 fmul    dword ptr [ecx+8]
+  .text:00105493                 faddp   st(1), st
+  .text:00105495                 fsub    dword ptr [ecx+0Ch]
+  .text:00105498                 fldz
+  .text:0010549A                 fucomip st, st(1)
+  .text:0010549C                 fstp    st
+  .text:0010549E                 jbe     short loc_10543F
+  .text:001054A0                 movsx   ebx, word ptr [eax+6]
+  .text:001054A4                 jmp     short loc_105443
+  .text:001054B0                 dec     edx
+  .text:001054B1                 jnz     loc_105300
+  .text:001054B7                 test    ds:g_groupmask, eax
+  .text:001054BD                 jz      loc_105300
+  .text:001054C3                 jmp     short loc_105500
+  .text:001054C8                 fstp    st
+  .text:001054CA                 jmp     short loc_105500
+  .text:001054D0                 fstp    st
+  .text:001054D2                 fstp    st
+  .text:001054D4                 jmp     short loc_105500
+  .text:001054E0                 fstp    st
+  .text:001054E2                 fstp    st
+  .text:001054E4                 fstp    st
+  .text:001054E6                 jmp     short loc_105500
+  .text:001054F0                 fstp    st
+  .text:001054F2                 fstp    st
+  .text:001054F4                 jmp     short loc_105500
+  .text:001054F6                 fstp    st
+  .text:001054F8                 nop
+  .text:001054F9                 lea     next, [next+0]
+  .text:00105500                 mov     ebx, next
+  .text:00105502                 cmp     l_0, edi
+  .text:00105504                 jnz     loc_1052C0
+  .text:0010550A                 mov     ebp, [esp+5Ch+node]
+  .text:0010550E                 mov     eax, [ebp+0]
+  .text:00105511                 cmp     eax, 0FFFFFFFFh
+  .text:00105514                 jz      short loc_105539
+  .text:00105516                 fld     dword ptr [ecx+eax*4]
+  .text:00105519                 fld     dword ptr [ebp+4]
+  .text:0010551C                 fxch    st(1)
+  .text:0010551E                 fucomi  st, st(1)
+  .text:00105520                 ja      short loc_105541
+  .text:00105522                 fxch    st(1)
+  .text:00105524                 fucomip st, st(1)
+  .text:00105526                 fstp    st
+  .text:00105528                 jbe     short loc_10555C
+  .text:0010552A                 ; pos
+  .text:0010552A                 mov     [esp+5Ch+mins], ecx; pos
+  .text:0010552E                 mov     eax, [ebp+0Ch]
+  .text:00105531                 ; node
+  .text:00105531                 mov     [esp+5Ch+ent], eax; node
+  .text:00105534                 call    SV_LinkContents
+  .text:00105539                 add     esp, 4Ch
+  .text:0010553C                 pop     ebx
+  .text:0010553D                 pop     esi
+  .text:0010553E                 pop     edi
+  .text:0010553F                 pop     ebp
+  .text:00105540                 retn
+  .text:00105541                 fstp    st
+  .text:00105543                 fstp    st
+  .text:00105545                 ; pos
+  .text:00105545                 mov     [esp+5Ch+mins], ecx; pos
+  .text:00105549                 mov     eax, [ebp+8]
+  .text:0010554C                 ; node
+  .text:0010554C                 mov     [esp+5Ch+ent], eax; node
+  .text:0010554F                 call    SV_LinkContents
+  .text:00105554                 add     esp, 4Ch
+  .text:00105557                 pop     l_0
+  .text:00105558                 pop     esi
+  .text:00105559                 pop     edi
+  .text:0010555A                 pop     ebp
+  .text:0010555B                 retn
+  .text:0010555C                 mov     eax, 0FFFFFFFFh
+  .text:00105561                 jmp     short loc_105539
+  .text:00105563                 mov     hull, ebx
+  .text:00105565                 mov     ecx, [esp+5Ch+pos]
+  .text:00105569                 mov     ebx, [esp+5Ch+l]
+  .text:0010556D                 inc     ebp
+  .text:0010556E                 jz      short loc_105500
+  .text:00105570                 mov     eax, [ebx+188h]
+  .text:00105576                 jmp     short loc_105539
+  .text:00105578                 mov     eax, [l_0+78h]
+  .text:0010557B                 mov     [esp+5Ch+var_4C], ecx
+  .text:0010557F                 mov     ecx, ds:pr_strings
+  .text:00105585                 mov     [esp+5Ch+ent], offset aInvalidContent; "Invalid contents on trigger field: %s\n"
+  .text:0010558C                 add     eax, ecx
+  .text:0010558E                 mov     [esp+5Ch+mins], eax
+  .text:00105592                 call    Con_DPrintf
+  .text:00105597                 mov     ecx, [esp+5Ch+var_4C]
+  .text:0010559B                 jmp     loc_1053A2
+procedure: |-
+  int __cdecl SV_LinkContents(areanode_t *node, const float *pos)
+  {
+    link_s *next; // ebx
+    areanode_t *v4; // esi
+    link_s *prev; // eax
+    model_s *v6; // eax
+    hull_s *v7; // eax
+    int firstclipnode; // ebp
+    long double v9; // fst7
+    long double v10; // fst7
+    int v11; // edx
+    int v12; // ebx
+    hull_s *v13; // ebp
+    int v14; // eax
+    int v15; // ecx
+    int v16; // edx
+    int result; // eax
+    const float *v18; // [esp+10h] [ebp-4Ch]
+    float v19; // [esp+10h] [ebp-4Ch]
+    const float *v20; // [esp+10h] [ebp-4Ch]
+    float v21; // [esp+14h] [ebp-48h]
+    float v22; // [esp+18h] [ebp-44h]
+    link_t *l; // [esp+1Ch] [ebp-40h]
+    vec3_t offset; // [esp+28h] [ebp-34h] BYREF
+    vec_t localPosition[10]; // [esp+34h] [ebp-28h]
+    const vec_t *posa; // [esp+64h] [ebp+8h]
+
+    next = node->solid_edicts.next;
+    if ( next != &node->solid_edicts )
+    {
+      do
+      {
+        v4 = (areanode_t *)next->next;
+        if ( !next[48].next )
+        {
+          prev = next[87].prev;
+          if ( prev )
+          {
+            if ( g_groupop )
+            {
+              if ( g_groupop == 1 && ((unsigned int)prev & g_groupmask) != 0 )
+                goto LABEL_30;
+            }
+            else if ( ((unsigned int)prev & g_groupmask) == 0 )
+            {
+              goto LABEL_30;
+            }
+          }
+          v6 = sv.models[(int)next[37].next];
+          if ( v6
+            && v6->type == mod_brush
+            && *pos <= (long double)*(float *)&next[41].prev
+            && pos[1] <= (long double)*(float *)&next[41].next
+            && pos[2] <= (long double)*(float *)&next[42].prev
+            && *(float *)&next[39].next <= (long double)*pos
+            && *(float *)&next[40].prev <= (long double)pos[1]
+            && *(float *)&next[40].next <= (long double)pos[2] )
+          {
+            if ( (unsigned int)&next[49].prev[12].next > 0xC8 )
+            {
+              v20 = pos;
+              Con_DPrintf("Invalid contents on trigger field: %s\n", &pr_strings[(unsigned int)next[15].prev]);
+              pos = v20;
+            }
+            v18 = pos;
+            v7 = SV_HullForBsp((edict_t_0 *)&next[-1], vec3_origin, vec3_origin, offset);
+            pos = v18;
+            firstclipnode = v7->firstclipnode;
+            v19 = *v18 - offset[0];
+            v9 = pos[1] - offset[1];
+            localPosition[0] = v19;
+            v21 = v9;
+            v10 = pos[2] - offset[2];
+            localPosition[1] = v21;
+            v22 = v10;
+            localPosition[2] = v22;
+            if ( firstclipnode >= 0 )
+            {
+              v11 = firstclipnode;
+              l = next;
+              v12 = firstclipnode;
+              v13 = v7;
+              posa = pos;
+              while ( 1 )
+              {
+                if ( v12 < v11 || v13->lastclipnode < v12 )
+                  Sys_Error("SV_HullPointContents: bad node number");
+                v14 = (int)&v13->clipnodes[v12];
+                v15 = (int)&v13->planes[*(_DWORD *)v14];
+                v16 = *(unsigned __int8 *)(v15 + 16);
+                if ( (unsigned __int8)v16 <= 2u )
+                {
+                  if ( localPosition[v16] - *(float *)(v15 + 12) >= 0.0 )
+                    goto LABEL_19;
+                }
+                else if ( v19 * *(float *)v15
+                        + v21 * *(float *)(v15 + 4)
+                        + v22 * *(float *)(v15 + 8)
+                        - *(float *)(v15 + 12) >= 0.0 )
+                {
+  LABEL_19:
+                  v12 = *(__int16 *)(v14 + 4);
+                  goto LABEL_20;
+                }
+                v12 = *(__int16 *)(v14 + 6);
+  LABEL_20:
+                if ( v12 < 0 )
+                {
+                  firstclipnode = v12;
+                  pos = posa;
+                  next = l;
+                  break;
+                }
+                v11 = v13->firstclipnode;
+              }
+            }
+            if ( firstclipnode != -1 )
+              return (int)next[49].prev;
+          }
+        }
+  LABEL_30:
+        next = (link_s *)v4;
+      }
+      while ( v4 != (areanode_t *)&node->solid_edicts );
+    }
+    result = node->axis;
+    if ( node->axis != -1 )
+    {
+      if ( pos[result] > (long double)node->dist )
+      {
+        return SV_LinkContents(node->children[0], pos);
+      }
+      else if ( node->dist <= (long double)pos[result] )
+      {
+        return -1;
+      }
+      else
+      {
+        return SV_LinkContents(node->children[1], pos);
+      }
+    }
+    return result;
+  }

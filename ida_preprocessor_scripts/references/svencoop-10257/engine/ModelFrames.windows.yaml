@@ -1,0 +1,31 @@
+func_name: "ModelFrames"
+func_va: "0x1d7c960"
+disasm_code: |-
+  .text:01D7C960                 mov     ecx, [esp+modelIndex]
+  .text:01D7C964                 lea     eax, [ecx-1]
+  .text:01D7C967                 cmp     eax, 1FFEh
+  .text:01D7C96C                 ja      short loc_1D7C981
+  .text:01D7C96E                 lfence
+  .text:01D7C971                 push    sv_models[ecx*4]
+  .text:01D7C978                 call    Mod_FrameCount
+  .text:01D7C97D                 add     esp, 4
+  .text:01D7C980                 retn
+  .text:01D7C981                 push    offset aBadSpriteIndex; "Bad sprite index!\n"
+  .text:01D7C986                 call    Con_DPrintf
+  .text:01D7C98B                 mov     eax, 1
+  .text:01D7C990                 add     esp, 4
+  .text:01D7C993                 retn
+procedure: |-
+  int __cdecl ModelFrames(int modelIndex)
+  {
+    if ( (unsigned int)(modelIndex - 1) > 0x1FFE )
+    {
+      Con_DPrintf("Bad sprite index!\n");
+      return 1;
+    }
+    else
+    {
+      _mm_lfence();
+      return Mod_FrameCount(sv_models[modelIndex]);
+    }
+  }

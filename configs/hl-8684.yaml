@@ -53,6 +53,61 @@ modules:
         expected_output:
           - SV_PushRotate.{platform}.yaml
           - SV_ClipToLinks.{platform}.yaml
+      - name: find-server-physics-layout
+        expected_input:
+          - ModelFrames.{platform}.yaml
+          - SV_LinkEdict.{platform}.yaml
+          - SV_LinkContents.{platform}.yaml
+          - sv.{platform}.yaml
+          - sv_models.{platform}.yaml
+          - sv_areanodes.{platform}.yaml
+          - g_groupop.{platform}.yaml
+          - g_groupmask.{platform}.yaml
+        expected_output:
+          - sv_models_offset.{platform}.yaml
+          - sv_models_element_size.{platform}.yaml
+          - sv_models_count.{platform}.yaml
+          - sv_models_size.{platform}.yaml
+          - sv_areanodes_element_size.{platform}.yaml
+          - sv_areanodes_count.{platform}.yaml
+          - sv_areanodes_size.{platform}.yaml
+          - areanode_t_axis_offset.{platform}.yaml
+          - areanode_t_dist_offset.{platform}.yaml
+          - areanode_t_children_offset.{platform}.yaml
+          - areanode_t_trigger_edicts_offset.{platform}.yaml
+          - areanode_t_solid_edicts_offset.{platform}.yaml
+      - name: find-host_frametime
+        expected_input:
+          - _Host_Frame.{platform}.yaml
+        expected_output:
+          - host_frametime.{platform}.yaml
+      - name: find-ModelFrames-sv_models
+        expected_input:
+          - ModelFrames.{platform}.yaml
+          - sv.{platform}.yaml
+        expected_output:
+          - sv_models.{platform}.yaml
+      - name: find-SV_LinkEdict-physics-globals-decompiles
+        expected_input:
+          - SV_LinkEdict.{platform}.yaml
+        expected_output:
+          - sv_areanodes.{platform}.yaml
+      - name: find-SV_LinkContents-physics-globals-decompiles
+        expected_input:
+          - SV_LinkContents.{platform}.yaml
+        expected_output:
+          - g_groupop.{platform}.yaml
+          - g_groupmask.{platform}.yaml
+      - name: find-Host_FilterTime
+        expected_input:
+          - _Host_Frame.{platform}.yaml
+        expected_output:
+          - Host_FilterTime.{platform}.yaml
+      - name: find-server-physics-owners
+        expected_output:
+          - ModelFrames.{platform}.yaml
+          - SV_LinkEdict.{platform}.yaml
+          - SV_LinkContents.{platform}.yaml
       - name: find-NET_QueuePacket
         platform: windows
         expected_output:
@@ -1683,6 +1738,60 @@ modules:
         expected_output:
           - CL_IsDevOverviewMode.{platform}.yaml
     symbols:
+      - name: sv_models_offset
+        category: scalar
+      - name: sv_models_element_size
+        category: scalar
+      - name: sv_models_count
+        category: scalar
+      - name: sv_models_size
+        category: scalar
+      - name: sv_areanodes_element_size
+        category: scalar
+      - name: sv_areanodes_count
+        category: scalar
+      - name: sv_areanodes_size
+        category: scalar
+      - name: areanode_t
+        category: struct
+      - name: areanode_t_axis_offset
+        category: structmember
+        struct: areanode_t
+        member: axis
+      - name: areanode_t_dist_offset
+        category: structmember
+        struct: areanode_t
+        member: dist
+      - name: areanode_t_children_offset
+        category: structmember
+        struct: areanode_t
+        member: children
+      - name: areanode_t_trigger_edicts_offset
+        category: structmember
+        struct: areanode_t
+        member: trigger_edicts
+      - name: areanode_t_solid_edicts_offset
+        category: structmember
+        struct: areanode_t
+        member: solid_edicts
+      - name: host_frametime
+        category: gv
+      - name: sv_models
+        category: gv
+      - name: sv_areanodes
+        category: gv
+      - name: g_groupop
+        category: gv
+      - name: g_groupmask
+        category: gv
+      - name: Host_FilterTime
+        category: func
+      - name: ModelFrames
+        category: func
+      - name: SV_LinkEdict
+        category: func
+      - name: SV_LinkContents
+        category: func
       - name: NET_StartThread
         category: func
         platform: windows

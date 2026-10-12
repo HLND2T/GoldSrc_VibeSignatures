@@ -1,0 +1,538 @@
+func_name: SV_LinkContents
+func_va: '0xde650'
+disasm_code: '.text:000DE650                 push    ebp
+
+  .text:000DE651                 push    edi
+
+  .text:000DE652                 push    esi
+
+  .text:000DE653                 push    ebx
+
+  .text:000DE654                 sub     esp, 7Ch
+
+  .text:000DE657                 call    sub_56390
+
+  .text:000DE65C                 add     ebx, (offset dbl_2EE000 - $)
+
+  .text:000DE662                 mov     eax, [esp+8Ch+node]
+
+  .text:000DE669                 mov     esi, [eax+1Ch]
+
+  .text:000DE66C                 lea     ecx, [eax+18h]
+
+  .text:000DE66F                 lea     eax, (unk_45F4B4 - 2EE000h)[ebx]
+
+  .text:000DE675                 lea     ebp, (dword_F9FF80 - 2EE000h)[ebx]
+
+  .text:000DE67B                 cmp     esi, ecx
+
+  .text:000DE67D                 mov     [esp+8Ch+var_60], eax
+
+  .text:000DE681                 jz      loc_DE90A
+
+  .text:000DE687                 mov     esi, esi
+
+  .text:000DE689                 lea     edi, [edi+0]
+
+  .text:000DE690                 mov     eax, [esi+184h]
+
+  .text:000DE696                 mov     edi, [esi+4]
+
+  .text:000DE699                 test    eax, eax
+
+  .text:000DE69B                 jnz     loc_DE900
+
+  .text:000DE6A1                 mov     eax, [esi+2B8h]
+
+  .text:000DE6A7                 test    eax, eax
+
+  .text:000DE6A9                 jz      short loc_DE6D0
+
+  .text:000DE6AB                 lea     edx, (g_groupop - 2EE000h)[ebx]
+
+  .text:000DE6B1                 mov     edx, [edx]
+
+  .text:000DE6B3                 test    edx, edx
+
+  .text:000DE6B5                 jnz     loc_DE960
+
+  .text:000DE6BB                 lea     edx, (g_groupmask - 2EE000h)[ebx]
+
+  .text:000DE6C1                 test    [edx], eax
+
+  .text:000DE6C3                 jz      loc_DE900
+
+  .text:000DE6C9                 lea     esi, [esi+0]
+
+  .text:000DE6D0                 mov     eax, [esi+12Ch]
+
+  .text:000DE6D6                 mov     eax, dword ptr ss:(aGlArbTextureSt+18h)[ebp+eax*4]; "ultisample"
+
+  .text:000DE6DD                 test    eax, eax
+
+  .text:000DE6DF                 jz      loc_DE900
+
+  .text:000DE6E5                 mov     eax, [eax+44h]
+
+  .text:000DE6E8                 test    eax, eax
+
+  .text:000DE6EA                 jnz     loc_DE900
+
+  .text:000DE6F0                 mov     eax, [esp+8Ch+pos]
+
+  .text:000DE6F7                 fld     dword ptr [eax]
+
+  .text:000DE6F9                 fld     dword ptr [esi+148h]
+
+  .text:000DE6FF                 fxch    st(1)
+
+  .text:000DE701                 fucomi  st, st(1)
+
+  .text:000DE703                 fstp    st(1)
+
+  .text:000DE705                 ja      loc_DE8C8
+
+  .text:000DE70B                 fld     dword ptr [eax+4]
+
+  .text:000DE70E                 fld     dword ptr [esi+14Ch]
+
+  .text:000DE714                 fxch    st(1)
+
+  .text:000DE716                 fucomi  st, st(1)
+
+  .text:000DE718                 fstp    st(1)
+
+  .text:000DE71A                 ja      loc_DE8D0
+
+  .text:000DE720                 fld     dword ptr [eax+8]
+
+  .text:000DE723                 fld     dword ptr [esi+150h]
+
+  .text:000DE729                 fxch    st(1)
+
+  .text:000DE72B                 fucomi  st, st(1)
+
+  .text:000DE72D                 fstp    st(1)
+
+  .text:000DE72F                 ja      loc_DE8E0
+
+  .text:000DE735                 fld     dword ptr [esi+13Ch]
+
+  .text:000DE73B                 fucomip st, st(3)
+
+  .text:000DE73D                 fstp    st(2)
+
+  .text:000DE73F                 ja      loc_DE8F0
+
+  .text:000DE745                 fld     dword ptr [esi+140h]
+
+  .text:000DE74B                 fucomip st, st(1)
+
+  .text:000DE74D                 fstp    st
+
+  .text:000DE74F                 ja      loc_DE8F6
+
+  .text:000DE755                 fld     dword ptr [esi+144h]
+
+  .text:000DE75B                 fucomip st, st(1)
+
+  .text:000DE75D                 fstp    st
+
+  .text:000DE75F                 ja      loc_DE900
+
+  .text:000DE765                 mov     eax, [esi+188h]
+
+  .text:000DE76B                 add     eax, 64h ; ''d''
+
+  .text:000DE76E                 cmp     eax, 0C8h
+
+  .text:000DE773                 ja      loc_DE9A2
+
+  .text:000DE779                 xor     eax, eax
+
+  .text:000DE77B                 mov     [esp+8Ch+var_7C], eax
+
+  .text:000DE77F                 lea     eax, [esp+8Ch+var_34]
+
+  .text:000DE783                 mov     [esp+8Ch+var_80], eax
+
+  .text:000DE787                 mov     eax, [esp+8Ch+var_60]
+
+  .text:000DE78B                 mov     [esp+8Ch+var_5C], ecx
+
+  .text:000DE78F                 mov     [esp+8Ch+var_84], eax
+
+  .text:000DE793                 mov     [esp+8Ch+var_88], eax
+
+  .text:000DE797                 lea     eax, [esi-8]
+
+  .text:000DE79A                 mov     [esp+8Ch+var_8C], eax
+
+  .text:000DE79D                 call    sub_DC8A0
+
+  .text:000DE7A2                 mov     ecx, eax
+
+  .text:000DE7A4                 mov     eax, [esp+8Ch+pos]
+
+  .text:000DE7AB                 mov     [esp+8Ch+var_64], ecx
+
+  .text:000DE7AF                 fld     dword ptr [eax]
+
+  .text:000DE7B1                 fld     [esp+8Ch+var_34]
+
+  .text:000DE7B5                 fsubp   st(1), st
+
+  .text:000DE7B7                 fstp    [esp+8Ch+var_58]
+
+  .text:000DE7BB                 fld     dword ptr [eax+4]
+
+  .text:000DE7BE                 fsub    [esp+8Ch+var_30]
+
+  .text:000DE7C2                 movss   xmm0, [esp+8Ch+var_58]
+
+  .text:000DE7C8                 movss   [esp+8Ch+var_28], xmm0
+
+  .text:000DE7CE                 fstp    [esp+8Ch+var_54]
+
+  .text:000DE7D2                 fld     dword ptr [eax+8]
+
+  .text:000DE7D5                 fld     [esp+8Ch+var_2C]
+
+  .text:000DE7D9                 fsubp   st(1), st
+
+  .text:000DE7DB                 mov     eax, [ecx+8]
+
+  .text:000DE7DE                 movss   xmm1, [esp+8Ch+var_54]
+
+  .text:000DE7E4                 mov     ecx, [esp+8Ch+var_5C]
+
+  .text:000DE7E8                 fstp    [esp+8Ch+var_50]
+
+  .text:000DE7EC                 test    eax, eax
+
+  .text:000DE7EE                 movss   xmm2, [esp+8Ch+var_50]
+
+  .text:000DE7F4                 movss   [esp+8Ch+var_24], xmm1
+
+  .text:000DE7FA                 movss   [esp+8Ch+var_20], xmm2
+
+  .text:000DE800                 js      loc_DE8B9
+
+  .text:000DE806                 lea     edx, (aSvHullpointcon - 2EE000h)[ebx]; "SV_HullPointContents: bad node number"
+
+  .text:000DE80C                 mov     [esp+8Ch+var_5C], edx
+
+  .text:000DE810                 mov     edx, eax
+
+  .text:000DE812                 mov     [esp+8Ch+var_48], esi
+
+  .text:000DE816                 mov     esi, eax
+
+  .text:000DE818                 mov     [esp+8Ch+var_44], edi
+
+  .text:000DE81C                 mov     edi, [esp+8Ch+var_64]
+
+  .text:000DE820                 mov     [esp+8Ch+var_4C], eax
+
+  .text:000DE824                 mov     [esp+8Ch+var_40], ecx
+
+  .text:000DE828                 jmp     short loc_DE84E
+
+  .text:000DE830                 fld     [esp+ecx*4+8Ch+var_28]
+
+  .text:000DE834                 fsub    dword ptr [eax+0Ch]
+
+  .text:000DE837                 fldz
+
+  .text:000DE839                 fst     [esp+8Ch+var_64]
+
+  .text:000DE83D                 fucomip st, st(1)
+
+  .text:000DE83F                 fstp    st
+
+  .text:000DE841                 ja      short loc_DE8A3
+
+  .text:000DE843                 movsx   esi, word ptr [edx+4]
+
+  .text:000DE847                 test    esi, esi
+
+  .text:000DE849                 js      short loc_DE8AB
+
+  .text:000DE84B                 mov     edx, [edi+8]
+
+  .text:000DE84E                 cmp     esi, edx
+
+  .text:000DE850                 jl      short loc_DE857
+
+  .text:000DE852                 cmp     [edi+0Ch], esi
+
+  .text:000DE855                 jge     short loc_DE863
+
+  .text:000DE857                 mov     eax, [esp+8Ch+var_5C]
+
+  .text:000DE85B                 ; char *
+
+  .text:000DE85B                 mov     [esp+8Ch+var_8C], eax; char *
+
+  .text:000DE85E                 call    sub_AF0A0
+
+  .text:000DE863                 mov     edx, [edi]
+
+  .text:000DE865                 lea     edx, [edx+esi*8]
+
+  .text:000DE868                 mov     eax, [edx]
+
+  .text:000DE86A                 lea     ecx, [eax+eax*4]
+
+  .text:000DE86D                 mov     eax, [edi+4]
+
+  .text:000DE870                 lea     eax, [eax+ecx*4]
+
+  .text:000DE873                 movzx   ecx, byte ptr [eax+10h]
+
+  .text:000DE877                 cmp     ecx, 2
+
+  .text:000DE87A                 jle     short loc_DE830
+
+  .text:000DE87C                 fld     [esp+8Ch+var_58]
+
+  .text:000DE880                 fmul    dword ptr [eax]
+
+  .text:000DE882                 fld     [esp+8Ch+var_54]
+
+  .text:000DE886                 fmul    dword ptr [eax+4]
+
+  .text:000DE889                 faddp   st(1), st
+
+  .text:000DE88B                 fld     [esp+8Ch+var_50]
+
+  .text:000DE88F                 fmul    dword ptr [eax+8]
+
+  .text:000DE892                 faddp   st(1), st
+
+  .text:000DE894                 fsub    dword ptr [eax+0Ch]
+
+  .text:000DE897                 fldz
+
+  .text:000DE899                 fst     [esp+8Ch+var_64]
+
+  .text:000DE89D                 fucomip st, st(1)
+
+  .text:000DE89F                 fstp    st
+
+  .text:000DE8A1                 jbe     short loc_DE843
+
+  .text:000DE8A3                 movsx   esi, word ptr [edx+6]
+
+  .text:000DE8A7                 test    esi, esi
+
+  .text:000DE8A9                 jns     short loc_DE84B
+
+  .text:000DE8AB                 mov     eax, esi
+
+  .text:000DE8AD                 mov     edi, [esp+8Ch+var_44]
+
+  .text:000DE8B1                 mov     ecx, [esp+8Ch+var_40]
+
+  .text:000DE8B5                 mov     esi, [esp+8Ch+var_48]
+
+  .text:000DE8B9                 inc     eax
+
+  .text:000DE8BA                 jnz     loc_DE9CE
+
+  .text:000DE8C0                 jmp     short loc_DE900
+
+  .text:000DE8C8                 fstp    st
+
+  .text:000DE8CA                 jmp     short loc_DE900
+
+  .text:000DE8D0                 fstp    st
+
+  .text:000DE8D2                 fstp    st
+
+  .text:000DE8D4                 jmp     short loc_DE900
+
+  .text:000DE8E0                 fstp    st
+
+  .text:000DE8E2                 fstp    st
+
+  .text:000DE8E4                 fstp    st
+
+  .text:000DE8E6                 jmp     short loc_DE900
+
+  .text:000DE8F0                 fstp    st
+
+  .text:000DE8F2                 fstp    st
+
+  .text:000DE8F4                 jmp     short loc_DE900
+
+  .text:000DE8F6                 fstp    st
+
+  .text:000DE8F8                 nop
+
+  .text:000DE8F9                 lea     esi, [esi+0]
+
+  .text:000DE900                 mov     esi, edi
+
+  .text:000DE902                 cmp     esi, ecx
+
+  .text:000DE904                 jnz     loc_DE690
+
+  .text:000DE90A                 mov     eax, [esp+8Ch+node]
+
+  .text:000DE911                 mov     eax, [eax]
+
+  .text:000DE913                 cmp     eax, 0FFFFFFFFh
+
+  .text:000DE916                 jz      short loc_DE950
+
+  .text:000DE918                 mov     ebx, [esp+8Ch+pos]
+
+  .text:000DE91F                 fld     dword ptr ds:(dbl_2EE000 - 2EE000h)[ebx+eax*4]
+
+  .text:000DE922                 mov     eax, [esp+8Ch+node]
+
+  .text:000DE929                 fld     dword ptr [eax+4]
+
+  .text:000DE92C                 fxch    st(1)
+
+  .text:000DE92E                 fucomi  st, st(1)
+
+  .text:000DE930                 ja      short loc_DE979
+
+  .text:000DE932                 fxch    st(1)
+
+  .text:000DE934                 fucomip st, st(1)
+
+  .text:000DE936                 fstp    st
+
+  .text:000DE938                 jbe     short loc_DE99B
+
+  .text:000DE93A                 mov     eax, [esp+8Ch+node]
+
+  .text:000DE941                 mov     [esp+8Ch+var_88], ebx
+
+  .text:000DE945                 mov     eax, [eax+0Ch]
+
+  .text:000DE948                 mov     [esp+8Ch+var_8C], eax
+
+  .text:000DE94B                 call    SV_LinkContents
+
+  .text:000DE950                 add     esp, 7Ch
+
+  .text:000DE953                 pop     ebx
+
+  .text:000DE954                 pop     esi
+
+  .text:000DE955                 pop     edi
+
+  .text:000DE956                 pop     ebp
+
+  .text:000DE957                 retn
+
+  .text:000DE960                 dec     edx
+
+  .text:000DE961                 jnz     loc_DE6D0
+
+  .text:000DE967                 lea     edx, (g_groupmask - 2EE000h)[ebx]
+
+  .text:000DE96D                 test    [edx], eax
+
+  .text:000DE96F                 jz      loc_DE6D0
+
+  .text:000DE975                 mov     esi, edi
+
+  .text:000DE977                 jmp     short loc_DE902
+
+  .text:000DE979                 fstp    st
+
+  .text:000DE97B                 fstp    st
+
+  .text:000DE97D                 mov     eax, [esp+8Ch+node]
+
+  .text:000DE984                 mov     [esp+8Ch+var_88], ebx
+
+  .text:000DE988                 mov     eax, [eax+8]
+
+  .text:000DE98B                 mov     [esp+8Ch+var_8C], eax
+
+  .text:000DE98E                 call    SV_LinkContents
+
+  .text:000DE993                 add     esp, 7Ch
+
+  .text:000DE996                 pop     ebx
+
+  .text:000DE997                 pop     esi
+
+  .text:000DE998                 pop     edi
+
+  .text:000DE999                 pop     ebp
+
+  .text:000DE99A                 retn
+
+  .text:000DE99B                 mov     eax, 0FFFFFFFFh
+
+  .text:000DE9A0                 jmp     short loc_DE950
+
+  .text:000DE9A2                 lea     eax, (dword_F1AE30 - 2EE000h)[ebx]
+
+  .text:000DE9A8                 mov     edx, [esi+78h]
+
+  .text:000DE9AB                 mov     [esp+8Ch+var_64], ecx
+
+  .text:000DE9AF                 mov     ecx, [eax]
+
+  .text:000DE9B1                 lea     eax, (aInvalidContent - 2EE000h)[ebx]; "Invalid contents on trigger field: %s\n"
+
+  .text:000DE9B7                 ; char *
+
+  .text:000DE9B7                 mov     [esp+8Ch+var_8C], eax; char *
+
+  .text:000DE9BA                 add     edx, ecx
+
+  .text:000DE9BC                 mov     [esp+8Ch+var_88], edx
+
+  .text:000DE9C0                 call    Con_DPrintf
+
+  .text:000DE9C5                 mov     ecx, [esp+8Ch+var_64]
+
+  .text:000DE9C9                 jmp     loc_DE779
+
+  .text:000DE9CE                 mov     eax, [esi+188h]
+
+  .text:000DE9D4                 jmp     loc_DE950'
+procedure: "int __cdecl SV_LinkContents(area350_t *node, const float *pos)\n{\n  struct link350_s *next; // esi\n  link350_t\
+  \ *p_solid_edicts; // ecx\n  struct link350_s *v4; // edi\n  struct link350_s *prev; // eax\n  int v6; // eax\n  long double\
+  \ v7; // fst7\n  int v8; // eax\n  int v9; // edx\n  int v10; // esi\n  int v11; // edx\n  int v12; // eax\n  int result;\
+  \ // eax\n  long double v14; // fst7\n  _DWORD *v15; // [esp+28h] [ebp-64h]\n  link350_t *v16; // [esp+28h] [ebp-64h]\n\
+  \  char *v17; // [esp+30h] [ebp-5Ch]\n  float v18; // [esp+34h] [ebp-58h]\n  float v19; // [esp+38h] [ebp-54h]\n  float\
+  \ v20; // [esp+3Ch] [ebp-50h]\n  struct link350_s *v21; // [esp+44h] [ebp-48h]\n  float v22[3]; // [esp+58h] [ebp-34h] BYREF\n\
+  \  _DWORD v23[10]; // [esp+64h] [ebp-28h]\n\n  next = node->solid_edicts.next;\n  p_solid_edicts = &node->solid_edicts;\n\
+  \  while ( next != p_solid_edicts )\n  {\n    v4 = next->next;\n    if ( !next[48].next )\n    {\n      prev = next[87].prev;\n\
+  \      if ( !prev )\n        goto LABEL_6;\n      if ( g_groupop )\n      {\n        if ( g_groupop == 1 && ((unsigned int)prev\
+  \ & g_groupmask) != 0 )\n        {\n          next = next->next;\n          continue;\n        }\nLABEL_6:\n        v6 =\
+  \ *(_DWORD *)&aGlArbTextureSt[(_DWORD)&dword_F9FF80[(int)next[37].next] + 24];\n        if ( v6\n          && !*(_DWORD\
+  \ *)(v6 + 68)\n          && *pos <= (long double)*(float *)&next[41].prev\n          && pos[1] <= (long double)*(float *)&next[41].next\n\
+  \          && pos[2] <= (long double)*(float *)&next[42].prev\n          && *(float *)&next[39].next <= (long double)*pos\n\
+  \          && *(float *)&next[40].prev <= (long double)pos[1]\n          && *(float *)&next[40].next <= (long double)pos[2]\
+  \ )\n        {\n          if ( (unsigned int)&next[49].prev[12].next > 0xC8 )\n          {\n            v16 = p_solid_edicts;\n\
+  \            Con_DPrintf(\"Invalid contents on trigger field: %s\\n\", (char *)next[15].prev + dword_F1AE30);\n        \
+  \    p_solid_edicts = v16;\n          }\n          v17 = (char *)p_solid_edicts;\n          v15 = (_DWORD *)sub_DC8A0(&next[-1],\
+  \ &unk_45F4B4, &unk_45F4B4, v22, 0);\n          v18 = *pos - v22[0];\n          v7 = pos[1] - v22[1];\n          *(float\
+  \ *)v23 = v18;\n          v19 = v7;\n          v8 = v15[2];\n          p_solid_edicts = (link350_t *)v17;\n          v20\
+  \ = pos[2] - v22[2];\n          *(float *)&v23[1] = v19;\n          *(float *)&v23[2] = v20;\n          if ( v8 >= 0 )\n\
+  \          {\n            v9 = v8;\n            v21 = next;\n            v10 = v8;\n            while ( 2 )\n          \
+  \  {\n              if ( v10 < v9 || v15[3] < v10 )\n                sub_AF0A0(\"SV_HullPointContents: bad node number\"\
+  );\n              v11 = *v15 + 8 * v10;\n              v12 = v15[1] + 20 * *(_DWORD *)v11;\n              if ( *(unsigned\
+  \ __int8 *)(v12 + 16) <= 2u )\n              {\n                if ( *(float *)&v23[*(unsigned __int8 *)(v12 + 16)] - *(float\
+  \ *)(v12 + 12) >= 0.0 )\n                  goto LABEL_19;\nLABEL_26:\n                v10 = *(__int16 *)(v11 + 6);\n   \
+  \             if ( v10 < 0 )\n                {\nLABEL_27:\n                  v8 = v10;\n                  next = v21;\n\
+  \                  break;\n                }\n              }\n              else\n              {\n                if (\
+  \ v18 * *(float *)v12 + v19 * *(float *)(v12 + 4) + v20 * *(float *)(v12 + 8) - *(float *)(v12 + 12) < 0.0 )\n         \
+  \         goto LABEL_26;\nLABEL_19:\n                v10 = *(__int16 *)(v11 + 4);\n                if ( v10 < 0 )\n    \
+  \              goto LABEL_27;\n              }\n              v9 = v15[2];\n              continue;\n            }\n   \
+  \       }\n          if ( v8 != -1 )\n            return (int)next[49].prev;\n        }\n        goto LABEL_29;\n      }\n\
+  \      if ( ((unsigned int)prev & g_groupmask) != 0 )\n        goto LABEL_6;\n    }\nLABEL_29:\n    next = v4;\n  }\n  result\
+  \ = node->axis;\n  if ( node->axis != -1 )\n  {\n    v14 = pos[result];\n    if ( v14 > node->dist )\n    {\n      return\
+  \ SV_LinkContents(node->children[0], pos);\n    }\n    else if ( node->dist <= v14 )\n    {\n      return -1;\n    }\n \
+  \   else\n    {\n      return SV_LinkContents(node->children[1], pos);\n    }\n  }\n  return result;\n}"
