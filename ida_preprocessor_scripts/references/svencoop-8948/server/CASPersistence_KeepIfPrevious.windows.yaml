@@ -51,7 +51,7 @@ disasm_code: |-
   .text:100AD5E1                 jmp     loc_100AD761
   .text:100AD5E6                 mov     ecx, eax
   .text:100AD5E8                 call    CScriptArray__GetSize
-  .text:100AD5ED                 mov     edi, CASServerManager_pInstance
+  .text:100AD5ED                 mov     edi, CASServerManager_pInstance; g_pServerManager (gv): singleton pointer storage, not the manager pointee
   .text:100AD5F3                 mov     [ebp+var_38], eax
   .text:100AD5F6                 test    edi, edi
   .text:100AD5F8                 jnz     short loc_100AD625
@@ -68,9 +68,9 @@ disasm_code: |-
   .text:100AD619                 mov     edi, eax
   .text:100AD61B                 jmp     short loc_100AD61F
   .text:100AD61D                 xor     edi, edi
-  .text:100AD61F                 mov     CASServerManager_pInstance, edi
+  .text:100AD61F                 mov     CASServerManager_pInstance, edi; g_pServerManager (gv): singleton pointer storage, not the manager pointee
   .text:100AD625                 mov     eax, dword ptr ds:aString; "string"
-  .text:100AD62A                 mov     esi, [edi+0Ch]
+  .text:100AD62A                 mov     esi, [edi+0Ch]; (structmember, struct=CASServerManager, member=scriptEngine)
   .text:100AD62D                 ; Inlined MSVC string construction: 16-byte inline buffer, length=6, capacity=15. Different from Linux __cxx11 layout.
   .text:100AD62D                 mov     [ebp+Src], eax; Inlined MSVC string construction: 16-byte inline buffer, length=6, capacity=15. Different from Linux __cxx11 layout.
   .text:100AD630                 mov     ax, word ptr ds:aString+4; "ng"
@@ -96,7 +96,7 @@ disasm_code: |-
   .text:100AD678                 jmp     short loc_100AD67C
   .text:100AD67A                 xor     edi, edi
   .text:100AD67C                 mov     byte ptr [ebp+var_4], 2
-  .text:100AD680                 mov     CASServerManager_pInstance, edi
+  .text:100AD680                 mov     CASServerManager_pInstance, edi; g_pServerManager (gv): singleton pointer storage, not the manager pointee
   .text:100AD686                 mov     ecx, [ebp+Block]
   .text:100AD689                 mov     esi, [esi]
   .text:100AD68B                 call    CScriptArray__GetElementTypeId
@@ -256,9 +256,9 @@ procedure: |
     if ( array )
     {
       Size = CScriptArray__GetSize(array);
-      manager = CASServerManager_pInstance;
+      manager = CASServerManager_pInstance; // g_pServerManager (gv): CASServerManager::GetInstance()::pInstance, the singleton pointer storage.
       arraySize = Size;
-      if ( !CASServerManager_pInstance )
+      if ( !CASServerManager_pInstance ) // g_pServerManager (gv): CASServerManager::GetInstance()::pInstance, the singleton pointer storage.
       {
         v8 = (CASManagerTypeQueryView *)operator new(0x44u);
         v24 = 1;
@@ -266,9 +266,9 @@ procedure: |
           manager = CASServerManager__Constructor(v8);
         else
           manager = nullptr;
-        CASServerManager_pInstance = manager;
+        CASServerManager_pInstance = manager; // g_pServerManager (gv): CASServerManager::GetInstance()::pInstance, the singleton pointer storage.
       }
-      scriptEngine = manager->scriptEngine;
+      scriptEngine = manager->scriptEngine; // (structmember, struct=CASServerManager, member=scriptEngine); CASManagerTypeQueryView is the verified manager prefix.
       strcpy(typeName.storage.local, "string");
       v21 = scriptEngine;
       typeName.capacity = 15;
@@ -283,7 +283,7 @@ procedure: |
         else
           manager = nullptr;
         LOBYTE(v24) = 2;
-        CASServerManager_pInstance = manager;
+        CASServerManager_pInstance = manager; // g_pServerManager (gv): CASServerManager::GetInstance()::pInstance, the singleton pointer storage.
       }
       vtable = scriptEngine->vtable;
       ElementTypeId = CScriptArray__GetElementTypeId(array);

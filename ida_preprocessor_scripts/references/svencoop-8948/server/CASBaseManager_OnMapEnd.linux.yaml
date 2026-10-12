@@ -37,7 +37,7 @@ disasm_code: |-
   .text:001CFA54                 call    __ZdlPv; operator delete(void *)
   .text:001CFA59                 add     esp, 10h
   .text:001CFA5C                 mov     dword ptr [esi+14h], 0
-  .text:001CFA63                 mov     ebx, [esi+18h]
+  .text:001CFA63                 mov     ebx, [esi+18h]; (structmember, struct=CASServerManager, member=curModule); inherited CASBaseManager activeModule field
   .text:001CFA66                 test    ebx, ebx
   .text:001CFA68                 mov     eax, ds:(_ZZN6CASLog11GetInstanceEvE9pInstance_ptr - 8B0000h)[edi]
   .text:001CFA6E                 mov     [ebp+var_1C], eax
@@ -53,7 +53,7 @@ disasm_code: |-
   .text:001CFA89                 push    ecx
   .text:001CFA8A                 mov     ebx, edi
   .text:001CFA8C                 call    __ZN6CASLog5ErrorE12ASLogLevel_tPKcz; CASLog::Error(ASLogLevel_t,char const*,...)
-  .text:001CFA91                 mov     dword ptr [esi+18h], 0
+  .text:001CFA91                 mov     dword ptr [esi+18h], 0; (structmember, struct=CASServerManager, member=curModule); inherited CASBaseManager activeModule field
   .text:001CFA98                 add     esp, 10h
   .text:001CFA9B                 mov     ebx, [esi+1Ch]
   .text:001CFA9E                 cmp     ebx, [esi+20h]
@@ -166,7 +166,7 @@ procedure: |-
     }
     self->moduleHandle = nullptr;
     v2 = &CASLog::GetInstance(void)::pInstance;
-    if ( self->activeModule )
+    if ( self->activeModule ) // (structmember, struct=CASServerManager, member=curModule); inherited activeModule is the consumer curModule field.
     {
       v3 = (CASLog *)CASLog::GetInstance(void)::pInstance;
       if ( !CASLog::GetInstance(void)::pInstance )
@@ -177,7 +177,7 @@ procedure: |-
         v3 = v7;
       }
       CASLog::Error(v3, 0, "Active module was not set to null!\n", (char)v2);
-      self->activeModule = nullptr;
+      self->activeModule = nullptr; // (structmember, struct=CASServerManager, member=curModule); inherited activeModule is the consumer curModule field.
     }
     for ( i = self->listenersBegin; self->listenersEnd != i; ++i )
       (*(void (__cdecl **)(void *))(*(_DWORD *)*i + 12))(*i);

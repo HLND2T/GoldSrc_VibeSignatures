@@ -51,7 +51,7 @@ disasm_code: |-
   .text:100B15A6                 mov     ecx, eax
   .text:100B15A8                 call    CScriptArray__GetSize
   .text:100B15AD                 mov     [ebp+var_34], eax
-  .text:100B15B0                 mov     eax, CASServerManager_pInstance
+  .text:100B15B0                 mov     eax, CASServerManager_pInstance; g_pServerManager (gv): singleton pointer storage, not the manager pointee
   .text:100B15B5                 mov     [ebp+var_2C], eax
   .text:100B15B8                 test    eax, eax
   .text:100B15BA                 jnz     short loc_100B15E7
@@ -68,8 +68,8 @@ disasm_code: |-
   .text:100B15DB                 jmp     short loc_100B15DF
   .text:100B15DD                 xor     eax, eax
   .text:100B15DF                 mov     [ebp+var_2C], eax
-  .text:100B15E2                 mov     CASServerManager_pInstance, eax
-  .text:100B15E7                 mov     edi, [eax+0Ch]
+  .text:100B15E2                 mov     CASServerManager_pInstance, eax; g_pServerManager (gv): singleton pointer storage, not the manager pointee
+  .text:100B15E7                 mov     edi, [eax+0Ch]; (structmember, struct=CASServerManager, member=scriptEngine)
   .text:100B15EA                 xorps   xmm0, xmm0
   .text:100B15ED                 mov     eax, dword ptr ds:aString; "string"
   .text:100B15F2                 movups  xmmword ptr [ebp+var_28], xmm0
@@ -226,9 +226,9 @@ procedure: |
     if ( array )
     {
       arraySize = CScriptArray__GetSize(array);
-      managerCopy = CASServerManager_pInstance;
-      manager = CASServerManager_pInstance;
-      if ( !CASServerManager_pInstance )
+      managerCopy = CASServerManager_pInstance; // g_pServerManager (gv): CASServerManager::GetInstance()::pInstance, the singleton pointer storage.
+      manager = CASServerManager_pInstance; // g_pServerManager (gv): CASServerManager::GetInstance()::pInstance, the singleton pointer storage.
+      if ( !CASServerManager_pInstance ) // g_pServerManager (gv): CASServerManager::GetInstance()::pInstance, the singleton pointer storage.
       {
         v6 = (CASManagerTypeQueryView *)operator new(0x44u);
         v21 = 1;
@@ -237,9 +237,9 @@ procedure: |
         else
           managerCopy = nullptr;
         manager = managerCopy;
-        CASServerManager_pInstance = managerCopy;
+        CASServerManager_pInstance = managerCopy; // g_pServerManager (gv): CASServerManager::GetInstance()::pInstance, the singleton pointer storage.
       }
-      scriptEngine = managerCopy->scriptEngine;
+      scriptEngine = managerCopy->scriptEngine; // (structmember, struct=CASServerManager, member=scriptEngine); CASManagerTypeQueryView is the verified manager prefix.
       typeName.storage = 0;
       strcpy(typeName.storage.local, "string");
       typeName.length = 6;
