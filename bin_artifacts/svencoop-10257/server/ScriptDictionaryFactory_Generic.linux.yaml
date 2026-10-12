@@ -1,0 +1,6 @@
+func_name: ScriptDictionaryFactory_Generic(asIScriptGeneric*)
+func_va: '0xf5a8a'
+func_rva: '0xf5a8a'
+func_size: '0x2a'
+func_sig: 56 53 83 EC ?? 8B 5C 24 ?? 8B 03 89 1C 24 FF 50 ?? 89 C6 8B 03 89 1C 24 FF 10 89 04 24 E8 ?? ?? ?? ?? 89 06 83 C4
+  ?? 5B 5E C3

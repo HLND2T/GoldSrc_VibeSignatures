@@ -3879,6 +3879,33 @@ modules:
     depot_windows: svencoop/dlls/server.dll
     depot_linux: svencoop/dlls/server.so
     skills:
+      - name: find-CScriptDictionary-registration
+        expected_output_windows:
+          - RegisterScriptDictionary.windows.yaml
+        expected_output_linux:
+          - RegisterScriptDictionary_Native.linux.yaml
+      - name: find-CScriptDictionary-registration-decompiles
+        expected_input_windows:
+          - RegisterScriptDictionary.windows.yaml
+        expected_input_linux:
+          - RegisterScriptDictionary_Native.linux.yaml
+        expected_output:
+          - CScriptDictionary_AddRef.{platform}.yaml
+          - CScriptDictionary_Release.{platform}.yaml
+          - CScriptDictionary_Set.{platform}.yaml
+          - CScriptDictionary_Get.{platform}.yaml
+          - CScriptDictionary_Exists.{platform}.yaml
+          - CScriptDictionary_IsEmpty.{platform}.yaml
+          - CScriptDictionary_GetSize.{platform}.yaml
+          - CScriptDictionary_Delete.{platform}.yaml
+          - CScriptDictionary_DeleteAll.{platform}.yaml
+        expected_output_linux:
+          - ScriptDictionaryFactory_Generic.linux.yaml
+      - name: find-CScriptDictionary_Create
+        expected_input_linux:
+          - ScriptDictionaryFactory_Generic.linux.yaml
+        expected_output:
+          - CScriptDictionary_Create.{platform}.yaml
       - name: find-CASDirectoryList-CASBaseManager
         expected_output:
           - CASDirectoryList_CreateDirectory.{platform}.yaml
@@ -3973,6 +4000,35 @@ modules:
         expected_output:
           - asGetActiveContext.{platform}.yaml
     symbols:
+      - name: RegisterScriptDictionary
+        category: func
+        platform: windows
+      - name: RegisterScriptDictionary_Native
+        category: func
+        platform: linux
+      - name: ScriptDictionaryFactory_Generic
+        category: func
+        platform: linux
+      - name: CScriptDictionary_Create
+        category: func
+      - name: CScriptDictionary_AddRef
+        category: func
+      - name: CScriptDictionary_Release
+        category: func
+      - name: CScriptDictionary_Set
+        category: func
+      - name: CScriptDictionary_Get
+        category: func
+      - name: CScriptDictionary_Exists
+        category: func
+      - name: CScriptDictionary_IsEmpty
+        category: func
+      - name: CScriptDictionary_GetSize
+        category: func
+      - name: CScriptDictionary_Delete
+        category: func
+      - name: CScriptDictionary_DeleteAll
+        category: func
       - name: CASDirectoryList_CreateDirectory
         category: func
       - name: CASBaseManager_GetTypeInfoByName

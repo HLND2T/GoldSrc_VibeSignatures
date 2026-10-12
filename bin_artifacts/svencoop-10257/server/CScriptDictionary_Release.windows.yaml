@@ -1,0 +1,6 @@
+func_name: CScriptDictionary::Release() const
+func_va: '0x1034f840'
+func_rva: '0x34f840'
+func_size: '0x2a'
+func_sig: 56 8B F1 8D 46 ?? C6 46 ?? ?? 50 E8 ?? ?? ?? ?? 83 C4 04 85 C0 75 ?? 8B 06 8B CE 6A 00 FF 10 56 E8 ?? ?? ?? ?? 83
+  C4 04 5E C3

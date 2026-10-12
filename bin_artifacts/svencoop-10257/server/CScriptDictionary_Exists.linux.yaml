@@ -1,0 +1,6 @@
+func_name: CScriptDictionary::Exists(const CString&) const
+func_va: '0xf5e20'
+func_rva: '0xf5e20'
+func_size: '0x32'
+func_sig: 83 EC ?? 8D 54 24 ?? 8B 44 24 ?? 89 44 24 ?? 8B 4C 24 ?? 83 C1 ?? 89 4C 24 ?? 89 14 24 E8 ?? ?? ?? ?? 83 EC ?? 8B
+  54 24 ?? 85 D2 0F 95 C0 83 C4 ?? C3

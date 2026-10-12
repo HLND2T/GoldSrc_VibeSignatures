@@ -1,0 +1,33 @@
+func_name: "ScriptDictionaryFactory_Generic"
+func_va: "0xf5a8a"
+disasm_code: |-
+  .text:000F5A8A                 push    esi
+  .text:000F5A8B                 push    ebx
+  .text:000F5A8C                 sub     esp, 14h
+  .text:000F5A8F                 mov     ebx, [esp+1Ch+generic]
+  .text:000F5A93                 mov     eax, [ebx]
+  .text:000F5A95                 mov     [esp+1Ch+engine], ebx
+  .text:000F5A98                 call    dword ptr [eax+64h]
+  .text:000F5A9B                 mov     esi, eax
+  .text:000F5A9D                 mov     eax, [ebx]
+  .text:000F5A9F                 mov     [esp+1Ch+engine], ebx
+  .text:000F5AA2                 call    dword ptr [eax]
+  .text:000F5AA4                 ; engine
+  .text:000F5AA4                 mov     [esp+1Ch+engine], eax; engine
+  .text:000F5AA7                 call    CScriptDictionary_Create; found_call CScriptDictionary_Create: independent engine-taking factory, not the buffer overload
+  .text:000F5AAC                 mov     [esi], eax
+  .text:000F5AAE                 add     esp, 14h
+  .text:000F5AB1                 pop     ebx
+  .text:000F5AB2                 pop     esi
+  .text:000F5AB3                 retn
+procedure: |-
+  // SDK generic factory: engine from GetEngine, store dictionary in GetAddressOfReturnLocation. Windows inlines allocation/construction; Linux calls the independent engine-taking Create. This wrapper is not CScriptDictionary::Create.
+  void __cdecl ScriptDictionaryFactory_Generic(asIScriptGeneric *generic)
+  {
+    CScriptDictionary **returnLocation; // esi
+    asIScriptEngine *engine; // eax
+
+    returnLocation = (CScriptDictionary **)generic->vtable->GetAddressOfReturnLocation(generic);
+    engine = (asIScriptEngine *)generic->vtable->GetEngine(generic);
+    *returnLocation = CScriptDictionary_Create(engine); // found_call CScriptDictionary_Create: allocate dictionary for this engine, then publish the returned object
+  }
