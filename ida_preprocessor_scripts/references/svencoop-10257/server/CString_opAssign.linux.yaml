@@ -1,0 +1,27 @@
+func_name: "CString_opAssign"
+func_va: "0x1780b8"
+disasm_code: |-
+  .text:001780B8                 push    ebx
+  .text:001780B9                 sub     esp, 18h
+  .text:001780BC                 mov     ebx, [esp+1Ch+this]
+  .text:001780C0                 mov     eax, [esp+1Ch+source]
+  .text:001780C4                 mov     edx, [eax+18h]
+  .text:001780C7                 ; length
+  .text:001780C7                 mov     [esp+1Ch+length], edx; length
+  .text:001780CB                 mov     ecx, [eax+14h]
+  .text:001780CE                 ; source
+  .text:001780CE                 mov     [esp+1Ch+var_18], ecx; source
+  .text:001780D2                 ; this
+  .text:001780D2                 mov     [esp+1Ch+var_1C], ebx; this
+  .text:001780D5                 ; (call, CString_Assign) source->buffer +20 and source->length +24 passed to native Assign(const char*, unsigned int).
+  .text:001780D5                 call    CString_Assign; (call, CString_Assign) source->buffer +20 and source->length +24 passed to native Assign(const char*, unsigned int).
+  .text:001780DA                 mov     eax, ebx
+  .text:001780DC                 add     esp, 18h
+  .text:001780DF                 pop     ebx
+  .text:001780E0                 retn
+procedure: |-
+  CString *__cdecl CString__operator_assign(CString *this, const CString *source)
+  {
+    CString_Assign(this, source->buffer, source->length);// (call, CString_Assign) source->buffer +20 and source->length +24 passed to native Assign(const char*, unsigned int).
+    return this;
+  }

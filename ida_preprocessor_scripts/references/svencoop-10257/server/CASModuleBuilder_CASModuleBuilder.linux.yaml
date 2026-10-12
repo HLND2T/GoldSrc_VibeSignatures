@@ -1,0 +1,282 @@
+func_name: "CASModuleBuilder_CASModuleBuilder"
+func_va: "0x11e39e"
+disasm_code: |-
+  .text:0011E39E                 push    ebp
+  .text:0011E39F                 push    edi
+  .text:0011E3A0                 push    esi
+  .text:0011E3A1                 push    ebx
+  .text:0011E3A2                 sub     esp, 2Ch
+  .text:0011E3A5                 call    sub_D4E81
+  .text:0011E3AA                 add     edi, (offset qword_B14000 - $)
+  .text:0011E3B0                 mov     esi, [esp+3Ch+this]
+  .text:0011E3B4                 mov     [esp+3Ch+manager], esi
+  .text:0011E3B7                 mov     ebx, edi
+  .text:0011E3B9                 call    nullsub_283
+  .text:0011E3BE                 mov     dword ptr [esi], 0
+  .text:0011E3C4                 ; unsigned int
+  .text:0011E3C4                 mov     [esp+3Ch+manager], 60h ; '`'; unsigned int
+  .text:0011E3CB                 call    __Znwj; operator new(uint)
+  .text:0011E3D0                 mov     ebp, eax
+  .text:0011E3D2                 mov     [esp+3Ch+manager], eax
+  .text:0011E3D5                 call    sub_EDBA0
+  .text:0011E3DA                 mov     [esi+4], ebp
+  .text:0011E3DD                 mov     dword ptr [esi+8], 0
+  .text:0011E3E4                 mov     dword ptr [esi+0Ch], 0
+  .text:0011E3EB                 mov     byte ptr [esi+10h], 0
+  .text:0011E3EF                 mov     dword ptr [esi+14h], 0
+  .text:0011E3F6                 mov     dword ptr [esi+18h], 0
+  .text:0011E3FD                 mov     eax, [esp+3Ch+moduleType]
+  .text:0011E401                 mov     [esp+3Ch+manager], eax
+  .text:0011E404                 call    sub_120B46
+  .text:0011E409                 mov     [esi], eax
+  .text:0011E40B                 test    eax, eax
+  .text:0011E40D                 jz      loc_11E542
+  .text:0011E413                 mov     edx, [esp+3Ch+moduleName]
+  .text:0011E417                 test    edx, edx
+  .text:0011E419                 jz      short loc_11E424
+  .text:0011E41B                 mov     ecx, [esp+3Ch+moduleName]
+  .text:0011E41F                 cmp     byte ptr [ecx], 0
+  .text:0011E422                 jnz     short loc_11E456
+  .text:0011E424                 mov     eax, ds:(dword_B24760 - 0B14000h)[edi]
+  .text:0011E42A                 test    eax, eax
+  .text:0011E42C                 jz      loc_11E558
+  .text:0011E432                 lea     edx, (aCasmodulebuild - 0B14000h)[edi]; "CASModuleBuilder::CASModuleBuilder: nul"...
+  .text:0011E438                 mov     [esp+3Ch+var_34], edx
+  .text:0011E43C                 mov     [esp+3Ch+s], 0
+  .text:0011E444                 mov     [esp+3Ch+manager], eax
+  .text:0011E447                 mov     ebx, edi
+  .text:0011E449                 call    sub_16EBFC
+  .text:0011E44E                 add     esp, 2Ch
+  .text:0011E451                 pop     ebx
+  .text:0011E452                 pop     esi
+  .text:0011E453                 pop     edi
+  .text:0011E454                 pop     ebp
+  .text:0011E455                 retn
+  .text:0011E456                 mov     ebx, [eax+8]
+  .text:0011E459                 test    ebx, ebx
+  .text:0011E45B                 jz      loc_11E52C
+  .text:0011E461                 cmp     byte ptr [ebx], 0
+  .text:0011E464                 jz      loc_11E52C
+  .text:0011E46A                 mov     [esp+3Ch+var_34], esi
+  .text:0011E46E                 lea     ebp, (sub_11EDB4 - 0B14000h)[edi]
+  .text:0011E474                 mov     [esp+3Ch+s], ebp
+  .text:0011E478                 mov     eax, [esi+4]
+  .text:0011E47B                 mov     [esp+3Ch+manager], eax
+  .text:0011E47E                 mov     ebx, edi
+  .text:0011E480                 call    sub_EDC1C
+  .text:0011E485                 lea     edx, (aPflagObserver+8 - 0B14000h)[edi]; "SERVER"
+  .text:0011E48B                 ; s
+  .text:0011E48B                 mov     [esp+3Ch+s], edx; s
+  .text:0011E48F                 mov     ecx, [esi+4]
+  .text:0011E492                 ; int
+  .text:0011E492                 mov     [esp+3Ch+manager], ecx; int
+  .text:0011E495                 mov     ebx, edi
+  .text:0011E497                 ; (call, CScriptBuilder_DefineWord) this->scriptBuilder and SERVER; find then insert a missing defined word.
+  .text:0011E497                 call    CScriptBuilder_DefineWord; (call, CScriptBuilder_DefineWord) this->scriptBuilder and SERVER; find then insert a missing defined word.
+  .text:0011E49C                 mov     ebp, ds:(g_CASServerManager_instance - 0B14000h)[edi]
+  .text:0011E4A2                 test    ebp, ebp
+  .text:0011E4A4                 jz      loc_11E57D
+  .text:0011E4AA                 mov     ebx, [esp+3Ch+moduleName]
+  .text:0011E4AE                 mov     [esp+3Ch+var_34], ebx
+  .text:0011E4B2                 mov     ebp, [ebp+0Ch]
+  .text:0011E4B5                 mov     [esp+3Ch+s], ebp
+  .text:0011E4B9                 mov     eax, [esi+4]
+  .text:0011E4BC                 mov     [esp+3Ch+manager], eax
+  .text:0011E4BF                 mov     ebx, edi
+  .text:0011E4C1                 call    sub_EE3F6
+  .text:0011E4C6                 mov     edx, [esi+4]
+  .text:0011E4C9                 mov     [esp+3Ch+manager], edx
+  .text:0011E4CC                 mov     ebx, edi
+  .text:0011E4CE                 call    sub_EDC4C
+  .text:0011E4D3                 mov     [esi+8], eax
+  .text:0011E4D6                 mov     ebx, [eax]
+  .text:0011E4D8                 mov     ecx, [esi]
+  .text:0011E4DA                 mov     ecx, [ecx+0Ch]
+  .text:0011E4DD                 mov     ebp, 1
+  .text:0011E4E2                 shl     ebp, cl
+  .text:0011E4E4                 mov     [esp+3Ch+s], ebp
+  .text:0011E4E8                 mov     [esp+3Ch+manager], eax
+  .text:0011E4EB                 call    dword ptr [ebx+20h]
+  .text:0011E4EE                 mov     eax, [esi]
+  .text:0011E4F0                 mov     edx, [eax]
+  .text:0011E4F2                 mov     [esp+3Ch+manager], eax
+  .text:0011E4F5                 call    dword ptr [edx]
+  .text:0011E4F7                 mov     [esi+18h], eax
+  .text:0011E4FA                 mov     ebp, [eax+4]
+  .text:0011E4FD                 test    ebp, ebp
+  .text:0011E4FF                 jz      loc_11E44E
+  .text:0011E505                 nop
+  .text:0011E506                 mov     ebx, [ebp+8]
+  .text:0011E509                 ; char *
+  .text:0011E509                 mov     [esp+3Ch+var_34], ebx; char *
+  .text:0011E50D                 mov     ecx, [ebp+4]
+  .text:0011E510                 ; char *
+  .text:0011E510                 mov     [esp+3Ch+s], ecx; char *
+  .text:0011E514                 ; int
+  .text:0011E514                 mov     [esp+3Ch+manager], esi; int
+  .text:0011E517                 call    sub_11E338
+  .text:0011E51C                 mov     ebp, [ebp+0]
+  .text:0011E51F                 test    ebp, ebp
+  .text:0011E521                 jnz     short loc_11E506
+  .text:0011E523                 add     esp, 2Ch
+  .text:0011E526                 pop     ebx
+  .text:0011E527                 pop     esi
+  .text:0011E528                 pop     edi
+  .text:0011E529                 pop     ebp
+  .text:0011E52A                 retn
+  .text:0011E52C                 mov     eax, ds:(dword_B24760 - 0B14000h)[edi]
+  .text:0011E532                 test    eax, eax
+  .text:0011E534                 jz      short loc_11E59E
+  .text:0011E536                 lea     edx, (aCasmodulebuild_0 - 0B14000h)[edi]; "CASModuleBuilder::CASModuleBuilder: nul"...
+  .text:0011E53C                 jmp     loc_11E438
+  .text:0011E542                 mov     eax, ds:(dword_B24760 - 0B14000h)[edi]
+  .text:0011E548                 test    eax, eax
+  .text:0011E54A                 jz      short loc_11E5C3
+  .text:0011E54C                 lea     edx, (aCasmodulebuild_1 - 0B14000h)[edi]; "CASModuleBuilder::CASModuleBuilder: nul"...
+  .text:0011E552                 jmp     loc_11E438
+  .text:0011E558                 ; unsigned int
+  .text:0011E558                 mov     [esp+3Ch+manager], 4; unsigned int
+  .text:0011E55F                 mov     ebx, edi
+  .text:0011E561                 call    __Znwj; operator new(uint)
+  .text:0011E566                 mov     ebp, eax
+  .text:0011E568                 mov     [esp+3Ch+manager], eax
+  .text:0011E56B                 call    sub_16EBD6
+  .text:0011E570                 mov     ds:(dword_B24760 - 0B14000h)[edi], ebp
+  .text:0011E576                 mov     eax, ebp
+  .text:0011E578                 jmp     loc_11E432
+  .text:0011E57D                 ; unsigned int
+  .text:0011E57D                 mov     [esp+3Ch+manager], 54h ; 'T'; unsigned int
+  .text:0011E584                 call    __Znwj; operator new(uint)
+  .text:0011E589                 mov     ebp, eax
+  .text:0011E58B                 ; manager
+  .text:0011E58B                 mov     [esp+3Ch+manager], eax; manager
+  .text:0011E58E                 call    CASServerManager__CASServerManager
+  .text:0011E593                 mov     ds:(g_CASServerManager_instance - 0B14000h)[edi], ebp
+  .text:0011E599                 jmp     loc_11E4AA
+  .text:0011E59E                 ; unsigned int
+  .text:0011E59E                 mov     [esp+3Ch+manager], 4; unsigned int
+  .text:0011E5A5                 mov     ebx, edi
+  .text:0011E5A7                 call    __Znwj; operator new(uint)
+  .text:0011E5AC                 mov     ebp, eax
+  .text:0011E5AE                 mov     [esp+3Ch+manager], eax
+  .text:0011E5B1                 call    sub_16EBD6
+  .text:0011E5B6                 mov     ds:(dword_B24760 - 0B14000h)[edi], ebp
+  .text:0011E5BC                 mov     eax, ebp
+  .text:0011E5BE                 jmp     loc_11E536
+  .text:0011E5C3                 ; unsigned int
+  .text:0011E5C3                 mov     [esp+3Ch+manager], 4; unsigned int
+  .text:0011E5CA                 call    __Znwj; operator new(uint)
+  .text:0011E5CF                 mov     ebp, eax
+  .text:0011E5D1                 mov     [esp+3Ch+manager], eax
+  .text:0011E5D4                 call    sub_16EBD6
+  .text:0011E5D9                 mov     ds:(dword_B24760 - 0B14000h)[edi], ebp
+  .text:0011E5DF                 mov     eax, ebp
+  .text:0011E5E1                 jmp     loc_11E54C
+  .text:0011E5E6                 mov     [esp+3Ch+var_20], eax
+  .text:0011E5EA                 mov     [esp+3Ch+manager], esi
+  .text:0011E5ED                 mov     ebx, edi
+  .text:0011E5EF                 call    nullsub_284
+  .text:0011E5F4                 mov     esi, [esp+3Ch+var_20]
+  .text:0011E5F8                 mov     [esp+3Ch+manager], esi
+  .text:0011E5FB                 call    __Unwind_Resume
+  .text:0011E600                 mov     [esp+3Ch+var_20], eax
+  .text:0011E604                 ; void *
+  .text:0011E604                 mov     [esp+3Ch+manager], ebp; void *
+  .text:0011E607                 mov     ebx, edi
+  .text:0011E609                 call    __ZdlPv; operator delete(void *)
+  .text:0011E60E                 mov     eax, [esp+3Ch+var_20]
+  .text:0011E612                 jmp     short loc_11E5E6
+  .text:0011E614                 jmp     short loc_11E600
+  .text:0011E616                 jmp     short loc_11E600
+  .text:0011E618                 nop
+  .text:0011E619                 lea     esi, [esi+0]
+  .text:0011E620                 jmp     short loc_11E600
+  .text:0011E622                 jmp     short loc_11E600
+procedure: |-
+  void __cdecl CASModuleBuilder__CASModuleBuilder(CASModuleBuilder *this, int moduleType, const char *moduleName)
+  {
+    CScriptBuilder *v3; // ebp
+    _DWORD *v4; // eax
+    int v5; // eax
+    const char *v6; // edx
+    _BYTE *v7; // ebx
+    CASServerManager *manager; // ebp
+    int v9; // eax
+    int v10; // eax
+    int **i; // ebp
+    int v12; // ebp
+    int v13; // ebp
+    int v14; // ebp
+
+    nullsub_283(this);
+    this->moduleInfo = nullptr;
+    v3 = (CScriptBuilder *)operator new(0x60u);
+    sub_EDBA0(v3);
+    this->scriptBuilder = v3;
+    *(_DWORD *)this->reserved = 0;
+    *(_DWORD *)&this->reserved[4] = 0;
+    this->reserved[8] = 0;
+    *(_DWORD *)&this->reserved[12] = 0;
+    *(_DWORD *)&this->reserved[16] = 0;
+    v4 = (_DWORD *)sub_120B46(moduleType);
+    this->moduleInfo = v4;
+    if ( !v4 )
+    {
+      v5 = dword_B24760;
+      if ( !dword_B24760 )
+      {
+        v14 = operator new(4u);
+        sub_16EBD6(v14);
+        dword_B24760 = v14;
+        v5 = v14;
+      }
+      v6 = "CASModuleBuilder::CASModuleBuilder: null module info!\n";
+      goto LABEL_7;
+    }
+    if ( !moduleName || !*moduleName )
+    {
+      v5 = dword_B24760;
+      if ( !dword_B24760 )
+      {
+        v12 = operator new(4u);
+        sub_16EBD6(v12);
+        dword_B24760 = v12;
+        v5 = v12;
+      }
+      v6 = "CASModuleBuilder::CASModuleBuilder: null or empty module name!\n";
+  LABEL_7:
+      sub_16EBFC(v5, 0, v6);
+      return;
+    }
+    v7 = (_BYTE *)v4[2];
+    if ( !v7 || !*v7 )
+    {
+      v5 = dword_B24760;
+      if ( !dword_B24760 )
+      {
+        v13 = operator new(4u);
+        sub_16EBD6(v13);
+        dword_B24760 = v13;
+        v5 = v13;
+      }
+      v6 = "CASModuleBuilder::CASModuleBuilder: null or empty directory name!\n";
+      goto LABEL_7;
+    }
+    sub_EDC1C(this->scriptBuilder, sub_11EDB4, this);
+    CScriptBuilder_DefineWord(this->scriptBuilder, "SERVER");// (call, CScriptBuilder_DefineWord) this->scriptBuilder and SERVER; find then insert a missing defined word.
+    manager = g_CASServerManager_instance;
+    if ( !g_CASServerManager_instance )
+    {
+      manager = (CASServerManager *)operator new(0x54u);
+      CASServerManager::CASServerManager(manager);
+      g_CASServerManager_instance = manager;
+    }
+    sub_EE3F6(this->scriptBuilder, manager->scriptEngine, moduleName);
+    v9 = sub_EDC4C(this->scriptBuilder);
+    *(_DWORD *)this->reserved = v9;
+    (*(void (__cdecl **)(int, int))(*(_DWORD *)v9 + 32))(v9, 1 << *((_DWORD *)this->moduleInfo + 3));
+    v10 = (**(int (__cdecl ***)(void *))this->moduleInfo)(this->moduleInfo);
+    *(_DWORD *)&this->reserved[16] = v10;
+    for ( i = *(int ***)(v10 + 4); i; i = (int **)*i )
+      sub_11E338((int)this, (char *)i[1], (char *)i[2]);
+  }

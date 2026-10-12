@@ -1,0 +1,279 @@
+func_name: "CASModuleBuilder_CASModuleBuilder"
+func_va: "0x100ad310"
+disasm_code: |-
+  .text:100AD310                 push    ebp
+  .text:100AD311                 mov     ebp, esp
+  .text:100AD313                 push    0FFFFFFFFh
+  .text:100AD315                 push    offset SEH_100AD310
+  .text:100AD31A                 mov     eax, large fs:0
+  .text:100AD320                 push    eax
+  .text:100AD321                 sub     esp, 8
+  .text:100AD324                 push    ebx
+  .text:100AD325                 push    esi
+  .text:100AD326                 push    edi
+  .text:100AD327                 mov     eax, ___security_cookie
+  .text:100AD32C                 xor     eax, ebp
+  .text:100AD32E                 push    eax
+  .text:100AD32F                 lea     eax, [ebp+var_C]
+  .text:100AD332                 mov     large fs:0, eax
+  .text:100AD338                 mov     edi, ecx
+  .text:100AD33A                 mov     [ebp+var_10], edi
+  .text:100AD33D                 call    sub_100CB1F0
+  .text:100AD342                 ; Size
+  .text:100AD342                 push    40h ; '@'; Size
+  .text:100AD344                 mov     [ebp+var_4], 0
+  .text:100AD34B                 mov     dword ptr [edi], 0
+  .text:100AD351                 call    ??2@YAPAXI@Z; operator new(uint)
+  .text:100AD356                 add     esp, 4
+  .text:100AD359                 mov     [ebp+Block], eax
+  .text:100AD35C                 mov     byte ptr [ebp+var_4], 1
+  .text:100AD360                 test    eax, eax
+  .text:100AD362                 jz      short loc_100AD36F
+  .text:100AD364                 mov     ecx, eax
+  .text:100AD366                 call    sub_1034C970
+  .text:100AD36B                 mov     edx, eax
+  .text:100AD36D                 jmp     short loc_100AD371
+  .text:100AD36F                 xor     edx, edx
+  .text:100AD371                 mov     [edi+4], edx
+  .text:100AD374                 mov     dword ptr [edi+8], 0
+  .text:100AD37B                 mov     dword ptr [edi+0Ch], 0
+  .text:100AD382                 mov     byte ptr [edi+10h], 0
+  .text:100AD386                 mov     dword ptr [edi+14h], 0
+  .text:100AD38D                 mov     dword ptr [edi+18h], 0
+  .text:100AD394                 mov     eax, dword_104F7110
+  .text:100AD399                 mov     byte ptr [ebp+var_4], 0
+  .text:100AD39D                 test    eax, eax
+  .text:100AD39F                 jz      short loc_100AD3B0
+  .text:100AD3A1                 mov     ecx, [ebp+arg_0]
+  .text:100AD3A4                 cmp     [eax+0Ch], ecx
+  .text:100AD3A7                 jz      short loc_100AD3E8
+  .text:100AD3A9                 mov     eax, [eax+4]
+  .text:100AD3AC                 test    eax, eax
+  .text:100AD3AE                 jnz     short loc_100AD3A4
+  .text:100AD3B0                 mov     dword ptr [edi], 0
+  .text:100AD3B6                 mov     eax, dword_104F70F4
+  .text:100AD3BB                 test    eax, eax
+  .text:100AD3BD                 jnz     loc_100AD4BF
+  .text:100AD3C3                 ; Size
+  .text:100AD3C3                 push    4; Size
+  .text:100AD3C5                 call    ??2@YAPAXI@Z; operator new(uint)
+  .text:100AD3CA                 add     esp, 4
+  .text:100AD3CD                 mov     [ebp+arg_0], eax
+  .text:100AD3D0                 mov     byte ptr [ebp+var_4], 2
+  .text:100AD3D4                 test    eax, eax
+  .text:100AD3D6                 jz      loc_100AD4B4
+  .text:100AD3DC                 ; this
+  .text:100AD3DC                 mov     ecx, eax; this
+  .text:100AD3DE                 call    ??0big_integer@__crt_strtox@@QAE@XZ; __crt_strtox::big_integer::big_integer(void)
+  .text:100AD3E3                 jmp     loc_100AD4B6
+  .text:100AD3E8                 mov     [edi], eax
+  .text:100AD3EA                 test    eax, eax
+  .text:100AD3EC                 jz      short loc_100AD3B6
+  .text:100AD3EE                 mov     ebx, [ebp+moduleName]
+  .text:100AD3F1                 test    ebx, ebx
+  .text:100AD3F3                 jz      loc_100AD4A8
+  .text:100AD3F9                 cmp     byte ptr [ebx], 0
+  .text:100AD3FC                 jz      loc_100AD4A8
+  .text:100AD402                 mov     eax, [eax+8]
+  .text:100AD405                 test    eax, eax
+  .text:100AD407                 jz      loc_100AD49C
+  .text:100AD40D                 cmp     byte ptr [eax], 0
+  .text:100AD410                 jz      loc_100AD49C
+  .text:100AD416                 push    edi
+  .text:100AD417                 push    offset sub_100B1130
+  .text:100AD41C                 mov     ecx, edx
+  .text:100AD41E                 call    sub_1034CC80
+  .text:100AD423                 mov     ecx, [edi+4]
+  .text:100AD426                 push    offset aServer; "SERVER"
+  .text:100AD42B                 ; (call, CScriptBuilder_DefineWord) this->scriptBuilder and SERVER. Callee finds the word in definedWords and inserts only when absent.
+  .text:100AD42B                 call    CScriptBuilder_DefineWord; (call, CScriptBuilder_DefineWord) this->scriptBuilder and SERVER. Callee finds the word in definedWords and inserts only when absent.
+  .text:100AD430                 mov     esi, [edi+4]
+  .text:100AD433                 call    CASServerManager__GetInstance
+  .text:100AD438                 push    ebx
+  .text:100AD439                 mov     ecx, esi
+  .text:100AD43B                 mov     eax, [eax+0Ch]
+  .text:100AD43E                 push    eax
+  .text:100AD43F                 call    sub_1034CA60
+  .text:100AD444                 mov     ecx, [edi+4]
+  .text:100AD447                 call    sub_1034CC70
+  .text:100AD44C                 mov     ecx, [edi]
+  .text:100AD44E                 mov     edx, 1
+  .text:100AD453                 mov     [edi+8], eax
+  .text:100AD456                 mov     esi, [eax]
+  .text:100AD458                 mov     ecx, [ecx+0Ch]
+  .text:100AD45B                 shl     edx, cl
+  .text:100AD45D                 mov     ecx, eax
+  .text:100AD45F                 push    edx
+  .text:100AD460                 call    dword ptr [esi+20h]
+  .text:100AD463                 mov     ecx, [edi]
+  .text:100AD465                 mov     eax, [ecx]
+  .text:100AD467                 call    dword ptr [eax]
+  .text:100AD469                 mov     [edi+18h], eax
+  .text:100AD46C                 mov     esi, [eax+4]
+  .text:100AD46F                 test    esi, esi
+  .text:100AD471                 jz      short loc_100AD4CF
+  .text:100AD473                 mov     eax, [esi+4]
+  .text:100AD476                 mov     ecx, [esi+8]
+  .text:100AD479                 test    eax, eax
+  .text:100AD47B                 jz      short loc_100AD494
+  .text:100AD47D                 cmp     byte ptr [eax], 0
+  .text:100AD480                 jz      short loc_100AD494
+  .text:100AD482                 test    ecx, ecx
+  .text:100AD484                 jz      short loc_100AD494
+  .text:100AD486                 push    0
+  .text:100AD488                 push    0
+  .text:100AD48A                 push    ecx
+  .text:100AD48B                 mov     ecx, [edi+4]
+  .text:100AD48E                 push    eax
+  .text:100AD48F                 call    sub_1034CBF0
+  .text:100AD494                 mov     esi, [esi]
+  .text:100AD496                 test    esi, esi
+  .text:100AD498                 jnz     short loc_100AD473
+  .text:100AD49A                 jmp     short loc_100AD4CF
+  .text:100AD49C                 call    sub_100AA3F0
+  .text:100AD4A1                 push    offset aCasmodulebuild; "CASModuleBuilder::CASModuleBuilder: nul"...
+  .text:100AD4A6                 jmp     short loc_100AD4C4
+  .text:100AD4A8                 call    sub_100AA3F0
+  .text:100AD4AD                 push    offset aCasmodulebuild_0; "CASModuleBuilder::CASModuleBuilder: nul"...
+  .text:100AD4B2                 jmp     short loc_100AD4C4
+  .text:100AD4B4                 xor     eax, eax
+  .text:100AD4B6                 mov     byte ptr [ebp+var_4], 0
+  .text:100AD4BA                 mov     dword_104F70F4, eax
+  .text:100AD4BF                 push    offset aCasmodulebuild_1; "CASModuleBuilder::CASModuleBuilder: nul"...
+  .text:100AD4C4                 push    0
+  .text:100AD4C6                 push    eax
+  .text:100AD4C7                 call    sub_100CAF90
+  .text:100AD4CC                 add     esp, 0Ch
+  .text:100AD4CF                 mov     eax, edi
+  .text:100AD4D1                 mov     ecx, [ebp+var_C]
+  .text:100AD4D4                 mov     large fs:0, ecx
+  .text:100AD4DB                 pop     ecx
+  .text:100AD4DC                 pop     edi
+  .text:100AD4DD                 pop     esi
+  .text:100AD4DE                 pop     ebx
+  .text:100AD4DF                 mov     esp, ebp
+  .text:100AD4E1                 pop     ebp
+  .text:100AD4E2                 retn    8
+  .text:103CB777                 mov     ecx, [ebp+var_10]
+  .text:103CB77A                 jmp     nullsub_4
+  .text:103CB77F                 push    40h ; '@'
+  .text:103CB781                 mov     eax, [ebp+Block]
+  .text:103CB784                 ; Block
+  .text:103CB784                 push    eax; Block
+  .text:103CB785                 call    sub_1038EE37
+  .text:103CB78A                 add     esp, 8
+  .text:103CB78D                 retn
+  .text:103CB78E                 push    4
+  .text:103CB790                 mov     eax, [ebp+arg_0]
+  .text:103CB793                 ; Block
+  .text:103CB793                 push    eax; Block
+  .text:103CB794                 call    sub_1038EE37
+  .text:103CB799                 add     esp, 8
+  .text:103CB79C                 retn
+  .text:103CB7A2                 nop
+  .text:103CB7A3                 nop
+  .text:103CB7A4                 mov     edx, [esp-4+moduleName]
+  .text:103CB7A8                 lea     eax, [edx+0Ch]
+  .text:103CB7AB                 mov     ecx, [edx-18h]
+  .text:103CB7AE                 ; StackCookie
+  .text:103CB7AE                 xor     ecx, eax; StackCookie
+  .text:103CB7B0                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:103CB7B5                 mov     eax, offset stru_104CCB3C
+  .text:103CB7BA                 jmp     ___CxxFrameHandler3
+procedure: |-
+  CASModuleBuilder *__thiscall CASModuleBuilder__CASModuleBuilder(
+          CASModuleBuilder *this,
+          int moduleType,
+          const char *moduleName)
+  {
+    CScriptBuilder *v4; // edx
+    _DWORD *v5; // eax
+    int v6; // eax
+    __crt_strtox::big_integer *v7; // eax
+    _BYTE *v8; // eax
+    CASServerManager *Instance; // eax
+    int v10; // eax
+    _DWORD *moduleInfo; // ecx
+    int v12; // eax
+    _DWORD *i; // esi
+    _BYTE *v14; // eax
+    void *v15; // ecx
+    int v16; // eax
+    int v17; // eax
+
+    sub_100CB1F0();
+    this->moduleInfo = nullptr;
+    if ( operator new(0x40u) )
+      v4 = (CScriptBuilder *)sub_1034C970();
+    else
+      v4 = nullptr;
+    this->scriptBuilder = v4;
+    *(_DWORD *)this->reserved = 0;
+    *(_DWORD *)&this->reserved[4] = 0;
+    this->reserved[8] = 0;
+    *(_DWORD *)&this->reserved[12] = 0;
+    *(_DWORD *)&this->reserved[16] = 0;
+    v5 = (_DWORD *)dword_104F7110;
+    if ( !dword_104F7110 )
+    {
+  LABEL_7:
+      this->moduleInfo = nullptr;
+  LABEL_8:
+      v6 = dword_104F70F4;
+      if ( !dword_104F70F4 )
+      {
+        v7 = (__crt_strtox::big_integer *)operator new(4u);
+        if ( v7 )
+          v6 = __crt_strtox::big_integer::big_integer(v7);
+        else
+          v6 = 0;
+        dword_104F70F4 = v6;
+      }
+      sub_100CAF90(v6, 0, "CASModuleBuilder::CASModuleBuilder: null module info!\n");
+      return this;
+    }
+    while ( v5[3] != moduleType )
+    {
+      v5 = (_DWORD *)v5[1];
+      if ( !v5 )
+        goto LABEL_7;
+    }
+    this->moduleInfo = v5;
+    if ( !v5 )
+      goto LABEL_8;
+    if ( moduleName && *moduleName )
+    {
+      v8 = (_BYTE *)v5[2];
+      if ( v8 && *v8 )
+      {
+        sub_1034CC80(sub_100B1130, this);
+        CScriptBuilder_DefineWord(this->scriptBuilder, "SERVER");// (call, CScriptBuilder_DefineWord) this->scriptBuilder and SERVER. Callee finds the word in definedWords and inserts only when absent.
+        Instance = CASServerManager::GetInstance();
+        sub_1034CA60(Instance->scriptEngine, moduleName);
+        v10 = sub_1034CC70(this->scriptBuilder);
+        moduleInfo = this->moduleInfo;
+        *(_DWORD *)this->reserved = v10;
+        (*(void (__thiscall **)(int, int))(*(_DWORD *)v10 + 32))(v10, 1 << moduleInfo[3]);
+        v12 = (**(int (__thiscall ***)(void *))this->moduleInfo)(this->moduleInfo);
+        *(_DWORD *)&this->reserved[16] = v12;
+        for ( i = *(_DWORD **)(v12 + 4); i; i = (_DWORD *)*i )
+        {
+          v14 = (_BYTE *)i[1];
+          v15 = (void *)i[2];
+          if ( v14 && *v14 && v15 )
+            sub_1034CBF0(v14, v15, 0, 0);
+        }
+      }
+      else
+      {
+        v16 = sub_100AA3F0();
+        sub_100CAF90(v16, 0, "CASModuleBuilder::CASModuleBuilder: null or empty directory name!\n");
+      }
+    }
+    else
+    {
+      v17 = sub_100AA3F0();
+      sub_100CAF90(v17, 0, "CASModuleBuilder::CASModuleBuilder: null or empty module name!\n");
+    }
+    return this;
+  }
