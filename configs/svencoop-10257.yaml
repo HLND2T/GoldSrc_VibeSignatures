@@ -5,6 +5,9 @@ modules:
     depot_windows: hw.dll
     depot_linux: hw.so
     skills:
+      - name: find-CL_GetModelByIndex
+        expected_output:
+          - CL_GetModelByIndex.{platform}.yaml
       - name: find-SV_Physics-decompiles
         expected_input:
           - SV_Physics.{platform}.yaml
@@ -2312,6 +2315,8 @@ modules:
         category: func
       - name: R_NewMap
         category: func
+      - name: CL_GetModelByIndex
+        category: func
       - name: R_DecalInit
         category: func
       - name: gDecalPool
@@ -3228,6 +3233,16 @@ modules:
           - TeamFortressViewport_AllowedToPrintText.{platform}.yaml
           - CHud_GetBorderSize.{platform}.yaml
           - TeamFortressViewport_IsScoreBoardVisible.{platform}.yaml
+      - name: find-Sven-client-menu-punch
+        expected_output:
+          - TeamFortressViewport_ShowVGUIMenu.{platform}.yaml
+          - V_PunchAxis.{platform}.yaml
+      - name: find-g_PlayerExtraInfo
+        expected_output:
+          - g_PlayerExtraInfo.{platform}.yaml
+      - name: find-CClient_SoundEngine_Initialize
+        expected_output:
+          - CClient_SoundEngine_Initialize.{platform}.yaml
       - name: find-CClient_SoundEngine_LookupSoundBySentenceIndex
         expected_input:
           - CClient_SoundEngine_PlayFMODSound.{platform}.yaml
@@ -3390,6 +3405,14 @@ modules:
       - name: GetClientColor
         category: func
       - name: TeamFortressViewport_AllowedToPrintText
+        category: func
+      - name: TeamFortressViewport_ShowVGUIMenu
+        category: func
+      - name: V_PunchAxis
+        category: func
+      - name: g_PlayerExtraInfo
+        category: gv
+      - name: CClient_SoundEngine_Initialize
         category: func
       - name: CHud_GetBorderSize
         category: func

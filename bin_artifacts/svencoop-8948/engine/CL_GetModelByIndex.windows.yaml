@@ -1,0 +1,5 @@
+func_name: CL_GetModelByIndex
+func_va: '0x1d27e00'
+func_rva: '0x27e00'
+func_size: '0x91'
+func_sig: 83 EC 08 56 57 8B 7C 24 ?? 8B 34 BD ?? ?? ?? ?? 85 F6 75 ?? 5F 33 C0 5E 83 C4 08 C3 8B 46 ??
