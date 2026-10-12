@@ -1,0 +1,8 @@
+gv_name: g_groupmask
+gv_va: '0x855b6b8'
+gv_rva: '0x685b6b8'
+gv_sig: 8B 15 ?? ?? ?? ?? 53 8B 5C 24 ?? 55 56 57 8B 7C 24 ?? EB ??
+gv_sig_va: '0x1dd2c89'
+gv_inst_offset: '0x0'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'

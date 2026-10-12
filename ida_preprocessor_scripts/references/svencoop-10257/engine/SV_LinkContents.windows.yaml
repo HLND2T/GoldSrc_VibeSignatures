@@ -1,0 +1,338 @@
+func_name: SV_LinkContents
+func_va: '0x1dd2c80'
+disasm_code: '.text:01DD2C80                 mov     ecx, g_groupop
+
+  .text:01DD2C86                 sub     esp, 1Ch
+
+  .text:01DD2C89                 mov     edx, g_groupmask
+
+  .text:01DD2C8F                 push    ebx
+
+  .text:01DD2C90                 mov     ebx, [esp+20h+pos]
+
+  .text:01DD2C94                 push    ebp
+
+  .text:01DD2C95                 push    esi
+
+  .text:01DD2C96                 push    edi
+
+  .text:01DD2C97                 mov     edi, [esp+2Ch+node]
+
+  .text:01DD2C9B                 jmp     short loc_1DD2CA0
+
+  .text:01DD2CA0                 mov     esi, [edi+1Ch]
+
+  .text:01DD2CA3                 lea     ebp, [edi+18h]
+
+  .text:01DD2CA6                 mov     [esp+2Ch+var_1C], ebp
+
+  .text:01DD2CAA                 cmp     esi, ebp
+
+  .text:01DD2CAC                 jz      loc_1DD2E2F
+
+  .text:01DD2CB2                 mov     eax, ebp
+
+  .text:01DD2CB4                 jmp     short loc_1DD2CC0
+
+  .text:01DD2CC0                 mov     ebp, [esi+4]
+
+  .text:01DD2CC3                 add     esi, 0FFFFFFF8h
+
+  .text:01DD2CC6                 cmp     dword ptr [esi+18Ch], 0
+
+  .text:01DD2CCD                 jnz     loc_1DD2E21
+
+  .text:01DD2CD3                 mov     eax, [esi+2C0h]
+
+  .text:01DD2CD9                 test    eax, eax
+
+  .text:01DD2CDB                 jz      short loc_1DD2CF8
+
+  .text:01DD2CDD                 test    ecx, ecx
+
+  .text:01DD2CDF                 jnz     short loc_1DD2CEB
+
+  .text:01DD2CE1                 test    edx, eax
+
+  .text:01DD2CE3                 jz      loc_1DD2E1D
+
+  .text:01DD2CE9                 jmp     short loc_1DD2CF8
+
+  .text:01DD2CEB                 cmp     ecx, 1
+
+  .text:01DD2CEE                 jnz     short loc_1DD2CF8
+
+  .text:01DD2CF0                 test    edx, eax
+
+  .text:01DD2CF2                 jnz     loc_1DD2E1D
+
+  .text:01DD2CF8                 mov     eax, [esi+134h]
+
+  .text:01DD2CFE                 mov     eax, sv_models[eax*4]
+
+  .text:01DD2D05                 test    eax, eax
+
+  .text:01DD2D07                 jz      loc_1DD2E1D
+
+  .text:01DD2D0D                 cmp     dword ptr [eax+44h], 0
+
+  .text:01DD2D11                 jnz     loc_1DD2E1D
+
+  .text:01DD2D17                 fld     dword ptr [ebx]
+
+  .text:01DD2D19                 fcom    dword ptr [esi+150h]
+
+  .text:01DD2D1F                 fnstsw  ax
+
+  .text:01DD2D21                 test    ah, 41h
+
+  .text:01DD2D24                 jz      loc_1DD2E1B
+
+  .text:01DD2D2A                 fld     dword ptr [ebx+4]
+
+  .text:01DD2D2D                 fcom    dword ptr [esi+154h]
+
+  .text:01DD2D33                 fnstsw  ax
+
+  .text:01DD2D35                 test    ah, 41h
+
+  .text:01DD2D38                 jz      loc_1DD2E19
+
+  .text:01DD2D3E                 fld     dword ptr [ebx+8]
+
+  .text:01DD2D41                 lea     edi, [ebx+8]
+
+  .text:01DD2D44                 fcom    dword ptr [esi+158h]
+
+  .text:01DD2D4A                 fnstsw  ax
+
+  .text:01DD2D4C                 test    ah, 41h
+
+  .text:01DD2D4F                 jz      loc_1DD2E13
+
+  .text:01DD2D55                 fld     dword ptr [esi+144h]
+
+  .text:01DD2D5B                 fcomp   st(3)
+
+  .text:01DD2D5D                 fnstsw  ax
+
+  .text:01DD2D5F                 fstp    st(2)
+
+  .text:01DD2D61                 test    ah, 41h
+
+  .text:01DD2D64                 jz      loc_1DD2E15
+
+  .text:01DD2D6A                 fcomp   dword ptr [esi+148h]
+
+  .text:01DD2D70                 fnstsw  ax
+
+  .text:01DD2D72                 test    ah, 5
+
+  .text:01DD2D75                 jnp     loc_1DD2E1B
+
+  .text:01DD2D7B                 fcomp   dword ptr [esi+14Ch]
+
+  .text:01DD2D81                 fnstsw  ax
+
+  .text:01DD2D83                 test    ah, 5
+
+  .text:01DD2D86                 jnp     loc_1DD2E1D
+
+  .text:01DD2D8C                 mov     eax, [esi+190h]
+
+  .text:01DD2D92                 cmp     eax, 0FFFFFF9Ch
+
+  .text:01DD2D95                 jl      short loc_1DD2D9F
+
+  .text:01DD2D97                 cmp     eax, 64h ; ''d''
+
+  .text:01DD2D9A                 jle     short loc_1DD2DB9
+
+  .text:01DD2D9C                 lea     edi, [ebx+8]
+
+  .text:01DD2D9F                 mov     eax, [esi+80h]
+
+  .text:01DD2DA5                 add     eax, dword_90E6EDC
+
+  .text:01DD2DAB                 ; ArgList
+
+  .text:01DD2DAB                 push    eax; ArgList
+
+  .text:01DD2DAC                 push    offset aInvalidContent; "Invalid contents on trigger field: %s\n"
+
+  .text:01DD2DB1                 call    Con_DPrintf
+
+  .text:01DD2DB6                 add     esp, 8
+
+  .text:01DD2DB9                 push    0
+
+  .text:01DD2DBB                 lea     eax, [esp+30h+var_18]
+
+  .text:01DD2DBF                 push    eax
+
+  .text:01DD2DC0                 push    offset flt_8449204
+
+  .text:01DD2DC5                 push    offset flt_8449204
+
+  .text:01DD2DCA                 push    esi
+
+  .text:01DD2DCB                 call    sub_1DD1760
+
+  .text:01DD2DD0                 fld     dword ptr [ebx]
+
+  .text:01DD2DD2                 lea     ecx, [esp+40h+var_C]
+
+  .text:01DD2DD6                 fsub    [esp+40h+var_18]
+
+  .text:01DD2DDA                 push    ecx
+
+  .text:01DD2DDB                 push    dword ptr [eax+8]
+
+  .text:01DD2DDE                 fstp    [esp+48h+var_C]
+
+  .text:01DD2DE2                 fld     dword ptr [ebx+4]
+
+  .text:01DD2DE5                 fsub    [esp+48h+var_14]
+
+  .text:01DD2DE9                 push    eax
+
+  .text:01DD2DEA                 fstp    [esp+4Ch+var_8]
+
+  .text:01DD2DEE                 fld     dword ptr [edi]
+
+  .text:01DD2DF0                 fsub    [esp+4Ch+var_10]
+
+  .text:01DD2DF4                 fstp    [esp+4Ch+var_4]
+
+  .text:01DD2DF8                 call    sub_1DD20F0
+
+  .text:01DD2DFD                 add     esp, 20h
+
+  .text:01DD2E00                 cmp     eax, 0FFFFFFFFh
+
+  .text:01DD2E03                 jnz     short loc_1DD2E6A
+
+  .text:01DD2E05                 mov     ecx, g_groupop
+
+  .text:01DD2E0B                 mov     edx, g_groupmask
+
+  .text:01DD2E11                 jmp     short loc_1DD2E1D
+
+  .text:01DD2E13                 fstp    st(2)
+
+  .text:01DD2E15                 fstp    st
+
+  .text:01DD2E17                 jmp     short loc_1DD2E1B
+
+  .text:01DD2E19                 fstp    st(1)
+
+  .text:01DD2E1B                 fstp    st
+
+  .text:01DD2E1D                 mov     eax, [esp+2Ch+var_1C]
+
+  .text:01DD2E21                 mov     esi, ebp
+
+  .text:01DD2E23                 cmp     ebp, eax
+
+  .text:01DD2E25                 jnz     loc_1DD2CC0
+
+  .text:01DD2E2B                 mov     edi, [esp+2Ch+node]
+
+  .text:01DD2E2F                 mov     eax, [edi]
+
+  .text:01DD2E31                 cmp     eax, 0FFFFFFFFh
+
+  .text:01DD2E34                 jz      short loc_1DD2E78
+
+  .text:01DD2E36                 fld     dword ptr [ebx+eax*4]
+
+  .text:01DD2E39                 fld     dword ptr [edi+4]
+
+  .text:01DD2E3C                 fcom    st(1)
+
+  .text:01DD2E3E                 fnstsw  ax
+
+  .text:01DD2E40                 test    ah, 5
+
+  .text:01DD2E43                 jp      short loc_1DD2E55
+
+  .text:01DD2E45                 mov     edi, [edi+8]
+
+  .text:01DD2E48                 fstp    st(1)
+
+  .text:01DD2E4A                 fstp    st
+
+  .text:01DD2E4C                 mov     [esp+2Ch+node], edi
+
+  .text:01DD2E50                 jmp     loc_1DD2CA0
+
+  .text:01DD2E55                 fcompp
+
+  .text:01DD2E57                 fnstsw  ax
+
+  .text:01DD2E59                 test    ah, 41h
+
+  .text:01DD2E5C                 jnz     short loc_1DD2E78
+
+  .text:01DD2E5E                 mov     edi, [edi+0Ch]
+
+  .text:01DD2E61                 mov     [esp+2Ch+node], edi
+
+  .text:01DD2E65                 jmp     loc_1DD2CA0
+
+  .text:01DD2E6A                 mov     eax, [esi+190h]
+
+  .text:01DD2E70                 pop     edi
+
+  .text:01DD2E71                 pop     esi
+
+  .text:01DD2E72                 pop     ebp
+
+  .text:01DD2E73                 pop     ebx
+
+  .text:01DD2E74                 add     esp, 1Ch
+
+  .text:01DD2E77                 retn
+
+  .text:01DD2E78                 pop     edi
+
+  .text:01DD2E79                 pop     esi
+
+  .text:01DD2E7A                 pop     ebp
+
+  .text:01DD2E7B                 or      eax, 0FFFFFFFFh
+
+  .text:01DD2E7E                 pop     ebx
+
+  .text:01DD2E7F                 add     esp, 1Ch
+
+  .text:01DD2E82                 retn'
+procedure: "int __cdecl SV_LinkContents(area350_t *node, const float *pos)\n{\n  int v2; // ecx\n  int v3; // edx\n  area350_t\
+  \ *i; // edi\n  struct link350_s *next; // esi\n  link350_t *v6; // eax\n  struct link350_s *v7; // ebp\n  struct link350_s\
+  \ *v8; // esi\n  struct link350_s *prev; // eax\n  _DWORD *v10; // eax\n  double v11; // st7\n  double v12; // st6\n  double\
+  \ v13; // st5\n  float *v14; // edi\n  int v15; // eax\n  int v16; // eax\n  double v17; // st7\n  double dist; // st6\n\
+  \  int v20; // [esp-1Ch] [ebp-48h]\n  link350_t *p_solid_edicts; // [esp+10h] [ebp-1Ch]\n  float v22[3]; // [esp+14h] [ebp-18h]\
+  \ BYREF\n  float v23[3]; // [esp+20h] [ebp-Ch] BYREF\n\n  v2 = g_groupop;\n  v3 = g_groupmask;\n  for ( i = node; ; node\
+  \ = i )\n  {\n    while ( 1 )\n    {\n      next = i->solid_edicts.next;\n      p_solid_edicts = &i->solid_edicts;\n   \
+  \   if ( next != &i->solid_edicts )\n      {\n        v6 = &i->solid_edicts;\n        while ( 1 )\n        {\n         \
+  \ v7 = next->next;\n          v8 = next - 1;\n          if ( !v8[49].next )\n            break;\nLABEL_26:\n          next\
+  \ = v7;\n          if ( v7 == v6 )\n          {\n            i = node;\n            goto LABEL_28;\n          }\n      \
+  \  }\n        prev = v8[88].prev;\n        if ( prev )\n        {\n          if ( v2 )\n          {\n            if ( v2\
+  \ == 1 && ((unsigned int)prev & v3) != 0 )\n              goto LABEL_25;\n          }\n          else if ( ((unsigned int)prev\
+  \ & v3) == 0 )\n          {\n            goto LABEL_25;\n          }\n        }\n        v10 = sv_models[(int)v8[38].next];\n\
+  \        if ( v10 )\n        {\n          if ( !v10[17] )\n          {\n            v11 = *pos;\n            if ( v11 <=\
+  \ *(float *)&v8[42].prev )\n            {\n              v12 = pos[1];\n              if ( v12 <= *(float *)&v8[42].next\
+  \ )\n              {\n                v13 = pos[2];\n                v14 = (float *)(pos + 2);\n                if ( v13\
+  \ <= *(float *)&v8[43].prev\n                  && *(float *)&v8[40].next <= v11\n                  && v12 >= *(float *)&v8[41].prev\n\
+  \                  && v13 >= *(float *)&v8[41].next )\n                {\n                  v15 = (int)v8[50].prev;\n  \
+  \                if ( v15 >= -100 )\n                  {\n                    if ( v15 <= 100 )\n                    {\n\
+  LABEL_23:\n                      v16 = sub_1DD1760(v8, &flt_8449204, &flt_8449204, v22, 0);\n                      v20 =\
+  \ *(_DWORD *)(v16 + 8);\n                      v23[0] = *pos - v22[0];\n                      v23[1] = pos[1] - v22[1];\n\
+  \                      v23[2] = *v14 - v22[2];\n                      if ( sub_1DD20F0(v16, v20, v23) != -1 )\n        \
+  \                return (int)v8[50].prev;\n                      v2 = g_groupop;\n                      v3 = g_groupmask;\n\
+  \                      goto LABEL_25;\n                    }\n                    v14 = (float *)(pos + 2);\n          \
+  \        }\n                  Con_DPrintf(\"Invalid contents on trigger field: %s\\n\", (const char *)v8[16].prev + dword_90E6EDC);\n\
+  \                  goto LABEL_23;\n                }\n              }\n            }\n          }\n        }\nLABEL_25:\n\
+  \        v6 = p_solid_edicts;\n        goto LABEL_26;\n      }\nLABEL_28:\n      if ( i->axis == -1 )\n        return -1;\n\
+  \      v17 = pos[i->axis];\n      dist = i->dist;\n      if ( dist >= v17 )\n        break;\n      i = i->children[0];\n\
+  \      node = i;\n    }\n    if ( dist <= v17 )\n      break;\n    i = i->children[1];\n  }\n  return -1;\n}"

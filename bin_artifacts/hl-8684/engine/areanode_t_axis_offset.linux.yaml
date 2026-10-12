@@ -1,0 +1,4 @@
+struct_name: areanode_t
+member_name: axis
+offset: '0x0'
+size: 4

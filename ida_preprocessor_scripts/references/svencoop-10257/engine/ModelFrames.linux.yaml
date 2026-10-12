@@ -1,0 +1,51 @@
+func_name: ModelFrames
+func_va: '0x96d50'
+disasm_code: '.text:00096D50                 push    ebx
+
+  .text:00096D51                 sub     esp, 18h
+
+  .text:00096D54                 mov     eax, [esp+1Ch+modelIndex]
+
+  .text:00096D58                 call    sub_56390
+
+  .text:00096D5D                 add     ebx, (offset dbl_2EE000 - $)
+
+  .text:00096D63                 lea     edx, [eax-1]
+
+  .text:00096D66                 cmp     edx, 1FFEh
+
+  .text:00096D6C                 jbe     short loc_96D90
+
+  .text:00096D6E                 lea     eax, (aBadSpriteIndex - 2EE000h)[ebx]; "Bad sprite index!\n"
+
+  .text:00096D74                 ; char *
+
+  .text:00096D74                 mov     [esp+1Ch+var_1C], eax; char *
+
+  .text:00096D77                 call    Con_DPrintf
+
+  .text:00096D7C                 add     esp, 18h
+
+  .text:00096D7F                 mov     eax, 1
+
+  .text:00096D84                 pop     ebx
+
+  .text:00096D85                 retn
+
+  .text:00096D90                 lea     edx, (dword_F9FF80 - 2EE000h)[ebx]
+
+  .text:00096D96                 mov     eax, dword ptr ds:(aGlArbTextureSt+18h)[edx+eax*4]; "ultisample" ; sv_models = sv
+  + current models member offset; modelIndex * sizeof(model_t*)
+
+  .text:00096D9D                 mov     [esp+1Ch+var_1C], eax
+
+  .text:00096DA0                 call    Mod_FrameCount
+
+  .text:00096DA5                 add     esp, 18h
+
+  .text:00096DA8                 pop     ebx
+
+  .text:00096DA9                 retn'
+procedure: "int __cdecl ModelFrames(int modelIndex)\n{\n  if ( (unsigned int)(modelIndex - 1) <= 0x1FFE )\n    return Mod_FrameCount(*(void\
+  \ **)&aGlArbTextureSt[(_DWORD)&dword_F9FF80[modelIndex] + 24]); /* sv_models: server models[modelIndex], four-byte pointers\
+  \ */\n  Con_DPrintf(\"Bad sprite index!\\n\");\n  return 1;\n}"

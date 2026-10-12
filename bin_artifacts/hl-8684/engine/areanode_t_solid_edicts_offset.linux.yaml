@@ -1,0 +1,4 @@
+struct_name: areanode_t
+member_name: solid_edicts
+offset: '0x18'
+size: 8
