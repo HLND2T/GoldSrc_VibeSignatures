@@ -1,0 +1,4 @@
+struct_name: areanode_t
+member_name: dist
+offset: '0x4'
+size: 4

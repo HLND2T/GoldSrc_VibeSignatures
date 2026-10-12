@@ -1,0 +1,304 @@
+func_name: SV_LinkEdict
+func_va: '0x1dd1a90'
+disasm_code: '.text:01DD1A90                 push    esi
+
+  .text:01DD1A91                 mov     esi, [esp+4+ent]
+
+  .text:01DD1A95                 mov     ecx, [esi+8]
+
+  .text:01DD1A98                 push    edi
+
+  .text:01DD1A99                 lea     edi, [esi+8]
+
+  .text:01DD1A9C                 test    ecx, ecx
+
+  .text:01DD1A9E                 jz      short loc_1DD1ABA
+
+  .text:01DD1AA0                 mov     eax, [edi+4]
+
+  .text:01DD1AA3                 mov     [eax], ecx
+
+  .text:01DD1AA5                 mov     ecx, [edi]
+
+  .text:01DD1AA7                 mov     eax, [edi+4]
+
+  .text:01DD1AAA                 mov     [ecx+4], eax
+
+  .text:01DD1AAD                 mov     dword ptr [esi+0Ch], 0
+
+  .text:01DD1AB4                 mov     dword ptr [edi], 0
+
+  .text:01DD1ABA                 cmp     esi, dword_9588588
+
+  .text:01DD1AC0                 jz      loc_1DD1C69
+
+  .text:01DD1AC6                 cmp     dword ptr [esi], 0
+
+  .text:01DD1AC9                 jnz     loc_1DD1C69
+
+  .text:01DD1ACF                 push    ebx
+
+  .text:01DD1AD0                 push    esi
+
+  .text:01DD1AD1                 call    dword_95D2264
+
+  .text:01DD1AD7                 add     esp, 4
+
+  .text:01DD1ADA                 cmp     dword ptr [esi+188h], 0Ch
+
+  .text:01DD1AE1                 jnz     short loc_1DD1B10
+
+  .text:01DD1AE3                 mov     ecx, [esi+214h]
+
+  .text:01DD1AE9                 test    ecx, ecx
+
+  .text:01DD1AEB                 jz      short loc_1DD1B10
+
+  .text:01DD1AED                 mov     eax, [ecx+10h]
+
+  .text:01DD1AF0                 mov     [esi+10h], eax
+
+  .text:01DD1AF3                 mov     eax, [ecx+14h]
+
+  .text:01DD1AF6                 mov     [esi+14h], eax
+
+  .text:01DD1AF9                 lea     eax, [ecx+18h]
+
+  .text:01DD1AFC                 push    60h ; ''`''
+
+  .text:01DD1AFE                 push    eax
+
+  .text:01DD1AFF                 lea     eax, [esi+18h]
+
+  .text:01DD1B02                 push    eax
+
+  .text:01DD1B03                 call    sub_1D3D800
+
+  .text:01DD1B08                 lea     ebx, [esi+134h]
+
+  .text:01DD1B0E                 jmp     short loc_1DD1B71
+
+  .text:01DD1B10                 or      eax, 0FFFFFFFFh
+
+  .text:01DD1B13                 mov     dword ptr [esi+14h], 0
+
+  .text:01DD1B1A                 cmp     dword ptr [esi+134h], 0
+
+  .text:01DD1B21                 lea     ebx, [esi+134h]
+
+  .text:01DD1B27                 mov     dword ptr [esi+10h], 0FFFFFFFFh
+
+  .text:01DD1B2E                 mov     [esp+0Ch+ent], eax
+
+  .text:01DD1B32                 jz      short loc_1DD1B51
+
+  .text:01DD1B34                 lea     eax, [esp+0Ch+ent]
+
+  .text:01DD1B38                 push    eax
+
+  .text:01DD1B39                 mov     eax, dword_90E7158
+
+  .text:01DD1B3E                 push    dword ptr [eax+0A4h]
+
+  .text:01DD1B44                 push    esi
+
+  .text:01DD1B45                 call    sub_1DD2AF0
+
+  .text:01DD1B4A                 mov     eax, [esp+18h+ent]
+
+  .text:01DD1B4E                 add     esp, 0Ch
+
+  .text:01DD1B51                 cmp     dword ptr [esi+14h], 30h ; ''0''
+
+  .text:01DD1B55                 jle     short loc_1DD1B74
+
+  .text:01DD1B57                 ; Size
+
+  .text:01DD1B57                 push    60h ; ''`''; Size
+
+  .text:01DD1B59                 mov     [esi+10h], eax
+
+  .text:01DD1B5C                 lea     eax, [esi+18h]
+
+  .text:01DD1B5F                 ; Val
+
+  .text:01DD1B5F                 push    0FFh; Val
+
+  .text:01DD1B64                 ; void *
+
+  .text:01DD1B64                 push    eax; void *
+
+  .text:01DD1B65                 mov     dword ptr [esi+14h], 0
+
+  .text:01DD1B6C                 call    sub_1D3D7B0
+
+  .text:01DD1B71                 add     esp, 0Ch
+
+  .text:01DD1B74                 mov     eax, [esi+18Ch]
+
+  .text:01DD1B7A                 test    eax, eax
+
+  .text:01DD1B7C                 jnz     short loc_1DD1BB8
+
+  .text:01DD1B7E                 cmp     dword ptr [esi+190h], 0FFFFFFFFh
+
+  .text:01DD1B85                 jge     loc_1DD1C68
+
+  .text:01DD1B8B                 mov     edx, sv_areanodes
+
+  .text:01DD1B91                 mov     ecx, offset sv_areanodes
+
+  .text:01DD1B96                 cmp     edx, 0FFFFFFFFh
+
+  .text:01DD1B99                 jz      short loc_1DD1C18
+
+  .text:01DD1B9B                 jmp     short loc_1DD1BA0
+
+  .text:01DD1BA0                 fld     dword ptr [ecx+4]
+
+  .text:01DD1BA3                 fcom    dword ptr [esi+edx*4+144h]
+
+  .text:01DD1BAA                 fnstsw  ax
+
+  .text:01DD1BAC                 test    ah, 5
+
+  .text:01DD1BAF                 jp      short loc_1DD1C00
+
+  .text:01DD1BB1                 mov     ecx, [ecx+8]
+
+  .text:01DD1BB4                 fstp    st
+
+  .text:01DD1BB6                 jmp     short loc_1DD1C11
+
+  .text:01DD1BB8                 cmp     eax, 4
+
+  .text:01DD1BBB                 jnz     short loc_1DD1B8B
+
+  .text:01DD1BBD                 mov     eax, [ebx]
+
+  .text:01DD1BBF                 cmp     sv_models[eax*4], 0
+
+  .text:01DD1BC7                 jnz     short loc_1DD1B8B
+
+  .text:01DD1BC9                 mov     eax, [esi+138h]
+
+  .text:01DD1BCF                 add     eax, dword_90E6EDC
+
+  .text:01DD1BD5                 push    eax
+
+  .text:01DD1BD6                 call    sub_1D3D950
+
+  .text:01DD1BDB                 add     esp, 4
+
+  .text:01DD1BDE                 test    eax, eax
+
+  .text:01DD1BE0                 jnz     short loc_1DD1B8B
+
+  .text:01DD1BE2                 mov     eax, [esi+80h]
+
+  .text:01DD1BE8                 add     eax, dword_90E6EDC
+
+  .text:01DD1BEE                 ; ArgList
+
+  .text:01DD1BEE                 push    eax; ArgList
+
+  .text:01DD1BEF                 push    offset aInsertedSWithN; "Inserted %s with no model\n"
+
+  .text:01DD1BF4                 call    Con_DPrintf
+
+  .text:01DD1BF9                 add     esp, 8
+
+  .text:01DD1BFC                 pop     ebx
+
+  .text:01DD1BFD                 pop     edi
+
+  .text:01DD1BFE                 pop     esi
+
+  .text:01DD1BFF                 retn
+
+  .text:01DD1C00                 fcomp   dword ptr [esi+edx*4+150h]
+
+  .text:01DD1C07                 fnstsw  ax
+
+  .text:01DD1C09                 test    ah, 41h
+
+  .text:01DD1C0C                 jnz     short loc_1DD1C18
+
+  .text:01DD1C0E                 mov     ecx, [ecx+0Ch]
+
+  .text:01DD1C11                 mov     edx, [ecx]
+
+  .text:01DD1C13                 cmp     edx, 0FFFFFFFFh
+
+  .text:01DD1C16                 jnz     short loc_1DD1BA0
+
+  .text:01DD1C18                 cmp     dword ptr [esi+18Ch], 1
+
+  .text:01DD1C1F                 lea     eax, [ecx+10h]
+
+  .text:01DD1C22                 jz      short loc_1DD1C27
+
+  .text:01DD1C24                 lea     eax, [ecx+18h]
+
+  .text:01DD1C27                 cmp     [esp+0Ch+touch_triggers], 0
+
+  .text:01DD1C2C                 mov     [edi+4], eax
+
+  .text:01DD1C2F                 mov     eax, [eax]
+
+  .text:01DD1C31                 mov     [edi], eax
+
+  .text:01DD1C33                 mov     [eax+4], edi
+
+  .text:01DD1C36                 mov     eax, [edi+4]
+
+  .text:01DD1C39                 mov     [eax], edi
+
+  .text:01DD1C3B                 jz      short loc_1DD1C68
+
+  .text:01DD1C3D                 cmp     dword_9714090, 0
+
+  .text:01DD1C44                 jnz     short loc_1DD1C68
+
+  .text:01DD1C46                 push    offset sv_areanodes
+
+  .text:01DD1C4B                 push    esi
+
+  .text:01DD1C4C                 mov     dword_9714090, 1
+
+  .text:01DD1C56                 call    sub_1DD28E0
+
+  .text:01DD1C5B                 mov     dword_9714090, 0
+
+  .text:01DD1C65                 add     esp, 8
+
+  .text:01DD1C68                 pop     ebx
+
+  .text:01DD1C69                 pop     edi
+
+  .text:01DD1C6A                 pop     esi
+
+  .text:01DD1C6B                 retn'
+procedure: "void __cdecl SV_LinkEdict(struct edict_s *ent, int touch_triggers)\n{\n  struct edict_s *v2; // esi\n  int v3;\
+  \ // ecx\n  struct link350_s *v4; // edi\n  int v5; // ecx\n  _DWORD *v6; // ebx\n  int v7; // eax\n  bool v8; // zf\n \
+  \ int v9; // eax\n  int axis; // edx\n  area350_t *i; // ecx\n  double dist; // st7\n  link350_t *p_trigger_edicts; // eax\n\
+  \  struct link350_s *prev; // eax\n\n  v2 = ent;\n  v3 = *((_DWORD *)ent + 2);\n  v4 = (struct link350_s *)((char *)ent\
+  \ + 8);\n  if ( v3 )\n  {\n    **((_DWORD **)ent + 3) = v3;\n    v4->prev->next = v4->next;\n    *((_DWORD *)v2 + 3) = 0;\n\
+  \    v4->prev = nullptr;\n  }\n  if ( v2 != (struct edict_s *)dword_9588588 && !*(_DWORD *)v2 )\n  {\n    dword_95D2264(v2);\n\
+  \    if ( *((_DWORD *)v2 + 98) == 12 && (v5 = *((_DWORD *)v2 + 133)) != 0 )\n    {\n      *((_DWORD *)v2 + 4) = *(_DWORD\
+  \ *)(v5 + 16);\n      *((_DWORD *)v2 + 5) = *(_DWORD *)(v5 + 20);\n      sub_1D3D800((char *)v2 + 24, v5 + 24, 96);\n  \
+  \    v6 = (_DWORD *)((char *)v2 + 308);\n    }\n    else\n    {\n      v7 = -1;\n      *((_DWORD *)v2 + 5) = 0;\n      v8\
+  \ = *((_DWORD *)v2 + 77) == 0;\n      v6 = (_DWORD *)((char *)v2 + 308);\n      *((_DWORD *)v2 + 4) = -1;\n      ent = (struct\
+  \ edict_s *)-1;\n      if ( !v8 )\n      {\n        sub_1DD2AF0(v2, *(_DWORD *)(dword_90E7158 + 164), &ent);\n        v7\
+  \ = (int)ent;\n      }\n      if ( *((int *)v2 + 5) > 48 )\n      {\n        *((_DWORD *)v2 + 4) = v7;\n        *((_DWORD\
+  \ *)v2 + 5) = 0;\n        sub_1D3D7B0((char *)v2 + 24, 255, 0x60u);\n      }\n    }\n    v9 = *((_DWORD *)v2 + 99);\n  \
+  \  if ( v9 )\n    {\n      if ( v9 == 4 && !sv_models[*v6] && !sub_1D3D950(dword_90E6EDC + *((_DWORD *)v2 + 78)) )\n   \
+  \   {\n        Con_DPrintf(\"Inserted %s with no model\\n\", (const char *)(dword_90E6EDC + *((_DWORD *)v2 + 32)));\n  \
+  \      return;\n      }\n    }\n    else if ( *((int *)v2 + 100) >= -1 )\n    {\n      return;\n    }\n    axis = sv_areanodes[0].axis;\n\
+  \    for ( i = sv_areanodes; i->axis != -1; axis = i->axis )\n    {\n      dist = i->dist;\n      if ( dist >= *((float\
+  \ *)v2 + axis + 81) )\n      {\n        if ( dist <= *((float *)v2 + axis + 84) )\n          break;\n        i = i->children[1];\n\
+  \      }\n      else\n      {\n        i = i->children[0];\n      }\n    }\n    p_trigger_edicts = &i->trigger_edicts;\n\
+  \    if ( *((_DWORD *)v2 + 99) != 1 )\n      p_trigger_edicts = &i->solid_edicts;\n    v8 = touch_triggers == 0;\n    v4->next\
+  \ = p_trigger_edicts;\n    prev = p_trigger_edicts->prev;\n    v4->prev = prev;\n    prev->next = v4;\n    v4->next->prev\
+  \ = v4;\n    if ( !v8 && !dword_9714090 )\n    {\n      dword_9714090 = 1;\n      sub_1DD28E0(v2, sv_areanodes);\n     \
+  \ dword_9714090 = 0;\n    }\n  }\n}"

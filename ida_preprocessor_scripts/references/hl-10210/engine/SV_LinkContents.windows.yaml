@@ -1,0 +1,248 @@
+func_name: "SV_LinkContents"
+func_va: "0x10236bb0"
+disasm_code: |-
+  .text:10236BB0                 push    ebp
+  .text:10236BB1                 mov     ebp, esp
+  .text:10236BB3                 sub     esp, 24h
+  .text:10236BB6                 mov     eax, ___security_cookie
+  .text:10236BBB                 xor     eax, ebp
+  .text:10236BBD                 mov     [ebp+var_4], eax
+  .text:10236BC0                 mov     ecx, g_groupop
+  .text:10236BC6                 mov     edx, g_groupmask
+  .text:10236BCC                 push    ebx
+  .text:10236BCD                 mov     ebx, [ebp+node]
+  .text:10236BD0                 push    esi
+  .text:10236BD1                 push    edi
+  .text:10236BD2                 mov     edi, [ebp+pos]
+  .text:10236BD5                 mov     esi, [ebx+1Ch]
+  .text:10236BD8                 lea     eax, [ebx+18h]
+  .text:10236BDB                 mov     [ebp+var_18], ebx
+  .text:10236BDE                 mov     [ebp+var_14], eax
+  .text:10236BE1                 cmp     esi, eax
+  .text:10236BE3                 jz      loc_10236D4A
+  .text:10236BE9                 nop     dword ptr [eax+00000000h]
+  .text:10236BF0                 mov     ebx, [esi+4]
+  .text:10236BF3                 add     esi, 0FFFFFFF8h
+  .text:10236BF6                 cmp     dword ptr [esi+18Ch], 0
+  .text:10236BFD                 jnz     loc_10236D3D
+  .text:10236C03                 mov     eax, [esi+2C0h]
+  .text:10236C09                 test    eax, eax
+  .text:10236C0B                 jz      short loc_10236C28
+  .text:10236C0D                 test    ecx, ecx
+  .text:10236C0F                 jnz     short loc_10236C1B
+  .text:10236C11                 test    edx, eax
+  .text:10236C13                 jz      loc_10236D3A
+  .text:10236C19                 jmp     short loc_10236C28
+  .text:10236C1B                 cmp     ecx, 1
+  .text:10236C1E                 jnz     short loc_10236C28
+  .text:10236C20                 test    edx, eax
+  .text:10236C22                 jnz     loc_10236D3A
+  .text:10236C28                 mov     eax, [esi+134h]
+  .text:10236C2E                 mov     eax, sv_models[eax*4]
+  .text:10236C35                 test    eax, eax
+  .text:10236C37                 jz      loc_10236D3A
+  .text:10236C3D                 cmp     dword ptr [eax+44h], 0
+  .text:10236C41                 jnz     loc_10236D3A
+  .text:10236C47                 movss   xmm1, dword ptr [edi]
+  .text:10236C4B                 comiss  xmm1, dword ptr [esi+150h]
+  .text:10236C52                 ja      loc_10236D3A
+  .text:10236C58                 movss   xmm2, dword ptr [edi+4]
+  .text:10236C5D                 comiss  xmm2, dword ptr [esi+154h]
+  .text:10236C64                 ja      loc_10236D3A
+  .text:10236C6A                 movss   xmm3, dword ptr [edi+8]
+  .text:10236C6F                 comiss  xmm3, dword ptr [esi+158h]
+  .text:10236C76                 ja      loc_10236D3A
+  .text:10236C7C                 movss   xmm0, dword ptr [esi+144h]
+  .text:10236C84                 comiss  xmm0, xmm1
+  .text:10236C87                 ja      loc_10236D3A
+  .text:10236C8D                 movss   xmm0, dword ptr [esi+148h]
+  .text:10236C95                 comiss  xmm0, xmm2
+  .text:10236C98                 ja      loc_10236D3A
+  .text:10236C9E                 movss   xmm0, dword ptr [esi+14Ch]
+  .text:10236CA6                 comiss  xmm0, xmm3
+  .text:10236CA9                 ja      loc_10236D3A
+  .text:10236CAF                 mov     eax, [esi+190h]
+  .text:10236CB5                 cmp     eax, 0FFFFFF9Ch
+  .text:10236CB8                 jl      short loc_10236CBF
+  .text:10236CBA                 cmp     eax, 64h ; 'd'
+  .text:10236CBD                 jle     short loc_10236CD9
+  .text:10236CBF                 mov     eax, [esi+80h]
+  .text:10236CC5                 add     eax, dword_11198F4C
+  .text:10236CCB                 ; ArgList
+  .text:10236CCB                 push    eax; ArgList
+  .text:10236CCC                 push    102CB70Ch; "Invalid contents on trigger field: %s\n"
+  .text:10236CD1                 call    Con_DPrintf
+  .text:10236CD6                 add     esp, 8
+  .text:10236CD9                 lea     eax, [ebp+var_24]
+  .text:10236CDC                 push    eax
+  .text:10236CDD                 push    offset dword_104B9808
+  .text:10236CE2                 push    offset dword_104B9808
+  .text:10236CE7                 push    esi
+  .text:10236CE8                 call    sub_102368C0
+  .text:10236CED                 movss   xmm0, dword ptr [edi]
+  .text:10236CF1                 lea     ecx, [ebp+var_10]
+  .text:10236CF4                 subss   xmm0, [ebp+var_24]
+  .text:10236CF9                 push    ecx
+  .text:10236CFA                 push    dword ptr [eax+8]
+  .text:10236CFD                 push    eax
+  .text:10236CFE                 movss   [ebp+var_10], xmm0
+  .text:10236D03                 movss   xmm0, dword ptr [edi+4]
+  .text:10236D08                 subss   xmm0, [ebp+var_20]
+  .text:10236D0D                 movss   [ebp+var_C], xmm0
+  .text:10236D12                 movss   xmm0, dword ptr [edi+8]
+  .text:10236D17                 subss   xmm0, [ebp+var_1C]
+  .text:10236D1C                 movss   [ebp+var_8], xmm0
+  .text:10236D21                 call    sub_10236B00
+  .text:10236D26                 add     esp, 1Ch
+  .text:10236D29                 cmp     eax, 0FFFFFFFFh
+  .text:10236D2C                 jnz     short loc_10236D75
+  .text:10236D2E                 mov     ecx, g_groupop
+  .text:10236D34                 mov     edx, g_groupmask
+  .text:10236D3A                 mov     eax, [ebp+var_14]
+  .text:10236D3D                 mov     esi, ebx
+  .text:10236D3F                 cmp     ebx, eax
+  .text:10236D41                 jnz     loc_10236BF0
+  .text:10236D47                 mov     ebx, [ebp+var_18]
+  .text:10236D4A                 mov     eax, [ebx]
+  .text:10236D4C                 cmp     eax, 0FFFFFFFFh
+  .text:10236D4F                 jz      short loc_10236D8C
+  .text:10236D51                 movss   xmm0, dword ptr [edi+eax*4]
+  .text:10236D56                 movss   xmm1, dword ptr [ebx+4]
+  .text:10236D5B                 comiss  xmm0, xmm1
+  .text:10236D5E                 jbe     short loc_10236D68
+  .text:10236D60                 mov     ebx, [ebx+8]
+  .text:10236D63                 jmp     loc_10236BD5
+  .text:10236D68                 comiss  xmm1, xmm0
+  .text:10236D6B                 jbe     short loc_10236D8C
+  .text:10236D6D                 mov     ebx, [ebx+0Ch]
+  .text:10236D70                 jmp     loc_10236BD5
+  .text:10236D75                 mov     eax, [esi+190h]
+  .text:10236D7B                 pop     edi
+  .text:10236D7C                 pop     esi
+  .text:10236D7D                 pop     ebx
+  .text:10236D7E                 mov     ecx, [ebp+var_4]
+  .text:10236D81                 xor     ecx, ebp
+  .text:10236D83                 call    102AB707h
+  .text:10236D88                 mov     esp, ebp
+  .text:10236D8A                 pop     ebp
+  .text:10236D8B                 retn
+  .text:10236D8C                 mov     ecx, [ebp+var_4]
+  .text:10236D8F                 or      eax, 0FFFFFFFFh
+  .text:10236D92                 pop     edi
+  .text:10236D93                 pop     esi
+  .text:10236D94                 xor     ecx, ebp
+  .text:10236D96                 pop     ebx
+  .text:10236D97                 call    102AB707h
+  .text:10236D9C                 mov     esp, ebp
+  .text:10236D9E                 pop     ebp
+  .text:10236D9F                 retn
+procedure: |-
+  int __cdecl SV_LinkContents(area350_t *node, const float *pos)
+  {
+    int v2; // ecx
+    int v3; // edx
+    struct link350_s *next; // esi
+    link350_t *p_solid_edicts; // eax
+    struct link350_s *v7; // ebx
+    struct link350_s *v8; // esi
+    struct link350_s *prev; // eax
+    _DWORD *v10; // eax
+    float v11; // xmm2_4
+    float v12; // xmm3_4
+    int v13; // eax
+    int v14; // eax
+    float v15; // xmm0_4
+    float dist; // xmm1_4
+    int v18; // [esp-18h] [ebp-48h]
+    float v19[3]; // [esp+Ch] [ebp-24h] BYREF
+    area350_t *v20; // [esp+18h] [ebp-18h]
+    link350_t *v21; // [esp+1Ch] [ebp-14h]
+    float v22[3]; // [esp+20h] [ebp-10h] BYREF
+
+    v2 = g_groupop;
+    v3 = g_groupmask;
+    while ( 1 )
+    {
+      while ( 1 )
+      {
+        next = node->solid_edicts.next;
+        p_solid_edicts = &node->solid_edicts;
+        v20 = node;
+        v21 = &node->solid_edicts;
+        if ( next != &node->solid_edicts )
+        {
+          while ( 1 )
+          {
+            v7 = next->next;
+            v8 = next - 1;
+            if ( !v8[49].next )
+              break;
+  LABEL_24:
+            next = v7;
+            if ( v7 == p_solid_edicts )
+            {
+              node = v20;
+              goto LABEL_26;
+            }
+          }
+          prev = v8[88].prev;
+          if ( !prev )
+            goto LABEL_10;
+          if ( v2 )
+          {
+            if ( v2 != 1 || ((unsigned int)prev & v3) == 0 )
+            {
+  LABEL_10:
+              v10 = sv_models[(int)v8[38].next];
+              if ( v10 )
+              {
+                if ( !v10[17] && *pos <= *(float *)&v8[42].prev )
+                {
+                  v11 = pos[1];
+                  if ( v11 <= *(float *)&v8[42].next )
+                  {
+                    v12 = pos[2];
+                    if ( v12 <= *(float *)&v8[43].prev
+                      && *(float *)&v8[40].next <= *pos
+                      && *(float *)&v8[41].prev <= v11
+                      && *(float *)&v8[41].next <= v12 )
+                    {
+                      v13 = (int)v8[50].prev;
+                      if ( v13 < -100 || v13 > 100 )
+                        Con_DPrintf("Invalid contents on trigger field: %s\n", (const char *)v8[16].prev + dword_11198F4C);
+                      v14 = sub_102368C0(v8, &dword_104B9808, &dword_104B9808, v19);
+                      v18 = *(_DWORD *)(v14 + 8);
+                      v22[0] = *pos - v19[0];
+                      v22[1] = pos[1] - v19[1];
+                      v22[2] = pos[2] - v19[2];
+                      if ( sub_10236B00(v14, v18, v22) != -1 )
+                        return (int)v8[50].prev;
+                      v2 = g_groupop;
+                      v3 = g_groupmask;
+                    }
+                  }
+                }
+              }
+            }
+          }
+          else if ( ((unsigned int)prev & v3) != 0 )
+          {
+            goto LABEL_10;
+          }
+          p_solid_edicts = v21;
+          goto LABEL_24;
+        }
+  LABEL_26:
+        if ( node->axis == -1 )
+          return -1;
+        v15 = pos[node->axis];
+        dist = node->dist;
+        if ( v15 <= dist )
+          break;
+        node = node->children[0];
+      }
+      if ( dist <= v15 )
+        return -1;
+      node = node->children[1];
+    }
+  }

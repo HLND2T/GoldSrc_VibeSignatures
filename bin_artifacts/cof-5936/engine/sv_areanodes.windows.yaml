@@ -1,0 +1,9 @@
+gv_name: sv_areanodes
+gv_va: '0x2501480'
+gv_rva: '0x801480'
+gv_sig: C7 45 ?? ?? ?? ?? ?? B9 01 00 00 00 85 C9 74 ?? 8B 55 ?? 83 3A FF 75 ?? EB ?? 8B 45 ?? 8B 08 8B 55 ?? 8B 45 ??
+gv_sig_va: '0x1e10244'
+gv_inst_offset: '0x0'
+gv_inst_length: '0x7'
+gv_inst_disp: '0x2'
+gv_address_offset: '0xb23b9384'

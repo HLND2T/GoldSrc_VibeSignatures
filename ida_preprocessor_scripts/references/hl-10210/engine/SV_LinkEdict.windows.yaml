@@ -1,0 +1,232 @@
+func_name: "SV_LinkEdict"
+func_va: "0x10236da0"
+disasm_code: |-
+  .text:10236DA0                 push    ebp
+  .text:10236DA1                 mov     ebp, esp
+  .text:10236DA3                 push    esi
+  .text:10236DA4                 mov     esi, [ebp+8]
+  .text:10236DA7                 mov     ecx, [esi+8]
+  .text:10236DAA                 push    edi
+  .text:10236DAB                 lea     edi, [esi+8]
+  .text:10236DAE                 test    ecx, ecx
+  .text:10236DB0                 jz      short loc_10236DCC
+  .text:10236DB2                 mov     eax, [edi+4]
+  .text:10236DB5                 mov     [eax], ecx
+  .text:10236DB7                 mov     ecx, [edi]
+  .text:10236DB9                 mov     eax, [edi+4]
+  .text:10236DBC                 mov     [ecx+4], eax
+  .text:10236DBF                 mov     dword ptr [esi+0Ch], 0
+  .text:10236DC6                 mov     dword ptr [edi], 0
+  .text:10236DCC                 cmp     esi, dword_1100CC60
+  .text:10236DD2                 jz      loc_10236F69
+  .text:10236DD8                 cmp     dword ptr [esi], 0
+  .text:10236DDB                 jnz     loc_10236F69
+  .text:10236DE1                 push    esi
+  .text:10236DE2                 call    dword_10F773A4
+  .text:10236DE8                 add     esp, 4
+  .text:10236DEB                 cmp     dword ptr [esi+188h], 0Ch
+  .text:10236DF2                 jnz     short loc_10236E1B
+  .text:10236DF4                 mov     ecx, [esi+214h]
+  .text:10236DFA                 test    ecx, ecx
+  .text:10236DFC                 jz      short loc_10236E1B
+  .text:10236DFE                 mov     eax, [ecx+10h]
+  .text:10236E01                 mov     [esi+10h], eax
+  .text:10236E04                 mov     eax, [ecx+14h]
+  .text:10236E07                 mov     [esi+14h], eax
+  .text:10236E0A                 lea     eax, [ecx+18h]
+  .text:10236E0D                 push    60h ; '`'
+  .text:10236E0F                 push    eax
+  .text:10236E10                 lea     eax, [esi+18h]
+  .text:10236E13                 push    eax
+  .text:10236E14                 call    sub_101BAFC0
+  .text:10236E19                 jmp     short loc_10236E74
+  .text:10236E1B                 cmp     dword ptr [esi+134h], 0
+  .text:10236E22                 mov     dword ptr [esi+14h], 0
+  .text:10236E29                 mov     dword ptr [esi+10h], 0FFFFFFFFh
+  .text:10236E30                 mov     dword ptr [ebp+8], 0FFFFFFFFh
+  .text:10236E37                 jz      short loc_10236E77
+  .text:10236E39                 lea     eax, [ebp+8]
+  .text:10236E3C                 push    eax
+  .text:10236E3D                 mov     eax, dword_10FD1130
+  .text:10236E42                 push    dword ptr [eax+0A4h]
+  .text:10236E48                 push    esi
+  .text:10236E49                 call    sub_102367B0
+  .text:10236E4E                 add     esp, 0Ch
+  .text:10236E51                 cmp     dword ptr [esi+14h], 30h ; '0'
+  .text:10236E55                 jle     short loc_10236E77
+  .text:10236E57                 mov     eax, [ebp+8]
+  .text:10236E5A                 push    60h ; '`'
+  .text:10236E5C                 mov     [esi+10h], eax
+  .text:10236E5F                 lea     eax, [esi+18h]
+  .text:10236E62                 push    0FFh
+  .text:10236E67                 push    eax
+  .text:10236E68                 mov     dword ptr [esi+14h], 0
+  .text:10236E6F                 call    sub_101BB020
+  .text:10236E74                 add     esp, 0Ch
+  .text:10236E77                 mov     eax, [esi+18Ch]
+  .text:10236E7D                 test    eax, eax
+  .text:10236E7F                 jnz     short loc_10236EB8
+  .text:10236E81                 cmp     dword ptr [esi+190h], 0FFFFFFFFh
+  .text:10236E88                 jge     loc_10236F69
+  .text:10236E8E                 mov     ecx, sv_areanodes
+  .text:10236E94                 mov     eax, offset sv_areanodes
+  .text:10236E99                 cmp     ecx, 0FFFFFFFFh
+  .text:10236E9C                 jz      short loc_10236F18
+  .text:10236E9E                 xchg    ax, ax
+  .text:10236EA0                 movss   xmm1, dword ptr [eax+4]
+  .text:10236EA5                 movss   xmm0, dword ptr [esi+ecx*4+144h]
+  .text:10236EAE                 comiss  xmm0, xmm1
+  .text:10236EB1                 jbe     short loc_10236F04
+  .text:10236EB3                 mov     eax, [eax+8]
+  .text:10236EB6                 jmp     short loc_10236F11
+  .text:10236EB8                 cmp     eax, 4
+  .text:10236EBB                 jnz     short loc_10236E8E
+  .text:10236EBD                 mov     eax, [esi+134h]
+  .text:10236EC3                 cmp     sv_models[eax*4], 0
+  .text:10236ECB                 jnz     short loc_10236E8E
+  .text:10236ECD                 mov     eax, [esi+138h]
+  .text:10236ED3                 add     eax, dword_11198F4C
+  .text:10236ED9                 push    eax
+  .text:10236EDA                 call    sub_101BB200
+  .text:10236EDF                 add     esp, 4
+  .text:10236EE2                 test    eax, eax
+  .text:10236EE4                 jnz     short loc_10236E8E
+  .text:10236EE6                 mov     eax, [esi+80h]
+  .text:10236EEC                 add     eax, dword_11198F4C
+  .text:10236EF2                 ; ArgList
+  .text:10236EF2                 push    eax; ArgList
+  .text:10236EF3                 push    102CB6C8h; "Inserted %s with no model\n"
+  .text:10236EF8                 call    Con_DPrintf
+  .text:10236EFD                 add     esp, 8
+  .text:10236F00                 pop     edi
+  .text:10236F01                 pop     esi
+  .text:10236F02                 pop     ebp
+  .text:10236F03                 retn
+  .text:10236F04                 comiss  xmm1, dword ptr [esi+ecx*4+150h]
+  .text:10236F0C                 jbe     short loc_10236F18
+  .text:10236F0E                 mov     eax, [eax+0Ch]
+  .text:10236F11                 mov     ecx, [eax]
+  .text:10236F13                 cmp     ecx, 0FFFFFFFFh
+  .text:10236F16                 jnz     short loc_10236EA0
+  .text:10236F18                 cmp     dword ptr [esi+18Ch], 1
+  .text:10236F1F                 jnz     short loc_10236F26
+  .text:10236F21                 add     eax, 10h
+  .text:10236F24                 jmp     short loc_10236F29
+  .text:10236F26                 add     eax, 18h
+  .text:10236F29                 cmp     dword ptr [ebp+0Ch], 0
+  .text:10236F2D                 mov     [edi+4], eax
+  .text:10236F30                 mov     eax, [eax]
+  .text:10236F32                 mov     [edi], eax
+  .text:10236F34                 mov     [eax+4], edi
+  .text:10236F37                 mov     eax, [edi+4]
+  .text:10236F3A                 mov     [eax], edi
+  .text:10236F3C                 jz      short loc_10236F69
+  .text:10236F3E                 cmp     dword_1065A0B8, 0
+  .text:10236F45                 jnz     short loc_10236F69
+  .text:10236F47                 push    offset sv_areanodes
+  .text:10236F4C                 push    esi
+  .text:10236F4D                 mov     dword_1065A0B8, 1
+  .text:10236F57                 call    sub_10237B20
+  .text:10236F5C                 mov     dword_1065A0B8, 0
+  .text:10236F66                 add     esp, 8
+  .text:10236F69                 pop     edi
+  .text:10236F6A                 pop     esi
+  .text:10236F6B                 pop     ebp
+  .text:10236F6C                 retn
+procedure: |-
+  void __cdecl SV_LinkEdict(struct edict_s *ent, int touch_triggers)
+  {
+    struct edict_s *v2; // esi
+    int v3; // ecx
+    struct link350_s *v4; // edi
+    int v5; // ecx
+    bool v6; // zf
+    int v7; // eax
+    int axis; // ecx
+    area350_t *i; // eax
+    float dist; // xmm1_4
+    link350_t *p_trigger_edicts; // eax
+    struct link350_s *prev; // eax
+
+    v2 = ent;
+    v3 = *((_DWORD *)ent + 2);
+    v4 = (struct link350_s *)((char *)ent + 8);
+    if ( v3 )
+    {
+      **((_DWORD **)ent + 3) = v3;
+      v4->prev->next = v4->next;
+      *((_DWORD *)v2 + 3) = 0;
+      v4->prev = nullptr;
+    }
+    if ( v2 != (struct edict_s *)dword_1100CC60 && !*(_DWORD *)v2 )
+    {
+      dword_10F773A4(v2);
+      if ( *((_DWORD *)v2 + 98) == 12 && (v5 = *((_DWORD *)v2 + 133)) != 0 )
+      {
+        *((_DWORD *)v2 + 4) = *(_DWORD *)(v5 + 16);
+        *((_DWORD *)v2 + 5) = *(_DWORD *)(v5 + 20);
+        sub_101BAFC0((char *)v2 + 24, v5 + 24, 96);
+      }
+      else
+      {
+        v6 = *((_DWORD *)v2 + 77) == 0;
+        *((_DWORD *)v2 + 5) = 0;
+        *((_DWORD *)v2 + 4) = -1;
+        ent = (struct edict_s *)-1;
+        if ( !v6 )
+        {
+          sub_102367B0(v2, *(_DWORD *)(dword_10FD1130 + 164), &ent);
+          if ( *((int *)v2 + 5) > 48 )
+          {
+            *((_DWORD *)v2 + 4) = ent;
+            *((_DWORD *)v2 + 5) = 0;
+            sub_101BB020((char *)v2 + 24, 255, 96);
+          }
+        }
+      }
+      v7 = *((_DWORD *)v2 + 99);
+      if ( v7 )
+      {
+        if ( v7 == 4 && !sv_models[*((_DWORD *)v2 + 77)] && !sub_101BB200(dword_11198F4C + *((_DWORD *)v2 + 78)) )
+        {
+          Con_DPrintf("Inserted %s with no model\n", (const char *)(dword_11198F4C + *((_DWORD *)v2 + 32)));
+          return;
+        }
+      }
+      else if ( *((int *)v2 + 100) >= -1 )
+      {
+        return;
+      }
+      axis = sv_areanodes[0].axis;
+      for ( i = sv_areanodes; i->axis != -1; axis = i->axis )
+      {
+        dist = i->dist;
+        if ( *((float *)v2 + axis + 81) <= dist )
+        {
+          if ( dist <= *((float *)v2 + axis + 84) )
+            break;
+          i = i->children[1];
+        }
+        else
+        {
+          i = i->children[0];
+        }
+      }
+      if ( *((_DWORD *)v2 + 99) == 1 )
+        p_trigger_edicts = &i->trigger_edicts;
+      else
+        p_trigger_edicts = &i->solid_edicts;
+      v6 = touch_triggers == 0;
+      v4->next = p_trigger_edicts;
+      prev = p_trigger_edicts->prev;
+      v4->prev = prev;
+      prev->next = v4;
+      v4->next->prev = v4;
+      if ( !v6 && !dword_1065A0B8 )
+      {
+        dword_1065A0B8 = 1;
+        sub_10237B20(v2, sv_areanodes);
+        dword_1065A0B8 = 0;
+      }
+    }
+  }

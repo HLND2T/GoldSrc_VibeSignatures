@@ -1,0 +1,4 @@
+struct_name: areanode_t
+member_name: trigger_edicts
+offset: '0x10'
+size: 8
