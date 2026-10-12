@@ -1,0 +1,1505 @@
+func_name: "CPlayerMove_PlayStepSound"
+func_va: "0x23cf78"
+disasm_code: |-
+  .text:0023CF78                 ; Reference reconstruction: private Sven server source unavailable; source names are verified 5.15 ELF symbols, ABI/layout and calls come from current ELF32 instructions. The movement partial type contains only observed fields. This version calls the real CPlayerMove_PlaySoundFX wrapper with raw playerindex; that wrapper increments playerindex before calling the PM callback.
+  .text:0023CF78                 push    ebp; Reference reconstruction: private Sven server source unavailable; source names are verified 5.15 ELF symbols, ABI/layout and calls come from current ELF32 instructions. The movement partial type contains only observed fields. This version calls the real CPlayerMove_PlaySoundFX wrapper with raw playerindex; that wrapper increments playerindex before calling the PM callback.
+  .text:0023CF79                 push    edi
+  .text:0023CF7A                 push    esi
+  .text:0023CF7B                 push    ebx
+  .text:0023CF7C                 sub     esp, 2Ch
+  .text:0023CF7F                 call    __x86_get_pc_thunk_bx
+  .text:0023CF84                 add     ebx, (offset _GLOBAL_OFFSET_TABLE_ - $)
+  .text:0023CF8A                 mov     esi, [esp+3Ch+this]
+  .text:0023CF8E                 mov     ebp, dword ptr [esp+3Ch+isJump]
+  .text:0023CF92                 fldz
+  .text:0023CF94                 fst     [esp+3Ch+vector]
+  .text:0023CF98                 fst     [esp+3Ch+var_24]
+  .text:0023CF9C                 fst     [esp+3Ch+var_20]
+  .text:0023CFA0                 mov     eax, [esi+460h]
+  .text:0023CFA6                 xor     edx, edx
+  .text:0023CFA8                 mov     edi, [eax+98h]
+  .text:0023CFAE                 test    edi, edi
+  .text:0023CFB0                 setz    dl
+  .text:0023CFB3                 mov     [eax+98h], edx
+  .text:0023CFB9                 mov     ecx, [eax+4F5B0h]
+  .text:0023CFBF                 test    ecx, ecx
+  .text:0023CFC1                 jnz     short loc_23CFD2
+  .text:0023CFC3                 fstp    st
+  .text:0023CFC5                 jmp     short def_23D0BB; jumptable 0023D0BB default case
+  .text:0023CFC8                 fstp    st
+  .text:0023CFCA                 ; jumptable 0023D0BB default case
+  jumptable 0023D377 default case
+  jumptable 0023D5C3 default case
+  .text:0023CFCA                 add     esp, 2Ch; jumptable 0023D0BB default case
+  .text:0023CFCD                 pop     ebx
+  .text:0023CFCE                 pop     esi
+  .text:0023CFCF                 pop     edi
+  .text:0023CFD0                 pop     ebp
+  .text:0023CFD1                 retn
+  .text:0023CFD2                 fstp    [esp+3Ch+var_30]
+  .text:0023CFD6                 sub     esp, 8
+  .text:0023CFD9                 push    1
+  .text:0023CFDB                 push    0
+  .text:0023CFDD                 call    dword ptr [eax+4F588h]
+  .text:0023CFE3                 mov     edx, eax
+  .text:0023CFE5                 mov     eax, [esi+460h]
+  .text:0023CFEB                 mov     edi, [eax+98h]
+  .text:0023CFF1                 add     esp, 10h
+  .text:0023CFF4                 mov     ecx, [eax+8]
+  .text:0023CFF7                 test    ecx, ecx
+  .text:0023CFF9                 fld     [esp+3Ch+var_30]
+  .text:0023CFFD                 jnz     short loc_23D030
+  .text:0023CFFF                 fld     dword ptr [eax+5Ch]
+  .text:0023D002                 fstp    [esp+3Ch+vector]
+  .text:0023D006                 fld     dword ptr [eax+60h]
+  .text:0023D009                 fstp    [esp+3Ch+var_24]
+  .text:0023D00D                 fstp    [esp+3Ch+var_20]
+  .text:0023D011                 add     edi, edi
+  .text:0023D013                 add     edi, edx
+  .text:0023D015                 ; switch 12 cases
+  .text:0023D015                 cmp     [esp+3Ch+stepType], 0Bh; switch 12 cases
+  .text:0023D01A                 ja      _L734; jumptable 0023D02D default case, case 0
+  .text:0023D020                 mov     edx, [esp+3Ch+stepType]
+  .text:0023D024                 mov     ecx, ds:(jpt_23D02D - 8B0000h)[ebx+edx*4]
+  .text:0023D02B                 add     ecx, ebx
+  .text:0023D02D                 ; switch jump
+  .text:0023D02D                 jmp     ecx; switch jump
+  .text:0023D030                 mov     ecx, [eax+4F4F0h]
+  .text:0023D036                 mov     ecx, [ecx+40h]
+  .text:0023D039                 test    ecx, ecx
+  .text:0023D03B                 jz      short loc_23CFC8
+  .text:0023D03D                 fld     dword ptr [eax+5Ch]
+  .text:0023D040                 fstp    [esp+3Ch+vector]
+  .text:0023D044                 fld     dword ptr [eax+60h]
+  .text:0023D047                 fstp    [esp+3Ch+var_24]
+  .text:0023D04B                 fstp    [esp+3Ch+var_20]
+  .text:0023D04F                 mov     eax, [esi+464h]
+  .text:0023D055                 test    eax, eax
+  .text:0023D057                 jnz     short loc_23D011
+  .text:0023D059                 mov     ecx, ebp
+  .text:0023D05B                 test    cl, cl
+  .text:0023D05D                 jnz     short loc_23D011
+  .text:0023D05F                 mov     [esp+3Ch+var_30], edx
+  .text:0023D063                 sub     esp, 0Ch
+  .text:0023D066                 lea     ebp, [esp+48h+vector]
+  .text:0023D06A                 ; vector
+  .text:0023D06A                 push    ebp; vector
+  .text:0023D06B                 call    __Z6LengthPKf; Length(float const*)
+  .text:0023D070                 add     esp, 10h
+  .text:0023D073                 fld     ds:(flt_6954C8 - 8B0000h)[ebx]
+  .text:0023D079                 fucompp
+  .text:0023D07B                 fnstsw  ax
+  .text:0023D07D                 test    ah, 5
+  .text:0023D080                 mov     edx, [esp+3Ch+var_30]
+  .text:0023D084                 jz      def_23D0BB; jumptable 0023D0BB default case
+  .text:0023D08A                 jmp     short loc_23D011
+  .text:0023D08C                 ; jumptable 0023D02D case 11
+  .text:0023D08C                 sub     esp, 8; jumptable 0023D02D case 11
+  .text:0023D08F                 mov     ebp, [esi+460h]
+  .text:0023D095                 push    1
+  .text:0023D097                 push    0
+  .text:0023D099                 call    dword ptr [ebp+4F588h]
+  .text:0023D09F                 add     esp, 10h
+  .text:0023D0A2                 test    eax, eax
+  .text:0023D0A4                 jz      short loc_23D0A9
+  .text:0023D0A6                 add     edi, 4
+  .text:0023D0A9                 ; switch 8 cases
+  .text:0023D0A9                 cmp     edi, 7; switch 8 cases
+  .text:0023D0AC                 ja      def_23D0BB; jumptable 0023D0BB default case
+  .text:0023D0B2                 mov     edi, ds:(jpt_23D0BB - 8B0000h)[ebx+edi*4]
+  .text:0023D0B9                 add     edi, ebx
+  .text:0023D0BB                 ; switch jump
+  .text:0023D0BB                 jmp     edi; switch jump
+  .text:0023D0BD                 ; jumptable 0023D02D case 10
+  .text:0023D0BD                 cmp     edi, 1; jumptable 0023D02D case 10
+  .text:0023D0C0                 jz      loc_23D81D
+  .text:0023D0C6                 jle     loc_23D723
+  .text:0023D0CC                 cmp     edi, 2
+  .text:0023D0CF                 jz      loc_23D911
+  .text:0023D0D5                 cmp     edi, 3
+  .text:0023D0D8                 jnz     def_23D0BB; jumptable 0023D0BB default case
+  .text:0023D0DE                 mov     eax, [esi+460h]
+  .text:0023D0E4                 sub     esp, 0Ch
+  .text:0023D0E7                 ; pitch
+  .text:0023D0E7                 push    64h ; 'd'; pitch
+  .text:0023D0E9                 ; flags
+  .text:0023D0E9                 push    0; flags
+  .text:0023D0EB                 ; attenuation
+  .text:0023D0EB                 push    3F4CCCCDh; attenuation
+  .text:0023D0F0                 mov     ebp, [esp+54h+volume]
+  .text:0023D0F4                 ; volume
+  .text:0023D0F4                 push    ebp; volume
+  .text:0023D0F5                 lea     edi, (aPlayerPlOrgani - 8B0000h)[ebx]; "player/pl_organic4.wav"
+  .text:0023D0FB                 ; sound
+  .text:0023D0FB                 push    edi; sound
+  .text:0023D0FC                 ; channel
+  .text:0023D0FC                 push    0; channel
+  .text:0023D0FE                 lea     edx, [eax+38h]
+  .text:0023D101                 ; origin
+  .text:0023D101                 push    edx; origin
+  .text:0023D102                 mov     eax, [eax]
+  .text:0023D104                 ; playerindex
+  .text:0023D104                 push    eax; playerindex
+  .text:0023D105                 ; self
+  .text:0023D105                 push    esi; self
+  .text:0023D106                 call    CPlayerMove_PlaySoundFX; CPlayerMove_PlaySoundFX(int,float *,int,char *,float,float,int,int)
+  .text:0023D10B                 add     esp, 30h
+  .text:0023D10E                 jmp     def_23D0BB; jumptable 0023D0BB default case
+  .text:0023D113                 ; jumptable 0023D02D case 9
+  .text:0023D113                 cmp     edi, 1; jumptable 0023D02D case 9
+  .text:0023D116                 jz      loc_23D97A
+  .text:0023D11C                 jle     loc_23D77A
+  .text:0023D122                 cmp     edi, 2
+  .text:0023D125                 jz      loc_23D842
+  .text:0023D12B                 cmp     edi, 3
+  .text:0023D12E                 jnz     def_23D0BB; jumptable 0023D0BB default case
+  .text:0023D134                 mov     eax, [esi+460h]
+  .text:0023D13A                 sub     esp, 0Ch
+  .text:0023D13D                 push    64h ; 'd'
+  .text:0023D13F                 push    0
+  .text:0023D141                 push    3F4CCCCDh
+  .text:0023D146                 mov     ebp, [esp+54h+volume]
+  .text:0023D14A                 push    ebp
+  .text:0023D14B                 lea     edi, (aPlayerPlWood4W - 8B0000h)[ebx]; "player/pl_wood4.wav"
+  .text:0023D151                 push    edi
+  .text:0023D152                 push    0
+  .text:0023D154                 jmp     short loc_23D0FE
+  .text:0023D156                 ; jumptable 0023D02D case 7
+  .text:0023D156                 mov     eax, ds:(_ZZN11CPlayerMove13PlayStepSoundEifbE9iSkipStep - 8B0000h)[ebx]; jumptable 0023D02D case 7
+  .text:0023D15C                 test    eax, eax
+  .text:0023D15E                 jnz     loc_23D64D
+  .text:0023D164                 mov     ds:(_ZZN11CPlayerMove13PlayStepSoundEifbE9iSkipStep - 8B0000h)[ebx], 1; CPlayerMove::PlayStepSound(int,float,bool)::iSkipStep
+  .text:0023D16E                 jmp     def_23D0BB; jumptable 0023D0BB default case
+  .text:0023D173                 ; jumptable 0023D02D case 5
+  .text:0023D173                 sub     esp, 8; jumptable 0023D02D case 5
+  .text:0023D176                 mov     eax, [esi+460h]
+  .text:0023D17C                 push    4
+  .text:0023D17E                 push    0
+  .text:0023D180                 call    dword ptr [eax+4F588h]
+  .text:0023D186                 add     esp, 10h
+  .text:0023D189                 test    eax, eax
+  .text:0023D18B                 jnz     loc_23D5B1
+  .text:0023D191                 ; jumptable 0023D5C3 case 4
+  .text:0023D191                 mov     eax, [esi+460h]; jumptable 0023D5C3 case 4
+  .text:0023D197                 sub     esp, 0Ch
+  .text:0023D19A                 push    64h ; 'd'
+  .text:0023D19C                 push    0
+  .text:0023D19E                 push    3F4CCCCDh
+  .text:0023D1A3                 mov     ebp, [esp+54h+volume]
+  .text:0023D1A7                 push    ebp
+  .text:0023D1A8                 lea     ebp, (aPlayerPlTile5W - 8B0000h)[ebx]; "player/pl_tile5.wav"
+  .text:0023D1AE                 push    ebp
+  .text:0023D1AF                 push    4
+  .text:0023D1B1                 jmp     loc_23D0FE
+  .text:0023D1B6                 ; jumptable 0023D02D case 4
+  .text:0023D1B6                 cmp     edi, 1; jumptable 0023D02D case 4
+  .text:0023D1B9                 jz      loc_23D958
+  .text:0023D1BF                 jle     loc_23D750
+  .text:0023D1C5                 cmp     edi, 2
+  .text:0023D1C8                 jz      loc_23D936
+  .text:0023D1CE                 cmp     edi, 3
+  .text:0023D1D1                 jnz     def_23D0BB; jumptable 0023D0BB default case
+  .text:0023D1D7                 mov     eax, [esi+460h]
+  .text:0023D1DD                 sub     esp, 0Ch
+  .text:0023D1E0                 push    64h ; 'd'
+  .text:0023D1E2                 push    0
+  .text:0023D1E4                 push    3F4CCCCDh
+  .text:0023D1E9                 mov     edx, [esp+54h+volume]
+  .text:0023D1ED                 push    edx
+  .text:0023D1EE                 lea     ebp, (aPlayerPlGrate4 - 8B0000h)[ebx]; "player/pl_grate4.wav"
+  .text:0023D1F4                 jmp     short loc_23D1AE
+  .text:0023D1F6                 ; jumptable 0023D02D case 8
+  .text:0023D1F6                 cmp     edi, 1; jumptable 0023D02D case 8
+  .text:0023D1F9                 jz      loc_23D889
+  .text:0023D1FF                 jle     loc_23D7A7
+  .text:0023D205                 cmp     edi, 2
+  .text:0023D208                 jz      loc_23D9E6
+  .text:0023D20E                 cmp     edi, 3
+  .text:0023D211                 jnz     def_23D0BB; jumptable 0023D0BB default case
+  .text:0023D217                 mov     eax, [esi+460h]
+  .text:0023D21D                 sub     esp, 0Ch
+  .text:0023D220                 push    64h ; 'd'
+  .text:0023D222                 push    0
+  .text:0023D224                 push    3F4CCCCDh
+  .text:0023D229                 mov     ecx, [esp+54h+volume]
+  .text:0023D22D                 push    ecx
+  .text:0023D22E                 lea     ebp, (aPlayerPlLadder - 8B0000h)[ebx]; "player/pl_ladder4.wav"
+  .text:0023D234                 jmp     loc_23D1AE
+  .text:0023D239                 ; jumptable 0023D02D case 3
+  .text:0023D239                 cmp     edi, 1; jumptable 0023D02D case 3
+  .text:0023D23C                 jz      loc_23D7FB
+  .text:0023D242                 jle     loc_23D6F9
+  .text:0023D248                 cmp     edi, 2
+  .text:0023D24B                 jz      loc_23D8CD
+  .text:0023D251                 cmp     edi, 3
+  .text:0023D254                 jnz     def_23D0BB; jumptable 0023D0BB default case
+  .text:0023D25A                 mov     eax, [esi+460h]
+  .text:0023D260                 sub     esp, 0Ch
+  .text:0023D263                 push    64h ; 'd'
+  .text:0023D265                 push    0
+  .text:0023D267                 push    3F4CCCCDh
+  .text:0023D26C                 mov     edx, [esp+54h+volume]
+  .text:0023D270                 push    edx
+  .text:0023D271                 lea     ebp, (aPlayerPlDuct4W - 8B0000h)[ebx]; "player/pl_duct4.wav"
+  .text:0023D277                 jmp     loc_23D1AE
+  .text:0023D27C                 ; jumptable 0023D02D case 1
+  .text:0023D27C                 cmp     edi, 1; jumptable 0023D02D case 1
+  .text:0023D27F                 jz      loc_23D99F
+  .text:0023D285                 jle     loc_23D6A2
+  .text:0023D28B                 cmp     edi, 2
+  .text:0023D28E                 jz      loc_23D867
+  .text:0023D294                 cmp     edi, 3
+  .text:0023D297                 jnz     def_23D0BB; jumptable 0023D0BB default case
+  .text:0023D29D                 mov     eax, [esi+460h]
+  .text:0023D2A3                 sub     esp, 0Ch
+  .text:0023D2A6                 push    64h ; 'd'
+  .text:0023D2A8                 push    0
+  .text:0023D2AA                 push    3F4CCCCDh
+  .text:0023D2AF                 mov     edx, [esp+54h+volume]
+  .text:0023D2B3                 push    edx
+  .text:0023D2B4                 lea     ebp, (aPlayerPlMetal4 - 8B0000h)[ebx]; "player/pl_metal4.wav"
+  .text:0023D2BA                 jmp     loc_23D1AE
+  .text:0023D2BF                 ; jumptable 0023D02D case 6
+  .text:0023D2BF                 cmp     edi, 1; jumptable 0023D02D case 6
+  .text:0023D2C2                 jz      loc_23D9C1
+  .text:0023D2C8                 jle     loc_23D6CC
+  .text:0023D2CE                 cmp     edi, 2
+  .text:0023D2D1                 jz      loc_23DA08
+  .text:0023D2D7                 cmp     edi, 3
+  .text:0023D2DA                 jnz     def_23D0BB; jumptable 0023D0BB default case
+  .text:0023D2E0                 mov     eax, [esi+460h]
+  .text:0023D2E6                 sub     esp, 0Ch
+  .text:0023D2E9                 push    64h ; 'd'
+  .text:0023D2EB                 push    0
+  .text:0023D2ED                 push    3F4CCCCDh
+  .text:0023D2F2                 mov     edi, [esp+54h+volume]
+  .text:0023D2F6                 push    edi
+  .text:0023D2F7                 lea     edx, (aPlayerPlSlosh4 - 8B0000h)[ebx]; "player/pl_slosh4.wav"
+  .text:0023D2FD                 push    edx
+  .text:0023D2FE                 push    0
+  .text:0023D300                 jmp     loc_23D0FE
+  .text:0023D305                 ; jumptable 0023D02D case 2
+  .text:0023D305                 cmp     edi, 1; jumptable 0023D02D case 2
+  .text:0023D308                 jz      loc_23D8AB
+  .text:0023D30E                 jle     loc_23D7D1
+  .text:0023D314                 cmp     edi, 2
+  .text:0023D317                 jz      loc_23D8EF
+  .text:0023D31D                 cmp     edi, 3
+  .text:0023D320                 jnz     def_23D0BB; jumptable 0023D0BB default case
+  .text:0023D326                 mov     eax, [esi+460h]
+  .text:0023D32C                 sub     esp, 0Ch
+  .text:0023D32F                 push    64h ; 'd'
+  .text:0023D331                 push    0
+  .text:0023D333                 push    3F4CCCCDh
+  .text:0023D338                 mov     edx, [esp+54h+volume]
+  .text:0023D33C                 push    edx
+  .text:0023D33D                 lea     ebp, (aPlayerPlDirt4W - 8B0000h)[ebx]; "player/pl_dirt4.wav"
+  .text:0023D343                 jmp     loc_23D1AE
+  .text:0023D348                 ; jumptable 0023D02D default case, case 0
+  .text:0023D348                 sub     esp, 8; jumptable 0023D02D default case, case 0
+  .text:0023D34B                 mov     eax, [esi+460h]
+  .text:0023D351                 push    1
+  .text:0023D353                 push    0
+  .text:0023D355                 call    dword ptr [eax+4F588h]
+  .text:0023D35B                 add     esp, 10h
+  .text:0023D35E                 test    eax, eax
+  .text:0023D360                 jz      short loc_23D365
+  .text:0023D362                 add     edi, 4
+  .text:0023D365                 ; switch 8 cases
+  .text:0023D365                 cmp     edi, 7; switch 8 cases
+  .text:0023D368                 ja      def_23D0BB; jumptable 0023D0BB default case
+  .text:0023D36E                 mov     edi, ds:(jpt_23D377 - 8B0000h)[ebx+edi*4]
+  .text:0023D375                 add     edi, ebx
+  .text:0023D377                 ; switch jump
+  .text:0023D377                 jmp     edi; switch jump
+  .text:0023D379                 ; jumptable 0023D377 case 6
+  .text:0023D379                 mov     eax, [esi+460h]; jumptable 0023D377 case 6
+  .text:0023D37F                 sub     esp, 0Ch
+  .text:0023D382                 push    64h ; 'd'
+  .text:0023D384                 push    0
+  .text:0023D386                 push    3F4CCCCDh
+  .text:0023D38B                 mov     edx, [esp+54h+volume]
+  .text:0023D38F                 push    edx
+  .text:0023D390                 lea     ebp, (aPlayerPlStep7W - 8B0000h)[ebx]; "player/pl_step7.wav"
+  .text:0023D396                 jmp     loc_23D1AE
+  .text:0023D39B                 ; jumptable 0023D377 case 5
+  .text:0023D39B                 mov     eax, [esi+460h]; jumptable 0023D377 case 5
+  .text:0023D3A1                 sub     esp, 0Ch
+  .text:0023D3A4                 push    64h ; 'd'
+  .text:0023D3A6                 push    0
+  .text:0023D3A8                 push    3F4CCCCDh
+  .text:0023D3AD                 mov     ecx, [esp+54h+volume]
+  .text:0023D3B1                 push    ecx
+  .text:0023D3B2                 lea     ebp, (aPlayerPlStep6W - 8B0000h)[ebx]; "player/pl_step6.wav"
+  .text:0023D3B8                 jmp     loc_23D1AE
+  .text:0023D3BD                 ; jumptable 0023D377 case 4
+  .text:0023D3BD                 mov     eax, [esi+460h]; jumptable 0023D377 case 4
+  .text:0023D3C3                 sub     esp, 0Ch
+  .text:0023D3C6                 push    64h ; 'd'
+  .text:0023D3C8                 push    0
+  .text:0023D3CA                 push    3F4CCCCDh
+  .text:0023D3CF                 mov     ebp, [esp+54h+volume]
+  .text:0023D3D3                 push    ebp
+  .text:0023D3D4                 lea     ebp, (aPlayerPlStep5W - 8B0000h)[ebx]; "player/pl_step5.wav"
+  .text:0023D3DA                 jmp     loc_23D1AE
+  .text:0023D3DF                 ; jumptable 0023D377 case 3
+  .text:0023D3DF                 mov     eax, [esi+460h]; jumptable 0023D377 case 3
+  .text:0023D3E5                 sub     esp, 0Ch
+  .text:0023D3E8                 push    64h ; 'd'
+  .text:0023D3EA                 push    0
+  .text:0023D3EC                 push    3F4CCCCDh
+  .text:0023D3F1                 mov     edi, [esp+54h+volume]
+  .text:0023D3F5                 push    edi
+  .text:0023D3F6                 lea     ebp, (aPlayerPlStep4W - 8B0000h)[ebx]; "player/pl_step4.wav"
+  .text:0023D3FC                 jmp     loc_23D1AE
+  .text:0023D401                 ; jumptable 0023D377 case 2
+  .text:0023D401                 mov     eax, [esi+460h]; jumptable 0023D377 case 2
+  .text:0023D407                 sub     esp, 0Ch
+  .text:0023D40A                 push    64h ; 'd'
+  .text:0023D40C                 push    0
+  .text:0023D40E                 push    3F4CCCCDh
+  .text:0023D413                 mov     edx, [esp+54h+volume]
+  .text:0023D417                 push    edx
+  .text:0023D418                 lea     ebp, (aPlayerPlStep2W - 8B0000h)[ebx]; "player/pl_step2.wav"
+  .text:0023D41E                 jmp     loc_23D1AE
+  .text:0023D423                 ; jumptable 0023D377 case 1
+  .text:0023D423                 mov     eax, [esi+460h]; jumptable 0023D377 case 1
+  .text:0023D429                 sub     esp, 0Ch
+  .text:0023D42C                 push    64h ; 'd'
+  .text:0023D42E                 push    0
+  .text:0023D430                 push    3F4CCCCDh
+  .text:0023D435                 mov     ecx, [esp+54h+volume]
+  .text:0023D439                 push    ecx
+  .text:0023D43A                 lea     ebp, (aPlayerPlStep3W - 8B0000h)[ebx]; "player/pl_step3.wav"
+  .text:0023D440                 jmp     loc_23D1AE
+  .text:0023D445                 ; jumptable 0023D377 case 0
+  .text:0023D445                 mov     eax, [esi+460h]; jumptable 0023D377 case 0
+  .text:0023D44B                 sub     esp, 0Ch
+  .text:0023D44E                 push    64h ; 'd'
+  .text:0023D450                 push    0
+  .text:0023D452                 push    3F4CCCCDh
+  .text:0023D457                 mov     ebp, [esp+54h+volume]
+  .text:0023D45B                 push    ebp
+  .text:0023D45C                 lea     ebp, (aPlayerPlStep1W - 8B0000h)[ebx]; "player/pl_step1.wav"
+  .text:0023D462                 jmp     loc_23D1AE
+  .text:0023D467                 ; jumptable 0023D377 case 7
+  .text:0023D467                 mov     eax, [esi+460h]; jumptable 0023D377 case 7
+  .text:0023D46D                 sub     esp, 0Ch
+  .text:0023D470                 push    64h ; 'd'
+  .text:0023D472                 push    0
+  .text:0023D474                 push    3F4CCCCDh
+  .text:0023D479                 mov     edi, [esp+54h+volume]
+  .text:0023D47D                 push    edi
+  .text:0023D47E                 lea     ebp, (aPlayerPlStep8W - 8B0000h)[ebx]; "player/pl_step8.wav"
+  .text:0023D484                 jmp     loc_23D1AE
+  .text:0023D489                 ; jumptable 0023D0BB case 4
+  .text:0023D489                 mov     eax, [esi+460h]; jumptable 0023D0BB case 4
+  .text:0023D48F                 sub     esp, 0Ch
+  .text:0023D492                 push    64h ; 'd'
+  .text:0023D494                 push    0
+  .text:0023D496                 push    3F4CCCCDh
+  .text:0023D49B                 mov     edx, [esp+54h+volume]
+  .text:0023D49F                 push    edx
+  .text:0023D4A0                 lea     ecx, (aPlayerPlSnow5W - 8B0000h)[ebx]; "player/pl_snow5.wav"
+  .text:0023D4A6                 push    ecx
+  .text:0023D4A7                 push    0
+  .text:0023D4A9                 jmp     loc_23D0FE
+  .text:0023D4AE                 ; jumptable 0023D0BB case 3
+  .text:0023D4AE                 mov     eax, [esi+460h]; jumptable 0023D0BB case 3
+  .text:0023D4B4                 sub     esp, 0Ch
+  .text:0023D4B7                 push    64h ; 'd'
+  .text:0023D4B9                 push    0
+  .text:0023D4BB                 push    3F4CCCCDh
+  .text:0023D4C0                 mov     ebp, [esp+54h+volume]
+  .text:0023D4C4                 push    ebp
+  .text:0023D4C5                 lea     edi, (aPlayerPlSnow4W - 8B0000h)[ebx]; "player/pl_snow4.wav"
+  .text:0023D4CB                 push    edi
+  .text:0023D4CC                 push    0
+  .text:0023D4CE                 jmp     loc_23D0FE
+  .text:0023D4D3                 ; jumptable 0023D0BB case 2
+  .text:0023D4D3                 mov     eax, [esi+460h]; jumptable 0023D0BB case 2
+  .text:0023D4D9                 sub     esp, 0Ch
+  .text:0023D4DC                 push    64h ; 'd'
+  .text:0023D4DE                 push    0
+  .text:0023D4E0                 push    3F4CCCCDh
+  .text:0023D4E5                 mov     edx, [esp+54h+volume]
+  .text:0023D4E9                 push    edx
+  .text:0023D4EA                 lea     ecx, (aPlayerPlSnow2W - 8B0000h)[ebx]; "player/pl_snow2.wav"
+  .text:0023D4F0                 push    ecx
+  .text:0023D4F1                 push    0
+  .text:0023D4F3                 jmp     loc_23D0FE
+  .text:0023D4F8                 ; jumptable 0023D0BB case 1
+  .text:0023D4F8                 mov     eax, [esi+460h]; jumptable 0023D0BB case 1
+  .text:0023D4FE                 sub     esp, 0Ch
+  .text:0023D501                 push    64h ; 'd'
+  .text:0023D503                 push    0
+  .text:0023D505                 push    3F4CCCCDh
+  .text:0023D50A                 mov     ebp, [esp+54h+volume]
+  .text:0023D50E                 push    ebp
+  .text:0023D50F                 lea     edi, (aPlayerPlSnow3W - 8B0000h)[ebx]; "player/pl_snow3.wav"
+  .text:0023D515                 push    edi
+  .text:0023D516                 push    0
+  .text:0023D518                 jmp     loc_23D0FE
+  .text:0023D51D                 ; jumptable 0023D0BB case 6
+  .text:0023D51D                 mov     eax, [esi+460h]; jumptable 0023D0BB case 6
+  .text:0023D523                 sub     esp, 0Ch
+  .text:0023D526                 push    64h ; 'd'
+  .text:0023D528                 push    0
+  .text:0023D52A                 push    3F4CCCCDh
+  .text:0023D52F                 mov     edx, [esp+54h+volume]
+  .text:0023D533                 push    edx
+  .text:0023D534                 lea     ecx, (aPlayerPlSnow7W - 8B0000h)[ebx]; "player/pl_snow7.wav"
+  .text:0023D53A                 push    ecx
+  .text:0023D53B                 push    0
+  .text:0023D53D                 jmp     loc_23D0FE
+  .text:0023D542                 ; jumptable 0023D0BB case 5
+  .text:0023D542                 mov     eax, [esi+460h]; jumptable 0023D0BB case 5
+  .text:0023D548                 sub     esp, 0Ch
+  .text:0023D54B                 push    64h ; 'd'
+  .text:0023D54D                 push    0
+  .text:0023D54F                 push    3F4CCCCDh
+  .text:0023D554                 mov     ebp, [esp+54h+volume]
+  .text:0023D558                 push    ebp
+  .text:0023D559                 lea     edi, (aPlayerPlSnow6W - 8B0000h)[ebx]; "player/pl_snow6.wav"
+  .text:0023D55F                 push    edi
+  .text:0023D560                 push    0
+  .text:0023D562                 jmp     loc_23D0FE
+  .text:0023D567                 ; jumptable 0023D0BB case 0
+  .text:0023D567                 mov     eax, [esi+460h]; jumptable 0023D0BB case 0
+  .text:0023D56D                 sub     esp, 0Ch
+  .text:0023D570                 push    64h ; 'd'
+  .text:0023D572                 push    0
+  .text:0023D574                 push    3F4CCCCDh
+  .text:0023D579                 mov     edx, [esp+54h+volume]
+  .text:0023D57D                 push    edx
+  .text:0023D57E                 lea     ecx, (aPlayerPlSnow1W - 8B0000h)[ebx]; "player/pl_snow1.wav"
+  .text:0023D584                 push    ecx
+  .text:0023D585                 push    0
+  .text:0023D587                 jmp     loc_23D0FE
+  .text:0023D58C                 ; jumptable 0023D0BB case 7
+  .text:0023D58C                 mov     eax, [esi+460h]; jumptable 0023D0BB case 7
+  .text:0023D592                 sub     esp, 0Ch
+  .text:0023D595                 push    64h ; 'd'
+  .text:0023D597                 push    0
+  .text:0023D599                 push    3F4CCCCDh
+  .text:0023D59E                 mov     ebp, [esp+54h+volume]
+  .text:0023D5A2                 push    ebp
+  .text:0023D5A3                 lea     edi, (aPlayerPlSnow8W - 8B0000h)[ebx]; "player/pl_snow8.wav"
+  .text:0023D5A9                 push    edi
+  .text:0023D5AA                 push    0
+  .text:0023D5AC                 jmp     loc_23D0FE
+  .text:0023D5B1                 ; switch 5 cases
+  .text:0023D5B1                 cmp     edi, 4; switch 5 cases
+  .text:0023D5B4                 ja      def_23D0BB; jumptable 0023D0BB default case
+  .text:0023D5BA                 mov     ecx, ds:(jpt_23D5C3 - 8B0000h)[ebx+edi*4]
+  .text:0023D5C1                 add     ecx, ebx
+  .text:0023D5C3                 ; switch jump
+  .text:0023D5C3                 jmp     ecx; switch jump
+  .text:0023D5C5                 ; jumptable 0023D5C3 case 3
+  .text:0023D5C5                 mov     eax, [esi+460h]; jumptable 0023D5C3 case 3
+  .text:0023D5CB                 sub     esp, 0Ch
+  .text:0023D5CE                 push    64h ; 'd'
+  .text:0023D5D0                 push    0
+  .text:0023D5D2                 push    3F4CCCCDh
+  .text:0023D5D7                 mov     ebp, [esp+54h+volume]
+  .text:0023D5DB                 push    ebp
+  .text:0023D5DC                 lea     ebp, (aPlayerPlTile4W - 8B0000h)[ebx]; "player/pl_tile4.wav"
+  .text:0023D5E2                 jmp     loc_23D1AE
+  .text:0023D5E7                 ; jumptable 0023D5C3 case 2
+  .text:0023D5E7                 mov     eax, [esi+460h]; jumptable 0023D5C3 case 2
+  .text:0023D5ED                 sub     esp, 0Ch
+  .text:0023D5F0                 push    64h ; 'd'
+  .text:0023D5F2                 push    0
+  .text:0023D5F4                 push    3F4CCCCDh
+  .text:0023D5F9                 mov     edi, [esp+54h+volume]
+  .text:0023D5FD                 push    edi
+  .text:0023D5FE                 lea     ebp, (aPlayerPlTile2W - 8B0000h)[ebx]; "player/pl_tile2.wav"
+  .text:0023D604                 jmp     loc_23D1AE
+  .text:0023D609                 ; jumptable 0023D5C3 case 1
+  .text:0023D609                 mov     eax, [esi+460h]; jumptable 0023D5C3 case 1
+  .text:0023D60F                 sub     esp, 0Ch
+  .text:0023D612                 push    64h ; 'd'
+  .text:0023D614                 push    0
+  .text:0023D616                 push    3F4CCCCDh
+  .text:0023D61B                 mov     edx, [esp+54h+volume]
+  .text:0023D61F                 push    edx
+  .text:0023D620                 lea     ebp, (aPlayerPlTile3W - 8B0000h)[ebx]; "player/pl_tile3.wav"
+  .text:0023D626                 jmp     loc_23D1AE
+  .text:0023D62B                 ; jumptable 0023D5C3 case 0
+  .text:0023D62B                 mov     eax, [esi+460h]; jumptable 0023D5C3 case 0
+  .text:0023D631                 sub     esp, 0Ch
+  .text:0023D634                 push    64h ; 'd'
+  .text:0023D636                 push    0
+  .text:0023D638                 push    3F4CCCCDh
+  .text:0023D63D                 mov     ecx, [esp+54h+volume]
+  .text:0023D641                 push    ecx
+  .text:0023D642                 lea     ebp, (aPlayerPlTile1W - 8B0000h)[ebx]; "player/pl_tile1.wav"
+  .text:0023D648                 jmp     loc_23D1AE
+  .text:0023D64D                 cmp     eax, 3
+  .text:0023D650                 jz      loc_23DA59
+  .text:0023D656                 inc     eax
+  .text:0023D657                 mov     ds:(_ZZN11CPlayerMove13PlayStepSoundEifbE9iSkipStep - 8B0000h)[ebx], eax; CPlayerMove::PlayStepSound(int,float,bool)::iSkipStep
+  .text:0023D65D                 cmp     edi, 1
+  .text:0023D660                 jz      loc_23DA8C
+  .text:0023D666                 jle     loc_23DA2D
+  .text:0023D66C                 cmp     edi, 2
+  .text:0023D66F                 jz      loc_23DA68
+  .text:0023D675                 cmp     edi, 3
+  .text:0023D678                 jnz     def_23D0BB; jumptable 0023D0BB default case
+  .text:0023D67E                 mov     eax, [esi+460h]
+  .text:0023D684                 sub     esp, 0Ch
+  .text:0023D687                 push    64h ; 'd'
+  .text:0023D689                 push    0
+  .text:0023D68B                 push    3F4CCCCDh
+  .text:0023D690                 push    [esp+54h+volume]
+  .text:0023D694                 lea     ebp, (aPlayerPlWade4W - 8B0000h)[ebx]; "player/pl_wade4.wav"
+  .text:0023D69A                 push    ebp
+  .text:0023D69B                 push    3
+  .text:0023D69D                 jmp     loc_23D0FE
+  .text:0023D6A2                 test    edi, edi
+  .text:0023D6A4                 jnz     def_23D0BB; jumptable 0023D0BB default case
+  .text:0023D6AA                 mov     eax, [esi+460h]
+  .text:0023D6B0                 sub     esp, 0Ch
+  .text:0023D6B3                 push    64h ; 'd'
+  .text:0023D6B5                 push    0
+  .text:0023D6B7                 push    3F4CCCCDh
+  .text:0023D6BC                 mov     edi, [esp+54h+volume]
+  .text:0023D6C0                 push    edi
+  .text:0023D6C1                 lea     ebp, (aPlayerPlMetal1 - 8B0000h)[ebx]; "player/pl_metal1.wav"
+  .text:0023D6C7                 jmp     loc_23D1AE
+  .text:0023D6CC                 test    edi, edi
+  .text:0023D6CE                 jnz     def_23D0BB; jumptable 0023D0BB default case
+  .text:0023D6D4                 mov     eax, [esi+460h]
+  .text:0023D6DA                 sub     esp, 0Ch
+  .text:0023D6DD                 push    64h ; 'd'
+  .text:0023D6DF                 push    0
+  .text:0023D6E1                 push    3F4CCCCDh
+  .text:0023D6E6                 mov     ecx, [esp+54h+volume]
+  .text:0023D6EA                 push    ecx
+  .text:0023D6EB                 lea     ebp, (aPlayerPlSlosh1 - 8B0000h)[ebx]; "player/pl_slosh1.wav"
+  .text:0023D6F1                 push    ebp
+  .text:0023D6F2                 push    0
+  .text:0023D6F4                 jmp     loc_23D0FE
+  .text:0023D6F9                 test    edi, edi
+  .text:0023D6FB                 jnz     def_23D0BB; jumptable 0023D0BB default case
+  .text:0023D701                 mov     eax, [esi+460h]
+  .text:0023D707                 sub     esp, 0Ch
+  .text:0023D70A                 push    64h ; 'd'
+  .text:0023D70C                 push    0
+  .text:0023D70E                 push    3F4CCCCDh
+  .text:0023D713                 mov     edi, [esp+54h+volume]
+  .text:0023D717                 push    edi
+  .text:0023D718                 lea     ebp, (aPlayerPlDuct1W - 8B0000h)[ebx]; "player/pl_duct1.wav"
+  .text:0023D71E                 jmp     loc_23D1AE
+  .text:0023D723                 test    edi, edi
+  .text:0023D725                 jnz     def_23D0BB; jumptable 0023D0BB default case
+  .text:0023D72B                 mov     eax, [esi+460h]
+  .text:0023D731                 sub     esp, 0Ch
+  .text:0023D734                 push    64h ; 'd'
+  .text:0023D736                 push    0
+  .text:0023D738                 push    3F4CCCCDh
+  .text:0023D73D                 mov     edx, [esp+54h+volume]
+  .text:0023D741                 push    edx
+  .text:0023D742                 lea     ecx, (aPlayerPlOrgani_0 - 8B0000h)[ebx]; "player/pl_organic1.wav"
+  .text:0023D748                 push    ecx
+  .text:0023D749                 push    0
+  .text:0023D74B                 jmp     loc_23D0FE
+  .text:0023D750                 test    edi, edi
+  .text:0023D752                 jnz     def_23D0BB; jumptable 0023D0BB default case
+  .text:0023D758                 mov     eax, [esi+460h]
+  .text:0023D75E                 sub     esp, 0Ch
+  .text:0023D761                 push    64h ; 'd'
+  .text:0023D763                 push    0
+  .text:0023D765                 push    3F4CCCCDh
+  .text:0023D76A                 mov     edi, [esp+54h+volume]
+  .text:0023D76E                 push    edi
+  .text:0023D76F                 lea     ebp, (aPlayerPlGrate1 - 8B0000h)[ebx]; "player/pl_grate1.wav"
+  .text:0023D775                 jmp     loc_23D1AE
+  .text:0023D77A                 test    edi, edi
+  .text:0023D77C                 jnz     def_23D0BB; jumptable 0023D0BB default case
+  .text:0023D782                 mov     eax, [esi+460h]
+  .text:0023D788                 sub     esp, 0Ch
+  .text:0023D78B                 push    64h ; 'd'
+  .text:0023D78D                 push    0
+  .text:0023D78F                 push    3F4CCCCDh
+  .text:0023D794                 mov     edx, [esp+54h+volume]
+  .text:0023D798                 push    edx
+  .text:0023D799                 lea     ecx, (aPlayerPlWood1W - 8B0000h)[ebx]; "player/pl_wood1.wav"
+  .text:0023D79F                 push    ecx
+  .text:0023D7A0                 push    0
+  .text:0023D7A2                 jmp     loc_23D0FE
+  .text:0023D7A7                 test    edi, edi
+  .text:0023D7A9                 jnz     def_23D0BB; jumptable 0023D0BB default case
+  .text:0023D7AF                 mov     eax, [esi+460h]
+  .text:0023D7B5                 sub     esp, 0Ch
+  .text:0023D7B8                 push    64h ; 'd'
+  .text:0023D7BA                 push    0
+  .text:0023D7BC                 push    3F4CCCCDh
+  .text:0023D7C1                 mov     edx, [esp+54h+volume]
+  .text:0023D7C5                 push    edx
+  .text:0023D7C6                 lea     ebp, (aPlayerPlLadder_0 - 8B0000h)[ebx]; "player/pl_ladder1.wav"
+  .text:0023D7CC                 jmp     loc_23D1AE
+  .text:0023D7D1                 test    edi, edi
+  .text:0023D7D3                 jnz     def_23D0BB; jumptable 0023D0BB default case
+  .text:0023D7D9                 mov     eax, [esi+460h]
+  .text:0023D7DF                 sub     esp, 0Ch
+  .text:0023D7E2                 push    64h ; 'd'
+  .text:0023D7E4                 push    0
+  .text:0023D7E6                 push    3F4CCCCDh
+  .text:0023D7EB                 mov     edi, [esp+54h+volume]
+  .text:0023D7EF                 push    edi
+  .text:0023D7F0                 lea     ebp, (aPlayerPlDirt1W - 8B0000h)[ebx]; "player/pl_dirt1.wav"
+  .text:0023D7F6                 jmp     loc_23D1AE
+  .text:0023D7FB                 mov     eax, [esi+460h]
+  .text:0023D801                 sub     esp, 0Ch
+  .text:0023D804                 push    64h ; 'd'
+  .text:0023D806                 push    0
+  .text:0023D808                 push    3F4CCCCDh
+  .text:0023D80D                 mov     ebp, [esp+54h+volume]
+  .text:0023D811                 push    ebp
+  .text:0023D812                 lea     ebp, (aPlayerPlDuct3W - 8B0000h)[ebx]; "player/pl_duct3.wav"
+  .text:0023D818                 jmp     loc_23D1AE
+  .text:0023D81D                 mov     eax, [esi+460h]
+  .text:0023D823                 sub     esp, 0Ch
+  .text:0023D826                 push    64h ; 'd'
+  .text:0023D828                 push    0
+  .text:0023D82A                 push    3F4CCCCDh
+  .text:0023D82F                 mov     ebp, [esp+54h+volume]
+  .text:0023D833                 push    ebp
+  .text:0023D834                 lea     edi, (aPlayerPlOrgani_1 - 8B0000h)[ebx]; "player/pl_organic3.wav"
+  .text:0023D83A                 push    edi
+  .text:0023D83B                 push    0
+  .text:0023D83D                 jmp     loc_23D0FE
+  .text:0023D842                 mov     eax, [esi+460h]
+  .text:0023D848                 sub     esp, 0Ch
+  .text:0023D84B                 push    64h ; 'd'
+  .text:0023D84D                 push    0
+  .text:0023D84F                 push    3F4CCCCDh
+  .text:0023D854                 mov     edx, [esp+54h+volume]
+  .text:0023D858                 push    edx
+  .text:0023D859                 lea     ecx, (aPlayerPlWood2W - 8B0000h)[ebx]; "player/pl_wood2.wav"
+  .text:0023D85F                 push    ecx
+  .text:0023D860                 push    0
+  .text:0023D862                 jmp     loc_23D0FE
+  .text:0023D867                 mov     eax, [esi+460h]
+  .text:0023D86D                 sub     esp, 0Ch
+  .text:0023D870                 push    64h ; 'd'
+  .text:0023D872                 push    0
+  .text:0023D874                 push    3F4CCCCDh
+  .text:0023D879                 mov     ecx, [esp+54h+volume]
+  .text:0023D87D                 push    ecx
+  .text:0023D87E                 lea     ebp, (aPlayerPlMetal2 - 8B0000h)[ebx]; "player/pl_metal2.wav"
+  .text:0023D884                 jmp     loc_23D1AE
+  .text:0023D889                 mov     eax, [esi+460h]
+  .text:0023D88F                 sub     esp, 0Ch
+  .text:0023D892                 push    64h ; 'd'
+  .text:0023D894                 push    0
+  .text:0023D896                 push    3F4CCCCDh
+  .text:0023D89B                 mov     edx, [esp+54h+volume]
+  .text:0023D89F                 push    edx
+  .text:0023D8A0                 lea     ebp, (aPlayerPlLadder_1 - 8B0000h)[ebx]; "player/pl_ladder3.wav"
+  .text:0023D8A6                 jmp     loc_23D1AE
+  .text:0023D8AB                 mov     eax, [esi+460h]
+  .text:0023D8B1                 sub     esp, 0Ch
+  .text:0023D8B4                 push    64h ; 'd'
+  .text:0023D8B6                 push    0
+  .text:0023D8B8                 push    3F4CCCCDh
+  .text:0023D8BD                 mov     ebp, [esp+54h+volume]
+  .text:0023D8C1                 push    ebp
+  .text:0023D8C2                 lea     ebp, (aPlayerPlDirt3W - 8B0000h)[ebx]; "player/pl_dirt3.wav"
+  .text:0023D8C8                 jmp     loc_23D1AE
+  .text:0023D8CD                 mov     eax, [esi+460h]
+  .text:0023D8D3                 sub     esp, 0Ch
+  .text:0023D8D6                 push    64h ; 'd'
+  .text:0023D8D8                 push    0
+  .text:0023D8DA                 push    3F4CCCCDh
+  .text:0023D8DF                 mov     ecx, [esp+54h+volume]
+  .text:0023D8E3                 push    ecx
+  .text:0023D8E4                 lea     ebp, (aPlayerPlDuct2W - 8B0000h)[ebx]; "player/pl_duct2.wav"
+  .text:0023D8EA                 jmp     loc_23D1AE
+  .text:0023D8EF                 mov     eax, [esi+460h]
+  .text:0023D8F5                 sub     esp, 0Ch
+  .text:0023D8F8                 push    64h ; 'd'
+  .text:0023D8FA                 push    0
+  .text:0023D8FC                 push    3F4CCCCDh
+  .text:0023D901                 mov     ecx, [esp+54h+volume]
+  .text:0023D905                 push    ecx
+  .text:0023D906                 lea     ebp, (aPlayerPlDirt2W - 8B0000h)[ebx]; "player/pl_dirt2.wav"
+  .text:0023D90C                 jmp     loc_23D1AE
+  .text:0023D911                 mov     eax, [esi+460h]
+  .text:0023D917                 sub     esp, 0Ch
+  .text:0023D91A                 push    64h ; 'd'
+  .text:0023D91C                 push    0
+  .text:0023D91E                 push    3F4CCCCDh
+  .text:0023D923                 mov     edx, [esp+54h+volume]
+  .text:0023D927                 push    edx
+  .text:0023D928                 lea     ecx, (aPlayerPlOrgani_2 - 8B0000h)[ebx]; "player/pl_organic2.wav"
+  .text:0023D92E                 push    ecx
+  .text:0023D92F                 push    0
+  .text:0023D931                 jmp     loc_23D0FE
+  .text:0023D936                 mov     eax, [esi+460h]
+  .text:0023D93C                 sub     esp, 0Ch
+  .text:0023D93F                 push    64h ; 'd'
+  .text:0023D941                 push    0
+  .text:0023D943                 push    3F4CCCCDh
+  .text:0023D948                 mov     ecx, [esp+54h+volume]
+  .text:0023D94C                 push    ecx
+  .text:0023D94D                 lea     ebp, (aPlayerPlGrate2 - 8B0000h)[ebx]; "player/pl_grate2.wav"
+  .text:0023D953                 jmp     loc_23D1AE
+  .text:0023D958                 mov     eax, [esi+460h]
+  .text:0023D95E                 sub     esp, 0Ch
+  .text:0023D961                 push    64h ; 'd'
+  .text:0023D963                 push    0
+  .text:0023D965                 push    3F4CCCCDh
+  .text:0023D96A                 mov     ebp, [esp+54h+volume]
+  .text:0023D96E                 push    ebp
+  .text:0023D96F                 lea     ebp, (aPlayerPlGrate3 - 8B0000h)[ebx]; "player/pl_grate3.wav"
+  .text:0023D975                 jmp     loc_23D1AE
+  .text:0023D97A                 mov     eax, [esi+460h]
+  .text:0023D980                 sub     esp, 0Ch
+  .text:0023D983                 push    64h ; 'd'
+  .text:0023D985                 push    0
+  .text:0023D987                 push    3F4CCCCDh
+  .text:0023D98C                 mov     ebp, [esp+54h+volume]
+  .text:0023D990                 push    ebp
+  .text:0023D991                 lea     edi, (aPlayerPlWood3W - 8B0000h)[ebx]; "player/pl_wood3.wav"
+  .text:0023D997                 push    edi
+  .text:0023D998                 push    0
+  .text:0023D99A                 jmp     loc_23D0FE
+  .text:0023D99F                 mov     eax, [esi+460h]
+  .text:0023D9A5                 sub     esp, 0Ch
+  .text:0023D9A8                 push    64h ; 'd'
+  .text:0023D9AA                 push    0
+  .text:0023D9AC                 push    3F4CCCCDh
+  .text:0023D9B1                 mov     ebp, [esp+54h+volume]
+  .text:0023D9B5                 push    ebp
+  .text:0023D9B6                 lea     ebp, (aPlayerPlMetal3 - 8B0000h)[ebx]; "player/pl_metal3.wav"
+  .text:0023D9BC                 jmp     loc_23D1AE
+  .text:0023D9C1                 mov     eax, [esi+460h]
+  .text:0023D9C7                 sub     esp, 0Ch
+  .text:0023D9CA                 push    64h ; 'd'
+  .text:0023D9CC                 push    0
+  .text:0023D9CE                 push    3F4CCCCDh
+  .text:0023D9D3                 mov     edi, [esp+54h+volume]
+  .text:0023D9D7                 push    edi
+  .text:0023D9D8                 lea     edx, (aPlayerPlSlosh3 - 8B0000h)[ebx]; "player/pl_slosh3.wav"
+  .text:0023D9DE                 push    edx
+  .text:0023D9DF                 push    0
+  .text:0023D9E1                 jmp     loc_23D0FE
+  .text:0023D9E6                 mov     eax, [esi+460h]
+  .text:0023D9EC                 sub     esp, 0Ch
+  .text:0023D9EF                 push    64h ; 'd'
+  .text:0023D9F1                 push    0
+  .text:0023D9F3                 push    3F4CCCCDh
+  .text:0023D9F8                 mov     edi, [esp+54h+volume]
+  .text:0023D9FC                 push    edi
+  .text:0023D9FD                 lea     ebp, (aPlayerPlLadder_2 - 8B0000h)[ebx]; "player/pl_ladder2.wav"
+  .text:0023DA03                 jmp     loc_23D1AE
+  .text:0023DA08                 mov     eax, [esi+460h]
+  .text:0023DA0E                 sub     esp, 0Ch
+  .text:0023DA11                 push    64h ; 'd'
+  .text:0023DA13                 push    0
+  .text:0023DA15                 push    3F4CCCCDh
+  .text:0023DA1A                 mov     ecx, [esp+54h+volume]
+  .text:0023DA1E                 push    ecx
+  .text:0023DA1F                 lea     ebp, (aPlayerPlSlosh2 - 8B0000h)[ebx]; "player/pl_slosh2.wav"
+  .text:0023DA25                 push    ebp
+  .text:0023DA26                 push    0
+  .text:0023DA28                 jmp     loc_23D0FE
+  .text:0023DA2D                 test    edi, edi
+  .text:0023DA2F                 jnz     def_23D0BB; jumptable 0023D0BB default case
+  .text:0023DA35                 mov     eax, [esi+460h]
+  .text:0023DA3B                 sub     esp, 0Ch
+  .text:0023DA3E                 push    64h ; 'd'
+  .text:0023DA40                 push    0
+  .text:0023DA42                 push    3F4CCCCDh
+  .text:0023DA47                 push    [esp+54h+volume]
+  .text:0023DA4B                 lea     ecx, (aPlayerPlWade1W - 8B0000h)[ebx]; "player/pl_wade1.wav"
+  .text:0023DA51                 push    ecx
+  .text:0023DA52                 push    3
+  .text:0023DA54                 jmp     loc_23D0FE
+  .text:0023DA59                 mov     ds:(_ZZN11CPlayerMove13PlayStepSoundEifbE9iSkipStep - 8B0000h)[ebx], 0; CPlayerMove::PlayStepSound(int,float,bool)::iSkipStep
+  .text:0023DA63                 jmp     loc_23D65D
+  .text:0023DA68                 mov     eax, [esi+460h]
+  .text:0023DA6E                 sub     esp, 0Ch
+  .text:0023DA71                 push    64h ; 'd'
+  .text:0023DA73                 push    0
+  .text:0023DA75                 push    3F4CCCCDh
+  .text:0023DA7A                 push    [esp+54h+volume]
+  .text:0023DA7E                 lea     edi, (aPlayerPlWade3W - 8B0000h)[ebx]; "player/pl_wade3.wav"
+  .text:0023DA84                 push    edi
+  .text:0023DA85                 push    3
+  .text:0023DA87                 jmp     loc_23D0FE
+  .text:0023DA8C                 mov     eax, [esi+460h]
+  .text:0023DA92                 sub     esp, 0Ch
+  .text:0023DA95                 push    64h ; 'd'
+  .text:0023DA97                 push    0
+  .text:0023DA99                 push    3F4CCCCDh
+  .text:0023DA9E                 push    [esp+54h+volume]
+  .text:0023DAA2                 lea     edx, (aPlayerPlWade2W - 8B0000h)[ebx]; "player/pl_wade2.wav"
+  .text:0023DAA8                 push    edx
+  .text:0023DAA9                 push    3
+  .text:0023DAAB                 jmp     loc_23D0FE
+procedure: |-
+  // Reference reconstruction: private Sven server source unavailable; source names are verified 5.15 ELF symbols, ABI/layout and calls come from current ELF32 instructions. The movement partial type contains only observed fields. This version calls the real CPlayerMove_PlaySoundFX wrapper with raw playerindex; that wrapper increments playerindex before calling the PM callback.
+  void __cdecl CPlayerMove::PlayStepSound(CPlayerMoveReference *self, int stepType, float volume, bool isJump)
+  {
+    PlayerMovementReference *movement; // eax
+    int v5; // edx
+    PlayerMovementReference *v6; // eax
+    int stepLeft; // edi
+    int soundIndex; // edi
+    long double horizontalSpeed; // fst7
+    PlayerMovementReference *emitterMovement; // eax
+    const char *soundName; // ebp
+    float soundVolume; // [esp-1Ch] [ebp-58h]
+    int v13; // [esp+Ch] [ebp-30h]
+    float vector; // [esp+14h] [ebp-28h] BYREF
+    float v15; // [esp+18h] [ebp-24h]
+    float v16; // [esp+1Ch] [ebp-20h]
+
+    vector = 0.0;
+    v15 = 0.0;
+    v16 = 0.0;
+    movement = self->movement;
+    movement->stepLeft = movement->stepLeft == 0;
+    if ( movement->runfuncs )
+    {
+      v5 = movement->randomLong(0, 1);
+      v6 = self->movement;
+      stepLeft = v6->stepLeft;
+      if ( v6->multiplayer )
+      {
+        if ( !v6->movevars->footsteps )
+          return;
+        vector = v6->velocity[0];
+        v15 = v6->velocity[1];
+        v16 = 0.0;
+        if ( !self->onLadder && !isJump )
+        {
+          v13 = v5;
+          horizontalSpeed = Length(&vector);
+          v5 = v13;
+          if ( horizontalSpeed <= 220.0 )
+            return;
+        }
+      }
+      else
+      {
+        vector = v6->velocity[0];
+        v15 = v6->velocity[1];
+        v16 = 0.0;
+      }
+      soundIndex = v5 + 2 * stepLeft;
+      switch ( stepType )
+      {
+        case 1:
+          if ( soundIndex == 1 )
+          {
+            emitterMovement = self->movement;
+            soundVolume = volume;
+            soundName = "player/pl_metal3.wav";
+            goto LABEL_30;
+          }
+          if ( soundIndex <= 1 )
+          {
+            if ( !soundIndex )
+            {
+              emitterMovement = self->movement;
+              soundVolume = volume;
+              soundName = "player/pl_metal1.wav";
+              goto LABEL_30;
+            }
+          }
+          else
+          {
+            if ( soundIndex == 2 )
+            {
+              emitterMovement = self->movement;
+              soundVolume = volume;
+              soundName = "player/pl_metal2.wav";
+              goto LABEL_30;
+            }
+            if ( soundIndex == 3 )
+            {
+              emitterMovement = self->movement;
+              soundVolume = volume;
+              soundName = "player/pl_metal4.wav";
+              goto LABEL_30;
+            }
+          }
+          return;
+        case 2:
+          if ( soundIndex == 1 )
+          {
+            emitterMovement = self->movement;
+            soundVolume = volume;
+            soundName = "player/pl_dirt3.wav";
+            goto LABEL_30;
+          }
+          if ( soundIndex <= 1 )
+          {
+            if ( !soundIndex )
+            {
+              emitterMovement = self->movement;
+              soundVolume = volume;
+              soundName = "player/pl_dirt1.wav";
+              goto LABEL_30;
+            }
+          }
+          else
+          {
+            if ( soundIndex == 2 )
+            {
+              emitterMovement = self->movement;
+              soundVolume = volume;
+              soundName = "player/pl_dirt2.wav";
+              goto LABEL_30;
+            }
+            if ( soundIndex == 3 )
+            {
+              emitterMovement = self->movement;
+              soundVolume = volume;
+              soundName = "player/pl_dirt4.wav";
+              goto LABEL_30;
+            }
+          }
+          return;
+        case 3:
+          if ( soundIndex == 1 )
+          {
+            emitterMovement = self->movement;
+            soundVolume = volume;
+            soundName = "player/pl_duct3.wav";
+            goto LABEL_30;
+          }
+          if ( soundIndex <= 1 )
+          {
+            if ( !soundIndex )
+            {
+              emitterMovement = self->movement;
+              soundVolume = volume;
+              soundName = "player/pl_duct1.wav";
+              goto LABEL_30;
+            }
+          }
+          else
+          {
+            if ( soundIndex == 2 )
+            {
+              emitterMovement = self->movement;
+              soundVolume = volume;
+              soundName = "player/pl_duct2.wav";
+              goto LABEL_30;
+            }
+            if ( soundIndex == 3 )
+            {
+              emitterMovement = self->movement;
+              soundVolume = volume;
+              soundName = "player/pl_duct4.wav";
+              goto LABEL_30;
+            }
+          }
+          return;
+        case 4:
+          if ( soundIndex == 1 )
+          {
+            emitterMovement = self->movement;
+            soundVolume = volume;
+            soundName = "player/pl_grate3.wav";
+            goto LABEL_30;
+          }
+          if ( soundIndex <= 1 )
+          {
+            if ( !soundIndex )
+            {
+              emitterMovement = self->movement;
+              soundVolume = volume;
+              soundName = "player/pl_grate1.wav";
+              goto LABEL_30;
+            }
+          }
+          else
+          {
+            if ( soundIndex == 2 )
+            {
+              emitterMovement = self->movement;
+              soundVolume = volume;
+              soundName = "player/pl_grate2.wav";
+              goto LABEL_30;
+            }
+            if ( soundIndex == 3 )
+            {
+              emitterMovement = self->movement;
+              soundVolume = volume;
+              soundName = "player/pl_grate4.wav";
+              goto LABEL_30;
+            }
+          }
+          return;
+        case 5:
+          if ( !self->movement->randomLong(0, 4) )
+          {
+  _L778:
+            emitterMovement = self->movement;
+            soundVolume = volume;
+            soundName = "player/pl_tile5.wav";
+            goto LABEL_30;
+          }
+          switch ( soundIndex )
+          {
+            case 0:
+              emitterMovement = self->movement;
+              soundVolume = volume;
+              soundName = "player/pl_tile1.wav";
+              goto LABEL_30;
+            case 1:
+              emitterMovement = self->movement;
+              soundVolume = volume;
+              soundName = "player/pl_tile3.wav";
+              goto LABEL_30;
+            case 2:
+              emitterMovement = self->movement;
+              soundVolume = volume;
+              soundName = "player/pl_tile2.wav";
+              goto LABEL_30;
+            case 3:
+              emitterMovement = self->movement;
+              soundVolume = volume;
+              soundName = "player/pl_tile4.wav";
+              goto LABEL_30;
+            case 4:
+              goto _L778;
+            default:
+              return;
+          }
+          return;
+        case 6:
+          if ( soundIndex == 1 )
+          {
+            CPlayerMove_PlaySoundFX(
+              self,
+              self->movement->playerindex,
+              self->movement->origin,
+              0,
+              "player/pl_slosh3.wav",
+              volume,
+              0.80000001,
+              0,
+              100);
+          }
+          else if ( soundIndex <= 1 )
+          {
+            if ( !soundIndex )
+              CPlayerMove_PlaySoundFX(
+                self,
+                self->movement->playerindex,
+                self->movement->origin,
+                0,
+                "player/pl_slosh1.wav",
+                volume,
+                0.80000001,
+                0,
+                100);
+          }
+          else if ( soundIndex == 2 )
+          {
+            CPlayerMove_PlaySoundFX(
+              self,
+              self->movement->playerindex,
+              self->movement->origin,
+              0,
+              "player/pl_slosh2.wav",
+              volume,
+              0.80000001,
+              0,
+              100);
+          }
+          else if ( soundIndex == 3 )
+          {
+            CPlayerMove_PlaySoundFX(
+              self,
+              self->movement->playerindex,
+              self->movement->origin,
+              0,
+              "player/pl_slosh4.wav",
+              volume,
+              0.80000001,
+              0,
+              100);
+          }
+          return;
+        case 7:
+          if ( CPlayerMove::PlayStepSound(int,float,bool)::iSkipStep )
+          {
+            if ( CPlayerMove::PlayStepSound(int,float,bool)::iSkipStep == 3 )
+              CPlayerMove::PlayStepSound(int,float,bool)::iSkipStep = 0;
+            else
+              ++CPlayerMove::PlayStepSound(int,float,bool)::iSkipStep;
+            if ( soundIndex == 1 )
+            {
+              CPlayerMove_PlaySoundFX(
+                self,
+                self->movement->playerindex,
+                self->movement->origin,
+                3,
+                "player/pl_wade2.wav",
+                volume,
+                0.80000001,
+                0,
+                100);
+            }
+            else if ( soundIndex <= 1 )
+            {
+              if ( !soundIndex )
+                CPlayerMove_PlaySoundFX(
+                  self,
+                  self->movement->playerindex,
+                  self->movement->origin,
+                  3,
+                  "player/pl_wade1.wav",
+                  volume,
+                  0.80000001,
+                  0,
+                  100);
+            }
+            else if ( soundIndex == 2 )
+            {
+              CPlayerMove_PlaySoundFX(
+                self,
+                self->movement->playerindex,
+                self->movement->origin,
+                3,
+                "player/pl_wade3.wav",
+                volume,
+                0.80000001,
+                0,
+                100);
+            }
+            else if ( soundIndex == 3 )
+            {
+              CPlayerMove_PlaySoundFX(
+                self,
+                self->movement->playerindex,
+                self->movement->origin,
+                3,
+                "player/pl_wade4.wav",
+                volume,
+                0.80000001,
+                0,
+                100);
+            }
+          }
+          else
+          {
+            CPlayerMove::PlayStepSound(int,float,bool)::iSkipStep = 1;
+          }
+          return;
+        case 8:
+          if ( soundIndex == 1 )
+          {
+            emitterMovement = self->movement;
+            soundVolume = volume;
+            soundName = "player/pl_ladder3.wav";
+          }
+          else if ( soundIndex <= 1 )
+          {
+            if ( soundIndex )
+              return;
+            emitterMovement = self->movement;
+            soundVolume = volume;
+            soundName = "player/pl_ladder1.wav";
+          }
+          else if ( soundIndex == 2 )
+          {
+            emitterMovement = self->movement;
+            soundVolume = volume;
+            soundName = "player/pl_ladder2.wav";
+          }
+          else
+          {
+            if ( soundIndex != 3 )
+              return;
+            emitterMovement = self->movement;
+            soundVolume = volume;
+            soundName = "player/pl_ladder4.wav";
+          }
+  LABEL_30:
+          CPlayerMove_PlaySoundFX(
+            self,
+            emitterMovement->playerindex,
+            emitterMovement->origin,
+            4,
+            soundName,
+            soundVolume,
+            0.80000001,
+            0,
+            100);
+          return;
+        case 9:
+          if ( soundIndex == 1 )
+          {
+            CPlayerMove_PlaySoundFX(
+              self,
+              self->movement->playerindex,
+              self->movement->origin,
+              0,
+              "player/pl_wood3.wav",
+              volume,
+              0.80000001,
+              0,
+              100);
+          }
+          else if ( soundIndex <= 1 )
+          {
+            if ( !soundIndex )
+              CPlayerMove_PlaySoundFX(
+                self,
+                self->movement->playerindex,
+                self->movement->origin,
+                0,
+                "player/pl_wood1.wav",
+                volume,
+                0.80000001,
+                0,
+                100);
+          }
+          else if ( soundIndex == 2 )
+          {
+            CPlayerMove_PlaySoundFX(
+              self,
+              self->movement->playerindex,
+              self->movement->origin,
+              0,
+              "player/pl_wood2.wav",
+              volume,
+              0.80000001,
+              0,
+              100);
+          }
+          else if ( soundIndex == 3 )
+          {
+            CPlayerMove_PlaySoundFX(
+              self,
+              self->movement->playerindex,
+              self->movement->origin,
+              0,
+              "player/pl_wood4.wav",
+              volume,
+              0.80000001,
+              0,
+              100);
+          }
+          return;
+        case 10:
+          if ( soundIndex == 1 )
+          {
+            CPlayerMove_PlaySoundFX(
+              self,
+              self->movement->playerindex,
+              self->movement->origin,
+              0,
+              "player/pl_organic3.wav",
+              volume,
+              0.80000001,
+              0,
+              100);
+          }
+          else if ( soundIndex <= 1 )
+          {
+            if ( !soundIndex )
+              CPlayerMove_PlaySoundFX(
+                self,
+                self->movement->playerindex,
+                self->movement->origin,
+                0,
+                "player/pl_organic1.wav",
+                volume,
+                0.80000001,
+                0,
+                100);
+          }
+          else if ( soundIndex == 2 )
+          {
+            CPlayerMove_PlaySoundFX(
+              self,
+              self->movement->playerindex,
+              self->movement->origin,
+              0,
+              "player/pl_organic2.wav",
+              volume,
+              0.80000001,
+              0,
+              100);
+          }
+          else if ( soundIndex == 3 )
+          {
+            CPlayerMove_PlaySoundFX(
+              self,
+              self->movement->playerindex,
+              self->movement->origin,
+              0,
+              "player/pl_organic4.wav",
+              volume,
+              0.80000001,
+              0,
+              100);
+          }
+          return;
+        case 11:
+          if ( self->movement->randomLong(0, 1) )
+            soundIndex += 4;
+          switch ( soundIndex )
+          {
+            case 0:
+              CPlayerMove_PlaySoundFX(
+                self,
+                self->movement->playerindex,
+                self->movement->origin,
+                0,
+                "player/pl_snow1.wav",
+                volume,
+                0.80000001,
+                0,
+                100);
+              break;
+            case 1:
+              CPlayerMove_PlaySoundFX(
+                self,
+                self->movement->playerindex,
+                self->movement->origin,
+                0,
+                "player/pl_snow3.wav",
+                volume,
+                0.80000001,
+                0,
+                100);
+              break;
+            case 2:
+              CPlayerMove_PlaySoundFX(
+                self,
+                self->movement->playerindex,
+                self->movement->origin,
+                0,
+                "player/pl_snow2.wav",
+                volume,
+                0.80000001,
+                0,
+                100);
+              break;
+            case 3:
+              CPlayerMove_PlaySoundFX(
+                self,
+                self->movement->playerindex,
+                self->movement->origin,
+                0,
+                "player/pl_snow4.wav",
+                volume,
+                0.80000001,
+                0,
+                100);
+              break;
+            case 4:
+              CPlayerMove_PlaySoundFX(
+                self,
+                self->movement->playerindex,
+                self->movement->origin,
+                0,
+                "player/pl_snow5.wav",
+                volume,
+                0.80000001,
+                0,
+                100);
+              break;
+            case 5:
+              CPlayerMove_PlaySoundFX(
+                self,
+                self->movement->playerindex,
+                self->movement->origin,
+                0,
+                "player/pl_snow6.wav",
+                volume,
+                0.80000001,
+                0,
+                100);
+              break;
+            case 6:
+              CPlayerMove_PlaySoundFX(
+                self,
+                self->movement->playerindex,
+                self->movement->origin,
+                0,
+                "player/pl_snow7.wav",
+                volume,
+                0.80000001,
+                0,
+                100);
+              break;
+            case 7:
+              CPlayerMove_PlaySoundFX(
+                self,
+                self->movement->playerindex,
+                self->movement->origin,
+                0,
+                "player/pl_snow8.wav",
+                volume,
+                0.80000001,
+                0,
+                100);
+              break;
+            default:
+              return;
+          }
+          return;
+        default:
+          if ( self->movement->randomLong(0, 1) )
+            soundIndex += 4;
+          switch ( soundIndex )
+          {
+            case 0:
+              emitterMovement = self->movement;
+              soundVolume = volume;
+              soundName = "player/pl_step1.wav";
+              goto LABEL_30;
+            case 1:
+              emitterMovement = self->movement;
+              soundVolume = volume;
+              soundName = "player/pl_step3.wav";
+              goto LABEL_30;
+            case 2:
+              emitterMovement = self->movement;
+              soundVolume = volume;
+              soundName = "player/pl_step2.wav";
+              goto LABEL_30;
+            case 3:
+              emitterMovement = self->movement;
+              soundVolume = volume;
+              soundName = "player/pl_step4.wav";
+              goto LABEL_30;
+            case 4:
+              emitterMovement = self->movement;
+              soundVolume = volume;
+              soundName = "player/pl_step5.wav";
+              goto LABEL_30;
+            case 5:
+              emitterMovement = self->movement;
+              soundVolume = volume;
+              soundName = "player/pl_step6.wav";
+              goto LABEL_30;
+            case 6:
+              emitterMovement = self->movement;
+              soundVolume = volume;
+              soundName = "player/pl_step7.wav";
+              goto LABEL_30;
+            case 7:
+              emitterMovement = self->movement;
+              soundVolume = volume;
+              soundName = "player/pl_step8.wav";
+              goto LABEL_30;
+            default:
+              return;
+          }
+          return;
+      }
+    }
+  }
