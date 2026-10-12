@@ -1,0 +1,5 @@
+func_name: CScriptDictionary::CIterator::operator!=(const CIterator&) const
+func_va: '0x1b28d2'
+func_rva: '0x1b28d2'
+func_size: '0x10'
+func_sig: 8B 44 24 ?? 8B 54 24 ?? 8B 08 39 0A 0F 95 C0 C3

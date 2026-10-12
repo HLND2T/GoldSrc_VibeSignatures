@@ -1,0 +1,380 @@
+func_name: CASEntityFuncs_InitializeEntity
+func_va: '0x2a9e5a'
+disasm_code: |-
+  .text:002A9E5A                 push    ebp
+  .text:002A9E5B                 mov     ebp, esp
+  .text:002A9E5D                 push    edi
+  .text:002A9E5E                 push    esi
+  .text:002A9E5F                 push    ebx
+  .text:002A9E60                 sub     esp, 8Ch
+  .text:002A9E66                 call    __x86_get_pc_thunk_si
+  .text:002A9E6B                 add     esi, (offset qword_B14000 - $)
+  .text:002A9E71                 mov     eax, [ebp+entity]
+  .text:002A9E74                 test    eax, eax
+  .text:002A9E76                 jz      loc_2AA0BE
+  .text:002A9E7C                 mov     edx, [eax+4]
+  .text:002A9E7F                 test    edx, edx
+  .text:002A9E81                 jz      loc_2AA082
+  .text:002A9E87                 mov     ecx, [edx+208h]
+  .text:002A9E8D                 mov     [ebp+edict], ecx
+  .text:002A9E90                 mov     ebx, [ebp+classname]
+  .text:002A9E93                 mov     edi, [ebx+14h]
+  .text:002A9E96                 mov     [ebp+data.class_name], edi
+  .text:002A9E99                 lea     eax, (aConstStringTCl+0Fh - 0B14000h)[esi]; "classname"
+  .text:002A9E9F                 mov     [ebp+data.key], eax
+  .text:002A9EA2                 mov     [ebp+data.value], edi
+  .text:002A9EA5                 mov     [ebp+data.handled], 0
+  .text:002A9EAC                 lea     edx, [ebp+data]
+  .text:002A9EAF                 mov     [ebp+var_80], edx
+  .text:002A9EB2                 ; data
+  .text:002A9EB2                 mov     [esp+4], edx; data
+  .text:002A9EB6                 mov     ecx, [ebp+edict]
+  .text:002A9EB9                 ; edict
+  .text:002A9EB9                 mov     [esp], ecx; edict
+  .text:002A9EBC                 mov     ebx, esi
+  .text:002A9EBE                 call    DispatchKeyValue
+  .text:002A9EC3                 mov     ebx, [ebp+keyvalues]
+  .text:002A9EC6                 test    ebx, ebx
+  .text:002A9EC8                 jz      short loc_2A9F3A
+  .text:002A9ECA                 lea     edi, [ebp+name+8]
+  .text:002A9ECD                 mov     dword ptr [ebp+name], edi
+  .text:002A9ED0                 mov     dword ptr [ebp+name+8], 69727473h
+  .text:002A9ED7                 mov     word ptr [ebp+name+0Ch], 676Eh
+  .text:002A9EDD                 mov     dword ptr [ebp+name+4], 6
+  .text:002A9EE4                 mov     [ebp+name+0Eh], 0
+  .text:002A9EE8                 mov     edx, ds:(CASServerManager_pInstance - 0B14000h)[esi]
+  .text:002A9EEE                 test    edx, edx
+  .text:002A9EF0                 jz      loc_2AA0C8
+  .text:002A9EF6                 lea     ebx, [ebp+name]
+  .text:002A9EF9                 mov     [ebp+self], ebx
+  .text:002A9EFC                 ; name
+  .text:002A9EFC                 mov     [esp+4], ebx; name
+  .text:002A9F00                 ; manager
+  .text:002A9F00                 mov     [esp], edx; manager
+  .text:002A9F03                 mov     ebx, esi
+  .text:002A9F05                 call    CASBaseManager__GetTypeInfoByName
+  .text:002A9F0A                 mov     [ebp+other], eax
+  .text:002A9F0D                 mov     eax, dword ptr [ebp+name]
+  .text:002A9F10                 cmp     eax, edi
+  .text:002A9F12                 jz      short loc_2A9F1E
+  .text:002A9F14                 ; void *
+  .text:002A9F14                 mov     [esp], eax; void *
+  .text:002A9F17                 mov     ebx, esi
+  .text:002A9F19                 call    __ZdlPv; operator delete(void *)
+  .text:002A9F1E                 mov     edi, [ebp+other]
+  .text:002A9F21                 test    edi, edi
+  .text:002A9F23                 jz      loc_2AA08E
+  .text:002A9F29                 mov     edx, [ebp+keyvalues]
+  .text:002A9F2C                 ; dictionary
+  .text:002A9F2C                 mov     [esp], edx; dictionary
+  .text:002A9F2F                 mov     ebx, esi
+  .text:002A9F31                 call    CScriptDictionary__IsEmpty
+  .text:002A9F36                 test    al, al
+  .text:002A9F38                 jz      short loc_2A9F48
+  .text:002A9F3A                 mov     eax, 1
+  .text:002A9F3F                 lea     esp, [ebp-0Ch]
+  .text:002A9F42                 pop     ebx
+  .text:002A9F43                 pop     esi
+  .text:002A9F44                 pop     edi
+  .text:002A9F45                 pop     ebp
+  .text:002A9F46                 retn
+  .text:002A9F48                 mov     eax, [ebp+self]
+  .text:002A9F4B                 ; string
+  .text:002A9F4B                 mov     [esp], eax; string
+  .text:002A9F4E                 call    CString__Constructor
+  .text:002A9F53                 mov     edi, [ebp+other]
+  .text:002A9F56                 mov     eax, [edi]
+  .text:002A9F58                 mov     [esp], edi
+  .text:002A9F5B                 call    dword ptr [eax+30h]
+  .text:002A9F5E                 mov     [ebp+typeId], eax
+  .text:002A9F61                 lea     edi, [ebp+result]
+  .text:002A9F64                 mov     edx, [ebp+keyvalues]
+  .text:002A9F67                 ; dictionary
+  .text:002A9F67                 mov     [esp+4], edx; dictionary
+  .text:002A9F6B                 ; result
+  .text:002A9F6B                 mov     [esp], edi; result
+  .text:002A9F6E                 call    CScriptDictionary__begin
+  .text:002A9F73                 sub     esp, 4
+  .text:002A9F76                 lea     ebx, [ebp+var_54]
+  .text:002A9F79                 mov     [ebp+other], ebx
+  .text:002A9F7C                 lea     ecx, (aCasentityfuncs - 0B14000h)[esi]; "CASEntityFuncs::CreateCustomEntity: fai"...
+  .text:002A9F82                 mov     [ebp+format], ecx
+  .text:002A9F88                 jmp     short loc_2A9FBE
+  .text:002A9F8A                 call    CScriptDictionary__CIterator__GetKey
+  .text:002A9F8F                 mov     eax, [eax+14h]
+  .text:002A9F92                 mov     [ebp+data.key], eax
+  .text:002A9F95                 mov     edx, dword ptr [ebp+name+14h]
+  .text:002A9F98                 mov     [ebp+data.value], edx
+  .text:002A9F9B                 mov     [ebp+data.handled], 0
+  .text:002A9FA2                 mov     ecx, [ebp+var_80]
+  .text:002A9FA5                 ; data
+  .text:002A9FA5                 mov     [esp+4], ecx; data
+  .text:002A9FA9                 mov     eax, [ebp+edict]
+  .text:002A9FAC                 ; edict
+  .text:002A9FAC                 mov     [esp], eax; edict
+  .text:002A9FAF                 call    DispatchKeyValue
+  .text:002A9FB4                 ; iterator
+  .text:002A9FB4                 mov     [esp], edi; iterator
+  .text:002A9FB7                 mov     ebx, esi
+  .text:002A9FB9                 ; CScriptDictionary_CIterator_operator_PP: prefix operator++(), void return; only iterator this. Never choose the byte-identical postfix body.
+  .text:002A9FB9                 call    CScriptDictionary_CIterator_operator_PP; CScriptDictionary_CIterator_operator_PP: prefix operator++(), void return; only iterator this. Never choose the byte-identical postfix body.
+  .text:002A9FBE                 mov     eax, [ebp+keyvalues]
+  .text:002A9FC1                 ; dictionary
+  .text:002A9FC1                 mov     [esp+4], eax; dictionary
+  .text:002A9FC5                 mov     edx, [ebp+other]
+  .text:002A9FC8                 ; result
+  .text:002A9FC8                 mov     [esp], edx; result
+  .text:002A9FCB                 mov     ebx, esi
+  .text:002A9FCD                 call    CScriptDictionary__end
+  .text:002A9FD2                 sub     esp, 4
+  .text:002A9FD5                 mov     ecx, [ebp+other]
+  .text:002A9FD8                 ; other
+  .text:002A9FD8                 mov     [esp+4], ecx; other
+  .text:002A9FDC                 ; iterator
+  .text:002A9FDC                 mov     [esp], edi; iterator
+  .text:002A9FDF                 call    CScriptDictionary__CIterator__operator_NE
+  .text:002A9FE4                 test    al, al
+  .text:002A9FE6                 jz      loc_2AA070
+  .text:002A9FEC                 mov     eax, [ebp+typeId]
+  .text:002A9FEF                 ; typeId
+  .text:002A9FEF                 mov     [esp+8], eax; typeId
+  .text:002A9FF3                 mov     edx, [ebp+self]
+  .text:002A9FF6                 ; value
+  .text:002A9FF6                 mov     [esp+4], edx; value
+  .text:002A9FFA                 ; iterator
+  .text:002A9FFA                 mov     [esp], edi; iterator
+  .text:002A9FFD                 call    CScriptDictionary__CIterator__GetValue
+  .text:002AA002                 ; iterator
+  .text:002AA002                 mov     [esp], edi; iterator
+  .text:002AA005                 test    al, al
+  .text:002AA007                 jnz     short loc_2A9F8A
+  .text:002AA009                 mov     ebx, esi
+  .text:002AA00B                 call    CScriptDictionary__CIterator__GetKey
+  .text:002AA010                 mov     ecx, [eax+14h]
+  .text:002AA013                 mov     [ebp+var_78], ecx
+  .text:002AA016                 mov     eax, ds:(CASLog_pInstance - 0B14000h)[esi]
+  .text:002AA01C                 test    eax, eax
+  .text:002AA01E                 jz      short loc_2AA048
+  .text:002AA020                 mov     edx, [ebp+var_78]
+  .text:002AA023                 mov     [esp+0Ch], edx
+  .text:002AA027                 mov     ecx, [ebp+format]
+  .text:002AA02D                 ; format
+  .text:002AA02D                 mov     [esp+8], ecx; format
+  .text:002AA031                 ; level
+  .text:002AA031                 mov     dword ptr [esp+4], 0; level
+  .text:002AA039                 ; logger
+  .text:002AA039                 mov     [esp], eax; logger
+  .text:002AA03C                 mov     ebx, esi
+  .text:002AA03E                 call    CASLog__Warning
+  .text:002AA043                 jmp     loc_2A9FB4
+  .text:002AA048                 ; unsigned int
+  .text:002AA048                 mov     dword ptr [esp], 4; unsigned int
+  .text:002AA04F                 call    __Znwj; operator new(uint)
+  .text:002AA054                 mov     [ebp+var_88], eax
+  .text:002AA05A                 ; log
+  .text:002AA05A                 mov     [esp], eax; log
+  .text:002AA05D                 call    CASLog__CASLog
+  .text:002AA062                 mov     eax, [ebp+var_88]
+  .text:002AA068                 mov     ds:(CASLog_pInstance - 0B14000h)[esi], eax
+  .text:002AA06E                 jmp     short loc_2AA020
+  .text:002AA070                 mov     edi, [ebp+self]
+  .text:002AA073                 ; self
+  .text:002AA073                 mov     [esp], edi; self
+  .text:002AA076                 mov     ebx, esi
+  .text:002AA078                 call    CString__dtor
+  .text:002AA07D                 jmp     loc_2A9F3A
+  .text:002AA082                 mov     [ebp+edict], 0
+  .text:002AA089                 jmp     loc_2A9E90
+  .text:002AA08E                 mov     edi, ds:(CASLog_pInstance - 0B14000h)[esi]
+  .text:002AA094                 test    edi, edi
+  .text:002AA096                 jz      short loc_2AA0EF
+  .text:002AA098                 lea     ecx, (aCasentityfuncs_0 - 0B14000h)[esi]; "CASEntityFuncs::CreateCustomEntity: fai"...
+  .text:002AA09E                 ; format
+  .text:002AA09E                 mov     [esp+8], ecx; format
+  .text:002AA0A2                 ; level
+  .text:002AA0A2                 mov     dword ptr [esp+4], 0; level
+  .text:002AA0AA                 ; log
+  .text:002AA0AA                 mov     [esp], edi; log
+  .text:002AA0AD                 mov     ebx, esi
+  .text:002AA0AF                 call    CASLog__Error
+  .text:002AA0B4                 xor     eax, eax
+  .text:002AA0B6                 lea     esp, [ebp-0Ch]
+  .text:002AA0B9                 pop     ebx
+  .text:002AA0BA                 pop     esi
+  .text:002AA0BB                 pop     edi
+  .text:002AA0BC                 pop     ebp
+  .text:002AA0BD                 retn
+  .text:002AA0BE                 xor     eax, eax
+  .text:002AA0C0                 lea     esp, [ebp-0Ch]
+  .text:002AA0C3                 pop     ebx
+  .text:002AA0C4                 pop     esi
+  .text:002AA0C5                 pop     edi
+  .text:002AA0C6                 pop     ebp
+  .text:002AA0C7                 retn
+  .text:002AA0C8                 ; unsigned int
+  .text:002AA0C8                 mov     dword ptr [esp], 54h ; 'T'; unsigned int
+  .text:002AA0CF                 mov     ebx, esi
+  .text:002AA0D1                 call    __Znwj; operator new(uint)
+  .text:002AA0D6                 mov     [ebp+other], eax
+  .text:002AA0D9                 ; manager
+  .text:002AA0D9                 mov     [esp], eax; manager
+  .text:002AA0DC                 call    CASServerManager__Constructor
+  .text:002AA0E1                 mov     edx, [ebp+other]
+  .text:002AA0E4                 mov     ds:(CASServerManager_pInstance - 0B14000h)[esi], edx
+  .text:002AA0EA                 jmp     loc_2A9EF6
+  .text:002AA0EF                 ; unsigned int
+  .text:002AA0EF                 mov     dword ptr [esp], 4; unsigned int
+  .text:002AA0F6                 mov     ebx, esi
+  .text:002AA0F8                 call    __Znwj; operator new(uint)
+  .text:002AA0FD                 mov     edi, eax
+  .text:002AA0FF                 ; log
+  .text:002AA0FF                 mov     [esp], eax; log
+  .text:002AA102                 call    CASLog__CASLog
+  .text:002AA107                 mov     ds:(CASLog_pInstance - 0B14000h)[esi], edi
+  .text:002AA10D                 jmp     short loc_2AA098
+  .text:002AA10F                 mov     edi, eax
+  .text:002AA111                 mov     ebx, [ebp+self]
+  .text:002AA114                 ; self
+  .text:002AA114                 mov     [esp], ebx; self
+  .text:002AA117                 mov     ebx, esi
+  .text:002AA119                 call    CString__dtor
+  .text:002AA11E                 mov     [esp], edi
+  .text:002AA121                 call    __Unwind_Resume
+  .text:002AA126                 mov     [ebp+other], eax
+  .text:002AA129                 mov     edx, dword ptr [ebp+name]
+  .text:002AA12C                 cmp     edx, edi
+  .text:002AA12E                 jz      short loc_2AA13A
+  .text:002AA130                 ; void *
+  .text:002AA130                 mov     [esp], edx; void *
+  .text:002AA133                 mov     ebx, esi
+  .text:002AA135                 call    __ZdlPv; operator delete(void *)
+  .text:002AA13A                 mov     ecx, [ebp+other]
+  .text:002AA13D                 mov     [esp], ecx
+  .text:002AA140                 mov     ebx, esi
+  .text:002AA142                 call    __Unwind_Resume
+  .text:002AA147                 mov     [ebp+self], eax
+  .text:002AA14A                 mov     eax, [ebp+other]
+  .text:002AA14D                 ; void *
+  .text:002AA14D                 mov     [esp], eax; void *
+  .text:002AA150                 mov     ebx, esi
+  .text:002AA152                 call    __ZdlPv; operator delete(void *)
+  .text:002AA157                 mov     ecx, [ebp+self]
+  .text:002AA15A                 mov     [ebp+other], ecx
+  .text:002AA15D                 jmp     short loc_2AA129
+  .text:002AA15F                 mov     edi, eax
+  .text:002AA161                 mov     ebx, [ebp+var_88]
+  .text:002AA167                 ; void *
+  .text:002AA167                 mov     [esp], ebx; void *
+  .text:002AA16A                 mov     ebx, esi
+  .text:002AA16C                 call    __ZdlPv; operator delete(void *)
+  .text:002AA171                 jmp     short loc_2AA111
+  .text:002AA173                 mov     [ebp+other], eax
+  .text:002AA176                 ; void *
+  .text:002AA176                 mov     [esp], edi; void *
+  .text:002AA179                 mov     ebx, esi
+  .text:002AA17B                 call    __ZdlPv; operator delete(void *)
+  .text:002AA180                 mov     esi, [ebp+other]
+  .text:002AA183                 mov     [esp], esi
+  .text:002AA186                 call    __Unwind_Resume
+procedure: |-
+  // Static CASEntityFuncs::InitializeEntity(const CString&, CBaseEntity*, CScriptDictionary*). No private server source or usable DWARF; mapped by 5.15 ELF symbols and cross-platform instructions. Linux begin/end take hidden result first, dictionary second; callee ret 4 consumes only the hidden pointer. Explicit __usercall argument locations retain this order; actual ret instruction remains authoritative. Iterator is {node,dictionary}, 8 bytes. The compiler reuses storage for std::string type_name then CString value; union is an analysis view, not a runtime API type.
+  bool __cdecl CASEntityFuncs__InitializeEntity(
+          const SvenStringView *classname,
+          SvenEntityView *entity,
+          const SvenDictionaryView *keyvalues)
+  {
+    SvenEntVarsView *vars; // edx
+    CASManagerTypeQueryView *manager; // edx
+    void *logger; // eax
+    void *errorLogger; // edi
+    void *newLogger; // [esp+10h] [ebp-88h]
+    void *edict; // [esp+1Ch] [ebp-7Ch]
+    const char *data; // [esp+20h] [ebp-78h]
+    int stringTypeId; // [esp+24h] [ebp-74h]
+    asITypeInfo *stringTypeInfo; // [esp+2Ch] [ebp-6Ch]
+    CASManagerTypeQueryView *other; // [esp+2Ch] [ebp-6Ch]
+    SvenDictionaryIteratorView iterator; // [esp+3Ch] [ebp-5Ch] BYREF
+    SvenDictionaryIteratorView endIterator; // [esp+44h] [ebp-54h] BYREF
+    SvenKeyValueData kv; // [esp+4Ch] [ebp-4Ch] BYREF
+    SvenTypeNameOrValue typeNameOrValue; // [esp+5Ch] [ebp-3Ch] BYREF
+
+    if ( !entity )
+      return 0;
+    vars = entity->vars;
+    if ( vars )
+      edict = vars->edict;
+    else
+      edict = nullptr;
+    kv.class_name = classname->data;
+    kv.key = "classname";
+    kv.value = kv.class_name;
+    kv.handled = 0;
+    DispatchKeyValue(edict, &kv);
+    if ( !keyvalues )
+      return 1;
+    typeNameOrValue.type_name.data = typeNameOrValue.type_name.storage.local;
+    strcpy(typeNameOrValue.type_name.storage.local, "string");
+    typeNameOrValue.type_name.length = 6;
+    manager = CASServerManager_pInstance;
+    if ( !CASServerManager_pInstance )
+    {
+      other = (CASManagerTypeQueryView *)operator new(0x54u);
+      CASServerManager__Constructor(other);
+      manager = other;
+      CASServerManager_pInstance = other;
+    }
+    stringTypeInfo = CASBaseManager__GetTypeInfoByName(manager, &typeNameOrValue.type_name);
+    if ( (unsigned __int8 *)typeNameOrValue.type_name.data != &typeNameOrValue.value.padding[8] )
+      operator delete(typeNameOrValue.type_name.data);
+    if ( stringTypeInfo )
+    {
+      if ( !CScriptDictionary__IsEmpty(keyvalues) )
+      {
+        CString__Constructor((SvenStringView *)&typeNameOrValue);
+        stringTypeId = (*(int (__cdecl **)(asITypeInfo *))(*(_DWORD *)stringTypeInfo + 48))(stringTypeInfo);
+        CScriptDictionary__begin(&iterator, keyvalues);
+        while ( 1 )
+        {
+          CScriptDictionary__end(&endIterator, keyvalues);
+          if ( !CScriptDictionary__CIterator__operator_NE(&iterator, &endIterator) )
+            break;
+          if ( CScriptDictionary__CIterator__GetValue(&iterator, &typeNameOrValue, stringTypeId) )
+          {
+            kv.key = CScriptDictionary__CIterator__GetKey(&iterator)->data;
+            kv.value = typeNameOrValue.value.data;
+            kv.handled = 0;
+            DispatchKeyValue(edict, &kv);
+          }
+          else
+          {
+            data = CScriptDictionary__CIterator__GetKey(&iterator)->data;
+            logger = CASLog_pInstance;
+            if ( !CASLog_pInstance )
+            {
+              newLogger = (void *)operator new(4u);
+              CASLog::CASLog(newLogger);
+              logger = newLogger;
+              CASLog_pInstance = newLogger;
+            }
+            CASLog__Warning(
+              logger,
+              0,
+              "CASEntityFuncs::CreateCustomEntity: failed to retrieve value for key '%s' from dictionary!\n",
+              data);
+          }
+          CScriptDictionary_CIterator_operator_PP(&iterator);
+        }
+        CString::dtor((CStringReference *)&typeNameOrValue);
+      }
+      return 1;
+    }
+    errorLogger = CASLog_pInstance;
+    if ( !CASLog_pInstance )
+    {
+      errorLogger = (void *)operator new(4u);
+      CASLog::CASLog(errorLogger);
+      CASLog_pInstance = errorLogger;
+    }
+    CASLog::Error(errorLogger, 0, "CASEntityFuncs::CreateCustomEntity: failed to get string type!\n");
+    return 0;
+  }
