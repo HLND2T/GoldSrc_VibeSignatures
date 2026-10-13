@@ -1,0 +1,10 @@
+func_name: vgui2::Menu::AddMenuItem(char const*, vgui2::KeyValues*, vgui2::Panel*, vgui2::KeyValues const*)
+func_va: '0x10097200'
+func_rva: '0x97200'
+func_size: '0x5b'
+func_sig: 55 8B EC 83 EC 44 53 56 57 51 8D 7D ?? B9 11 00 00 00 B8 CC CC CC CC F3 AB 59 89 4D ?? 8B F4 8B 45 ?? 50 8B 4D ??
+  51 8B 55 ?? 52 8B 45 ?? 50 8B 4D ?? 51 8B 55 ?? 8B 02 8B 4D ?? FF 90 ?? ?? ?? ?? 3B F4 E8 4B CE 03 00 5F 5E 5B 83 C4 44
+  3B EC E8 ?? ?? ?? ?? 8B E5 5D C2 10 00
+vtable_name: vgui2::Menu
+vfunc_offset: '0x220'
+vfunc_index: 136

@@ -1,0 +1,8 @@
+func_name: vgui2::ComboBox::AddItem(wchar_t const*, KeyValues const*)
+func_va: '0x2707ae60'
+func_rva: '0x7ae60'
+func_size: '0xb2'
+func_sig: 55 8B EC 51 53 56 8B 75 ?? 57 8B D9 56 89 5D ?? E8 ?? ?? ?? ?? 83 C0 04 83 C4 04 24 FC E8 ?? ?? ?? ??
+vtable_name: vgui2::ComboBox
+vfunc_offset: '0x30c'
+vfunc_index: 195

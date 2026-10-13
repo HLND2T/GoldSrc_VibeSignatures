@@ -1,0 +1,8 @@
+func_name: vgui2::ComboBox::IsItemIDValid(int)
+func_va: '0x1008ec60'
+func_rva: '0x8ec60'
+func_size: '0x14'
+func_sig: 55 8B EC 8B 89 ?? ?? ?? ?? 8B 01 8B 80 ?? ?? ?? ?? 5D FF E0
+vtable_name: vgui2::ComboBox
+vfunc_offset: '0x320'
+vfunc_index: 200

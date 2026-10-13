@@ -1,0 +1,8 @@
+func_name: vgui2::BuildModeDialog::SetActiveControl(vgui2::Panel*)
+func_va: '0x100500e0'
+func_rva: '0x500e0'
+func_size: '0x5b7'
+func_sig: 55 8B EC 6A FF 68 ?? ?? ?? ?? 64 A1 ?? ?? ?? ?? 50 81 EC 90 00 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 53 56 57 50
+vtable_name: vgui2::BuildModeDialog
+vfunc_offset: '0x2f8'
+vfunc_index: 190

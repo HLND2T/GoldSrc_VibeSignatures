@@ -92,6 +92,19 @@ modules:
           - ISurface_SupportsFeature.{platform}.yaml
           - IInput_GetAppModalSurface.{platform}.yaml
           - ISchemeManager_ReloadSchemes.{platform}.yaml
+      - name: find-client-ComboBox-Unicode
+        expected_input:
+          - ClientVGUI_KeyValues_vtable.{platform}.yaml
+        expected_output:
+          - vgui2_ComboBox_vtable.{platform}.yaml
+          - CSpectatorGUI_UpdateSpectatorPlayerList.{platform}.yaml
+          - vgui2_ComboBox_AddItemW.{platform}.yaml
+          - vgui2_ComboBox_IsItemIDValid.{platform}.yaml
+          - vgui2_ComboBox_UpdateItemW.{platform}.yaml
+        expected_output_windows:
+          - CSpectatorGUI_vtable2.windows.yaml
+        expected_output_linux:
+          - CSpectatorGUI_vtable.linux.yaml
       - name: find-client-vgui-keyvalues
         expected_output:
           - ClientVGUI_KeyValues_vtable.{platform}.yaml
@@ -185,6 +198,22 @@ modules:
         category: func
       - name: ClientVGUI_Panel_Init
         category: func
+      - name: vgui2_ComboBox_vtable
+        category: vtable
+      - name: CSpectatorGUI_vtable2
+        category: vtable
+        platform: windows
+      - name: CSpectatorGUI_vtable
+        category: vtable
+        platform: linux
+      - name: CSpectatorGUI_UpdateSpectatorPlayerList
+        category: vfunc
+      - name: vgui2_ComboBox_AddItemW
+        category: vfunc
+      - name: vgui2_ComboBox_IsItemIDValid
+        category: vfunc
+      - name: vgui2_ComboBox_UpdateItemW
+        category: vfunc
       - name: ClientVGUI_KeyValues_vtable
         category: vtable
       - name: ClientVGUI_KeyValues_LoadFromFile

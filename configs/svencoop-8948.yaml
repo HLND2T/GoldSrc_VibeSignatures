@@ -3635,6 +3635,23 @@ modules:
           - GameUI_RichText_InsertStringW.{platform}.yaml
         expected_output:
           - GameUI_RichText_CarriageReturn_branch.{platform}.yaml
+      - name: find-GameUI-ComboBox
+        expected_input:
+          - vgui2_Menu_vtable.{platform}.yaml
+          - KeyValues_vtable.{platform}.yaml
+        expected_output:
+          - vgui2_ComboBox_vtable.{platform}.yaml
+          - vgui2_Label_vtable.{platform}.yaml
+          - vgui2_BuildModeDialog_vtable.{platform}.yaml
+          - vgui2_BuildModeDialog_SetActiveControl.{platform}.yaml
+          - vgui2_ComboBox_AddItemA.{platform}.yaml
+          - vgui2_ComboBox_AddItemW.{platform}.yaml
+          - vgui2_ComboBox_GetMenu.{platform}.yaml
+          - vgui2_Menu_AddMenuItem_Message.{platform}.yaml
+          - vgui2_ComboBox_m_pDropDown.{platform}.yaml
+          - vgui2_Label_SetTextA.{platform}.yaml
+          - vgui2_Label_SetTextColorState.{platform}.yaml
+          - vgui2_Label_SetContentAlignment.{platform}.yaml
       - name: find-GameUI-Menu
         expected_input:
           - GameUI_PropertySheet_PerformLayout.{platform}.yaml
@@ -3877,6 +3894,34 @@ modules:
         platform: linux
       - name: CBasePanel_ctor
         category: func
+      - name: vgui2_ComboBox
+        category: struct
+      - name: vgui2_ComboBox_m_pDropDown
+        category: structmember
+        struct: vgui2_ComboBox
+        member: m_pDropDown
+      - name: vgui2_ComboBox_vtable
+        category: vtable
+      - name: vgui2_Label_vtable
+        category: vtable
+      - name: vgui2_BuildModeDialog_vtable
+        category: vtable
+      - name: vgui2_BuildModeDialog_SetActiveControl
+        category: vfunc
+      - name: vgui2_ComboBox_AddItemA
+        category: vfunc
+      - name: vgui2_ComboBox_AddItemW
+        category: vfunc
+      - name: vgui2_ComboBox_GetMenu
+        category: vfunc
+      - name: vgui2_Menu_AddMenuItem_Message
+        category: vfunc
+      - name: vgui2_Label_SetTextA
+        category: vfunc
+      - name: vgui2_Label_SetTextColorState
+        category: vfunc
+      - name: vgui2_Label_SetContentAlignment
+        category: vfunc
       - name: vgui2_Menu_vtable
         category: vtable
       - name: vgui2_Menu_PerformLayout

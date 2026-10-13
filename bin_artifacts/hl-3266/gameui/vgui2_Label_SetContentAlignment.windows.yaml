@@ -1,0 +1,9 @@
+func_name: vgui2::Label::SetContentAlignment(vgui2::Label::Alignment)
+func_va: '0x10043dd0'
+func_rva: '0x43dd0'
+func_size: '0x4d'
+func_sig: 55 8B EC 83 EC 44 53 56 57 51 8D 7D ?? B9 11 00 00 00 B8 CC CC CC CC F3 AB 59 89 4D ?? 8B 45 ?? 8B 4D ?? 89 48 ??
+  8B 45 ?? 8B 10 8B F4 8B 4D ?? FF 52 ?? 3B F4 E8 89 02 09 00 5F 5E 5B 83 C4 44 3B EC E8 ?? ?? ?? ?? 8B E5 5D C2 04 00
+vtable_name: vgui2::Label
+vfunc_offset: '0x22c'
+vfunc_index: 139
