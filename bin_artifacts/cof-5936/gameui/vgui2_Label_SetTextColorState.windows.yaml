@@ -1,0 +1,9 @@
+func_name: vgui2::Label::SetTextColorState(vgui2::Label::EColorState)
+func_va: '0x1005b077'
+func_rva: '0x5b077'
+func_size: '0x39'
+func_sig: 55 8B EC 51 89 4D ?? 8B 45 ?? 8B 88 ?? ?? ?? ?? 3B 4D ?? 74 ?? 8B 55 ?? 8B 45 ?? 89 82 ?? ?? ?? ?? 6A 00 6A 00 8B
+  4D ??
+vtable_name: vgui2::Label
+vfunc_offset: '0x244'
+vfunc_index: 145

@@ -1,0 +1,9 @@
+func_name: vgui2::ComboBox::UpdateItem(int,wchar_t const*,KeyValues const*)
+func_va: '0x10ec30'
+func_rva: '0x10ec30'
+func_size: '0x14b'
+func_sig: 55 89 E5 83 EC ?? 8B 45 ?? 89 75 ?? 8B 75 ?? 89 5D ?? 8B 4D ?? 89 7D ?? 8B 7D ?? 89 45 ?? 65 A1 ?? ?? ?? ?? 89 45
+  ??
+vtable_name: vgui2::ComboBox
+vfunc_offset: '0x320'
+vfunc_index: 200

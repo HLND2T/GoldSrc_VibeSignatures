@@ -47,6 +47,7 @@ GROUP_FILES = {
         "test_panel_bounds_identity.py",
         "test_x86_first_pass.py",
         "test_vgui_private_method_identity.py",
+        "test_combobox_unicode_identity.py",
         "test_richtext_identity.py",
         "test_host_basepal_store.py",
         "test_llm_diagnostics.py",

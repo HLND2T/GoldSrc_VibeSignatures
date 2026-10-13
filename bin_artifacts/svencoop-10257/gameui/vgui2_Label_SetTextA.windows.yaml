@@ -1,0 +1,8 @@
+func_name: vgui2::Label::SetText(char const*)
+func_va: '0x10027130'
+func_rva: '0x27130'
+func_size: '0x70'
+func_sig: 55 8B EC 8B 45 ?? 85 C0 53 56 8B F1 57 BF ?? ?? ?? ?? 0F 45 F8 8B 4E ?? 57 8B 01 FF 50 ?? 80 3F 23
+vtable_name: vgui2::Label
+vfunc_offset: '0x21c'
+vfunc_index: 135

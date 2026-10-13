@@ -1,0 +1,23 @@
+vtable_class: CSpectatorGUI
+vtable_symbol: ??_7CSpectatorGUI@@6B@_0
+vtable_va: '0x270ae274'
+vtable_rva: '0xae274'
+vtable_size: '0x40'
+vtable_numvfunc: 16
+vtable_entries:
+  0: '0x27033ca0'
+  1: '0x27033240'
+  2: '0x27033280'
+  3: '0x270332d0'
+  4: '0x27033300'
+  5: '0x27033310'
+  6: '0x27033360'
+  7: '0x27033320'
+  8: '0x27033530'
+  9: '0x270338a0'
+  10: '0x27033af0'
+  11: '0x27033cb0'
+  12: '0x27033cc0'
+  13: '0x27033cd0'
+  14: '0x27033d50'
+  15: '0x27033d60'

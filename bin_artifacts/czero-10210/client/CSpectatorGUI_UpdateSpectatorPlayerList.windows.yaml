@@ -1,0 +1,9 @@
+func_name: CSpectatorGUI::UpdateSpectatorPlayerList()
+func_va: '0x100b0ff0'
+func_rva: '0xb0ff0'
+func_size: '0x317'
+func_sig: 55 8B EC 6A FF 68 ?? ?? ?? ?? 64 A1 ?? ?? ?? ?? 50 81 EC 70 02 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 56 57 50 8D 45
+  ??
+vtable_name: CSpectatorGUI_vtable2
+vfunc_offset: '0x24'
+vfunc_index: 9
