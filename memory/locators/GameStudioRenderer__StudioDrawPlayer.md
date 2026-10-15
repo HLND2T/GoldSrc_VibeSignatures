@@ -21,8 +21,8 @@ tags:
 ## Availability
 
 - Declared in 8 client configs: cstrike-3248/3647/4554/6153/8684/10210, czero-8684/10210.
-- Platforms: Windows for all 8 configs; Linux too only in cstrike-10210, cstrike-6153 and
-  cstrike-8684 (the other five declare only `module_windows: client.dll`).
+- Platforms: Windows for all 8 configs; Linux also in cstrike-6153/8684/10210 and
+  czero-8684/10210. Only cstrike-3248/3647/4554 declare Windows alone.
 - Inlined / absent elsewhere: the CS-family prediction wrapper is the only owner of this slot.
   CZDS (`czeror-*`) has no prediction wrapper's inner `_StudioDrawPlayer`, and hl-*, cof-5936 and
   svencoop-10257 are not registered at all — no inner virtual may be manufactured for them.
@@ -64,3 +64,24 @@ tags:
   position plus the runtime signature uniqueness of the emitted `vfunc_sig`. In GCC builds the
   method is large and can be split, so the body is not used as a positive anchor.
 - Existence is family-bounded: do not synthesize this artifact for CZDS, HL, CoF or SvEngine.
+
+## Consumer integration: BulletPhysics issue #926
+
+- Trigger: CZ 10210 players disappear at particular view angles with BulletPhysics enabled.
+- Root cause: the public Studio interface can call the inner method directly, bypassing
+  the outer prediction wrapper. Hooking only `GameStudioRenderer_StudioDrawPlayer` does
+  not cover that path. The auxiliary bone-update flags then reach the inner method
+  without BulletPhysics establishing the owning entity, leaving physics AABBs near
+  their initial world-origin pose; the bbox hook can reject an otherwise visible player.
+- Correct integration: consume this separate symbol and hook the inner method when
+  available, with the outer method as the fallback for clients without an inner method.
+  Avoid applying the physics wrapper twice when an outer call forwards to the inner one.
+  Keep the existing outer symbol's identity unchanged.
+- Verification: on 2026-10-15, live CZ 10210 debugging found the outer method at RVA
+  `0x4b450` (slot 3), while the public interface dispatched through slot 25 to RVA
+  `0x4cc00`, matching the committed Windows artifact. A `flags=0x20` update reached
+  that inner method with the BP render entity sentinel still zero. Temporarily routing
+  the inner dispatch through the BP handler restored the entity sentinel and subsequent
+  rigid-body AABBs followed the player position instead of the world origin.
+- Scope: runtime evidence is CZ 10210 Windows; it does not establish visual compatibility
+  for the other configured binaries. The slot numbers above are evidence, not finder anchors.
