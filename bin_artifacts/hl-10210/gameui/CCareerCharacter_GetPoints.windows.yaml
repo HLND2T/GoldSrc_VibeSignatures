@@ -1,0 +1,5 @@
+func_name: CCareerCharacter::GetPoints() const
+func_va: '0x10013f60'
+func_rva: '0x13f60'
+func_size: '0xb'
+func_sig: 8B 01 85 C0 75 ?? C3 8B 40 ?? C3

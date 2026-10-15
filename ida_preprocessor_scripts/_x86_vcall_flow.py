@@ -293,6 +293,10 @@ def _transfer(block, incoming, platform, static_loads, collect=False):
                         )
             else:
                 state[target[1]] = state.get(source[1])
+        elif mnemonic.startswith("cmov") and len(operands) == 2:
+            # Flags are intentionally not evaluated: retain both possible
+            # origins, and fail closed when either origin is unknown.
+            write(operands[0], choice(read(operands[0]), read(operands[1])), ea)
         elif mnemonic in ("mov", "movzx", "movsx") and len(operands) == 2:
             if collect and operands[1][0] == "mem":
                 events["loads"].append(

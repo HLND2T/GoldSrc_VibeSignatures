@@ -1,0 +1,8 @@
+func_name: vgui2::TextImage::SetText(wchar_t const*)
+func_va: '0x1004b870'
+func_rva: '0x4b870'
+func_size: '0xa8'
+func_sig: 55 8B EC 8B 45 ?? 85 C0 56 BE ?? ?? ?? ?? 0F 45 F0 8B D6 57 8B F9 8D 4A ?? 0F 1F 80 ?? ?? ?? ?? 66 8B 02
+vtable_name: vgui2::TextImage
+vfunc_offset: '0x68'
+vfunc_index: 26

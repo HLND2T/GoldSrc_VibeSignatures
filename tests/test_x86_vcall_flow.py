@@ -56,6 +56,22 @@ class StagedPrivateWalkTests(unittest.IsolatedAsyncioTestCase):
 
 
 class VcallFlowTests(unittest.TestCase):
+    def test_conditional_move_retains_both_possible_pointer_origins(self):
+        for mnemonic in ("cmovz", "cmovnz", "cmova", "cmovbe"):
+            with self.subTest(mnemonic=mnemonic):
+                code = [
+                    instruction(1, "mov", reg("eax"), mem("esp", 4)),
+                    instruction(2, "mov", reg("esi"), imm(0x9000)),
+                    instruction(3, mnemonic, reg("esi"), reg("eax"), writes=["esi"]),
+                    instruction(4, "mov", reg("eax"), reg("esi")),
+                    instruction(5, "ret"),
+                ]
+                flow = trace_function([dict(start=1, succs=[], insns=code)], 1, "windows")
+                self.assertEqual(("choice", ("arg", 1), ("const", 0x9000)), flow["returns"][0]["value"])
+                code[2] = instruction(3, mnemonic, reg("esi"), reg("edx"), writes=["esi"])
+                flow = trace_function([dict(start=1, succs=[], insns=code)], 1, "windows")
+                self.assertIsNone(flow["returns"][0]["value"])
+
     def test_simd_registration_zero_and_copy_preserve_each_word(self):
         vector = ("reg", "xmm0", 16)
         source = ("mem", "esp", -32, None, 1, 16)
