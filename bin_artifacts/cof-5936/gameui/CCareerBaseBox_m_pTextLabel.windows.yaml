@@ -1,0 +1,6 @@
+struct_name: CCareerBaseBox
+member_name: m_pTextLabel
+offset: '0x134'
+size: '0x4'
+offset_sig: 55 8B EC 83 EC 4C 89 4D ?? 6A 00 8B 45 ?? 50 8B 4D ?? 51 8B 4D ?? E8 ?? ?? ?? ?? 8B 4D ?? 81 C1 14 01 00 00
+offset_sig_disp: '0x1d4'

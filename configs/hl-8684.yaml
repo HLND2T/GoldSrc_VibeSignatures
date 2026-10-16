@@ -3008,6 +3008,14 @@ modules:
     depot_windows: valve/cl_dlls/GameUI.dll
     depot_linux: valve/cl_dlls/gameui.so
     skills:
+      - name: find-GameUI-career-player-name
+        expected_input:
+          - vgui2_Label_SetTextW.{platform}.yaml
+        expected_output:
+          - CCareerDifficultyBox_ctor.{platform}.yaml
+          - CCareerBaseFrame_Activate.{platform}.yaml
+          - CCareerBaseBox_m_pTextLabel.{platform}.yaml
+          - CCareerBaseFrame_m_pPlayerName.{platform}.yaml
       - name: find-GameUI-career-bot-cost
         expected_input:
           - vgui2_TextImage_SetTextW.{platform}.yaml
@@ -3015,6 +3023,11 @@ modules:
           - CBotButton_SetCharacter.{platform}.yaml
           - CCareerCharacter_GetPoints.{platform}.yaml
           - CBotButton_m_pText.{platform}.yaml
+      - name: find-vgui2_Label-SetText
+        expected_input:
+          - vgui2_TextImage_SetTextW.{platform}.yaml
+        expected_output:
+          - vgui2_Label_SetTextW.{platform}.yaml
       - name: find-vgui2_TextImage-SetText
         expected_output:
           - vgui2_TextImage_vtable.{platform}.yaml
@@ -3299,6 +3312,22 @@ modules:
           - vgui2_EditablePanel_OnSizeChanged_call_GetChild_callsite_0.{platform}.yaml
           - vgui2_EditablePanel_OnSizeChanged_call_SetBounds_callsite_0.{platform}.yaml
     symbols:
+      - name: CCareerBaseBox
+        category: struct
+      - name: CCareerBaseBox_m_pTextLabel
+        category: structmember
+        struct: CCareerBaseBox
+        member: m_pTextLabel
+      - name: CCareerBaseFrame
+        category: struct
+      - name: CCareerBaseFrame_m_pPlayerName
+        category: structmember
+        struct: CCareerBaseFrame
+        member: m_pPlayerName
+      - name: CCareerDifficultyBox_ctor
+        category: func
+      - name: CCareerBaseFrame_Activate
+        category: func
       - name: CBotButton
         category: struct
       - name: CBotButton_SetCharacter
@@ -3309,6 +3338,8 @@ modules:
         category: structmember
         struct: CBotButton
         member: m_pText
+      - name: vgui2_Label_SetTextW
+        category: vfunc
       - name: vgui2_TextImage_vtable
         category: vtable
       - name: vgui2_TextImage_SetTextW
