@@ -1,0 +1,8 @@
+func_name: vgui2::Panel::InvalidateLayout(bool,bool)
+func_va: '0x12dc90'
+func_rva: '0x12dc90'
+func_size: '0x145'
+func_sig: 55 57 56 53 83 EC ?? 8B 74 24 ?? 80 7C 24 ?? ?? 0F B6 5C 24 ?? C6 46 ?? ?? 0F 84 ?? ?? ?? ?? C6 46 ?? ?? 31 FF
+vtable_name: vgui2::ComboBox
+vfunc_offset: '0xec'
+vfunc_index: 59

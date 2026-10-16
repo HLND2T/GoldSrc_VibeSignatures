@@ -134,3 +134,49 @@ def spectator_update_calls(method):
                         continue
                     found.append(dict(check=check, add=add, update=update, receiver=receiver))
     return sole(found, "spectator valid-ID/update/add branch") if found else None
+
+
+def update_item_evidence(method, literals, dropdown):
+    """Recover the wide menu update and deferred layout call on the valid-ID arm."""
+    flow = method.get("flow", {})
+    calls = method_calls(method)
+    menu = ("load", THIS, dropdown)
+    found = []
+    for check in calls:
+        dispatch = virtual_dispatch(check)
+        if not dispatch or dispatch[0] != menu or check["args"][:2] != [menu, ("arg", 1)]:
+            continue
+        for branch in flow.get("branches", []):
+            if stripped_result(branch["condition"]) != ("result", check["ea"]):
+                continue
+            zero = before_guard(flow["blocks"], branch["zero"], check["block"])
+            nonzero = before_guard(flow["blocks"], branch["nonzero"], check["block"])
+            valid = nonzero - zero
+            for update in calls:
+                target, args = virtual_dispatch(update), update["args"]
+                if not target or target[0] != menu or update["block"] not in valid or len(args) < 5:
+                    continue
+                if args[:3] != [menu, ("arg", 1), ("arg", 2)] or args[4] != ("arg", 3):
+                    continue
+                # The old conversion's alloca buffer may be unknown to the tracer.
+                # Bind the message object and literal keys, not that lossy text.
+                messages = [
+                    c for c in calls if len(c["args"]) >= 4 and c in message_calls(method, literals, c["args"][3])
+                ]
+                choices = args[3][1:] if args[3] and args[3][0] == "choice" else (args[3],)
+                if not any(
+                    any(v in (m["args"][0], ("result", m["ea"])) for v in choices)
+                    and all(v in (m["args"][0], ("result", m["ea"]), ("const", 0)) for v in choices)
+                    for m in messages
+                ):
+                    continue
+                for invalidate in calls:
+                    target = virtual_dispatch(invalidate)
+                    if (
+                        target
+                        and target[0] == THIS
+                        and invalidate["block"] in valid
+                        and invalidate["args"][:3] == [THIS, ("const", 0), ("const", 0)]
+                    ):
+                        found.append(dict(update=update, invalidate=invalidate))
+    return sole(found, "wide menu update and deferred layout") if found else None

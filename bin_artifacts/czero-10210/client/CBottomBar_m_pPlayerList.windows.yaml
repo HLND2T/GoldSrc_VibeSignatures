@@ -1,0 +1,6 @@
+struct_name: CBottomBar
+member_name: m_pPlayerList
+offset: '0x118'
+size: '0x4'
+offset_sig: 55 8B EC 83 EC 08 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 53 56 57 8B 7D ?? 8B C7 89 4D ?? 8D 50 ?? 66 90
+offset_sig_disp: '0x65'

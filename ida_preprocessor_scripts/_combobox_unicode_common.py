@@ -43,7 +43,7 @@ def literal_evidence(text):
     return dict(addresses=sorted(addresses),owners=sorted(owners))
 
 literals={s:literal_evidence(s) for s in ('autoresize','localize','north','north-west',
-    '1 - resize right','[nothing currently selected]','SetText','text','#Spec_PlayerItem_Team','UserData','player')}
+    '1 - resize right','[nothing currently selected]','SetText','text','#Spec_PlayerItem_Team','UserData','player','#Spec_Map','#Spectators')}
 names=('#Spec_PlayerItem_Team','UserData') if values['client'] else ('autoresize','localize')
 if any(len(literals[n]['addresses'])!=1 for n in names):raise ValueError('anchor literal is not unique')
 root=sole(set.intersection(*(set(literals[n]['owners']) for n in names)),'anchored owner')
@@ -140,7 +140,7 @@ def constructor_receivers(method,cls):
             receivers.update((call['args'][0],('result',call['ea'])))
     return receivers
 
-def local_buffer_agreement(method,menu_call,conversion):
+def local_buffer_agreement(method,menu_call,conversion,argument_count=5):
     # Dynamic alloca makes ESP-relative output provenance unknown in the small
     # machine tracer. Compare CTree operands at those two verified machine CALLs;
     # only aliases of a local stack object/alloca result qualify as the buffer.
@@ -178,7 +178,7 @@ def local_buffer_agreement(method,menu_call,conversion):
     menu_args=list(menu.a);convert_args=list(convert.a)
     # This supplemental comparison is used only for the cdecl Linux bodies;
     # machine provenance already suffices for known Windows stack buffers.
-    if len(menu_args)!=5 or len(convert_args)!=4:return False
+    if len(menu_args)!=argument_count or len(convert_args)!=4:return False
     output=normalized(convert_args[2]);item=normalized(menu_args[1])
     return local(output) and output==item
 
@@ -348,6 +348,57 @@ else:
     if not add_item_evidence(selected_wide,literals,menu_index=narrow_evidence['menu_index'],
                              dropdown=narrow_evidence['dropdown'],wide=True):
         raise ValueError('client branch target is not the current Unicode AddItem body')
+    dropdown=narrow_evidence['dropdown']
+    getter=recover_menu_getter(combo,dropdown)
+    menu_add=table_method('vgui2::Menu',narrow_evidence['menu_index'])
+    result['getter']=dict(ea=getter['ea'],index=getter['index'])
+    result['menu_add']=dict(ea=menu_add['ea'],index=menu_add['index'])
+    update=table_method('vgui2::ComboBox',result['update']['index'])
+    if values['platform']=='windows':
+        purges={}
+        for call in method_calls(update):
+            dispatch=virtual_dispatch(call)
+            if not dispatch:continue
+            cls='vgui2::ComboBox' if dispatch[0]==THIS else 'vgui2::Menu' if dispatch[0]==('load',THIS,dropdown) else None
+            if cls:purges[call['ea']]=current_purge(table_method(cls,dispatch[1]))
+        update=dict(update,flow=flow_at(update['ea'],values['platform'],call_purges=purges,
+                                       preserved_calls=preserved,first_pass=True))
+    evidence=update_item_evidence(update,literals,dropdown)
+    if evidence is None:raise ValueError('wide UpdateItem does not preserve menu arguments and deferred layout')
+    for key,cls,call in (('menu_update','vgui2::Menu',evidence['update']),
+                         ('invalidate','vgui2::ComboBox',evidence['invalidate'])):
+        entry=from_call(call,cls);result[key]=dict(ea=entry['ea'],index=entry['index'])
+    # The selected caption has its own lossy conversion, independently of the
+    # menu AddItem/UpdateItem path. Prove the helper forwards its converted input
+    # to the player-list member, without assuming object offsets or vtable slots.
+    caption_owner=sole(set.intersection(*(set(literals[n]['owners']) for n in
+        ('#Spec_Map','#Spectators'))),'spectator selected-caption owner')
+    caption_candidates=[]
+    for call in method_calls(describe(caption_owner)):
+        if not call['direct'] or not is_code_address(call['direct']):continue
+        candidate=describe(call['direct'])
+        for sink in method_calls(candidate):
+            dispatch=virtual_dispatch(sink)
+            if not dispatch or not member_value(dispatch[0]):continue
+            for conversion in method_calls(candidate):
+                target=virtual_dispatch(conversion)
+                if not target or not target[0] or target[0][0]!='result':continue
+                if len(conversion['args'])<3 or conversion['args'][1]!=('arg',1) or conversion['ea']>=sink['ea']:continue
+                output=conversion['args'][2]
+                same=output is not None and output[0]=='stack' and sink['args'][1]==output
+                if not (same or aligned_stack_buffer(candidate,sink,conversion) or
+                        local_buffer_agreement(candidate,sink,conversion,2)):continue
+                caption_candidates.append((candidate,dispatch))
+    caption,dispatch=sole(caption_candidates,'bottom bar Unicode caption helper')
+    result['caption']=dict(ea=caption['ea'])
+    entry=table_method('vgui2::ComboBox',dispatch[1])
+    result['caption_text']=dict(ea=entry['ea'],index=entry['index'])
+    loads=[e for e in caption['flow']['loads'] if e['value']==dispatch[0] and e['width']==4]
+    reference=sole({e['ea'] for e in loads},'bottom bar player-list member access')
+    insn=idautils.DecodeInstruction(reference)
+    if dispatch[0][2] not in {signed32(op.addr) for op in insn.ops if op.type==idaapi.o_displ}:
+        raise ValueError('player-list reference has no matching current displacement')
+    result['caption_member']=dict(owner=caption['ea'],ea=reference,offset=dispatch[0][2])
 if values['platform']=='linux':
     for key,target in result.items():
         if isinstance(target,dict) and 'ea' in target:
@@ -397,7 +448,7 @@ async def emit_functions(session, outputs, image_base, functions):
             if target["demangled"].replace(" ", "").replace("(void)", "()") != name.replace(" ", ""):
                 raise ValueError(f"{symbol}: current ELF overload {target['demangled']!r} disagrees with {name!r}")
             name = target["demangled"]
-        payload = await function_payload(session, target["ea"], image_base, name, table=cls, index=target["index"])
+        payload = await function_payload(session, target["ea"], image_base, name, table=cls, index=target.get("index"))
         if payload is None:
             raise ValueError(f"{symbol}: no unique output signature")
         payloads[symbol] = payload
@@ -426,6 +477,32 @@ async def preprocess_combo(session, outputs, directory, platform, image_base, *,
         ]
         if client:
             functions += [
+                ("CBottomBar_SetPlayerText", "CBottomBar::SetPlayerText(wchar_t const*)", None, found["caption"]),
+                (
+                    "vgui2_TextEntry_SetTextA",
+                    "vgui2::TextEntry::SetText(char const*)",
+                    "vgui2::ComboBox",
+                    found["caption_text"],
+                ),
+                ("vgui2_ComboBox_GetMenu", "vgui2::ComboBox::GetMenu()", "vgui2::ComboBox", found["getter"]),
+                (
+                    "vgui2_Menu_AddMenuItem_Message",
+                    f"vgui2::Menu::AddMenuItem(char const*, {keyvalues}*, vgui2::Panel*, {keyvalues} const*)",
+                    "vgui2::Menu",
+                    found["menu_add"],
+                ),
+                (
+                    "vgui2_Menu_UpdateMenuItemW",
+                    f"vgui2::Menu::UpdateMenuItem(int, wchar_t const*, {keyvalues}*, {keyvalues} const*)",
+                    "vgui2::Menu",
+                    found["menu_update"],
+                ),
+                (
+                    "vgui2_Panel_InvalidateLayout",
+                    "vgui2::Panel::InvalidateLayout(bool, bool)",
+                    "vgui2::ComboBox",
+                    found["invalidate"],
+                ),
                 (
                     "CSpectatorGUI_UpdateSpectatorPlayerList",
                     "CSpectatorGUI::UpdateSpectatorPlayerList()",
@@ -481,6 +558,20 @@ async def preprocess_combo(session, outputs, directory, platform, image_base, *,
                 ),
             ]
         payloads = await emit_functions(session, outputs, image_base, functions)
+        if client:
+            ref = found["caption_member"]
+            owner = payloads["CBottomBar_SetPlayerText"]
+            member = dict(
+                struct_name="CBottomBar",
+                member_name="m_pPlayerList",
+                offset=hex(ref["offset"]),
+                size="0x4",
+                offset_sig=owner["func_sig"],
+                offset_sig_disp=hex(ref["ea"] - ref["owner"]),
+            )
+            if owner.get("func_sig_allow_across_function_boundary"):
+                member["offset_sig_allow_across_function_boundary"] = True
+            payloads["CBottomBar_m_pPlayerList"] = member
         if not client:
             ref = found["member"]
             owner = payloads["vgui2_ComboBox_AddItemA"]
@@ -496,7 +587,7 @@ async def preprocess_combo(session, outputs, directory, platform, image_base, *,
                 member["offset_sig_allow_across_function_boundary"] = True
             payloads["vgui2_ComboBox_m_pDropDown"] = member
         for cls, table in tables.items():
-            if cls == "vgui2::Menu":
+            if cls == "vgui2::Menu" and not client:
                 continue
             stem = cls.replace("::", "_") + "_vtable"
             if cls == "CSpectatorGUI" and platform == "windows":

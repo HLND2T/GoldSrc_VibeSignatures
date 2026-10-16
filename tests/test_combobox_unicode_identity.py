@@ -7,6 +7,7 @@ from ida_preprocessor_scripts._combobox_unicode_identity import (
     add_item_evidence,
     recover_menu_getter,
     spectator_update_calls,
+    update_item_evidence,
 )
 
 
@@ -115,6 +116,42 @@ class GuardedUpdateTests(unittest.TestCase):
             else:
                 update["block"] = 2
             self.assertIsNone(spectator_update_calls(method))
+
+
+def item_update():
+    menu = ("load", THIS, 0x94)
+    check = call(10, menu, ("arg", 1), index=13, block=1)
+    message = call(20, ("stack", -40), ("const", 10), ("const", 20), ("stack", -80), direct=900, block=3)
+    update = call(30, menu, ("arg", 1), ("arg", 2), ("result", 20), ("arg", 3), index=31, block=3)
+    invalidate = call(40, THIS, ("const", 0), ("const", 0), index=61, block=3)
+    return dict(
+        flow=dict(
+            calls=[invalidate, update, message, check],
+            blocks={1: [2, 3], 2: [], 3: []},
+            branches=[dict(condition=("result", 10), zero=2, nonzero=3)],
+        )
+    )
+
+
+class UpdateItemTests(unittest.TestCase):
+    def test_recovers_menu_update_and_layout_without_fixed_slots(self):
+        method = item_update()
+        found = update_item_evidence(method, LITERALS, 0x94)
+        self.assertEqual((30, 40), (found["update"]["ea"], found["invalidate"]["ea"]))
+        method["flow"]["calls"][0]["target"] = ("load", ("load", THIS, 0), 79 * 4)
+        self.assertIsNotNone(update_item_evidence(method, LITERALS, 0x94))
+
+    def test_rejects_wrong_id_text_userdata_message_and_branch(self):
+        for argument in (1, 2, 3, 4):
+            method = item_update()
+            method["flow"]["calls"][1]["args"][argument] = ("const", 999)
+            self.assertIsNone(update_item_evidence(method, LITERALS, 0x94))
+        method = item_update()
+        method["flow"]["calls"][1]["block"] = 2
+        self.assertIsNone(update_item_evidence(method, LITERALS, 0x94))
+        method = item_update()
+        method["flow"]["calls"][0]["args"][1] = ("const", 1)
+        self.assertIsNone(update_item_evidence(method, LITERALS, 0x94))
 
 
 if __name__ == "__main__":

@@ -101,6 +101,14 @@ modules:
           - vgui2_ComboBox_AddItemW.{platform}.yaml
           - vgui2_ComboBox_IsItemIDValid.{platform}.yaml
           - vgui2_ComboBox_UpdateItemW.{platform}.yaml
+          - vgui2_ComboBox_GetMenu.{platform}.yaml
+          - vgui2_Menu_vtable.{platform}.yaml
+          - vgui2_Menu_AddMenuItem_Message.{platform}.yaml
+          - vgui2_Menu_UpdateMenuItemW.{platform}.yaml
+          - vgui2_Panel_InvalidateLayout.{platform}.yaml
+          - CBottomBar_SetPlayerText.{platform}.yaml
+          - CBottomBar_m_pPlayerList.{platform}.yaml
+          - vgui2_TextEntry_SetTextA.{platform}.yaml
         expected_output_windows:
           - CSpectatorGUI_vtable2.windows.yaml
         expected_output_linux:
@@ -213,6 +221,26 @@ modules:
       - name: vgui2_ComboBox_IsItemIDValid
         category: vfunc
       - name: vgui2_ComboBox_UpdateItemW
+        category: vfunc
+      - name: vgui2_ComboBox_GetMenu
+        category: vfunc
+      - name: vgui2_Menu_vtable
+        category: vtable
+      - name: vgui2_Menu_AddMenuItem_Message
+        category: vfunc
+      - name: vgui2_Menu_UpdateMenuItemW
+        category: vfunc
+      - name: vgui2_Panel_InvalidateLayout
+        category: vfunc
+      - name: CBottomBar_SetPlayerText
+        category: func
+      - name: CBottomBar
+        category: struct
+      - name: CBottomBar_m_pPlayerList
+        category: structmember
+        struct: CBottomBar
+        member: m_pPlayerList
+      - name: vgui2_TextEntry_SetTextA
         category: vfunc
       - name: ClientVGUI_KeyValues_vtable
         category: vtable
