@@ -1,4 +1,4 @@
-func_name: CTeamMenu::LoadMapPage(char const*)
+func_name: CTeamMenu::Update(char const*, bool, char const**, int)
 func_va: '0x10034de0'
 func_rva: '0x34de0'
 func_size: '0x198'
