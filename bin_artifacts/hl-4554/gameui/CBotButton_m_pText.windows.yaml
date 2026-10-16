@@ -1,0 +1,5 @@
+struct_name: CBotButton
+member_name: m_pText
+offset: '0x1c8'
+offset_sig: 81 EC 90 01 00 00 53 55 56 57 8B D9 E8 ?? ?? ?? ?? 8B F0 8B 03 8B CB 8B 3E FF 50 ?? 50
+offset_sig_disp: '0x83'

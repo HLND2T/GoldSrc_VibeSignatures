@@ -2857,6 +2857,17 @@ modules:
     module_windows: GameUI.dll
     depot_windows: valve/cl_dlls/GameUI.dll
     skills:
+      - name: find-GameUI-career-bot-cost
+        expected_input:
+          - vgui2_TextImage_SetTextW.{platform}.yaml
+        expected_output:
+          - CBotButton_SetCharacter.{platform}.yaml
+          - CCareerCharacter_GetPoints.{platform}.yaml
+          - CBotButton_m_pText.{platform}.yaml
+      - name: find-vgui2_TextImage-SetText
+        expected_output:
+          - vgui2_TextImage_vtable.{platform}.yaml
+          - vgui2_TextImage_SetTextW.{platform}.yaml
       - name: find-vgui2_Panel-bounds-callsites
         expected_input:
           - vgui2_Panel_Init.{platform}.yaml
@@ -3114,6 +3125,20 @@ modules:
           - vgui2_EditablePanel_OnSizeChanged_call_GetChild_callsite_0.{platform}.yaml
           - vgui2_EditablePanel_OnSizeChanged_call_SetBounds_callsite_0.{platform}.yaml
     symbols:
+      - name: CBotButton
+        category: struct
+      - name: CBotButton_SetCharacter
+        category: func
+      - name: CCareerCharacter_GetPoints
+        category: func
+      - name: CBotButton_m_pText
+        category: structmember
+        struct: CBotButton
+        member: m_pText
+      - name: vgui2_TextImage_vtable
+        category: vtable
+      - name: vgui2_TextImage_SetTextW
+        category: vfunc
       - name: vgui2_Panel_SetBounds_Const_callsite_0
         category: patch
       - name: vgui2_Panel_SetBounds_Const_callsite_1

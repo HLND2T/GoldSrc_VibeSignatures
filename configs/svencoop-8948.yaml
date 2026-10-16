@@ -3483,6 +3483,10 @@ modules:
     depot_windows: svencoop/cl_dlls/GameUI.dll
     depot_linux: svencoop/cl_dlls/gameui.so
     skills:
+      - name: find-vgui2_TextImage-SetText
+        expected_output:
+          - vgui2_TextImage_vtable.{platform}.yaml
+          - vgui2_TextImage_SetTextW.{platform}.yaml
       - name: find-vgui2_Panel-bounds-callsites
         expected_input:
           - vgui2_Panel_Init.{platform}.yaml
@@ -3742,6 +3746,10 @@ modules:
           - vgui2_EditablePanel_OnSizeChanged_call_GetChild_callsite_0.{platform}.yaml
           - vgui2_EditablePanel_OnSizeChanged_call_SetBounds_callsite_0.{platform}.yaml
     symbols:
+      - name: vgui2_TextImage_vtable
+        category: vtable
+      - name: vgui2_TextImage_SetTextW
+        category: vfunc
       - name: vgui2_Panel_SetBounds_Const_callsite_0
         category: patch
       - name: vgui2_Panel_SetBounds_Const_callsite_1

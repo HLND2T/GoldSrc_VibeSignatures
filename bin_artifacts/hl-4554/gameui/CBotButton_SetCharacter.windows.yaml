@@ -1,0 +1,5 @@
+func_name: CBotButton::SetCharacter(CCareerCharacter const*)
+func_va: '0x100032d0'
+func_rva: '0x32d0'
+func_size: '0x66e'
+func_sig: 81 EC 90 01 00 00 53 55 56 57 8B D9 E8 ?? ?? ?? ?? 8B F0 8B 03 8B CB 8B 3E FF 50 ?? 50
