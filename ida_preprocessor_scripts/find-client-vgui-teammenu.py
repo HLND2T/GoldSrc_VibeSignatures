@@ -8,9 +8,9 @@ argument is the LoadControlSettings entry — the thiscall ``push imm32`` form o
 MSVC and the cdecl ``mov [esp+4], reg`` store on GCC (whose earlier calls belong
 to the team-button CUtlVector and must be skipped).
 
-``CTeamMenu::LoadMapPage`` owns the single ``maps/%s.txt`` format string, so that
-literal's unique code reference already identifies the function entry — the same
-owner MetaHookSv reached by disassembling forward from the string push. The body's
+The ``maps/%s.txt`` owner can be LoadMapPage or Update with LoadMapPage inlined.
+Verify its ABI and guarded team-button forwarding before assigning either name.
+The body's
 byte-order-mark check ``memBlock[0] != 0xFEFF`` (vgui2/game_controls/teammenu.cpp)
 branches between ``RichText::SetText(const char*)`` on fall-through and
 ``RichText::SetText(const wchar_t*)`` at the conditional-branch target. Locating
@@ -18,11 +18,15 @@ the branch target's first direct call — instead of MetaHookSv's "next two call
 window — avoids picking up the trailing ``GotoTextStart`` call.
 """
 
+from pathlib import Path
+
 from ida_analyze_util import (
     _output_for_symbol,
     preprocess_vtable_via_mcp,
     write_func_yaml,
 )
+from ida_preprocessor_scripts._vgui_paint_common import walk as flow_walk
+import ida_preprocessor_scripts._teammenu_identity as team_identity
 from ida_preprocessor_scripts._client_vgui_private_common import (
     FRAME_CLASS,
     FRAME_VTABLE_ALIASES,
@@ -49,6 +53,25 @@ FRAME_ACTIVATE_DISPATCHES = {
     "linux": (0xCC, 0x30, 0x78, 0xC0),
 }
 FRAME_SET_MINIMIZED_DISPATCH = {"windows": 0x94, "linux": 0x98}
+
+IDENTITY_WALK = r"""
+owner=values['owner']
+flow=flow_at(owner,values['platform'],first_pass=True)
+cleanups=[]
+for returned in flow['returns']:
+    insn=idautils.DecodeInstruction(returned['ea'])
+    cleanups.append(int(insn.ops[0].value) if insn.ops[0].type==idaapi.o_imm else 0)
+buttons=set()
+for call in flow['calls']:
+    target=call.get('direct')
+    if not target:continue
+    for ea in idautils.FuncItems(target):
+        for ref in idautils.DataRefsFrom(ea):
+            if idc.get_strlit_contents(ref,-1,ida_nalt.STRTYPE_C)==b'&%i %s':
+                buttons.add(target)
+symbol,name=classify_map_owner(values['platform'],ida_name.get_name(owner),cleanups,flow,buttons)
+result=dict(symbol=symbol,name=name)
+"""
 
 # Walk forward from the TeamMenu.res immediate site to the direct call whose
 # arguments carry that string: MSVC pushes it as thiscall arg #1 right before the
@@ -273,11 +296,20 @@ async def preprocess_skill(
             print(f"  {LOADCS_SYMBOL}: locator failed: {located.get('error', located)}")
         return False
     result = located
+    identity = await flow_walk(
+        session,
+        "import ida_name\n" + Path(team_identity.__file__).read_text(encoding="utf-8") + IDENTITY_WALK,
+        {"owner": result["loadmap_owner"], "platform": platform},
+    )
+    if identity.get("error"):
+        if debug:
+            print(f"  Map owner identity rejected: {identity['error']}")
+        return False
     targets = {
         LOADCS_SYMBOL: ("load_control_settings", "vgui2::Frame::LoadControlSettings(char const*, char const*)"),
         SETTEXTA_SYMBOL: ("settext_a", "vgui2::RichText::SetText(char const*)"),
         SETTEXTW_SYMBOL: ("settext_w", "vgui2::RichText::SetText(wchar_t const*)"),
-        LOADMAP_SYMBOL: ("loadmap_owner", "CTeamMenu::LoadMapPage(char const*)"),
+        identity["symbol"]: ("loadmap_owner", identity["name"]),
     }
     outputs = {name: _output_for_symbol(expected_outputs, name) for name in (*targets, FRAME_ACTIVATE_SYMBOL)}
     if not all(outputs.values()):

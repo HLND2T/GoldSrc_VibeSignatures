@@ -108,8 +108,11 @@ modules:
           - ClientVGUI_LoadControlSettings.{platform}.yaml
           - ClientVGUI_RichText_SetTextA.{platform}.yaml
           - ClientVGUI_RichText_SetTextW.{platform}.yaml
-          - TeamMenu_LoadMapPage.{platform}.yaml
           - ClientVGUI_Frame_Activate.{platform}.yaml
+        expected_output_windows:
+          - TeamMenu_Update.windows.yaml
+        expected_output_linux:
+          - TeamMenu_LoadMapPage.linux.yaml
       - name: find-client-vgui-worldmap
         expected_output:
           - CClientVGUI_WorldMapPanel.{platform}.yaml
@@ -212,6 +215,10 @@ modules:
         category: func
       - name: TeamMenu_LoadMapPage
         category: func
+        platform: linux
+      - name: TeamMenu_Update
+        category: func
+        platform: windows
       - name: ClientVGUI_Frame_Activate
         category: vfunc
       - name: CZEROViewPort
