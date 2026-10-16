@@ -1,0 +1,8 @@
+func_name: vgui2::TextEntry::SetText(char const*)
+func_va: '0x19863a0'
+func_rva: '0x863a0'
+func_size: '0x61'
+func_sig: 81 EC 00 08 00 00 56 8B B4 24 ?? ?? ?? ?? 57 8B F9 85 F6 75 ?? BE ?? ?? ?? ?? 80 3E 23 75 ?? E8 7C 8A FF FF 8B 10
+vtable_name: vgui2::ComboBox
+vfunc_offset: '0x218'
+vfunc_index: 134

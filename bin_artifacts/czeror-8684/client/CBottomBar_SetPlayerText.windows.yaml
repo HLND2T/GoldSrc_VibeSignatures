@@ -1,0 +1,5 @@
+func_name: CBottomBar::SetPlayerText(wchar_t const*)
+func_va: '0x27032cb0'
+func_rva: '0x32cb0'
+func_size: '0x69'
+func_sig: 55 8B EC 83 EC 08 53 8B 5D ?? 56 57 53 89 4D ?? E8 ?? ?? ?? ?? 83 C0 04 83 C4 04 24 FC E8 ?? ?? ?? ??

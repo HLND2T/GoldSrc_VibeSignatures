@@ -94,3 +94,20 @@ The BLOB client hashes below describe the decrypted PE actually analyzed.
 ## Callers
 - vgui2::BuildModeDialog::SetActiveControl -> narrow ComboBox insertion and Label methods.
 - CSpectatorGUI::UpdateSpectatorPlayerList (or its current out-of-line PlayerAddItem helper) -> valid-ID test, wide update and wide insertion.
+
+
+## Client repair dependencies (2026-10-16)
+
+- Trigger: VGUI2Extension needs client-module Menu dispatch for the spectator AddItemW/UpdateItemW repair. Existing AddItemW/UpdateItemW hook targets alone do not describe all replacement calls.
+- Change: reuse the existing narrow AddItem evidence to recover GetMenu and four-argument Menu AddMenuItem; recover wide Menu UpdateMenuItem and Panel InvalidateLayout from the selected wide UpdateItem's valid-ID arm. Require current dropdown receiver, original ID/text/userData, constructed SetText message identity and deferred (false,false) layout on the combo receiver. Windows cleanup is derived from current callees; Linux alloca may obscure message text but not message identity. No copied addresses, fixed slot numbers or new pattern scan.
+- Outputs: four vfuncs plus current Menu vtable for each of the existing 17 CS/CZ client platform nodes; 85 new artifacts. Keep the original finder and config platform boundaries.
+- Verification: all 17 bounded analyzer nodes passed; 1511 unit tests (12 skips), 15 repository-contract tests passed. Current vtable targets/4-byte offsets and temporary input copy SHA-256 verified. 32 available same-build GameUI/client GetMenu and AddMenuItem slot comparisons matched; slots may match across modules but addresses belong to their own binaries.
+- Consumer: VGUI2Extension installs the two client hooks after Client_FillAddress game identification. Windows czero 10210 live dropdown/selection check passed; the separate CBottomBar::SetPlayerText truncation remains outside those hooks. Canonical candidates and local pruned 21-snapshot catalog validated, but new records are not yet published online.
+
+## Spectator selected caption follow-up (2026-10-16)
+
+- Trigger: after repairing ComboBox AddItemW/UpdateItemW, the dropdown is complete but the selected caption is truncated again during spectator refresh.
+- Root cause: CBottomBar::SetPlayerText independently allocates wcslen(text)+1 bytes before ConvertUnicodeToANSI (UTF-8). Confirmed czeror-10210 Windows 0x10033ab0, Linux 0x8a580; HLND2T_official/vgui2/game_controls/SpectatorGUI.cpp:457.
+- Locator: intersect current #Spec_Map/#Spectators owners, inspect direct callees, prove original wide input -> local converted buffer -> player-list member virtual SetText. Derive member displacement from its actual load and SetText slot from the current ComboBox table. Older CS moves player formatting out of Update, so #Spec_PlayerItem_Team is not a valid universal owner anchor.
+- Outputs: CBottomBar_SetPlayerText, CBottomBar_m_pPlayerList, vgui2_TextEntry_SetTextA. All 17 Windows/Linux CS/CZ nodes passed; 51 additional artifacts, no inherited address or fixed slot assumptions.
+- Verification: upstream unit suite 1511 tests (12 skipped), repository-contract 15 tests, format check; all passed. Plugin uses exact UTF-8 sizing/checks and original narrow SetText dispatch. czero 10210 live verification preserved full Chinese name plus (100) after switching from Calvin to Irving; native view switched successfully.
