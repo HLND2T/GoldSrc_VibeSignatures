@@ -1,0 +1,6 @@
+func_name: CCareerBaseFrame::Activate()
+func_va: '0x10002290'
+func_rva: '0x2290'
+func_size: '0x124'
+func_sig: 81 EC 44 01 00 00 56 57 8B F1 E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 8B 78 ?? 85 FF 74 ?? 8B 47 ?? 8B 4F ?? 6A 01 68 00 00
+  C8 41

@@ -1,0 +1,7 @@
+struct_name: CCareerBaseFrame
+member_name: m_pPlayerName
+offset: '0x128'
+size: '0x4'
+offset_sig: 81 EC 44 01 00 00 56 57 8B F1 E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 8B 78 ?? 85 FF 74 ?? 8B 47 ?? 8B 4F ?? 6A 01 68 00
+  00 C8 41
+offset_sig_disp: '0x35'

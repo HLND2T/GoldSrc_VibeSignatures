@@ -1,0 +1,5 @@
+func_name: CCareerDifficultyBox::CCareerDifficultyBox(char const*, vgui2::Panel*)
+func_va: '0x10006fc0'
+func_rva: '0x6fc0'
+func_size: '0x37a'
+func_sig: 81 EC DC 00 00 00 8B 84 24 ?? ?? ?? ?? 53 55 56 57 8B F9 8B 8C 24 ?? ?? ?? ?? 33 F6 56 50 51 8B CF
