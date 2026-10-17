@@ -3013,6 +3013,9 @@ modules:
       - name: find-CContentControlDialog_ctor
         expected_output:
           - CContentControlDialog_ctor.{platform}.yaml
+      - name: find-GameUI-default-server-name
+        expected_output:
+          - CCreateMultiplayerGameGameplayPage_LoadGameOptionsList.{platform}.yaml
       - name: find-GameUI-dialog-constructors
         expected_output:
           - CGameConsoleDialog_ctor.{platform}.yaml
@@ -3170,6 +3173,8 @@ modules:
           - vgui2_EditablePanel_OnSizeChanged_call_GetChild_callsite_0.{platform}.yaml
           - vgui2_EditablePanel_OnSizeChanged_call_SetBounds_callsite_0.{platform}.yaml
     symbols:
+      - name: CCreateMultiplayerGameGameplayPage_LoadGameOptionsList
+        category: func
       - name: CCareerBaseBox
         category: struct
       - name: CCareerBaseBox_m_pTextLabel
