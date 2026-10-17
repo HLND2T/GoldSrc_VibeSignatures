@@ -1,0 +1,5 @@
+func_name: CBaseGamesPage::ApplyGameFilters
+func_va: '0x10002a40'
+func_rva: '0x2a40'
+func_size: '0x23d'
+func_sig: 81 EC 04 01 00 00 53 56 8B F0 33 DB 39 9E ?? ?? ?? ?? 0F 8E ?? ?? ?? ?? 55 33 C0 57 89 44 24 ?? EB ??

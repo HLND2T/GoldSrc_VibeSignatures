@@ -3744,6 +3744,12 @@ modules:
     depot_windows: platform/servers/ServerBrowser.dll
     depot_linux: platform/servers/serverbrowser_linux.so
     skills:
+      - name: find-CBaseGamesPage-history
+        expected_output:
+          - CBaseGamesPage_ServerResponded.{platform}.yaml
+          - CBaseGamesPage_ApplyGameFilters.{platform}.yaml
+          - CBaseGamesPage_ServerResponded_to_strftime_callsite_0.{platform}.yaml
+          - CBaseGamesPage_ApplyGameFilters_to_strftime_callsite_0.{platform}.yaml
       - name: find-vgui2_Panel-size-callsites
         expected_input:
           - vgui2_Panel_Init.{platform}.yaml
@@ -3789,6 +3795,14 @@ modules:
           - KeyValues_vtable.{platform}.yaml
           - KeyValues_LoadFromFile.{platform}.yaml
     symbols:
+      - name: CBaseGamesPage_ServerResponded
+        category: func
+      - name: CBaseGamesPage_ApplyGameFilters
+        category: func
+      - name: CBaseGamesPage_ServerResponded_to_strftime_callsite_0
+        category: patch
+      - name: CBaseGamesPage_ApplyGameFilters_to_strftime_callsite_0
+        category: patch
       - name: vgui2_Panel_SetSize_Const_callsite_0
         category: patch
       - name: vgui2_Panel_SetSize_Const_callsite_1

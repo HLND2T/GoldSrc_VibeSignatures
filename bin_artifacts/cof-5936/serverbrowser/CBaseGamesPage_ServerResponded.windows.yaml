@@ -1,0 +1,5 @@
+func_name: CBaseGamesPage::ServerResponded
+func_va: '0x10002d60'
+func_rva: '0x2d60'
+func_size: '0x612'
+func_sig: 55 8B EC 83 E4 F8 81 EC CC 00 00 00 53 56 8B F1 57 83 C8 FF 8D 4C 24 ?? 89 44 24 ??

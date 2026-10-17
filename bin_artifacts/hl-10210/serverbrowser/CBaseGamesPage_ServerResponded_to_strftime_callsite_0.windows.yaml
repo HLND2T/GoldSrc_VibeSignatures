@@ -1,0 +1,5 @@
+patch_name: CBaseGamesPage_ServerResponded_to_strftime_callsite_0
+patch_va: '0x10006f8f'
+patch_rva: '0x6f8f'
+patch_sig: FF 15 ?? ?? ?? ?? 8D 4D ?? 83 C4 ?? 8D 51 ?? 66 90
+patch_sig_disp: '0x0'
