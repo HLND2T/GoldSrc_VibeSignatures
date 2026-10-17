@@ -15,6 +15,31 @@ downloads:
       "2": "724247850320422500" # DepotDownloader -app 70 -depot 2 -manifest 724247850320422500 -all-platforms -dir depots/Half-Life-10210 [-username XXX] [-password XXX] [-remember-password]
       "8": "1360709870205537514" # DepotDownloader -app 70 -depot 8 -manifest 1360709870205537514 -all-platforms -dir depots/Half-Life-10210 [-username XXX] [-password XXX] [-remember-password]
       "71": "3982364535202188842" # DepotDownloader -app 70 -depot 71 -manifest 3982364535202188842 -all-platforms -dir depots/Half-Life-10210 [-username XXX] [-password XXX] [-remember-password]
+  # Both engine generations use the same unchanged 2020 expansion clients.
+  - tag: "bshift-8684"
+    name: Half-Life Blue Shift (Half-Life engine buildnum 8684)
+    basepath: Blue-Shift-8684
+    appid: 130
+    manifests:
+      "130": "2832280714065945284"
+  - tag: "bshift-10210"
+    name: Half-Life Blue Shift (Half-Life engine buildnum 10210)
+    basepath: Blue-Shift-10210
+    appid: 130
+    manifests:
+      "130": "2832280714065945284"
+  - tag: "gearbox-8684"
+    name: Half-Life Opposing Force (Half-Life engine buildnum 8684)
+    basepath: Opposing-Force-8684
+    appid: 50
+    manifests:
+      "51": "789184054796507140"
+  - tag: "gearbox-10210"
+    name: Half-Life Opposing Force (Half-Life engine buildnum 10210)
+    basepath: Opposing-Force-10210
+    appid: 50
+    manifests:
+      "51": "789184054796507140"
   - tag: "cstrike-8684"
     name: Counter-Strike buildnum 8684 (Pre-25th Anniversary Build)
     basepath: Counter-Strike-8684
