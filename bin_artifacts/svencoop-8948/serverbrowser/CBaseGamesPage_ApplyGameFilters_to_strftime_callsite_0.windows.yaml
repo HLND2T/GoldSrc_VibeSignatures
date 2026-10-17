@@ -1,0 +1,5 @@
+patch_name: CBaseGamesPage_ApplyGameFilters_to_strftime_callsite_0
+patch_va: '0x100033bf'
+patch_rva: '0x33bf'
+patch_sig: E8 ?? ?? ?? ?? 8D 4C 24 ?? 83 C4 ??
+patch_sig_disp: '0x0'

@@ -1,0 +1,5 @@
+patch_name: CBaseGamesPage_ServerResponded_to_strftime_callsite_0
+patch_va: '0x3271c'
+patch_rva: '0x3271c'
+patch_sig: E8 ?? ?? ?? ?? 8B 16 83 C6 ??
+patch_sig_disp: '0x0'
