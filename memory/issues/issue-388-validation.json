@@ -1,0 +1,4199 @@
+{
+  "issue": "https://github.com/HLND2T/GoldSrc_VibeSignatures/issues/388",
+  "implementationBase": "2bdf859d3f4f1ed8bf4df789e971680621ed48e8",
+  "binarySubmoduleCommit": "bd43db40f1056dc235f621e26486ae1f5c5c72df",
+  "module": "engine",
+  "inputCount": 15,
+  "functionRecords": 30,
+  "globalRecords": 45,
+  "publicationStatus": "local guarded candidates only; no GitHub Release dispatched",
+  "consumerManifest": [
+    {
+      "gameVersion": "hl-3248",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "SV_BeginFileDownload_f",
+      "symbolName": "SV_BeginFileDownload_f",
+      "kind": "function",
+      "crc64": "7e07685c707cb53e",
+      "rva": "0xac6d0",
+      "size": "0x21b"
+    },
+    {
+      "gameVersion": "hl-3248",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "SV_DropClient",
+      "symbolName": "SV_DropClient",
+      "kind": "function",
+      "crc64": "7e07685c707cb53e",
+      "rva": "0x56970",
+      "size": "0x205"
+    },
+    {
+      "gameVersion": "hl-3248",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "cmd_source",
+      "symbolName": "cmd_source",
+      "kind": "global",
+      "crc64": "7e07685c707cb53e",
+      "rva": "0x105e0b8",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "hl-3248",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "host_client",
+      "symbolName": "host_client",
+      "kind": "global",
+      "crc64": "7e07685c707cb53e",
+      "rva": "0xb0dee8",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "hl-3248",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "sv_player",
+      "symbolName": "sv_player",
+      "kind": "global",
+      "crc64": "7e07685c707cb53e",
+      "rva": "0x8069bc",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "hl-3266",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "SV_BeginFileDownload_f",
+      "symbolName": "SV_BeginFileDownload_f",
+      "kind": "function",
+      "crc64": "8d3b22546891b7a8",
+      "rva": "0xac6d0",
+      "size": "0x21b"
+    },
+    {
+      "gameVersion": "hl-3266",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "SV_DropClient",
+      "symbolName": "SV_DropClient",
+      "kind": "function",
+      "crc64": "8d3b22546891b7a8",
+      "rva": "0x56950",
+      "size": "0x205"
+    },
+    {
+      "gameVersion": "hl-3266",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "cmd_source",
+      "symbolName": "cmd_source",
+      "kind": "global",
+      "crc64": "8d3b22546891b7a8",
+      "rva": "0x105e0b8",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "hl-3266",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "host_client",
+      "symbolName": "host_client",
+      "kind": "global",
+      "crc64": "8d3b22546891b7a8",
+      "rva": "0xb0dee8",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "hl-3266",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "sv_player",
+      "symbolName": "sv_player",
+      "kind": "global",
+      "crc64": "8d3b22546891b7a8",
+      "rva": "0x8069bc",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "hl-3329",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "SV_BeginFileDownload_f",
+      "symbolName": "SV_BeginFileDownload_f",
+      "kind": "function",
+      "crc64": "bcd73e6d3ca715a4",
+      "rva": "0xabd40",
+      "size": "0x21b"
+    },
+    {
+      "gameVersion": "hl-3329",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "SV_DropClient",
+      "symbolName": "SV_DropClient",
+      "kind": "function",
+      "crc64": "bcd73e6d3ca715a4",
+      "rva": "0x566b0",
+      "size": "0x205"
+    },
+    {
+      "gameVersion": "hl-3329",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "cmd_source",
+      "symbolName": "cmd_source",
+      "kind": "global",
+      "crc64": "bcd73e6d3ca715a4",
+      "rva": "0x102a9d8",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "hl-3329",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "host_client",
+      "symbolName": "host_client",
+      "kind": "global",
+      "crc64": "bcd73e6d3ca715a4",
+      "rva": "0xada808",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "hl-3329",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "sv_player",
+      "symbolName": "sv_player",
+      "kind": "global",
+      "crc64": "bcd73e6d3ca715a4",
+      "rva": "0x7d32dc",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "hl-3647",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "SV_BeginFileDownload_f",
+      "symbolName": "SV_BeginFileDownload_f",
+      "kind": "function",
+      "crc64": "a4f5787a83b57d53",
+      "rva": "0xaad40",
+      "size": "0x21b"
+    },
+    {
+      "gameVersion": "hl-3647",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "SV_DropClient",
+      "symbolName": "SV_DropClient",
+      "kind": "function",
+      "crc64": "a4f5787a83b57d53",
+      "rva": "0x567e0",
+      "size": "0x1fb"
+    },
+    {
+      "gameVersion": "hl-3647",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "cmd_source",
+      "symbolName": "cmd_source",
+      "kind": "global",
+      "crc64": "a4f5787a83b57d53",
+      "rva": "0x1029858",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "hl-3647",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "host_client",
+      "symbolName": "host_client",
+      "kind": "global",
+      "crc64": "a4f5787a83b57d53",
+      "rva": "0xad9688",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "hl-3647",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "sv_player",
+      "symbolName": "sv_player",
+      "kind": "global",
+      "crc64": "a4f5787a83b57d53",
+      "rva": "0x7d215c",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "hl-4554",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "SV_BeginFileDownload_f",
+      "symbolName": "SV_BeginFileDownload_f",
+      "kind": "function",
+      "crc64": "af713d75d839d5c7",
+      "rva": "0xb7190",
+      "size": "0x21b"
+    },
+    {
+      "gameVersion": "hl-4554",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "SV_DropClient",
+      "symbolName": "SV_DropClient",
+      "kind": "function",
+      "crc64": "af713d75d839d5c7",
+      "rva": "0x61dd0",
+      "size": "0x214"
+    },
+    {
+      "gameVersion": "hl-4554",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "cmd_source",
+      "symbolName": "cmd_source",
+      "kind": "global",
+      "crc64": "af713d75d839d5c7",
+      "rva": "0xfd3d5c",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "hl-4554",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "host_client",
+      "symbolName": "host_client",
+      "kind": "global",
+      "crc64": "af713d75d839d5c7",
+      "rva": "0xa8343c",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "hl-4554",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "sv_player",
+      "symbolName": "sv_player",
+      "kind": "global",
+      "crc64": "af713d75d839d5c7",
+      "rva": "0x7bbd9c",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "hl-6153",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "SV_BeginFileDownload_f",
+      "symbolName": "SV_BeginFileDownload_f",
+      "kind": "function",
+      "crc64": "6a2fadd69b9795c9",
+      "rva": "0x9ba80",
+      "size": "0x22c"
+    },
+    {
+      "gameVersion": "hl-6153",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "SV_DropClient",
+      "symbolName": "SV_DropClient",
+      "kind": "function",
+      "crc64": "6a2fadd69b9795c9",
+      "rva": "0x55560",
+      "size": "0x200"
+    },
+    {
+      "gameVersion": "hl-6153",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "cmd_source",
+      "symbolName": "cmd_source",
+      "kind": "global",
+      "crc64": "6a2fadd69b9795c9",
+      "rva": "0x1004d5c",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "hl-6153",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "host_client",
+      "symbolName": "host_client",
+      "kind": "global",
+      "crc64": "6a2fadd69b9795c9",
+      "rva": "0xab403c",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "hl-6153",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "sv_player",
+      "symbolName": "sv_player",
+      "kind": "global",
+      "crc64": "6a2fadd69b9795c9",
+      "rva": "0x7f2de4",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "hl-8684",
+      "module": "engine",
+      "platform": "linux",
+      "artifact": "SV_BeginFileDownload_f",
+      "symbolName": "SV_BeginFileDownload_f",
+      "kind": "function",
+      "crc64": "ec79b6fb0c5688c4",
+      "rva": "0x14b2e0",
+      "size": "0x369"
+    },
+    {
+      "gameVersion": "hl-8684",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "SV_BeginFileDownload_f",
+      "symbolName": "SV_BeginFileDownload_f",
+      "kind": "function",
+      "crc64": "f9b2f43f1509eb5c",
+      "rva": "0x9db10",
+      "size": "0x22c"
+    },
+    {
+      "gameVersion": "hl-8684",
+      "module": "engine",
+      "platform": "linux",
+      "artifact": "SV_DropClient",
+      "symbolName": "SV_DropClient",
+      "kind": "function",
+      "crc64": "ec79b6fb0c5688c4",
+      "rva": "0x10e3e0",
+      "size": "0x2b6"
+    },
+    {
+      "gameVersion": "hl-8684",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "SV_DropClient",
+      "symbolName": "SV_DropClient",
+      "kind": "function",
+      "crc64": "f9b2f43f1509eb5c",
+      "rva": "0x56990",
+      "size": "0x200"
+    },
+    {
+      "gameVersion": "hl-8684",
+      "module": "engine",
+      "platform": "linux",
+      "artifact": "cmd_source",
+      "symbolName": "cmd_source",
+      "kind": "global",
+      "crc64": "ec79b6fb0c5688c4",
+      "rva": "0x960b98",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "hl-8684",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "cmd_source",
+      "symbolName": "cmd_source",
+      "kind": "global",
+      "crc64": "f9b2f43f1509eb5c",
+      "rva": "0x100827c",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "hl-8684",
+      "module": "engine",
+      "platform": "linux",
+      "artifact": "host_client",
+      "symbolName": "host_client",
+      "kind": "global",
+      "crc64": "ec79b6fb0c5688c4",
+      "rva": "0x963980",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "hl-8684",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "host_client",
+      "symbolName": "host_client",
+      "kind": "global",
+      "crc64": "f9b2f43f1509eb5c",
+      "rva": "0xab753c",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "hl-8684",
+      "module": "engine",
+      "platform": "linux",
+      "artifact": "sv_player",
+      "symbolName": "sv_player",
+      "kind": "global",
+      "crc64": "ec79b6fb0c5688c4",
+      "rva": "0xbab940",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "hl-8684",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "sv_player",
+      "symbolName": "sv_player",
+      "kind": "global",
+      "crc64": "f9b2f43f1509eb5c",
+      "rva": "0x7f6304",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "hl-10210",
+      "module": "engine",
+      "platform": "linux",
+      "artifact": "SV_BeginFileDownload_f",
+      "symbolName": "SV_BeginFileDownload_f",
+      "kind": "function",
+      "crc64": "727eaa19926a236c",
+      "rva": "0xeb4e0",
+      "size": "0x338"
+    },
+    {
+      "gameVersion": "hl-10210",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "SV_BeginFileDownload_f",
+      "symbolName": "SV_BeginFileDownload_f",
+      "kind": "function",
+      "crc64": "6ef7192cd8254e2d",
+      "rva": "0x206a60",
+      "size": "0x294"
+    },
+    {
+      "gameVersion": "hl-10210",
+      "module": "engine",
+      "platform": "linux",
+      "artifact": "SV_DropClient",
+      "symbolName": "SV_DropClient",
+      "kind": "function",
+      "crc64": "727eaa19926a236c",
+      "rva": "0xa7ca0",
+      "size": "0x2d5"
+    },
+    {
+      "gameVersion": "hl-10210",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "SV_DropClient",
+      "symbolName": "SV_DropClient",
+      "kind": "function",
+      "crc64": "6ef7192cd8254e2d",
+      "rva": "0x1d4190",
+      "size": "0x236"
+    },
+    {
+      "gameVersion": "hl-10210",
+      "module": "engine",
+      "platform": "linux",
+      "artifact": "cmd_source",
+      "symbolName": "cmd_source",
+      "kind": "global",
+      "crc64": "727eaa19926a236c",
+      "rva": "0x94a928",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "hl-10210",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "cmd_source",
+      "symbolName": "cmd_source",
+      "kind": "global",
+      "crc64": "6ef7192cd8254e2d",
+      "rva": "0x124cc00",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "hl-10210",
+      "module": "engine",
+      "platform": "linux",
+      "artifact": "host_client",
+      "symbolName": "host_client",
+      "kind": "global",
+      "crc64": "727eaa19926a236c",
+      "rva": "0x94d680",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "hl-10210",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "host_client",
+      "symbolName": "host_client",
+      "kind": "global",
+      "crc64": "6ef7192cd8254e2d",
+      "rva": "0x1249e90",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "hl-10210",
+      "module": "engine",
+      "platform": "linux",
+      "artifact": "sv_player",
+      "symbolName": "sv_player",
+      "kind": "global",
+      "crc64": "727eaa19926a236c",
+      "rva": "0xb9655c",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "hl-10210",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "sv_player",
+      "symbolName": "sv_player",
+      "kind": "global",
+      "crc64": "6ef7192cd8254e2d",
+      "rva": "0xf779d8",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "svencoop-8948",
+      "module": "engine",
+      "platform": "linux",
+      "artifact": "SV_BeginFileDownload_f",
+      "symbolName": "_Z22SV_BeginFileDownload_fv",
+      "kind": "function",
+      "crc64": "550d53bb48ba07cd",
+      "rva": "0x104440",
+      "size": "0x30a"
+    },
+    {
+      "gameVersion": "svencoop-8948",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "SV_BeginFileDownload_f",
+      "symbolName": "SV_BeginFileDownload_f",
+      "kind": "function",
+      "crc64": "2f9d6118f0ebea99",
+      "rva": "0xaa660",
+      "size": "0x362"
+    },
+    {
+      "gameVersion": "svencoop-8948",
+      "module": "engine",
+      "platform": "linux",
+      "artifact": "SV_DropClient",
+      "symbolName": "_Z13SV_DropClientP8client_siPcz",
+      "kind": "function",
+      "crc64": "550d53bb48ba07cd",
+      "rva": "0xc89d0",
+      "size": "0x281"
+    },
+    {
+      "gameVersion": "svencoop-8948",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "SV_DropClient",
+      "symbolName": "SV_DropClient",
+      "kind": "function",
+      "crc64": "2f9d6118f0ebea99",
+      "rva": "0x666d0",
+      "size": "0x234"
+    },
+    {
+      "gameVersion": "svencoop-8948",
+      "module": "engine",
+      "platform": "linux",
+      "artifact": "cmd_source",
+      "symbolName": "cmd_source",
+      "kind": "global",
+      "crc64": "550d53bb48ba07cd",
+      "rva": "0x342024",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "svencoop-8948",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "cmd_source",
+      "symbolName": "cmd_source",
+      "kind": "global",
+      "crc64": "2f9d6118f0ebea99",
+      "rva": "0xfe5670",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "svencoop-8948",
+      "module": "engine",
+      "platform": "linux",
+      "artifact": "host_client",
+      "symbolName": "host_client",
+      "kind": "global",
+      "crc64": "550d53bb48ba07cd",
+      "rva": "0x357a5c",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "svencoop-8948",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "host_client",
+      "symbolName": "host_client",
+      "kind": "global",
+      "crc64": "2f9d6118f0ebea99",
+      "rva": "0x6706af8",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "svencoop-8948",
+      "module": "engine",
+      "platform": "linux",
+      "artifact": "sv_player",
+      "symbolName": "sv_player",
+      "kind": "global",
+      "crc64": "550d53bb48ba07cd",
+      "rva": "0x149f388",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "svencoop-8948",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "sv_player",
+      "symbolName": "sv_player",
+      "kind": "global",
+      "crc64": "2f9d6118f0ebea99",
+      "rva": "0x785bb68",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "svencoop-10257",
+      "module": "engine",
+      "platform": "linux",
+      "artifact": "SV_BeginFileDownload_f",
+      "symbolName": "SV_BeginFileDownload_f",
+      "kind": "function",
+      "crc64": "f486c097bcc00fd7",
+      "rva": "0xb5a40",
+      "size": "0x30a"
+    },
+    {
+      "gameVersion": "svencoop-10257",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "SV_BeginFileDownload_f",
+      "symbolName": "SV_BeginFileDownload_f",
+      "kind": "function",
+      "crc64": "f469129b520b2e16",
+      "rva": "0xaba60",
+      "size": "0x362"
+    },
+    {
+      "gameVersion": "svencoop-10257",
+      "module": "engine",
+      "platform": "linux",
+      "artifact": "SV_DropClient",
+      "symbolName": "SV_DropClient",
+      "kind": "function",
+      "crc64": "f486c097bcc00fd7",
+      "rva": "0x79b90",
+      "size": "0x281"
+    },
+    {
+      "gameVersion": "svencoop-10257",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "SV_DropClient",
+      "symbolName": "SV_DropClient",
+      "kind": "function",
+      "crc64": "f469129b520b2e16",
+      "rva": "0x66bd0",
+      "size": "0x234"
+    },
+    {
+      "gameVersion": "svencoop-10257",
+      "module": "engine",
+      "platform": "linux",
+      "artifact": "cmd_source",
+      "symbolName": "cmd_source",
+      "kind": "global",
+      "crc64": "f486c097bcc00fd7",
+      "rva": "0x2f4a64",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "svencoop-10257",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "cmd_source",
+      "symbolName": "cmd_source",
+      "kind": "global",
+      "crc64": "f469129b520b2e16",
+      "rva": "0x1025800",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "svencoop-10257",
+      "module": "engine",
+      "platform": "linux",
+      "artifact": "host_client",
+      "symbolName": "host_client",
+      "kind": "global",
+      "crc64": "f486c097bcc00fd7",
+      "rva": "0x30a49c",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "svencoop-10257",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "host_client",
+      "symbolName": "host_client",
+      "kind": "global",
+      "crc64": "f469129b520b2e16",
+      "rva": "0x6746c88",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "svencoop-10257",
+      "module": "engine",
+      "platform": "linux",
+      "artifact": "sv_player",
+      "symbolName": "sv_player",
+      "kind": "global",
+      "crc64": "f486c097bcc00fd7",
+      "rva": "0x1488068",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "svencoop-10257",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "sv_player",
+      "symbolName": "sv_player",
+      "kind": "global",
+      "crc64": "f469129b520b2e16",
+      "rva": "0x78d1398",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "cof-5936",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "SV_BeginFileDownload_f",
+      "symbolName": "SV_BeginFileDownload_f",
+      "kind": "function",
+      "crc64": "015f8476be9396f4",
+      "rva": "0xe2dbe",
+      "size": "0x2b3"
+    },
+    {
+      "gameVersion": "cof-5936",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "SV_DropClient",
+      "symbolName": "SV_DropClient",
+      "kind": "function",
+      "crc64": "015f8476be9396f4",
+      "rva": "0x7e2d6",
+      "size": "0x2e2"
+    },
+    {
+      "gameVersion": "cof-5936",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "cmd_source",
+      "symbolName": "cmd_source",
+      "kind": "global",
+      "crc64": "015f8476be9396f4",
+      "rva": "0x107da1c",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "cof-5936",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "host_client",
+      "symbolName": "host_client",
+      "kind": "global",
+      "crc64": "015f8476be9396f4",
+      "rva": "0xafc11c",
+      "size": "0x0"
+    },
+    {
+      "gameVersion": "cof-5936",
+      "module": "engine",
+      "platform": "windows",
+      "artifact": "sv_player",
+      "symbolName": "sv_player",
+      "kind": "global",
+      "crc64": "015f8476be9396f4",
+      "rva": "0x80e07c",
+      "size": "0x0"
+    }
+  ],
+  "inputs": [
+    {
+      "gameVersion": "cof-5936",
+      "platform": "windows",
+      "moduleFile": "bin/cof-5936/engine/hw.dll",
+      "moduleFileIdentity": {
+        "crc32": "aa2a0dcc",
+        "crc64": "015f8476be9396f4",
+        "isBlob": false,
+        "md5": "b2d22dec0f83d196c901315f6fc8bae8",
+        "sha256": "9dd34e536c4bb7cda3bc1bc4f0f5f6163687566a16f35c0ea0be59f93da62875",
+        "size": 2121828
+      },
+      "analysisBinary": "bin/cof-5936/engine/hw.dll",
+      "analysisSha256": "9dd34e536c4bb7cda3bc1bc4f0f5f6163687566a16f35c0ea0be59f93da62875",
+      "imageBase": "0x1d00000",
+      "anchors": {
+        "!MD5": {
+          "stringInstances": [
+            "0x1ece1a4",
+            "0x1eccc44",
+            "0x1ead5f0",
+            "0x1eae090",
+            "0x1ecccdc"
+          ],
+          "owningFunctions": [
+            "0x1d33647",
+            "0x1dece90",
+            "0x1de2b3b",
+            "0x1d3051d",
+            "0x1de2dbe"
+          ]
+        },
+        "custom.hpk": {
+          "stringInstances": [
+            "0x1eae120",
+            "0x1eccce4",
+            "0x1eae1a8",
+            "0x1ead7ec",
+            "0x1ead64c",
+            "0x1eae12c",
+            "0x1eb114c",
+            "0x1eae0d0",
+            "0x1eaf7d0",
+            "0x1ecb950",
+            "0x1ecccf0",
+            "0x1eaf534",
+            "0x1ece1ac",
+            "0x1ece2fc"
+          ],
+          "owningFunctions": [
+            "0x1d30c84",
+            "0x1d33647",
+            "0x1ddc567",
+            "0x1dece90",
+            "0x1d460d1",
+            "0x1ded475",
+            "0x1d3693a",
+            "0x1d35e7c",
+            "0x1d3051d",
+            "0x1de2dbe"
+          ]
+        },
+        "dlfile": {
+          "stringInstances": [
+            "0x1ecd048",
+            "0x1eca829",
+            "0x1ece730",
+            "0x1eb0f34"
+          ],
+          "owningFunctions": [
+            "0x1d456cb",
+            "0x1de3904"
+          ]
+        },
+        "Dropped %s from server\nReason: %s\n": {
+          "stringInstances": [],
+          "owningFunctions": []
+        },
+        "Dropped %s from server\nReason:  %s\n": {
+          "stringInstances": [
+            "0x1ebcef0"
+          ],
+          "owningFunctions": [
+            "0x1d7e2d6"
+          ]
+        },
+        "Bad command character in client command": {
+          "stringInstances": [
+            "0x1ecec9c"
+          ],
+          "owningFunctions": [
+            "0x1df1cb8"
+          ]
+        }
+      },
+      "registrationCallVA": "0x1de3a10",
+      "registrationCandidatesAccepted": 1,
+      "clientMessageOwnerVA": "0x1df1cb8",
+      "clientEdictByteOffsetEvidenceOnly": 19356,
+      "ordinaryFragmentCalleeVA": "0x1d90d7a",
+      "bufferFragmentCalleeVA": "0x1d90af0",
+      "idb": {
+        "path": "bin/cof-5936/engine/hw.dll.i64",
+        "modifiedUTC": "2026-10-19T15:01:33.619785+00:00",
+        "manualAcquisition": "idb_list then idb_open; task-owned sessions",
+        "manualFinalization": "idb_close(save=True) succeeded",
+        "formalAnalyzerPolicy": "restored-strict/no-save; owned workers released"
+      },
+      "symbols": [
+        {
+          "logicalName": "SV_BeginFileDownload_f",
+          "symbolName": "SV_BeginFileDownload_f",
+          "kind": "function",
+          "artifact": "bin_artifacts/cof-5936/engine/SV_BeginFileDownload_f.windows.yaml",
+          "va": "0x1de2dbe",
+          "rva": "0xe2dbe",
+          "uniqueSignatureVerified": true,
+          "size": "0x2b3"
+        },
+        {
+          "logicalName": "SV_DropClient",
+          "symbolName": "SV_DropClient",
+          "kind": "function",
+          "artifact": "bin_artifacts/cof-5936/engine/SV_DropClient.windows.yaml",
+          "va": "0x1d7e2d6",
+          "rva": "0x7e2d6",
+          "uniqueSignatureVerified": true,
+          "size": "0x2e2"
+        },
+        {
+          "logicalName": "host_client",
+          "symbolName": "host_client",
+          "kind": "global",
+          "artifact": "bin_artifacts/cof-5936/engine/host_client.windows.yaml",
+          "va": "0x27fc11c",
+          "rva": "0xafc11c",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1de2dbe",
+            "instructionVA": "0x1de2e81",
+            "instructionLength": 6,
+            "operandOffset": 2,
+            "operandFieldVA": "0x1de2e83",
+            "diskOperand": "0x27fc11c",
+            "loaderRelocatedOperand": "0x27fc11c",
+            "decodedStorageVA": "0x27fc11c",
+            "disassembly": "mov     edx, dword_27FC11C",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "cmd_source",
+          "symbolName": "cmd_source",
+          "kind": "global",
+          "artifact": "bin_artifacts/cof-5936/engine/cmd_source.windows.yaml",
+          "va": "0x2d7da1c",
+          "rva": "0x107da1c",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1de2dbe",
+            "instructionVA": "0x1de2e0a",
+            "instructionLength": 7,
+            "operandOffset": 2,
+            "operandFieldVA": "0x1de2e0c",
+            "diskOperand": "0x2d7da1c",
+            "loaderRelocatedOperand": "0x2d7da1c",
+            "decodedStorageVA": "0x2d7da1c",
+            "disassembly": "cmp     dword_2D7DA1C, 1",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "sv_player",
+          "symbolName": "sv_player",
+          "kind": "global",
+          "artifact": "bin_artifacts/cof-5936/engine/sv_player.windows.yaml",
+          "va": "0x250e07c",
+          "rva": "0x80e07c",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1df1cb8",
+            "instructionVA": "0x1df1d78",
+            "instructionLength": 5,
+            "operandOffset": 1,
+            "operandFieldVA": "0x1df1d79",
+            "diskOperand": "0x250e07c",
+            "loaderRelocatedOperand": "0x250e07c",
+            "decodedStorageVA": "0x250e07c",
+            "disassembly": "mov     dword_250E07C, eax",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        }
+      ]
+    },
+    {
+      "gameVersion": "hl-10210",
+      "platform": "linux",
+      "moduleFile": "bin/hl-10210/engine/hw.so",
+      "moduleFileIdentity": {
+        "crc32": "303f1fc8",
+        "crc64": "727eaa19926a236c",
+        "isBlob": false,
+        "md5": "cb9d363dc978bbc92e9a49edd3616d11",
+        "sha256": "fca6628b5a4d76a945e11b9796f327004edc65420d9f9cc23f883143508edd78",
+        "size": 11556210
+      },
+      "analysisBinary": "bin/hl-10210/engine/hw.so",
+      "analysisSha256": "fca6628b5a4d76a945e11b9796f327004edc65420d9f9cc23f883143508edd78",
+      "imageBase": "0x0",
+      "anchors": {
+        "!MD5": {
+          "stringInstances": [
+            "0x24e07b"
+          ],
+          "owningFunctions": [
+            "0xeb4e0",
+            "0x133c60",
+            "0xf98b0",
+            "0x136fd0"
+          ]
+        },
+        "custom.hpk": {
+          "stringInstances": [
+            "0x245a68"
+          ],
+          "owningFunctions": [
+            "0xe4120",
+            "0xeb4e0",
+            "0xfa1a0",
+            "0x133c60",
+            "0x1347a0",
+            "0x146620",
+            "0x8d8d0",
+            "0xf98b0",
+            "0xfa590",
+            "0x136fd0",
+            "0x145910"
+          ]
+        },
+        "dlfile": {
+          "stringInstances": [
+            "0x24e3bc"
+          ],
+          "owningFunctions": [
+            "0x8bee0",
+            "0xec720",
+            "0x8bf80"
+          ]
+        },
+        "Dropped %s from server\nReason: %s\n": {
+          "stringInstances": [],
+          "owningFunctions": []
+        },
+        "Dropped %s from server\nReason:  %s\n": {
+          "stringInstances": [
+            "0x2486d4"
+          ],
+          "owningFunctions": [
+            "0xa7ca0"
+          ]
+        },
+        "Bad command character in client command": {
+          "stringInstances": [
+            "0x2501a4"
+          ],
+          "owningFunctions": [
+            "0xfe7d0"
+          ]
+        }
+      },
+      "registrationCallVA": "0xec871",
+      "registrationCandidatesAccepted": 1,
+      "clientMessageOwnerVA": "0xfe7d0",
+      "clientEdictByteOffsetEvidenceOnly": 25076,
+      "ordinaryFragmentCalleeVA": "0xb9a00",
+      "bufferFragmentCalleeVA": "0xb96e0",
+      "idb": {
+        "path": "bin/hl-10210/engine/hw.so.i64",
+        "modifiedUTC": "2026-10-19T15:00:51.836883+00:00",
+        "manualAcquisition": "idb_list then idb_open; task-owned sessions",
+        "manualFinalization": "idb_close(save=True) succeeded",
+        "formalAnalyzerPolicy": "restored-strict/no-save; owned workers released"
+      },
+      "symbols": [
+        {
+          "logicalName": "SV_BeginFileDownload_f",
+          "symbolName": "SV_BeginFileDownload_f",
+          "kind": "function",
+          "artifact": "bin_artifacts/hl-10210/engine/SV_BeginFileDownload_f.linux.yaml",
+          "va": "0xeb4e0",
+          "rva": "0xeb4e0",
+          "uniqueSignatureVerified": true,
+          "size": "0x338"
+        },
+        {
+          "logicalName": "SV_DropClient",
+          "symbolName": "SV_DropClient",
+          "kind": "function",
+          "artifact": "bin_artifacts/hl-10210/engine/SV_DropClient.linux.yaml",
+          "va": "0xa7ca0",
+          "rva": "0xa7ca0",
+          "uniqueSignatureVerified": true,
+          "size": "0x2d5"
+        },
+        {
+          "logicalName": "host_client",
+          "symbolName": "host_client",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-10210/engine/host_client.linux.yaml",
+          "va": "0x94d680",
+          "rva": "0x94d680",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0xeb4e0",
+            "instructionVA": "0xeb5ed",
+            "instructionLength": 6,
+            "operandOffset": 2,
+            "operandFieldVA": "0xeb5ef",
+            "diskOperand": "0x94d680",
+            "loaderRelocatedOperand": "0x94d680",
+            "decodedStorageVA": "0x94d680",
+            "disassembly": "mov     esi, ds:host_client",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "cmd_source",
+          "symbolName": "cmd_source",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-10210/engine/cmd_source.linux.yaml",
+          "va": "0x94a928",
+          "rva": "0x94a928",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0xeb4e0",
+            "instructionVA": "0xeb553",
+            "instructionLength": 7,
+            "operandOffset": 2,
+            "operandFieldVA": "0xeb555",
+            "diskOperand": "0x94a928",
+            "loaderRelocatedOperand": "0x94a928",
+            "decodedStorageVA": "0x94a928",
+            "disassembly": "cmp     ds:cmd_source, 1",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "sv_player",
+          "symbolName": "sv_player",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-10210/engine/sv_player.linux.yaml",
+          "va": "0xb9655c",
+          "rva": "0xb9655c",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0xfe7d0",
+            "instructionVA": "0xfe854",
+            "instructionLength": 5,
+            "operandOffset": 1,
+            "operandFieldVA": "0xfe855",
+            "diskOperand": "0xb9655c",
+            "loaderRelocatedOperand": "0xb9655c",
+            "decodedStorageVA": "0xb9655c",
+            "disassembly": "mov     ds:sv_player, eax",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        }
+      ]
+    },
+    {
+      "gameVersion": "hl-10210",
+      "platform": "windows",
+      "moduleFile": "bin/hl-10210/engine/hw.dll",
+      "moduleFileIdentity": {
+        "crc32": "ebb1f68c",
+        "crc64": "6ef7192cd8254e2d",
+        "isBlob": false,
+        "md5": "ba0ae7ebdef6891b1e822830145f3415",
+        "sha256": "9ba9a2db5e07598fd59afa35507a98c86162e4e15b3835177b78c11842cd2295",
+        "size": 3598176
+      },
+      "analysisBinary": "bin/hl-10210/engine/hw.dll",
+      "analysisSha256": "9ba9a2db5e07598fd59afa35507a98c86162e4e15b3835177b78c11842cd2295",
+      "imageBase": "0x10000000",
+      "anchors": {
+        "!MD5": {
+          "stringInstances": [
+            "0x102b65f4"
+          ],
+          "owningFunctions": [
+            "0x101a1130",
+            "0x10219fc0",
+            "0x101a4870",
+            "0x10206a60"
+          ]
+        },
+        "custom.hpk": {
+          "stringInstances": [
+            "0x102b6654"
+          ],
+          "owningFunctions": [
+            "0x101a62c0",
+            "0x10206a60",
+            "0x10219fc0",
+            "0x1021a360",
+            "0x101a1130",
+            "0x101a4870",
+            "0x101a70d0",
+            "0x101a18d0",
+            "0x101b70f0",
+            "0x1020cd90"
+          ]
+        },
+        "dlfile": {
+          "stringInstances": [
+            "0x102c3e01",
+            "0x102b98d4"
+          ],
+          "owningFunctions": [
+            "0x101b6230",
+            "0x1020b290"
+          ]
+        },
+        "Dropped %s from server\nReason: %s\n": {
+          "stringInstances": [],
+          "owningFunctions": []
+        },
+        "Dropped %s from server\nReason:  %s\n": {
+          "stringInstances": [
+            "0x102bea9c"
+          ],
+          "owningFunctions": [
+            "0x101d4190"
+          ]
+        },
+        "Bad command character in client command": {
+          "stringInstances": [
+            "0x102c7bc4"
+          ],
+          "owningFunctions": [
+            "0x1021c3d0"
+          ]
+        }
+      },
+      "registrationCallVA": "0x1020b36f",
+      "registrationCandidatesAccepted": 1,
+      "clientMessageOwnerVA": "0x1021c3d0",
+      "clientEdictByteOffsetEvidenceOnly": 25356,
+      "ordinaryFragmentCalleeVA": "0x101db790",
+      "bufferFragmentCalleeVA": "0x101dbbc0",
+      "idb": {
+        "path": "bin/hl-10210/engine/hw.dll.i64",
+        "modifiedUTC": "2026-10-19T15:00:47.109532+00:00",
+        "manualAcquisition": "idb_list then idb_open; task-owned sessions",
+        "manualFinalization": "idb_close(save=True) succeeded",
+        "formalAnalyzerPolicy": "restored-strict/no-save; owned workers released"
+      },
+      "symbols": [
+        {
+          "logicalName": "SV_BeginFileDownload_f",
+          "symbolName": "SV_BeginFileDownload_f",
+          "kind": "function",
+          "artifact": "bin_artifacts/hl-10210/engine/SV_BeginFileDownload_f.windows.yaml",
+          "va": "0x10206a60",
+          "rva": "0x206a60",
+          "uniqueSignatureVerified": true,
+          "size": "0x294"
+        },
+        {
+          "logicalName": "SV_DropClient",
+          "symbolName": "SV_DropClient",
+          "kind": "function",
+          "artifact": "bin_artifacts/hl-10210/engine/SV_DropClient.windows.yaml",
+          "va": "0x101d4190",
+          "rva": "0x1d4190",
+          "uniqueSignatureVerified": true,
+          "size": "0x236"
+        },
+        {
+          "logicalName": "host_client",
+          "symbolName": "host_client",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-10210/engine/host_client.windows.yaml",
+          "va": "0x11249e90",
+          "rva": "0x1249e90",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x10206a60",
+            "instructionVA": "0x10206aea",
+            "instructionLength": 6,
+            "operandOffset": 2,
+            "operandFieldVA": "0x10206aec",
+            "diskOperand": "0x11249e90",
+            "loaderRelocatedOperand": "0x11249e90",
+            "decodedStorageVA": "0x11249e90",
+            "disassembly": "mov     edx, dword_11249E90",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "cmd_source",
+          "symbolName": "cmd_source",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-10210/engine/cmd_source.windows.yaml",
+          "va": "0x1124cc00",
+          "rva": "0x124cc00",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x10206a60",
+            "instructionVA": "0x10206a9a",
+            "instructionLength": 7,
+            "operandOffset": 2,
+            "operandFieldVA": "0x10206a9c",
+            "diskOperand": "0x1124cc00",
+            "loaderRelocatedOperand": "0x1124cc00",
+            "decodedStorageVA": "0x1124cc00",
+            "disassembly": "cmp     dword_1124CC00, 1",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "sv_player",
+          "symbolName": "sv_player",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-10210/engine/sv_player.windows.yaml",
+          "va": "0x10f779d8",
+          "rva": "0xf779d8",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1021c3d0",
+            "instructionVA": "0x1021c588",
+            "instructionLength": 5,
+            "operandOffset": 1,
+            "operandFieldVA": "0x1021c589",
+            "diskOperand": "0x10f779d8",
+            "loaderRelocatedOperand": "0x10f779d8",
+            "decodedStorageVA": "0x10f779d8",
+            "disassembly": "mov     ent, eax",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        }
+      ]
+    },
+    {
+      "gameVersion": "hl-3248",
+      "platform": "windows",
+      "moduleFile": "bin/hl-3248/engine/hw.dll",
+      "moduleFileIdentity": {
+        "crc32": "532b56ce",
+        "crc64": "7e07685c707cb53e",
+        "isBlob": true,
+        "md5": "0f29c74a2382544f6d7bb367bdbaae90",
+        "sha256": "525bdbddf2f180824944ee2576702e040c2f5554ca4290f40faec842e2cf02bb",
+        "size": 2058810
+      },
+      "analysisBinary": "bin/hl-3248/engine/hw.decrypt.dll",
+      "analysisSha256": "7311ec923c5644a4c81fb1c887d1062f7732c3b7152ad0469ff367bc0094feb0",
+      "imageBase": "0x1d00000",
+      "anchors": {
+        "!MD5": {
+          "stringInstances": [
+            "0x1eda46c",
+            "0x1ebbcb0",
+            "0x1eda414",
+            "0x1ebb058",
+            "0x1edba1c"
+          ],
+          "owningFunctions": [
+            "0x1d19e40",
+            "0x1dac6d0",
+            "0x1d1c950",
+            "0x1dac570",
+            "0x1db4f50"
+          ]
+        },
+        "custom.hpk": {
+          "stringInstances": [
+            "0x1ebbd40",
+            "0x1eda480",
+            "0x1ebbce4",
+            "0x1edba24",
+            "0x1ebecc8",
+            "0x1ebd1ac",
+            "0x1ed91fc",
+            "0x1ebb0b4",
+            "0x1ebbd34",
+            "0x1ebb254",
+            "0x1ebd414",
+            "0x1eda474",
+            "0x1edbb78",
+            "0x1ebbdbc"
+          ],
+          "owningFunctions": [
+            "0x1d2c0c0",
+            "0x1da79c0",
+            "0x1d19e40",
+            "0x1d1a540",
+            "0x1db5420",
+            "0x1d1c950",
+            "0x1d1eb30",
+            "0x1db4f50",
+            "0x1dac6d0",
+            "0x1d1f110"
+          ]
+        },
+        "dlfile": {
+          "stringInstances": [
+            "0x1eda7d8",
+            "0x1ebeaac",
+            "0x1edbd5c"
+          ],
+          "owningFunctions": [
+            "0x1dad010",
+            "0x1d2b8f0"
+          ]
+        },
+        "Dropped %s from server\nReason: %s\n": {
+          "stringInstances": [],
+          "owningFunctions": []
+        },
+        "Dropped %s from server\nReason:  %s\n": {
+          "stringInstances": [
+            "0x1eca6dc"
+          ],
+          "owningFunctions": [
+            "0x1d56970"
+          ]
+        },
+        "Bad command character in client command": {
+          "stringInstances": [
+            "0x1edc460"
+          ],
+          "owningFunctions": [
+            "0x1db8eff"
+          ]
+        }
+      },
+      "registrationCallVA": "0x1dad0ef",
+      "registrationCandidatesAccepted": 1,
+      "clientMessageOwnerVA": "0x1db8eff",
+      "clientEdictByteOffsetEvidenceOnly": 19356,
+      "ordinaryFragmentCalleeVA": "0x1d66190",
+      "bufferFragmentCalleeVA": "0x1d65f80",
+      "idb": {
+        "path": "bin/hl-3248/engine/hw.decrypt.dll.i64",
+        "modifiedUTC": "2026-10-19T14:59:49.475219+00:00",
+        "manualAcquisition": "idb_list then idb_open; task-owned sessions",
+        "manualFinalization": "idb_close(save=True) succeeded",
+        "formalAnalyzerPolicy": "restored-strict/no-save; owned workers released"
+      },
+      "symbols": [
+        {
+          "logicalName": "SV_BeginFileDownload_f",
+          "symbolName": "SV_BeginFileDownload_f",
+          "kind": "function",
+          "artifact": "bin_artifacts/hl-3248/engine/SV_BeginFileDownload_f.windows.yaml",
+          "va": "0x1dac6d0",
+          "rva": "0xac6d0",
+          "uniqueSignatureVerified": true,
+          "size": "0x21b"
+        },
+        {
+          "logicalName": "SV_DropClient",
+          "symbolName": "SV_DropClient",
+          "kind": "function",
+          "artifact": "bin_artifacts/hl-3248/engine/SV_DropClient.windows.yaml",
+          "va": "0x1d56970",
+          "rva": "0x56970",
+          "uniqueSignatureVerified": true,
+          "size": "0x205"
+        },
+        {
+          "logicalName": "host_client",
+          "symbolName": "host_client",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-3248/engine/host_client.windows.yaml",
+          "va": "0x280dee8",
+          "rva": "0xb0dee8",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1dac6d0",
+            "instructionVA": "0x1dac85f",
+            "instructionLength": 5,
+            "operandOffset": 1,
+            "operandFieldVA": "0x1dac860",
+            "diskOperand": "0x280dee8",
+            "loaderRelocatedOperand": "0x280dee8",
+            "decodedStorageVA": "0x280dee8",
+            "disassembly": "mov     eax, dword_280DEE8",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "cmd_source",
+          "symbolName": "cmd_source",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-3248/engine/cmd_source.windows.yaml",
+          "va": "0x2d5e0b8",
+          "rva": "0x105e0b8",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1dac6d0",
+            "instructionVA": "0x1dac725",
+            "instructionLength": 7,
+            "operandOffset": 2,
+            "operandFieldVA": "0x1dac727",
+            "diskOperand": "0x2d5e0b8",
+            "loaderRelocatedOperand": "0x2d5e0b8",
+            "decodedStorageVA": "0x2d5e0b8",
+            "disassembly": "cmp     dword_2D5E0B8, 1",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "sv_player",
+          "symbolName": "sv_player",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-3248/engine/sv_player.windows.yaml",
+          "va": "0x25069bc",
+          "rva": "0x8069bc",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1db8eff",
+            "instructionVA": "0x1db8f97",
+            "instructionLength": 5,
+            "operandOffset": 1,
+            "operandFieldVA": "0x1db8f98",
+            "diskOperand": "0x25069bc",
+            "loaderRelocatedOperand": "0x25069bc",
+            "decodedStorageVA": "0x25069bc",
+            "disassembly": "mov     dword_25069BC, eax",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        }
+      ]
+    },
+    {
+      "gameVersion": "hl-3266",
+      "platform": "windows",
+      "moduleFile": "bin/hl-3266/engine/hw.dll",
+      "moduleFileIdentity": {
+        "crc32": "dcc6a2c0",
+        "crc64": "8d3b22546891b7a8",
+        "isBlob": true,
+        "md5": "9bd50bfc62c882491293822132db4781",
+        "sha256": "e3faf0b5f1f694b02208ee905148d7febcde9eb8ea093c1251ce6a3dda1bb65e",
+        "size": 2058810
+      },
+      "analysisBinary": "bin/hl-3266/engine/hw.decrypt.dll",
+      "analysisSha256": "d00aed229438f2b3dbe0c77f37657b903e6c35893ee1d39e4695afbfffefee21",
+      "imageBase": "0x1d00000",
+      "anchors": {
+        "!MD5": {
+          "stringInstances": [
+            "0x1eda46c",
+            "0x1ebbcb0",
+            "0x1eda414",
+            "0x1ebb058",
+            "0x1edba1c"
+          ],
+          "owningFunctions": [
+            "0x1d19e40",
+            "0x1dac6d0",
+            "0x1d1c950",
+            "0x1dac570",
+            "0x1db4f50"
+          ]
+        },
+        "custom.hpk": {
+          "stringInstances": [
+            "0x1ebbd40",
+            "0x1eda480",
+            "0x1ebbce4",
+            "0x1edba24",
+            "0x1ebecc8",
+            "0x1ebd1ac",
+            "0x1ed91fc",
+            "0x1ebb0b4",
+            "0x1ebbd34",
+            "0x1ebb254",
+            "0x1ebd414",
+            "0x1eda474",
+            "0x1edbb78",
+            "0x1ebbdbc"
+          ],
+          "owningFunctions": [
+            "0x1d2c0a0",
+            "0x1da79a0",
+            "0x1d19e40",
+            "0x1d1a540",
+            "0x1db5420",
+            "0x1d1c950",
+            "0x1d1eb10",
+            "0x1db4f50",
+            "0x1dac6d0",
+            "0x1d1f0f0"
+          ]
+        },
+        "dlfile": {
+          "stringInstances": [
+            "0x1eda7d8",
+            "0x1ebeaac",
+            "0x1edbd5c"
+          ],
+          "owningFunctions": [
+            "0x1dad010",
+            "0x1d2b8d0"
+          ]
+        },
+        "Dropped %s from server\nReason: %s\n": {
+          "stringInstances": [],
+          "owningFunctions": []
+        },
+        "Dropped %s from server\nReason:  %s\n": {
+          "stringInstances": [
+            "0x1eca6dc"
+          ],
+          "owningFunctions": [
+            "0x1d56950"
+          ]
+        },
+        "Bad command character in client command": {
+          "stringInstances": [
+            "0x1edc460"
+          ],
+          "owningFunctions": [
+            "0x1db8eff"
+          ]
+        }
+      },
+      "registrationCallVA": "0x1dad0ef",
+      "registrationCandidatesAccepted": 1,
+      "clientMessageOwnerVA": "0x1db8eff",
+      "clientEdictByteOffsetEvidenceOnly": 19356,
+      "ordinaryFragmentCalleeVA": "0x1d66170",
+      "bufferFragmentCalleeVA": "0x1d65f60",
+      "idb": {
+        "path": "bin/hl-3266/engine/hw.decrypt.dll.i64",
+        "modifiedUTC": "2026-10-19T14:59:57.227261+00:00",
+        "manualAcquisition": "idb_list then idb_open; task-owned sessions",
+        "manualFinalization": "idb_close(save=True) succeeded",
+        "formalAnalyzerPolicy": "restored-strict/no-save; owned workers released"
+      },
+      "symbols": [
+        {
+          "logicalName": "SV_BeginFileDownload_f",
+          "symbolName": "SV_BeginFileDownload_f",
+          "kind": "function",
+          "artifact": "bin_artifacts/hl-3266/engine/SV_BeginFileDownload_f.windows.yaml",
+          "va": "0x1dac6d0",
+          "rva": "0xac6d0",
+          "uniqueSignatureVerified": true,
+          "size": "0x21b"
+        },
+        {
+          "logicalName": "SV_DropClient",
+          "symbolName": "SV_DropClient",
+          "kind": "function",
+          "artifact": "bin_artifacts/hl-3266/engine/SV_DropClient.windows.yaml",
+          "va": "0x1d56950",
+          "rva": "0x56950",
+          "uniqueSignatureVerified": true,
+          "size": "0x205"
+        },
+        {
+          "logicalName": "host_client",
+          "symbolName": "host_client",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-3266/engine/host_client.windows.yaml",
+          "va": "0x280dee8",
+          "rva": "0xb0dee8",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1dac6d0",
+            "instructionVA": "0x1dac85f",
+            "instructionLength": 5,
+            "operandOffset": 1,
+            "operandFieldVA": "0x1dac860",
+            "diskOperand": "0x280dee8",
+            "loaderRelocatedOperand": "0x280dee8",
+            "decodedStorageVA": "0x280dee8",
+            "disassembly": "mov     eax, dword_280DEE8",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "cmd_source",
+          "symbolName": "cmd_source",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-3266/engine/cmd_source.windows.yaml",
+          "va": "0x2d5e0b8",
+          "rva": "0x105e0b8",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1dac6d0",
+            "instructionVA": "0x1dac725",
+            "instructionLength": 7,
+            "operandOffset": 2,
+            "operandFieldVA": "0x1dac727",
+            "diskOperand": "0x2d5e0b8",
+            "loaderRelocatedOperand": "0x2d5e0b8",
+            "decodedStorageVA": "0x2d5e0b8",
+            "disassembly": "cmp     dword_2D5E0B8, 1",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "sv_player",
+          "symbolName": "sv_player",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-3266/engine/sv_player.windows.yaml",
+          "va": "0x25069bc",
+          "rva": "0x8069bc",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1db8eff",
+            "instructionVA": "0x1db8f97",
+            "instructionLength": 5,
+            "operandOffset": 1,
+            "operandFieldVA": "0x1db8f98",
+            "diskOperand": "0x25069bc",
+            "loaderRelocatedOperand": "0x25069bc",
+            "decodedStorageVA": "0x25069bc",
+            "disassembly": "mov     dword_25069BC, eax",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        }
+      ]
+    },
+    {
+      "gameVersion": "hl-3329",
+      "platform": "windows",
+      "moduleFile": "bin/hl-3329/engine/hw.dll",
+      "moduleFileIdentity": {
+        "crc32": "1b168ec1",
+        "crc64": "bcd73e6d3ca715a4",
+        "isBlob": true,
+        "md5": "875a8b462935f00acb6db3ee94a9dbac",
+        "sha256": "ef59e9f2001baf08185d3482684a56a8faad1b31f2fe6e5ba97048fe23f696ff",
+        "size": 1845834
+      },
+      "analysisBinary": "bin/hl-3329/engine/hw.decrypt.dll",
+      "analysisSha256": "4b42b89992cda6ef5b84c1bb56556f5b15b1e0c2a3a7b9f04fe053dcf24c4480",
+      "imageBase": "0x1d00000",
+      "anchors": {
+        "!MD5": {
+          "stringInstances": [
+            "0x1eabfe4",
+            "0x1ead48c",
+            "0x1eabf8c",
+            "0x1e8cd98",
+            "0x1e8d8d8"
+          ],
+          "owningFunctions": [
+            "0x1dabd40",
+            "0x1d1c520",
+            "0x1dabbe0",
+            "0x1d19ad0",
+            "0x1db4590"
+          ]
+        },
+        "custom.hpk": {
+          "stringInstances": [
+            "0x1e8d944",
+            "0x1e8ed44",
+            "0x1e90888",
+            "0x1ead5e8",
+            "0x1e8d9cc",
+            "0x1e8efac",
+            "0x1eabfec",
+            "0x1e8d8f0",
+            "0x1e8d950",
+            "0x1e8cf94",
+            "0x1e8cdf4",
+            "0x1eaad74",
+            "0x1ead494",
+            "0x1eabff8"
+          ],
+          "owningFunctions": [
+            "0x1d1c520",
+            "0x1db4a60",
+            "0x1d1ec80",
+            "0x1d1e6a0",
+            "0x1dabd40",
+            "0x1da7000",
+            "0x1d2bd50",
+            "0x1d1a1d0",
+            "0x1d19ad0",
+            "0x1db4590"
+          ]
+        },
+        "dlfile": {
+          "stringInstances": [
+            "0x1eac350",
+            "0x1ead7cc",
+            "0x1e9066c"
+          ],
+          "owningFunctions": [
+            "0x1dac680",
+            "0x1d2b580"
+          ]
+        },
+        "Dropped %s from server\nReason: %s\n": {
+          "stringInstances": [],
+          "owningFunctions": []
+        },
+        "Dropped %s from server\nReason:  %s\n": {
+          "stringInstances": [
+            "0x1e9c2bc"
+          ],
+          "owningFunctions": [
+            "0x1d566b0"
+          ]
+        },
+        "Bad command character in client command": {
+          "stringInstances": [
+            "0x1eadf2c"
+          ],
+          "owningFunctions": [
+            "0x1db85bf"
+          ]
+        }
+      },
+      "registrationCallVA": "0x1dac75f",
+      "registrationCandidatesAccepted": 1,
+      "clientMessageOwnerVA": "0x1db85bf",
+      "clientEdictByteOffsetEvidenceOnly": 19356,
+      "ordinaryFragmentCalleeVA": "0x1d65ed0",
+      "bufferFragmentCalleeVA": "0x1d65cc0",
+      "idb": {
+        "path": "bin/hl-3329/engine/hw.decrypt.dll.i64",
+        "modifiedUTC": "2026-10-19T15:00:04.683301+00:00",
+        "manualAcquisition": "idb_list then idb_open; task-owned sessions",
+        "manualFinalization": "idb_close(save=True) succeeded",
+        "formalAnalyzerPolicy": "restored-strict/no-save; owned workers released"
+      },
+      "symbols": [
+        {
+          "logicalName": "SV_BeginFileDownload_f",
+          "symbolName": "SV_BeginFileDownload_f",
+          "kind": "function",
+          "artifact": "bin_artifacts/hl-3329/engine/SV_BeginFileDownload_f.windows.yaml",
+          "va": "0x1dabd40",
+          "rva": "0xabd40",
+          "uniqueSignatureVerified": true,
+          "size": "0x21b"
+        },
+        {
+          "logicalName": "SV_DropClient",
+          "symbolName": "SV_DropClient",
+          "kind": "function",
+          "artifact": "bin_artifacts/hl-3329/engine/SV_DropClient.windows.yaml",
+          "va": "0x1d566b0",
+          "rva": "0x566b0",
+          "uniqueSignatureVerified": true,
+          "size": "0x205"
+        },
+        {
+          "logicalName": "host_client",
+          "symbolName": "host_client",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-3329/engine/host_client.windows.yaml",
+          "va": "0x27da808",
+          "rva": "0xada808",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1dabd40",
+            "instructionVA": "0x1dabecf",
+            "instructionLength": 5,
+            "operandOffset": 1,
+            "operandFieldVA": "0x1dabed0",
+            "diskOperand": "0x27da808",
+            "loaderRelocatedOperand": "0x27da808",
+            "decodedStorageVA": "0x27da808",
+            "disassembly": "mov     eax, dword_27DA808",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "cmd_source",
+          "symbolName": "cmd_source",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-3329/engine/cmd_source.windows.yaml",
+          "va": "0x2d2a9d8",
+          "rva": "0x102a9d8",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1dabd40",
+            "instructionVA": "0x1dabd95",
+            "instructionLength": 7,
+            "operandOffset": 2,
+            "operandFieldVA": "0x1dabd97",
+            "diskOperand": "0x2d2a9d8",
+            "loaderRelocatedOperand": "0x2d2a9d8",
+            "decodedStorageVA": "0x2d2a9d8",
+            "disassembly": "cmp     dword_2D2A9D8, 1",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "sv_player",
+          "symbolName": "sv_player",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-3329/engine/sv_player.windows.yaml",
+          "va": "0x24d32dc",
+          "rva": "0x7d32dc",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1db85bf",
+            "instructionVA": "0x1db8657",
+            "instructionLength": 5,
+            "operandOffset": 1,
+            "operandFieldVA": "0x1db8658",
+            "diskOperand": "0x24d32dc",
+            "loaderRelocatedOperand": "0x24d32dc",
+            "decodedStorageVA": "0x24d32dc",
+            "disassembly": "mov     dword_24D32DC, eax",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        }
+      ]
+    },
+    {
+      "gameVersion": "hl-3647",
+      "platform": "windows",
+      "moduleFile": "bin/hl-3647/engine/hw.dll",
+      "moduleFileIdentity": {
+        "crc32": "d4edc26e",
+        "crc64": "a4f5787a83b57d53",
+        "isBlob": true,
+        "md5": "fb4c56099f9331f41629a03ccedda916",
+        "sha256": "f80c01c3c8f0800c89102343d58c4295bb62872f654cbd04a524788aa10f901f",
+        "size": 1841770
+      },
+      "analysisBinary": "bin/hl-3647/engine/hw.decrypt.dll",
+      "analysisSha256": "7d4bee5d199c40d738c0bc2ed668c0fd8830278e2fed1f320b07832fda993110",
+      "imageBase": "0x1d00000",
+      "anchors": {
+        "!MD5": {
+          "stringInstances": [
+            "0x1eac324",
+            "0x1eab02c",
+            "0x1e8be10",
+            "0x1e8c950",
+            "0x1eaafd4"
+          ],
+          "owningFunctions": [
+            "0x1daad40",
+            "0x1daabe0",
+            "0x1db3770",
+            "0x1d19b30",
+            "0x1d1c5d0"
+          ]
+        },
+        "custom.hpk": {
+          "stringInstances": [
+            "0x1e8f940",
+            "0x1eab040",
+            "0x1eac480",
+            "0x1e8ca44",
+            "0x1e8ddfc",
+            "0x1e8e064",
+            "0x1e8c968",
+            "0x1e8c9c8",
+            "0x1e8be6c",
+            "0x1e8c00c",
+            "0x1eac32c",
+            "0x1eab034",
+            "0x1ea9dbc",
+            "0x1e8c9bc"
+          ],
+          "owningFunctions": [
+            "0x1daad40",
+            "0x1d1e7c0",
+            "0x1db3c40",
+            "0x1d1eda0",
+            "0x1d2be70",
+            "0x1d1c5d0",
+            "0x1d19b30",
+            "0x1d1a230",
+            "0x1db3770",
+            "0x1da6010"
+          ]
+        },
+        "dlfile": {
+          "stringInstances": [
+            "0x1eab398",
+            "0x1eac664",
+            "0x1e8f724"
+          ],
+          "owningFunctions": [
+            "0x1dab680",
+            "0x1d2b6a0"
+          ]
+        },
+        "Dropped %s from server\nReason: %s\n": {
+          "stringInstances": [],
+          "owningFunctions": []
+        },
+        "Dropped %s from server\nReason:  %s\n": {
+          "stringInstances": [
+            "0x1e9b37c"
+          ],
+          "owningFunctions": [
+            "0x1d567e0"
+          ]
+        },
+        "Bad command character in client command": {
+          "stringInstances": [
+            "0x1eacdc4"
+          ],
+          "owningFunctions": [
+            "0x1db779f"
+          ]
+        }
+      },
+      "registrationCallVA": "0x1dab75f",
+      "registrationCandidatesAccepted": 1,
+      "clientMessageOwnerVA": "0x1db779f",
+      "clientEdictByteOffsetEvidenceOnly": 19356,
+      "ordinaryFragmentCalleeVA": "0x1d66040",
+      "bufferFragmentCalleeVA": "0x1d65e30",
+      "idb": {
+        "path": "bin/hl-3647/engine/hw.decrypt.dll.i64",
+        "modifiedUTC": "2026-10-19T15:00:12.317343+00:00",
+        "manualAcquisition": "idb_list then idb_open; task-owned sessions",
+        "manualFinalization": "idb_close(save=True) succeeded",
+        "formalAnalyzerPolicy": "restored-strict/no-save; owned workers released"
+      },
+      "symbols": [
+        {
+          "logicalName": "SV_BeginFileDownload_f",
+          "symbolName": "SV_BeginFileDownload_f",
+          "kind": "function",
+          "artifact": "bin_artifacts/hl-3647/engine/SV_BeginFileDownload_f.windows.yaml",
+          "va": "0x1daad40",
+          "rva": "0xaad40",
+          "uniqueSignatureVerified": true,
+          "size": "0x21b"
+        },
+        {
+          "logicalName": "SV_DropClient",
+          "symbolName": "SV_DropClient",
+          "kind": "function",
+          "artifact": "bin_artifacts/hl-3647/engine/SV_DropClient.windows.yaml",
+          "va": "0x1d567e0",
+          "rva": "0x567e0",
+          "uniqueSignatureVerified": true,
+          "size": "0x1fb"
+        },
+        {
+          "logicalName": "host_client",
+          "symbolName": "host_client",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-3647/engine/host_client.windows.yaml",
+          "va": "0x27d9688",
+          "rva": "0xad9688",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1daad40",
+            "instructionVA": "0x1daaecf",
+            "instructionLength": 5,
+            "operandOffset": 1,
+            "operandFieldVA": "0x1daaed0",
+            "diskOperand": "0x27d9688",
+            "loaderRelocatedOperand": "0x27d9688",
+            "decodedStorageVA": "0x27d9688",
+            "disassembly": "mov     eax, dword_27D9688",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "cmd_source",
+          "symbolName": "cmd_source",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-3647/engine/cmd_source.windows.yaml",
+          "va": "0x2d29858",
+          "rva": "0x1029858",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1daad40",
+            "instructionVA": "0x1daad95",
+            "instructionLength": 7,
+            "operandOffset": 2,
+            "operandFieldVA": "0x1daad97",
+            "diskOperand": "0x2d29858",
+            "loaderRelocatedOperand": "0x2d29858",
+            "decodedStorageVA": "0x2d29858",
+            "disassembly": "cmp     dword_2D29858, 1",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "sv_player",
+          "symbolName": "sv_player",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-3647/engine/sv_player.windows.yaml",
+          "va": "0x24d215c",
+          "rva": "0x7d215c",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1db779f",
+            "instructionVA": "0x1db7837",
+            "instructionLength": 5,
+            "operandOffset": 1,
+            "operandFieldVA": "0x1db7838",
+            "diskOperand": "0x24d215c",
+            "loaderRelocatedOperand": "0x24d215c",
+            "decodedStorageVA": "0x24d215c",
+            "disassembly": "mov     dword_24D215C, eax",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        }
+      ]
+    },
+    {
+      "gameVersion": "hl-4554",
+      "platform": "windows",
+      "moduleFile": "bin/hl-4554/engine/hw.dll",
+      "moduleFileIdentity": {
+        "crc32": "72931d96",
+        "crc64": "af713d75d839d5c7",
+        "isBlob": false,
+        "md5": "5770740586cdd74611f17812bc289ade",
+        "sha256": "482871315f4a713a8aa72c5e2a73092d261bacb618890a4523630e9e168eb2a3",
+        "size": 1840440
+      },
+      "analysisBinary": "bin/hl-4554/engine/hw.dll",
+      "analysisSha256": "482871315f4a713a8aa72c5e2a73092d261bacb618890a4523630e9e168eb2a3",
+      "imageBase": "0x1d00000",
+      "anchors": {
+        "!MD5": {
+          "stringInstances": [
+            "0x1e89980",
+            "0x1e6a5c4",
+            "0x1e6b044",
+            "0x1e8ae8c",
+            "0x1e899dc"
+          ],
+          "owningFunctions": [
+            "0x1dbf1e0",
+            "0x1d24080",
+            "0x1db7030",
+            "0x1d26890",
+            "0x1db7190"
+          ]
+        },
+        "custom.hpk": {
+          "stringInstances": [
+            "0x1e6a620",
+            "0x1e6b0e0",
+            "0x1e6a7c0",
+            "0x1e6b084",
+            "0x1e899e4",
+            "0x1e8afe4",
+            "0x1e6c7b0",
+            "0x1e6e0f0",
+            "0x1e88710",
+            "0x1e899f0",
+            "0x1e6b0d4",
+            "0x1e6c514",
+            "0x1e8ae94",
+            "0x1e6b15c"
+          ],
+          "owningFunctions": [
+            "0x1d24080",
+            "0x1d246c0",
+            "0x1d28980",
+            "0x1dbf1e0",
+            "0x1dbf6b0",
+            "0x1d26890",
+            "0x1db7190",
+            "0x1d291f0",
+            "0x1d36350",
+            "0x1db22f0"
+          ]
+        },
+        "dlfile": {
+          "stringInstances": [
+            "0x1e6ded8",
+            "0x1e8b418",
+            "0x1e89d48"
+          ],
+          "owningFunctions": [
+            "0x1d35b60",
+            "0x1db7ad0"
+          ]
+        },
+        "Dropped %s from server\nReason: %s\n": {
+          "stringInstances": [],
+          "owningFunctions": []
+        },
+        "Dropped %s from server\nReason:  %s\n": {
+          "stringInstances": [
+            "0x1e79e60"
+          ],
+          "owningFunctions": [
+            "0x1d61dd0"
+          ]
+        },
+        "Bad command character in client command": {
+          "stringInstances": [
+            "0x1e8b970"
+          ],
+          "owningFunctions": [
+            "0x1dc31fb"
+          ]
+        }
+      },
+      "registrationCallVA": "0x1db7baf",
+      "registrationCandidatesAccepted": 1,
+      "clientMessageOwnerVA": "0x1dc31fb",
+      "clientEdictByteOffsetEvidenceOnly": 19356,
+      "ordinaryFragmentCalleeVA": "0x1d70c60",
+      "bufferFragmentCalleeVA": "0x1d70a50",
+      "idb": {
+        "path": "bin/hl-4554/engine/hw.dll.i64",
+        "modifiedUTC": "2026-10-19T15:00:19.562382+00:00",
+        "manualAcquisition": "idb_list then idb_open; task-owned sessions",
+        "manualFinalization": "idb_close(save=True) succeeded",
+        "formalAnalyzerPolicy": "restored-strict/no-save; owned workers released"
+      },
+      "symbols": [
+        {
+          "logicalName": "SV_BeginFileDownload_f",
+          "symbolName": "SV_BeginFileDownload_f",
+          "kind": "function",
+          "artifact": "bin_artifacts/hl-4554/engine/SV_BeginFileDownload_f.windows.yaml",
+          "va": "0x1db7190",
+          "rva": "0xb7190",
+          "uniqueSignatureVerified": true,
+          "size": "0x21b"
+        },
+        {
+          "logicalName": "SV_DropClient",
+          "symbolName": "SV_DropClient",
+          "kind": "function",
+          "artifact": "bin_artifacts/hl-4554/engine/SV_DropClient.windows.yaml",
+          "va": "0x1d61dd0",
+          "rva": "0x61dd0",
+          "uniqueSignatureVerified": true,
+          "size": "0x214"
+        },
+        {
+          "logicalName": "host_client",
+          "symbolName": "host_client",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-4554/engine/host_client.windows.yaml",
+          "va": "0x278343c",
+          "rva": "0xa8343c",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1db7190",
+            "instructionVA": "0x1db731f",
+            "instructionLength": 5,
+            "operandOffset": 1,
+            "operandFieldVA": "0x1db7320",
+            "diskOperand": "0x278343c",
+            "loaderRelocatedOperand": "0x278343c",
+            "decodedStorageVA": "0x278343c",
+            "disassembly": "mov     eax, dword_278343C",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "cmd_source",
+          "symbolName": "cmd_source",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-4554/engine/cmd_source.windows.yaml",
+          "va": "0x2cd3d5c",
+          "rva": "0xfd3d5c",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1db7190",
+            "instructionVA": "0x1db71e5",
+            "instructionLength": 7,
+            "operandOffset": 2,
+            "operandFieldVA": "0x1db71e7",
+            "diskOperand": "0x2cd3d5c",
+            "loaderRelocatedOperand": "0x2cd3d5c",
+            "decodedStorageVA": "0x2cd3d5c",
+            "disassembly": "cmp     dword_2CD3D5C, 1",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "sv_player",
+          "symbolName": "sv_player",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-4554/engine/sv_player.windows.yaml",
+          "va": "0x24bbd9c",
+          "rva": "0x7bbd9c",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1dc31fb",
+            "instructionVA": "0x1dc3294",
+            "instructionLength": 5,
+            "operandOffset": 1,
+            "operandFieldVA": "0x1dc3295",
+            "diskOperand": "0x24bbd9c",
+            "loaderRelocatedOperand": "0x24bbd9c",
+            "decodedStorageVA": "0x24bbd9c",
+            "disassembly": "mov     dword_24BBD9C, eax",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        }
+      ]
+    },
+    {
+      "gameVersion": "hl-6153",
+      "platform": "windows",
+      "moduleFile": "bin/hl-6153/engine/hw.dll",
+      "moduleFileIdentity": {
+        "crc32": "7dcd5719",
+        "crc64": "6a2fadd69b9795c9",
+        "isBlob": false,
+        "md5": "3b6460a5604317b1bfacdd6ab1a58f87",
+        "sha256": "5d9958f8111197f5fb22cc2a44f05239f4d5c9a48b8795f2bc287d507258a257",
+        "size": 1625608
+      },
+      "analysisBinary": "bin/hl-6153/engine/hw.dll",
+      "analysisSha256": "5d9958f8111197f5fb22cc2a44f05239f4d5c9a48b8795f2bc287d507258a257",
+      "imageBase": "0x1d00000",
+      "anchors": {
+        "!MD5": {
+          "stringInstances": [
+            "0x1e37d10",
+            "0x1e386f8",
+            "0x1e55d6c",
+            "0x1e57324"
+          ],
+          "owningFunctions": [
+            "0x1d16c00",
+            "0x1d19240",
+            "0x1d9ba80",
+            "0x1da3cf0"
+          ]
+        },
+        "custom.hpk": {
+          "stringInstances": [
+            "0x1e39ba0",
+            "0x1e3b9a0",
+            "0x1e55d80",
+            "0x1e57480",
+            "0x1e38764",
+            "0x1e39e08",
+            "0x1e37d6c",
+            "0x1e387ec",
+            "0x1e5732c",
+            "0x1e38710",
+            "0x1e38770",
+            "0x1e54a94",
+            "0x1e55d74",
+            "0x1e37f18"
+          ],
+          "owningFunctions": [
+            "0x1d19240",
+            "0x1d9ba80",
+            "0x1d287a0",
+            "0x1d16c00",
+            "0x1d17200",
+            "0x1d1b270",
+            "0x1da41f0",
+            "0x1da3cf0",
+            "0x1d96b50"
+          ]
+        },
+        "dlfile": {
+          "stringInstances": [
+            "0x1e3b788",
+            "0x1e537d1",
+            "0x1e57664",
+            "0x1e560d8"
+          ],
+          "owningFunctions": [
+            "0x1d27fa0",
+            "0x1d9c3c0"
+          ]
+        },
+        "Dropped %s from server\nReason: %s\n": {
+          "stringInstances": [],
+          "owningFunctions": []
+        },
+        "Dropped %s from server\nReason:  %s\n": {
+          "stringInstances": [
+            "0x1e47634"
+          ],
+          "owningFunctions": [
+            "0x1d55560"
+          ]
+        },
+        "Bad command character in client command": {
+          "stringInstances": [
+            "0x1e57ddc"
+          ],
+          "owningFunctions": [
+            "0x1da7d1f"
+          ]
+        }
+      },
+      "registrationCallVA": "0x1d9c49f",
+      "registrationCandidatesAccepted": 1,
+      "clientMessageOwnerVA": "0x1da7d1f",
+      "clientEdictByteOffsetEvidenceOnly": 19356,
+      "ordinaryFragmentCalleeVA": "0x1d648a0",
+      "bufferFragmentCalleeVA": "0x1d646a0",
+      "idb": {
+        "path": "bin/hl-6153/engine/hw.dll.i64",
+        "modifiedUTC": "2026-10-19T15:00:26.648895+00:00",
+        "manualAcquisition": "idb_list then idb_open; task-owned sessions",
+        "manualFinalization": "idb_close(save=True) succeeded",
+        "formalAnalyzerPolicy": "restored-strict/no-save; owned workers released"
+      },
+      "symbols": [
+        {
+          "logicalName": "SV_BeginFileDownload_f",
+          "symbolName": "SV_BeginFileDownload_f",
+          "kind": "function",
+          "artifact": "bin_artifacts/hl-6153/engine/SV_BeginFileDownload_f.windows.yaml",
+          "va": "0x1d9ba80",
+          "rva": "0x9ba80",
+          "uniqueSignatureVerified": true,
+          "size": "0x22c"
+        },
+        {
+          "logicalName": "SV_DropClient",
+          "symbolName": "SV_DropClient",
+          "kind": "function",
+          "artifact": "bin_artifacts/hl-6153/engine/SV_DropClient.windows.yaml",
+          "va": "0x1d55560",
+          "rva": "0x55560",
+          "uniqueSignatureVerified": true,
+          "size": "0x200"
+        },
+        {
+          "logicalName": "host_client",
+          "symbolName": "host_client",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-6153/engine/host_client.windows.yaml",
+          "va": "0x27b403c",
+          "rva": "0xab403c",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1d9ba80",
+            "instructionVA": "0x1d9bb22",
+            "instructionLength": 6,
+            "operandOffset": 2,
+            "operandFieldVA": "0x1d9bb24",
+            "diskOperand": "0x27b403c",
+            "loaderRelocatedOperand": "0x27b403c",
+            "decodedStorageVA": "0x27b403c",
+            "disassembly": "mov     edx, dword_27B403C",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "cmd_source",
+          "symbolName": "cmd_source",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-6153/engine/cmd_source.windows.yaml",
+          "va": "0x2d04d5c",
+          "rva": "0x1004d5c",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1d9ba80",
+            "instructionVA": "0x1d9bac8",
+            "instructionLength": 7,
+            "operandOffset": 2,
+            "operandFieldVA": "0x1d9baca",
+            "diskOperand": "0x2d04d5c",
+            "loaderRelocatedOperand": "0x2d04d5c",
+            "decodedStorageVA": "0x2d04d5c",
+            "disassembly": "cmp     dword_2D04D5C, 1",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "sv_player",
+          "symbolName": "sv_player",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-6153/engine/sv_player.windows.yaml",
+          "va": "0x24f2de4",
+          "rva": "0x7f2de4",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1da7d1f",
+            "instructionVA": "0x1da7db9",
+            "instructionLength": 5,
+            "operandOffset": 1,
+            "operandFieldVA": "0x1da7dba",
+            "diskOperand": "0x24f2de4",
+            "loaderRelocatedOperand": "0x24f2de4",
+            "decodedStorageVA": "0x24f2de4",
+            "disassembly": "mov     dword_24F2DE4, eax",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        }
+      ]
+    },
+    {
+      "gameVersion": "hl-8684",
+      "platform": "linux",
+      "moduleFile": "bin/hl-8684/engine/hw.so",
+      "moduleFileIdentity": {
+        "crc32": "633fc396",
+        "crc64": "ec79b6fb0c5688c4",
+        "isBlob": false,
+        "md5": "6b09e190ae45062f567675153f2957e5",
+        "sha256": "1e775773292407106ac17c98bc19f0444e8f1525d46e592de5cc53afad2b89e1",
+        "size": 9330714
+      },
+      "analysisBinary": "bin/hl-8684/engine/hw.so",
+      "analysisSha256": "1e775773292407106ac17c98bc19f0444e8f1525d46e592de5cc53afad2b89e1",
+      "imageBase": "0x0",
+      "anchors": {
+        "!MD5": {
+          "stringInstances": [
+            "0x2743b7"
+          ],
+          "owningFunctions": [
+            "0x14b2e0",
+            "0x18f110",
+            "0x18ecd0",
+            "0x158c90",
+            "0x18b590"
+          ]
+        },
+        "custom.hpk": {
+          "stringInstances": [
+            "0x26bdf4"
+          ],
+          "owningFunctions": [
+            "0xf8f40",
+            "0x159420",
+            "0x14b2e0",
+            "0x19d400",
+            "0x158c90",
+            "0x144c90",
+            "0x159870",
+            "0x18b590",
+            "0x18de70",
+            "0x18ecd0",
+            "0x18f110",
+            "0x19df70"
+          ]
+        },
+        "dlfile": {
+          "stringInstances": [
+            "0x274746"
+          ],
+          "owningFunctions": [
+            "0xf7700",
+            "0x14c500"
+          ]
+        },
+        "Dropped %s from server\nReason: %s\n": {
+          "stringInstances": [],
+          "owningFunctions": []
+        },
+        "Dropped %s from server\nReason:  %s\n": {
+          "stringInstances": [
+            "0x26ea4c"
+          ],
+          "owningFunctions": [
+            "0x10e3e0"
+          ]
+        },
+        "Bad command character in client command": {
+          "stringInstances": [
+            "0x2765c8"
+          ],
+          "owningFunctions": [
+            "0x15dd00"
+          ]
+        }
+      },
+      "registrationCallVA": "0x14c651",
+      "registrationCandidatesAccepted": 1,
+      "clientMessageOwnerVA": "0x15dd00",
+      "clientEdictByteOffsetEvidenceOnly": 19076,
+      "ordinaryFragmentCalleeVA": "0x11ef50",
+      "bufferFragmentCalleeVA": "0x11ec70",
+      "idb": {
+        "path": "bin/hl-8684/engine/hw.so.i64",
+        "modifiedUTC": "2026-10-19T15:00:38.703486+00:00",
+        "manualAcquisition": "idb_list then idb_open; task-owned sessions",
+        "manualFinalization": "idb_close(save=True) succeeded",
+        "formalAnalyzerPolicy": "restored-strict/no-save; owned workers released"
+      },
+      "symbols": [
+        {
+          "logicalName": "SV_BeginFileDownload_f",
+          "symbolName": "SV_BeginFileDownload_f",
+          "kind": "function",
+          "artifact": "bin_artifacts/hl-8684/engine/SV_BeginFileDownload_f.linux.yaml",
+          "va": "0x14b2e0",
+          "rva": "0x14b2e0",
+          "uniqueSignatureVerified": true,
+          "size": "0x369"
+        },
+        {
+          "logicalName": "SV_DropClient",
+          "symbolName": "SV_DropClient",
+          "kind": "function",
+          "artifact": "bin_artifacts/hl-8684/engine/SV_DropClient.linux.yaml",
+          "va": "0x10e3e0",
+          "rva": "0x10e3e0",
+          "uniqueSignatureVerified": true,
+          "size": "0x2b6"
+        },
+        {
+          "logicalName": "host_client",
+          "symbolName": "host_client",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-8684/engine/host_client.linux.yaml",
+          "va": "0x963980",
+          "rva": "0x963980",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x14b2e0",
+            "instructionVA": "0x14b410",
+            "instructionLength": 6,
+            "operandOffset": 2,
+            "operandFieldVA": "0x14b412",
+            "diskOperand": "0x0",
+            "loaderRelocatedOperand": "0x963980",
+            "decodedStorageVA": "0x963980",
+            "disassembly": "mov     edi, ds:host_client",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "cmd_source",
+          "symbolName": "cmd_source",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-8684/engine/cmd_source.linux.yaml",
+          "va": "0x960b98",
+          "rva": "0x960b98",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x14b2e0",
+            "instructionVA": "0x14b378",
+            "instructionLength": 7,
+            "operandOffset": 2,
+            "operandFieldVA": "0x14b37a",
+            "diskOperand": "0x0",
+            "loaderRelocatedOperand": "0x960b98",
+            "decodedStorageVA": "0x960b98",
+            "disassembly": "cmp     ds:cmd_source, 1",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "sv_player",
+          "symbolName": "sv_player",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-8684/engine/sv_player.linux.yaml",
+          "va": "0xbab940",
+          "rva": "0xbab940",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x15dd00",
+            "instructionVA": "0x15dda6",
+            "instructionLength": 5,
+            "operandOffset": 1,
+            "operandFieldVA": "0x15dda7",
+            "diskOperand": "0x0",
+            "loaderRelocatedOperand": "0xbab940",
+            "decodedStorageVA": "0xbab940",
+            "disassembly": "mov     ds:sv_player, eax",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        }
+      ]
+    },
+    {
+      "gameVersion": "hl-8684",
+      "platform": "windows",
+      "moduleFile": "bin/hl-8684/engine/hw.dll",
+      "moduleFileIdentity": {
+        "crc32": "f7dcffd9",
+        "crc64": "f9b2f43f1509eb5c",
+        "isBlob": false,
+        "md5": "a74c64de593e2533c04200c5417bd9e9",
+        "sha256": "be45f76049a133392423679d334c69c8e1e7e82dc873eebdd229ea0341ba1b10",
+        "size": 1641376
+      },
+      "analysisBinary": "bin/hl-8684/engine/hw.dll",
+      "analysisSha256": "be45f76049a133392423679d334c69c8e1e7e82dc873eebdd229ea0341ba1b10",
+      "imageBase": "0x1d00000",
+      "anchors": {
+        "!MD5": {
+          "stringInstances": [
+            "0x1e39f60",
+            "0x1e5a69c",
+            "0x1e590d8",
+            "0x1e3a9c8"
+          ],
+          "owningFunctions": [
+            "0x1d16fe0",
+            "0x1d9db10",
+            "0x1da5de0",
+            "0x1d196c0"
+          ]
+        },
+        "custom.hpk": {
+          "stringInstances": [
+            "0x1e3aa40",
+            "0x1e3a9e0",
+            "0x1e3aabc",
+            "0x1e3c0c0",
+            "0x1e590e0",
+            "0x1e5a6a4",
+            "0x1e5a7f8",
+            "0x1e3a168",
+            "0x1e3be88",
+            "0x1e57c2c",
+            "0x1e590ec",
+            "0x1e3aa34",
+            "0x1e3df58",
+            "0x1e39fbc"
+          ],
+          "owningFunctions": [
+            "0x1d196c0",
+            "0x1da62e0",
+            "0x1da5de0",
+            "0x1d175e0",
+            "0x1d29020",
+            "0x1d16fe0",
+            "0x1d9db10",
+            "0x1d1b6b0",
+            "0x1d98a10"
+          ]
+        },
+        "dlfile": {
+          "stringInstances": [
+            "0x1e3dd40",
+            "0x1e56901",
+            "0x1e5a9dc",
+            "0x1e59444"
+          ],
+          "owningFunctions": [
+            "0x1d28810",
+            "0x1d9e450"
+          ]
+        },
+        "Dropped %s from server\nReason: %s\n": {
+          "stringInstances": [],
+          "owningFunctions": []
+        },
+        "Dropped %s from server\nReason:  %s\n": {
+          "stringInstances": [
+            "0x1e4a3f4"
+          ],
+          "owningFunctions": [
+            "0x1d56990"
+          ]
+        },
+        "Bad command character in client command": {
+          "stringInstances": [
+            "0x1e5b1ac"
+          ],
+          "owningFunctions": [
+            "0x1da9e5f"
+          ]
+        }
+      },
+      "registrationCallVA": "0x1d9e52f",
+      "registrationCandidatesAccepted": 1,
+      "clientMessageOwnerVA": "0x1da9e5f",
+      "clientEdictByteOffsetEvidenceOnly": 19356,
+      "ordinaryFragmentCalleeVA": "0x1d66100",
+      "bufferFragmentCalleeVA": "0x1d65f00",
+      "idb": {
+        "path": "bin/hl-8684/engine/hw.dll.i64",
+        "modifiedUTC": "2026-10-19T15:00:33.346457+00:00",
+        "manualAcquisition": "idb_list then idb_open; task-owned sessions",
+        "manualFinalization": "idb_close(save=True) succeeded",
+        "formalAnalyzerPolicy": "restored-strict/no-save; owned workers released"
+      },
+      "symbols": [
+        {
+          "logicalName": "SV_BeginFileDownload_f",
+          "symbolName": "SV_BeginFileDownload_f",
+          "kind": "function",
+          "artifact": "bin_artifacts/hl-8684/engine/SV_BeginFileDownload_f.windows.yaml",
+          "va": "0x1d9db10",
+          "rva": "0x9db10",
+          "uniqueSignatureVerified": true,
+          "size": "0x22c"
+        },
+        {
+          "logicalName": "SV_DropClient",
+          "symbolName": "SV_DropClient",
+          "kind": "function",
+          "artifact": "bin_artifacts/hl-8684/engine/SV_DropClient.windows.yaml",
+          "va": "0x1d56990",
+          "rva": "0x56990",
+          "uniqueSignatureVerified": true,
+          "size": "0x200"
+        },
+        {
+          "logicalName": "host_client",
+          "symbolName": "host_client",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-8684/engine/host_client.windows.yaml",
+          "va": "0x27b753c",
+          "rva": "0xab753c",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1d9db10",
+            "instructionVA": "0x1d9dbb2",
+            "instructionLength": 6,
+            "operandOffset": 2,
+            "operandFieldVA": "0x1d9dbb4",
+            "diskOperand": "0x27b753c",
+            "loaderRelocatedOperand": "0x27b753c",
+            "decodedStorageVA": "0x27b753c",
+            "disassembly": "mov     edx, dword_27B753C",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "cmd_source",
+          "symbolName": "cmd_source",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-8684/engine/cmd_source.windows.yaml",
+          "va": "0x2d0827c",
+          "rva": "0x100827c",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1d9db10",
+            "instructionVA": "0x1d9db58",
+            "instructionLength": 7,
+            "operandOffset": 2,
+            "operandFieldVA": "0x1d9db5a",
+            "diskOperand": "0x2d0827c",
+            "loaderRelocatedOperand": "0x2d0827c",
+            "decodedStorageVA": "0x2d0827c",
+            "disassembly": "cmp     dword_2D0827C, 1",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "sv_player",
+          "symbolName": "sv_player",
+          "kind": "global",
+          "artifact": "bin_artifacts/hl-8684/engine/sv_player.windows.yaml",
+          "va": "0x24f6304",
+          "rva": "0x7f6304",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1da9e5f",
+            "instructionVA": "0x1da9ef9",
+            "instructionLength": 5,
+            "operandOffset": 1,
+            "operandFieldVA": "0x1da9efa",
+            "diskOperand": "0x24f6304",
+            "loaderRelocatedOperand": "0x24f6304",
+            "decodedStorageVA": "0x24f6304",
+            "disassembly": "mov     dword_24F6304, eax",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        }
+      ]
+    },
+    {
+      "gameVersion": "svencoop-10257",
+      "platform": "linux",
+      "moduleFile": "bin/svencoop-10257/engine/hw.so",
+      "moduleFileIdentity": {
+        "crc32": "8ad14968",
+        "crc64": "f486c097bcc00fd7",
+        "isBlob": false,
+        "md5": "52e45e6c96e1537a50cbe5c17c2ec670",
+        "sha256": "8cead76a51204a4ba1036c85cc2099b7c3542950d924846a9aa2ccf619df7dfd",
+        "size": 3269720
+      },
+      "analysisBinary": "bin/svencoop-10257/engine/hw.so",
+      "analysisSha256": "8cead76a51204a4ba1036c85cc2099b7c3542950d924846a9aa2ccf619df7dfd",
+      "imageBase": "0x0",
+      "anchors": {
+        "!MD5": {
+          "stringInstances": [
+            "0x264522"
+          ],
+          "owningFunctions": [
+            "0xb5a40",
+            "0xd1220",
+            "0x110420",
+            "0x113880"
+          ]
+        },
+        "custom.hpk": {
+          "stringInstances": [
+            "0x25d0c8"
+          ],
+          "owningFunctions": [
+            "0xd1220",
+            "0xb5a40",
+            "0xd1a60",
+            "0xc5880",
+            "0xd2060",
+            "0x110420",
+            "0x113880",
+            "0x122c20",
+            "0x123c00",
+            "0x59dd0",
+            "0x1129d0",
+            "0x112c50"
+          ]
+        },
+        "dlfile": {
+          "stringInstances": [
+            "0x264edd"
+          ],
+          "owningFunctions": [
+            "0x58490",
+            "0x58530",
+            "0xc4150"
+          ]
+        },
+        "Dropped %s from server\nReason: %s\n": {
+          "stringInstances": [
+            "0x25ff8c"
+          ],
+          "owningFunctions": [
+            "0x79b90"
+          ]
+        },
+        "Dropped %s from server\nReason:  %s\n": {
+          "stringInstances": [],
+          "owningFunctions": []
+        },
+        "Bad command character in client command": {
+          "stringInstances": [
+            "0x2669f8"
+          ],
+          "owningFunctions": [
+            "0xd7150"
+          ]
+        }
+      },
+      "registrationCallVA": "0xc42e6",
+      "registrationCandidatesAccepted": 1,
+      "clientMessageOwnerVA": "0xd7150",
+      "clientEdictByteOffsetEvidenceOnly": 203528,
+      "ordinaryFragmentCalleeVA": "0x90ec0",
+      "bufferFragmentCalleeVA": "0x90ba0",
+      "idb": {
+        "path": "bin/svencoop-10257/engine/hw.so.i64",
+        "modifiedUTC": "2026-10-19T15:07:14.710639+00:00",
+        "manualAcquisition": "idb_list then idb_open; task-owned sessions",
+        "manualFinalization": "idb_close(save=True) succeeded",
+        "formalAnalyzerPolicy": "restored-strict/no-save; owned workers released"
+      },
+      "symbols": [
+        {
+          "logicalName": "SV_BeginFileDownload_f",
+          "symbolName": "SV_BeginFileDownload_f",
+          "kind": "function",
+          "artifact": "bin_artifacts/svencoop-10257/engine/SV_BeginFileDownload_f.linux.yaml",
+          "va": "0xb5a40",
+          "rva": "0xb5a40",
+          "uniqueSignatureVerified": true,
+          "size": "0x30a"
+        },
+        {
+          "logicalName": "SV_DropClient",
+          "symbolName": "SV_DropClient",
+          "kind": "function",
+          "artifact": "bin_artifacts/svencoop-10257/engine/SV_DropClient.linux.yaml",
+          "va": "0x79b90",
+          "rva": "0x79b90",
+          "uniqueSignatureVerified": true,
+          "size": "0x281"
+        },
+        {
+          "logicalName": "host_client",
+          "symbolName": "host_client",
+          "kind": "global",
+          "artifact": "bin_artifacts/svencoop-10257/engine/host_client.linux.yaml",
+          "va": "0x30a49c",
+          "rva": "0x30a49c",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0xb5a40",
+            "instructionVA": "0xb5b19",
+            "instructionLength": 6,
+            "operandOffset": 2,
+            "operandFieldVA": "0xb5b1b",
+            "diskOperand": "0x1c49c",
+            "loaderRelocatedOperand": "0x1c49c",
+            "decodedStorageVA": "0x30a49c",
+            "disassembly": "lea     edi, (dword_30A49C - 2EE000h)[ebx]",
+            "picAddend": "0x2ee000",
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "cmd_source",
+          "symbolName": "cmd_source",
+          "kind": "global",
+          "artifact": "bin_artifacts/svencoop-10257/engine/cmd_source.linux.yaml",
+          "va": "0x2f4a64",
+          "rva": "0x2f4a64",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0xb5a40",
+            "instructionVA": "0xb5a75",
+            "instructionLength": 6,
+            "operandOffset": 2,
+            "operandFieldVA": "0xb5a77",
+            "diskOperand": "0x6a64",
+            "loaderRelocatedOperand": "0x6a64",
+            "decodedStorageVA": "0x2f4a64",
+            "disassembly": "lea     eax, (dword_2F4A64 - 2EE000h)[ebx]",
+            "picAddend": "0x2ee000",
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "sv_player",
+          "symbolName": "sv_player",
+          "kind": "global",
+          "artifact": "bin_artifacts/svencoop-10257/engine/sv_player.linux.yaml",
+          "va": "0x1488068",
+          "rva": "0x1488068",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0xd7150",
+            "instructionVA": "0xd7213",
+            "instructionLength": 6,
+            "operandOffset": 2,
+            "operandFieldVA": "0xd7215",
+            "diskOperand": "0x119a068",
+            "loaderRelocatedOperand": "0x119a068",
+            "decodedStorageVA": "0x1488068",
+            "disassembly": "mov     ds:(dword_1488068 - 2EE000h)[ebx], eax",
+            "picAddend": "0x2ee000",
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        }
+      ]
+    },
+    {
+      "gameVersion": "svencoop-10257",
+      "platform": "windows",
+      "moduleFile": "bin/svencoop-10257/engine/hw.dll",
+      "moduleFileIdentity": {
+        "crc32": "f3a7f2f1",
+        "crc64": "f469129b520b2e16",
+        "isBlob": false,
+        "md5": "297800b5feee41a8cb1499b0b2deca91",
+        "sha256": "e3c7f374b70845fb6f45c05906e4b5fe3dc9f394ab37bb653501d3b6a3282596",
+        "size": 2123776
+      },
+      "analysisBinary": "bin/svencoop-10257/engine/hw.dll",
+      "analysisSha256": "e3c7f374b70845fb6f45c05906e4b5fe3dc9f394ab37bb653501d3b6a3282596",
+      "imageBase": "0x1d00000",
+      "anchors": {
+        "!MD5": {
+          "stringInstances": [
+            "0x1e6761c"
+          ],
+          "owningFunctions": [
+            "0x1db6180",
+            "0x1daba60",
+            "0x1d2afa0",
+            "0x1d29cb0",
+            "0x1db5ab0"
+          ]
+        },
+        "custom.hpk": {
+          "stringInstances": [
+            "0x1e6767c"
+          ],
+          "owningFunctions": [
+            "0x1d2a020",
+            "0x1d2d7a0",
+            "0x1d2afa0",
+            "0x1d3bae0",
+            "0x1da7980",
+            "0x1daba60",
+            "0x1db56c0",
+            "0x1db6180",
+            "0x1d25e90",
+            "0x1d29cb0",
+            "0x1d2df70",
+            "0x1db5ab0"
+          ]
+        },
+        "dlfile": {
+          "stringInstances": [
+            "0x1e6a998",
+            "0x1e755a5"
+          ],
+          "owningFunctions": [
+            "0x1d39cc0",
+            "0x1d3a410",
+            "0x1d9f620",
+            "0x1d3a040"
+          ]
+        },
+        "Dropped %s from server\nReason: %s\n": {
+          "stringInstances": [
+            "0x1e6f0e0"
+          ],
+          "owningFunctions": [
+            "0x1d66bd0"
+          ]
+        },
+        "Dropped %s from server\nReason:  %s\n": {
+          "stringInstances": [],
+          "owningFunctions": []
+        },
+        "Bad command character in client command": {
+          "stringInstances": [
+            "0x1e7862c"
+          ],
+          "owningFunctions": [
+            "0x1db7d30"
+          ]
+        }
+      },
+      "registrationCallVA": "0x1d9f722",
+      "registrationCandidatesAccepted": 1,
+      "clientMessageOwnerVA": "0x1db7d30",
+      "clientEdictByteOffsetEvidenceOnly": 203804,
+      "ordinaryFragmentCalleeVA": "0x1d75790",
+      "bufferFragmentCalleeVA": "0x1d75c40",
+      "idb": {
+        "path": "bin/svencoop-10257/engine/hw.dll.i64",
+        "modifiedUTC": "2026-10-19T15:01:22.267723+00:00",
+        "manualAcquisition": "idb_list then idb_open; task-owned sessions",
+        "manualFinalization": "idb_close(save=True) succeeded",
+        "formalAnalyzerPolicy": "restored-strict/no-save; owned workers released"
+      },
+      "symbols": [
+        {
+          "logicalName": "SV_BeginFileDownload_f",
+          "symbolName": "SV_BeginFileDownload_f",
+          "kind": "function",
+          "artifact": "bin_artifacts/svencoop-10257/engine/SV_BeginFileDownload_f.windows.yaml",
+          "va": "0x1daba60",
+          "rva": "0xaba60",
+          "uniqueSignatureVerified": true,
+          "size": "0x362"
+        },
+        {
+          "logicalName": "SV_DropClient",
+          "symbolName": "SV_DropClient",
+          "kind": "function",
+          "artifact": "bin_artifacts/svencoop-10257/engine/SV_DropClient.windows.yaml",
+          "va": "0x1d66bd0",
+          "rva": "0x66bd0",
+          "uniqueSignatureVerified": true,
+          "size": "0x234"
+        },
+        {
+          "logicalName": "host_client",
+          "symbolName": "host_client",
+          "kind": "global",
+          "artifact": "bin_artifacts/svencoop-10257/engine/host_client.windows.yaml",
+          "va": "0x8446c88",
+          "rva": "0x6746c88",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1daba60",
+            "instructionVA": "0x1dabbc9",
+            "instructionLength": 6,
+            "operandOffset": 2,
+            "operandFieldVA": "0x1dabbcb",
+            "diskOperand": "0x8446c88",
+            "loaderRelocatedOperand": "0x8446c88",
+            "decodedStorageVA": "0x8446c88",
+            "disassembly": "mov     edx, dword_8446C88",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "cmd_source",
+          "symbolName": "cmd_source",
+          "kind": "global",
+          "artifact": "bin_artifacts/svencoop-10257/engine/cmd_source.windows.yaml",
+          "va": "0x2d25800",
+          "rva": "0x1025800",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1daba60",
+            "instructionVA": "0x1daba82",
+            "instructionLength": 7,
+            "operandOffset": 2,
+            "operandFieldVA": "0x1daba84",
+            "diskOperand": "0x2d25800",
+            "loaderRelocatedOperand": "0x2d25800",
+            "decodedStorageVA": "0x2d25800",
+            "disassembly": "cmp     dword_2D25800, 1",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "sv_player",
+          "symbolName": "sv_player",
+          "kind": "global",
+          "artifact": "bin_artifacts/svencoop-10257/engine/sv_player.windows.yaml",
+          "va": "0x95d1398",
+          "rva": "0x78d1398",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1db7d30",
+            "instructionVA": "0x1db7ecb",
+            "instructionLength": 5,
+            "operandOffset": 1,
+            "operandFieldVA": "0x1db7ecc",
+            "diskOperand": "0x95d1398",
+            "loaderRelocatedOperand": "0x95d1398",
+            "decodedStorageVA": "0x95d1398",
+            "disassembly": "mov     ent, eax",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        }
+      ]
+    },
+    {
+      "gameVersion": "svencoop-8948",
+      "platform": "linux",
+      "moduleFile": "bin/svencoop-8948/engine/hw.so",
+      "moduleFileIdentity": {
+        "crc32": "fae3128c",
+        "crc64": "550d53bb48ba07cd",
+        "isBlob": false,
+        "md5": "42093f09aed223b1f4bfe0f027b8c83b",
+        "sha256": "aad1299bf2389070f9fa27a7413543e028f8b26ef50d7ecfaa11504be26e4b0e",
+        "size": 4011104
+      },
+      "analysisBinary": "bin/svencoop-8948/engine/hw.so",
+      "analysisSha256": "aad1299bf2389070f9fa27a7413543e028f8b26ef50d7ecfaa11504be26e4b0e",
+      "imageBase": "0x0",
+      "anchors": {
+        "!MD5": {
+          "stringInstances": [
+            "0x2b038a"
+          ],
+          "owningFunctions": [
+            "0x104440",
+            "0x1605f0",
+            "0x11f740",
+            "0x15cf70"
+          ]
+        },
+        "custom.hpk": {
+          "stringInstances": [
+            "0x2a8fe8"
+          ],
+          "owningFunctions": [
+            "0xa8be0",
+            "0x11ff80",
+            "0x104440",
+            "0x11f740",
+            "0x10acc0",
+            "0x120580",
+            "0x15f760",
+            "0x15f9e0",
+            "0x170740",
+            "0x15cf70",
+            "0x1605f0",
+            "0x16f8f0"
+          ]
+        },
+        "dlfile": {
+          "stringInstances": [
+            "0x2b0d2c"
+          ],
+          "owningFunctions": [
+            "0xa72a0",
+            "0xa7340",
+            "0x112c60"
+          ]
+        },
+        "Dropped %s from server\nReason: %s\n": {
+          "stringInstances": [
+            "0x2abea4"
+          ],
+          "owningFunctions": [
+            "0xc89d0"
+          ]
+        },
+        "Dropped %s from server\nReason:  %s\n": {
+          "stringInstances": [],
+          "owningFunctions": []
+        },
+        "Bad command character in client command": {
+          "stringInstances": [
+            "0x2b2708"
+          ],
+          "owningFunctions": [
+            "0x125650"
+          ]
+        }
+      },
+      "registrationCallVA": "0x112df6",
+      "registrationCandidatesAccepted": 1,
+      "clientMessageOwnerVA": "0x125650",
+      "clientEdictByteOffsetEvidenceOnly": 203528,
+      "ordinaryFragmentCalleeVA": "0xdfc60",
+      "bufferFragmentCalleeVA": "0xdf940",
+      "idb": {
+        "path": "bin/svencoop-8948/engine/hw.so.i64",
+        "modifiedUTC": "2026-10-19T15:01:09.075807+00:00",
+        "manualAcquisition": "idb_list then idb_open; task-owned sessions",
+        "manualFinalization": "idb_close(save=True) succeeded",
+        "formalAnalyzerPolicy": "restored-strict/no-save; owned workers released"
+      },
+      "symbols": [
+        {
+          "logicalName": "SV_BeginFileDownload_f",
+          "symbolName": "_Z22SV_BeginFileDownload_fv",
+          "kind": "function",
+          "artifact": "bin_artifacts/svencoop-8948/engine/SV_BeginFileDownload_f.linux.yaml",
+          "va": "0x104440",
+          "rva": "0x104440",
+          "uniqueSignatureVerified": true,
+          "size": "0x30a"
+        },
+        {
+          "logicalName": "SV_DropClient",
+          "symbolName": "_Z13SV_DropClientP8client_siPcz",
+          "kind": "function",
+          "artifact": "bin_artifacts/svencoop-8948/engine/SV_DropClient.linux.yaml",
+          "va": "0xc89d0",
+          "rva": "0xc89d0",
+          "uniqueSignatureVerified": true,
+          "size": "0x281"
+        },
+        {
+          "logicalName": "host_client",
+          "symbolName": "host_client",
+          "kind": "global",
+          "artifact": "bin_artifacts/svencoop-8948/engine/host_client.linux.yaml",
+          "va": "0x357a5c",
+          "rva": "0x357a5c",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x104440",
+            "instructionVA": "0x104519",
+            "instructionLength": 6,
+            "operandOffset": 2,
+            "operandFieldVA": "0x10451b",
+            "diskOperand": "0xfffffa58",
+            "loaderRelocatedOperand": "0xfffffa58",
+            "decodedStorageVA": "0x357a5c",
+            "disassembly": "mov     edi, ds:(host_client_ptr - 33A000h)[ebx]",
+            "picAddend": "0x358004",
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "cmd_source",
+          "symbolName": "cmd_source",
+          "kind": "global",
+          "artifact": "bin_artifacts/svencoop-8948/engine/cmd_source.linux.yaml",
+          "va": "0x342024",
+          "rva": "0x342024",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x104440",
+            "instructionVA": "0x104475",
+            "instructionLength": 6,
+            "operandOffset": 2,
+            "operandFieldVA": "0x104477",
+            "diskOperand": "0xffffff44",
+            "loaderRelocatedOperand": "0xffffff44",
+            "decodedStorageVA": "0x342024",
+            "disassembly": "mov     eax, ds:(cmd_source_ptr - 33A000h)[ebx]",
+            "picAddend": "0x3420e0",
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "sv_player",
+          "symbolName": "sv_player",
+          "kind": "global",
+          "artifact": "bin_artifacts/svencoop-8948/engine/sv_player.linux.yaml",
+          "va": "0x149f388",
+          "rva": "0x149f388",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x125650",
+            "instructionVA": "0x125713",
+            "instructionLength": 6,
+            "operandOffset": 2,
+            "operandFieldVA": "0x125715",
+            "diskOperand": "0x1165388",
+            "loaderRelocatedOperand": "0x1165388",
+            "decodedStorageVA": "0x149f388",
+            "disassembly": "mov     ds:(sv_player - 33A000h)[ebx], eax",
+            "picAddend": "0x33a000",
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        }
+      ]
+    },
+    {
+      "gameVersion": "svencoop-8948",
+      "platform": "windows",
+      "moduleFile": "bin/svencoop-8948/engine/hw.dll",
+      "moduleFileIdentity": {
+        "crc32": "6c6ac798",
+        "crc64": "2f9d6118f0ebea99",
+        "isBlob": false,
+        "md5": "8057cc939789cc77194f4bd9ccbd8d62",
+        "sha256": "22fd4d1ad0d3e11a44e7cd5643fe9f6b8ded1234cce819cc242ba5a3fd338ce8",
+        "size": 2089472
+      },
+      "analysisBinary": "bin/svencoop-8948/engine/hw.dll",
+      "analysisSha256": "22fd4d1ad0d3e11a44e7cd5643fe9f6b8ded1234cce819cc242ba5a3fd338ce8",
+      "imageBase": "0x1d00000",
+      "anchors": {
+        "!MD5": {
+          "stringInstances": [
+            "0x1e6059c"
+          ],
+          "owningFunctions": [
+            "0x1d29b80",
+            "0x1d2ae20",
+            "0x1db4540",
+            "0x1daa660",
+            "0x1db4bc0"
+          ]
+        },
+        "custom.hpk": {
+          "stringInstances": [
+            "0x1e605fc"
+          ],
+          "owningFunctions": [
+            "0x1d2ae20",
+            "0x1d29b80",
+            "0x1d3b760",
+            "0x1da69e0",
+            "0x1daa660",
+            "0x1db4180",
+            "0x1db4540",
+            "0x1db4bc0",
+            "0x1d25e10",
+            "0x1d2d570",
+            "0x1d29ef0",
+            "0x1d2dd30",
+            "0x1da66f0"
+          ]
+        },
+        "dlfile": {
+          "stringInstances": [
+            "0x1e637c8",
+            "0x1e6e14d"
+          ],
+          "owningFunctions": [
+            "0x1d39980",
+            "0x1d9e5c0",
+            "0x1d39ce0",
+            "0x1d3a0b0"
+          ]
+        },
+        "Dropped %s from server\nReason: %s\n": {
+          "stringInstances": [
+            "0x1e67ed8"
+          ],
+          "owningFunctions": [
+            "0x1d666d0"
+          ]
+        },
+        "Dropped %s from server\nReason:  %s\n": {
+          "stringInstances": [],
+          "owningFunctions": []
+        },
+        "Bad command character in client command": {
+          "stringInstances": [
+            "0x1e7104c"
+          ],
+          "owningFunctions": [
+            "0x1db6770"
+          ]
+        }
+      },
+      "registrationCallVA": "0x1d9e6c2",
+      "registrationCandidatesAccepted": 1,
+      "clientMessageOwnerVA": "0x1db6770",
+      "clientEdictByteOffsetEvidenceOnly": 203804,
+      "ordinaryFragmentCalleeVA": "0x1d750e0",
+      "bufferFragmentCalleeVA": "0x1d754f0",
+      "idb": {
+        "path": "bin/svencoop-8948/engine/hw.dll.i64",
+        "modifiedUTC": "2026-10-19T15:01:04.190987+00:00",
+        "manualAcquisition": "idb_list then idb_open; task-owned sessions",
+        "manualFinalization": "idb_close(save=True) succeeded",
+        "formalAnalyzerPolicy": "restored-strict/no-save; owned workers released"
+      },
+      "symbols": [
+        {
+          "logicalName": "SV_BeginFileDownload_f",
+          "symbolName": "SV_BeginFileDownload_f",
+          "kind": "function",
+          "artifact": "bin_artifacts/svencoop-8948/engine/SV_BeginFileDownload_f.windows.yaml",
+          "va": "0x1daa660",
+          "rva": "0xaa660",
+          "uniqueSignatureVerified": true,
+          "size": "0x362"
+        },
+        {
+          "logicalName": "SV_DropClient",
+          "symbolName": "SV_DropClient",
+          "kind": "function",
+          "artifact": "bin_artifacts/svencoop-8948/engine/SV_DropClient.windows.yaml",
+          "va": "0x1d666d0",
+          "rva": "0x666d0",
+          "uniqueSignatureVerified": true,
+          "size": "0x234"
+        },
+        {
+          "logicalName": "host_client",
+          "symbolName": "host_client",
+          "kind": "global",
+          "artifact": "bin_artifacts/svencoop-8948/engine/host_client.windows.yaml",
+          "va": "0x8406af8",
+          "rva": "0x6706af8",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1daa660",
+            "instructionVA": "0x1daa7c9",
+            "instructionLength": 6,
+            "operandOffset": 2,
+            "operandFieldVA": "0x1daa7cb",
+            "diskOperand": "0x8406af8",
+            "loaderRelocatedOperand": "0x8406af8",
+            "decodedStorageVA": "0x8406af8",
+            "disassembly": "mov     edx, dword_8406AF8",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "cmd_source",
+          "symbolName": "cmd_source",
+          "kind": "global",
+          "artifact": "bin_artifacts/svencoop-8948/engine/cmd_source.windows.yaml",
+          "va": "0x2ce5670",
+          "rva": "0xfe5670",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1daa660",
+            "instructionVA": "0x1daa682",
+            "instructionLength": 7,
+            "operandOffset": 2,
+            "operandFieldVA": "0x1daa684",
+            "diskOperand": "0x2ce5670",
+            "loaderRelocatedOperand": "0x2ce5670",
+            "decodedStorageVA": "0x2ce5670",
+            "disassembly": "cmp     dword_2CE5670, 1",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        },
+        {
+          "logicalName": "sv_player",
+          "symbolName": "sv_player",
+          "kind": "global",
+          "artifact": "bin_artifacts/svencoop-8948/engine/sv_player.windows.yaml",
+          "va": "0x955bb68",
+          "rva": "0x785bb68",
+          "uniqueSignatureVerified": true,
+          "storageAccess": {
+            "ownerVA": "0x1db6770",
+            "instructionVA": "0x1db6903",
+            "instructionLength": 5,
+            "operandOffset": 1,
+            "operandFieldVA": "0x1db6904",
+            "diskOperand": "0x955bb68",
+            "loaderRelocatedOperand": "0x955bb68",
+            "decodedStorageVA": "0x955bb68",
+            "disassembly": "mov     dword_955BB68, eax",
+            "picAddend": null,
+            "addressOffset": null,
+            "consumerReceives": "variable storage; not value or instruction operand field"
+          }
+        }
+      ]
+    }
+  ],
+  "soundcache": [
+    {
+      "gameVersion": "svencoop-10257",
+      "module": "client",
+      "platform": "linux",
+      "binary": "bin/svencoop-10257/client/client.so",
+      "sha256": "50580344e1c59b3c77e8e4e52ed9f185fcec7da2da936873ec122f12c735a022",
+      "owners": [
+        {
+          "va": "0xaeac4",
+          "requestsDlfile": false,
+          "writesSoundList": false,
+          "evidence": [
+            "sub_B0470(v26, \"%s/*.txt\", \"maps/soundcache\");",
+            "sub_B0540(filename, \"%s/%s/%s\", v5, \"maps/soundcache\", v15);"
+          ]
+        },
+        {
+          "va": "0xaf726",
+          "requestsDlfile": true,
+          "writesSoundList": true,
+          "evidence": [
+            "sub_B06E0(v69, \"%s/%s\", v2, \"maps/soundcache\");",
+            "sub_B07B0(v65, \"%s/%s.txt\", \"maps/soundcache\", v58);",
+            "sub_B0880(v66, \"dlfile %s\\n\", v65);",
+            "\"maps/soundcache\",",
+            "&& memcmp(v67, \"SOUNDLIST {\", 0xBu) )"
+          ]
+        }
+      ],
+      "idb": "bin/svencoop-10257/client/client.so.i64",
+      "savedAndClosed": true,
+      "engineTableBase": "0xa57fa0",
+      "engineTableCopyBytes": "0x218",
+      "initializeEntries": [
+        "0xa4154"
+      ],
+      "requestApi": "pfnClientCmd",
+      "requestApiByteOffset": "0x50",
+      "requestApiStorageVA": "0xa57ff0",
+      "path": "maps/soundcache/<current-map-basename>.txt",
+      "command": "dlfile %s\n"
+    },
+    {
+      "gameVersion": "svencoop-10257",
+      "module": "client",
+      "platform": "windows",
+      "binary": "bin/svencoop-10257/client/client.dll",
+      "sha256": "f40e74b7a703d193188d628066660ff0ac4be2b09613ae4b7f8d2c671991e7d6",
+      "owners": [
+        {
+          "va": "0x1000ca80",
+          "requestsDlfile": false,
+          "writesSoundList": false,
+          "evidence": [
+            "sub_100107A0(v31, \"%s/*.txt\", (char)\"maps/soundcache\");"
+          ]
+        },
+        {
+          "va": "0x1000ecf0",
+          "requestsDlfile": true,
+          "writesSoundList": true,
+          "evidence": [
+            "sub_10010920(v35, \"%s/%s.txt\", (char)\"maps/soundcache\");",
+            "sub_10010980(v40, \"dlfile %s\\n\", (char)v35);",
+            "\"maps/soundcache\",",
+            "while ( strncmp(&v34[8], \"SOUNDLIST {\", 0xBu)"
+          ]
+        }
+      ],
+      "idb": "bin/svencoop-10257/client/client.dll.i64",
+      "savedAndClosed": true,
+      "engineTableBase": "0x101f8998",
+      "engineTableCopyBytes": "0x218",
+      "initializeEntries": [
+        "0x10008c90"
+      ],
+      "requestApi": "pfnClientCmd",
+      "requestApiByteOffset": "0x50",
+      "requestApiStorageVA": "0x101f89e8",
+      "path": "maps/soundcache/<current-map-basename>.txt",
+      "command": "dlfile %s\n"
+    },
+    {
+      "gameVersion": "svencoop-10257",
+      "module": "server",
+      "platform": "linux",
+      "binary": "bin/svencoop-10257/server/server.so",
+      "sha256": "7a980bbd4b03f7380092e45d0a7515085ffb5142e62589d87e2596e90d89d2ca",
+      "owners": [
+        {
+          "va": "0x4f0ff8",
+          "requestsDlfile": false,
+          "writesSoundList": false,
+          "evidence": [
+            "sub_4F1AB0((int)v6, \"%s/%s.txt\", (unsigned __int8)&aMapsSoundcache[-11616256] + (unsigned __int8)&qword_B14000);",
+            "v0 = fopen(filename, \"w\");"
+          ]
+        },
+        {
+          "va": "0x4f146e",
+          "requestsDlfile": false,
+          "writesSoundList": true,
+          "evidence": [
+            "sub_4F1C50((int)filename, \"%s/%s/%s.txt\", (char)v15);",
+            "v5 = fopen(filename, \"w\");",
+            "fprintf(v5, \"%s\\n\", v4, \"maps/soundcache\", v4);",
+            "fwrite(\"SOUNDLIST {\\n\", 1u, 0xCu, s);"
+          ]
+        }
+      ],
+      "idb": "bin/svencoop-10257/server/server.so.i64",
+      "savedAndClosed": true
+    },
+    {
+      "gameVersion": "svencoop-10257",
+      "module": "server",
+      "platform": "windows",
+      "binary": "bin/svencoop-10257/server/server.dll",
+      "sha256": "f8be8b7ba8af2a5006127c3c36ced3717d94aec1120ef8b5678e28b23f0b07c0",
+      "owners": [
+        {
+          "va": "0x10247d60",
+          "requestsDlfile": false,
+          "writesSoundList": false,
+          "evidence": [
+            "sub_10250A30(Buffer, \"%s/%s.txt\", (char)\"maps/soundcache\");",
+            "v2 = fopen(FileName, \"w\");"
+          ]
+        },
+        {
+          "va": "0x10248ab0",
+          "requestsDlfile": false,
+          "writesSoundList": true,
+          "evidence": [
+            "sub_10250970(FileName, \"%s/%s/%s.txt\", (char)ArgList);",
+            "v8 = fopen(FileName, \"w\");",
+            "sub_102213A0(v9, \"SOUNDLIST {\\n\");"
+          ]
+        }
+      ],
+      "idb": "bin/svencoop-10257/server/server.dll.i64",
+      "savedAndClosed": true
+    },
+    {
+      "gameVersion": "svencoop-8948",
+      "module": "client",
+      "platform": "linux",
+      "binary": "bin/svencoop-8948/client/client.so",
+      "sha256": "8b5fbb8f3533b38ab3fd53dfc6078012bc2f9259ba4e347b5bf301f3d0ebacc4",
+      "owners": [
+        {
+          "va": "0x11df68",
+          "requestsDlfile": false,
+          "writesSoundList": false,
+          "evidence": [
+            "UTIL_FormatString<260u>(v14, \"%s/*.txt\", \"maps/soundcache\");",
+            "UTIL_FormatString<388u>(filename, \"%s/%s/%s\", TopSubdir, \"maps/soundcache\", v4);"
+          ]
+        },
+        {
+          "va": "0x11e894",
+          "requestsDlfile": true,
+          "writesSoundList": true,
+          "evidence": [
+            "UTIL_FormatString<384u>(v53, \"%s/%s\", v2, \"maps/soundcache\");",
+            "UTIL_FormatString<160u>(v49, \"%s/%s.txt\", \"maps/soundcache\", v44);",
+            "UTIL_FormatString<202u>(v50, \"dlfile %s\\n\", v49);",
+            "&& memcmp(v51, \"SOUNDLIST {\", 0xBu) )"
+          ]
+        }
+      ],
+      "idb": "bin/svencoop-8948/client/client.so.i64",
+      "savedAndClosed": true,
+      "engineTableBase": "0x761780",
+      "engineTableCopyBytes": "0x218",
+      "initializeEntries": [
+        "0x1165bc"
+      ],
+      "requestApi": "pfnClientCmd",
+      "requestApiByteOffset": "0x50",
+      "requestApiStorageVA": "0x7617d0",
+      "path": "maps/soundcache/<current-map-basename>.txt",
+      "command": "dlfile %s\n"
+    },
+    {
+      "gameVersion": "svencoop-8948",
+      "module": "client",
+      "platform": "windows",
+      "binary": "bin/svencoop-8948/client/client.dll",
+      "sha256": "5e3bd90c24e829c43344f0fe18368a71cad3c9b3405695e2489b469cf694624c",
+      "owners": [
+        {
+          "va": "0x10059f60",
+          "requestsDlfile": false,
+          "writesSoundList": false,
+          "evidence": [
+            "sub_10002240(v32, (int)\"%s/*.txt\", (int)\"maps/soundcache\");"
+          ]
+        },
+        {
+          "va": "0x1005c210",
+          "requestsDlfile": true,
+          "writesSoundList": true,
+          "evidence": [
+            "sub_1005DD60(v35, (int)\"%s/%s.txt\", (char)\"maps/soundcache\");",
+            "sub_1005DDC0(v39, (int)\"dlfile %s\\n\", (char)v35);",
+            "\"maps/soundcache\",",
+            "while ( strncmp(&v34[8], \"SOUNDLIST {\", 0xBu)"
+          ]
+        }
+      ],
+      "idb": "bin/svencoop-8948/client/client.dll.i64",
+      "savedAndClosed": true,
+      "engineTableBase": "0x101ba888",
+      "engineTableCopyBytes": "0x218",
+      "initializeEntries": [
+        "0x10056320"
+      ],
+      "requestApi": "pfnClientCmd",
+      "requestApiByteOffset": "0x50",
+      "requestApiStorageVA": "0x101ba8d8",
+      "path": "maps/soundcache/<current-map-basename>.txt",
+      "command": "dlfile %s\n"
+    },
+    {
+      "gameVersion": "svencoop-8948",
+      "module": "server",
+      "platform": "linux",
+      "binary": "bin/svencoop-8948/server/server.so",
+      "sha256": "18ba7ee4e7ccd109dd43172446f463d9a12d9154dfa1f1230cb8345aadd43643",
+      "owners": [
+        {
+          "va": "0x54113a",
+          "requestsDlfile": false,
+          "writesSoundList": false,
+          "evidence": [
+            "\"%s/%s.txt\",",
+            "stream = fopen(filename, \"w\");"
+          ]
+        },
+        {
+          "va": "0x54130e",
+          "requestsDlfile": false,
+          "writesSoundList": true,
+          "evidence": [
+            "UTIL_FormatString<388u>((int)filename, \"%s/%s/%s.txt\", (char)v31);",
+            "stream = fopen(filename, \"w\");",
+            "fwrite(\"SOUNDLIST {\\n\", 1u, 0xCu, v6);"
+          ]
+        }
+      ],
+      "idb": "bin/svencoop-8948/server/server.so.i64",
+      "savedAndClosed": true
+    },
+    {
+      "gameVersion": "svencoop-8948",
+      "module": "server",
+      "platform": "windows",
+      "binary": "bin/svencoop-8948/server/server.dll",
+      "sha256": "61c5955cc3bcb1d4a23f8d65b5c19dd042c026e776ded937439bcdcd21973849",
+      "owners": [
+        {
+          "va": "0x1023a270",
+          "requestsDlfile": false,
+          "writesSoundList": false,
+          "evidence": [
+            "sub_10242BE0(v7, (int)\"%s/%s.txt\", (char)\"maps/soundcache\");",
+            "v2 = fopen(FileName, \"w\");"
+          ]
+        },
+        {
+          "va": "0x1023af60",
+          "requestsDlfile": false,
+          "writesSoundList": true,
+          "evidence": [
+            "sub_10242B20(FileName, (int)\"%s/%s/%s.txt\", (char)v16);",
+            "v7 = fopen(FileName, \"w\");",
+            "sub_101FDAE0(v8, \"SOUNDLIST {\\n\");"
+          ]
+        }
+      ],
+      "idb": "bin/svencoop-8948/server/server.dll.i64",
+      "savedAndClosed": true
+    }
+  ],
+  "checks": {
+    "formalAnalyzer": {
+      "inputsSucceeded": 15,
+      "failed": 0,
+      "skipped": 0,
+      "command": "uv run --no-sync python ida_analyze_bin.py -gamever <each engine tag> -modules engine -skill find-udp-download-symbols -platform windows,linux -oldgamever none -maxretry 1 -process_reporter none -debug"
+    },
+    "independentRawExecutableScan": {
+      "uniqueSignatures": 75,
+      "verifiedGlobalStorageOperands": 45,
+      "reproducibleArtifacts": 75,
+      "elfRelocationsHandled": [
+        "R_386_32",
+        "R_386_GLOB_DAT",
+        "R_386_RELATIVE"
+      ],
+      "picAddendsHandled": true
+    },
+    "unit": {
+      "passedSuite": true,
+      "count": 1525,
+      "passed": 1516,
+      "skipped": 9,
+      "skipReasons": [
+        "Windows byte-range lock compatibility",
+        "Windows path aliases are required",
+        "external MCP launcher uses taskkill on Windows",
+        "Windows batch Job requirement applies on Windows",
+        "Windows Job Objects require Windows",
+        "Windows Job assignment requires Windows",
+        "Windows-only host probe",
+        "Opt-in test: requires notes CLIs on PATH",
+        "Opt-in test: requires notes CLIs on PATH"
+      ]
+    },
+    "repositoryContract": {
+      "passed": true,
+      "count": 15
+    },
+    "format": {
+      "passed": true,
+      "command": "uv run --no-sync python format_repo_files.py --check"
+    },
+    "guardedCandidateVersions": 11,
+    "metamodCatalog": {
+      "sourceCommit": "f0449c80e024751113b158fe1aea962868395ed1",
+      "sourceUrl": "https://github.com/metamod-fallguys/metamod/blob/f0449c80e024751113b158fe1aea962868395ed1/src/gamedata.cpp",
+      "sourceBlob": "b61cf5cd36d58b89f68a0315326d58eb74843834",
+      "apis": [
+        "GameData::Initialize",
+        "GameData::ComputeFileCRC64",
+        "GameData::QueryByCRC64"
+      ],
+      "linuxQueriesPassed": 20,
+      "windowsQueriesPassed": 55,
+      "windowsMode": "POSIX build with only kPlatform literal switched to windows; actual PE file hashes and Windows records queried",
+      "verified": [
+        "actual module file CRC64",
+        "symbolName",
+        "kind",
+        "RVA",
+        "size"
+      ],
+      "gameProcessResolveInvoked": false,
+      "dependencyPins": {
+        "Chocobo1Hash": "f455b0e350dce4c3b2415bad5f10484842b0a605",
+        "rapidjson": "6089180ecb704cb2b136777798fa1be303618975"
+      }
+    },
+    "previewIndexSha256": "b44b3e0fb746deaf92ffda9d0beb030591afcd47e85c75ed4e9f0acd991492f6",
+    "runtimeNotTested": [
+      "pfnResolveGameSymbol in a loaded game engine",
+      "detours",
+      "ordinary UDP kick",
+      "decal/soundcache exemption behavior",
+      "independent console/file log switches",
+      "server console dlfile",
+      "FastDL and fallback integration"
+    ],
+    "candidateDatasets": [
+      {
+        "fileCount": 753,
+        "gameVersion": "cof-5936",
+        "lastPublishTime": "2026-10-19T15:03:35Z",
+        "sha256": "8a76a3d1881225ab330ca7833886eaf9c959820e8e9a09affdda3129108489df",
+        "size": 426815,
+        "snapshotSchemaVersion": 8,
+        "url": "cof-5936.8a76a3d1881225ab330ca7833886eaf9c959820e8e9a09affdda3129108489df.json"
+      },
+      {
+        "fileCount": 1365,
+        "gameVersion": "hl-10210",
+        "lastPublishTime": "2026-10-19T15:03:35Z",
+        "sha256": "e50d63353959f519741b67105f6f95f433b80a16f72f781a1b79c2545abc065e",
+        "size": 793723,
+        "snapshotSchemaVersion": 8,
+        "url": "hl-10210.e50d63353959f519741b67105f6f95f433b80a16f72f781a1b79c2545abc065e.json"
+      },
+      {
+        "fileCount": 1506,
+        "gameVersion": "hl-8684",
+        "lastPublishTime": "2026-10-19T15:03:35Z",
+        "sha256": "741edc54ffa12bdf3efd58762d3d79e1d2f8654b08fa0f8df94239876fc5d757",
+        "size": 848284,
+        "snapshotSchemaVersion": 8,
+        "url": "hl-8684.741edc54ffa12bdf3efd58762d3d79e1d2f8654b08fa0f8df94239876fc5d757.json"
+      },
+      {
+        "fileCount": 732,
+        "gameVersion": "hl-6153",
+        "lastPublishTime": "2026-10-19T15:03:35Z",
+        "sha256": "b3c3153a24599fb9cc5b698027195babd1e05b338b178c0782266545eec25d78",
+        "size": 414210,
+        "snapshotSchemaVersion": 8,
+        "url": "hl-6153.b3c3153a24599fb9cc5b698027195babd1e05b338b178c0782266545eec25d78.json"
+      },
+      {
+        "fileCount": 737,
+        "gameVersion": "hl-4554",
+        "lastPublishTime": "2026-10-19T15:03:35Z",
+        "sha256": "896b9e4cb2e4a7d9ef8a65fd4336f5d4f191e96a49a9b0ee2fc0143a94681552",
+        "size": 418317,
+        "snapshotSchemaVersion": 8,
+        "url": "hl-4554.896b9e4cb2e4a7d9ef8a65fd4336f5d4f191e96a49a9b0ee2fc0143a94681552.json"
+      },
+      {
+        "fileCount": 737,
+        "gameVersion": "hl-3647",
+        "lastPublishTime": "2026-10-19T15:03:35Z",
+        "sha256": "d06c2aa22b9d8d22154a8b9215557f377fcdae6c26d679f994f4b33b2610bb31",
+        "size": 415739,
+        "snapshotSchemaVersion": 8,
+        "url": "hl-3647.d06c2aa22b9d8d22154a8b9215557f377fcdae6c26d679f994f4b33b2610bb31.json"
+      },
+      {
+        "fileCount": 736,
+        "gameVersion": "hl-3329",
+        "lastPublishTime": "2026-10-19T15:03:35Z",
+        "sha256": "211d7fe8838450c619a54a32dd4696a6dcb820834c6185cfe841575840eb0f2b",
+        "size": 426930,
+        "snapshotSchemaVersion": 8,
+        "url": "hl-3329.211d7fe8838450c619a54a32dd4696a6dcb820834c6185cfe841575840eb0f2b.json"
+      },
+      {
+        "fileCount": 736,
+        "gameVersion": "hl-3266",
+        "lastPublishTime": "2026-10-19T15:03:35Z",
+        "sha256": "eab4a87eacf5701c913abbcc78655c21af0e1cc0b0277b9e62541bf5a05f6085",
+        "size": 426973,
+        "snapshotSchemaVersion": 8,
+        "url": "hl-3266.eab4a87eacf5701c913abbcc78655c21af0e1cc0b0277b9e62541bf5a05f6085.json"
+      },
+      {
+        "fileCount": 737,
+        "gameVersion": "hl-3248",
+        "lastPublishTime": "2026-10-19T15:03:35Z",
+        "sha256": "3715528f2d3611e44201b800a0639005cb0b83276a7ea35db373fed2364d45d2",
+        "size": 415858,
+        "snapshotSchemaVersion": 8,
+        "url": "hl-3248.3715528f2d3611e44201b800a0639005cb0b83276a7ea35db373fed2364d45d2.json"
+      },
+      {
+        "fileCount": 1745,
+        "gameVersion": "svencoop-10257",
+        "lastPublishTime": "2026-10-19T15:03:35Z",
+        "sha256": "0e4821260e578596979f51a5a3e0fa7c88b04890c2e32035f21fcaf9679b915f",
+        "size": 1021487,
+        "snapshotSchemaVersion": 8,
+        "url": "svencoop-10257.0e4821260e578596979f51a5a3e0fa7c88b04890c2e32035f21fcaf9679b915f.json"
+      },
+      {
+        "fileCount": 1751,
+        "gameVersion": "svencoop-8948",
+        "lastPublishTime": "2026-10-19T15:03:35Z",
+        "sha256": "0b8d7f93898afab56b5f87c63c4e3f0e4002c898e66c175a95fd067fa8dbdf3d",
+        "size": 1013983,
+        "snapshotSchemaVersion": 8,
+        "url": "svencoop-8948.0b8d7f93898afab56b5f87c63c4e3f0e4002c898e66c175a95fd067fa8dbdf3d.json"
+      }
+    ]
+  },
+  "referenceSourceFiles": [
+    {
+      "path": "/home/hztest2/HLND2T_official/engine/sv_main.c",
+      "sha256": "ae460f0b88965c5c5b27fb4d71526a62bbdb68fb5ef0101baa7982a10ad6b56c"
+    },
+    {
+      "path": "/home/hztest2/HLND2T_official/engine/sv_user.c",
+      "sha256": "dc30c4457ce050994d556d5bb1a08cea4bc07991e07c014ea523787a835ef679"
+    },
+    {
+      "path": "/home/hztest2/HLND2T_official/engine/cmd.c",
+      "sha256": "549c8a354ad6c6605318412f6e7a82587900a6b9ea2b2db91f4bd955e332b981"
+    },
+    {
+      "path": "/home/hztest2/HLND2T_official/engine/host.c",
+      "sha256": "09c405aba9ba80fabf54571e9880e21e9e95a53e44fcf2caf7df92d54f8d2476"
+    },
+    {
+      "path": "/home/hztest2/HLND2T_official/engine/APIProxy.h",
+      "sha256": "86fe4dd7d7afdcff20965a3334c42321b9ff1a8ad6268b48548ad679925db434"
+    }
+  ],
+  "referenceLimitations": [
+    "BarsTech source directory is unavailable locally",
+    "reference source revision is not the shipped binary revision"
+  ]
+}
