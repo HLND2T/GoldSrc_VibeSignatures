@@ -1,0 +1,5 @@
+func_name: CCareerBaseBox::BringToFront()
+func_va: '0x7dff0'
+func_rva: '0x7dff0'
+func_size: '0xa7'
+func_sig: A1 ?? ?? ?? ?? 85 C0 74 ?? 83 EC ?? 89 5C 24 ?? 89 74 24 ?? 89 7C 24 ?? 8B 10 89 04 24 FF 52 ?? 84 C0

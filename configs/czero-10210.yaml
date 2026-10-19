@@ -9,6 +9,11 @@ modules:
     depot_windows: czero/cl_dlls/client.dll
     depot_linux: czero/cl_dlls/client.so
     skills:
+      - name: find-client-career-popup
+        expected_output:
+          - CounterStrikeViewport_OnTick.{platform}.yaml
+          - CCareerBaseBox_BringToFront.{platform}.yaml
+          - CCareerBaseBox_s_currentBox.{platform}.yaml
       - name: find-vgui2_Panel-size-callsites
         expected_input:
           - ClientVGUI_Panel_Init.{platform}.yaml
@@ -146,6 +151,12 @@ modules:
           - CCSBackGroundPanel_YOffset.{platform}.yaml
           - ISurface_GetScreenSize.{platform}.yaml
     symbols:
+      - name: CounterStrikeViewport_OnTick
+        category: vfunc
+      - name: CCareerBaseBox_BringToFront
+        category: func
+      - name: CCareerBaseBox_s_currentBox
+        category: gv
       - name: vgui2_Panel_SetMinimumSize_ScaledConst_callsite_0
         category: patch
       - name: __g_CounterStrikeViewport_singleton
