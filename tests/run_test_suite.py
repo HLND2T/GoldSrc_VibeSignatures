@@ -37,6 +37,7 @@ GROUP_FILES = {
         "test_studio_view_info.py",
         "test_portal_layout.py",
         "test_server_physics_dataflow.py",
+        "test_udp_download_dataflow.py",
         "test_renderer_elf_symbols.py",
         "test_pitch_store_predicate.py",
         "test_push_immediate_locator.py",

@@ -1,0 +1,9 @@
+gv_name: sv_player
+gv_va: '0x1488068'
+gv_rva: '0x1488068'
+gv_sig: 89 83 ?? ?? ?? ?? 8D 83 ?? ?? ?? ?? 89 10 EB ??
+gv_sig_va: '0xd7213'
+gv_inst_offset: '0x0'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'
+gv_pic_addend: '0x2ee000'

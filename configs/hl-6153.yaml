@@ -2,6 +2,15 @@ modules:
   - name: engine
     module_windows: hw.dll
     skills:
+      - name: find-udp-download-symbols
+        expected_input:
+          - Cmd_ExecuteString.{platform}.yaml
+        expected_output:
+          - SV_BeginFileDownload_f.{platform}.yaml
+          - SV_DropClient.{platform}.yaml
+          - host_client.{platform}.yaml
+          - cmd_source.{platform}.yaml
+          - sv_player.{platform}.yaml
       - name: find-SV_Physics-decompiles
         expected_input:
           - SV_Physics.{platform}.yaml
@@ -1654,6 +1663,16 @@ modules:
         expected_output:
           - CL_IsDevOverviewMode.{platform}.yaml
     symbols:
+      - name: SV_BeginFileDownload_f
+        category: func
+      - name: SV_DropClient
+        category: func
+      - name: host_client
+        category: gv
+      - name: cmd_source
+        category: gv
+      - name: sv_player
+        category: gv
       - name: sv_models_offset
         category: scalar
       - name: sv_models_element_size
