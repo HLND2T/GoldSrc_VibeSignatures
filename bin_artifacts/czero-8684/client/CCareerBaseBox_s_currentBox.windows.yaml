@@ -1,0 +1,8 @@
+gv_name: CCareerBaseBox::s_currentBox
+gv_va: '0x1a00224'
+gv_rva: '0x100224'
+gv_sig: 8B 0D ?? ?? ?? ?? 85 C9 74 ?? 8B 01 FF 50 ?? 84 C0 74 ?? 8B 0D ?? ?? ?? ?? 8B 11
+gv_sig_va: '0x1920e20'
+gv_inst_offset: '0x0'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'

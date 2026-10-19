@@ -1,0 +1,8 @@
+func_name: CounterStrikeViewport::OnTick()
+func_va: '0xdd370'
+func_rva: '0xdd370'
+func_size: '0x85'
+func_sig: 53 83 EC ?? 8B 5C 24 ?? 89 1C 24 E8 ?? ?? ?? ?? 8B 43 ?? 8B 10 89 04 24 FF 52 ?? 84 C0 75 ?? 80 BB ?? ?? ?? ?? ??
+vtable_name: CounterStrikeViewport
+vfunc_offset: '0xb0'
+vfunc_index: 44
