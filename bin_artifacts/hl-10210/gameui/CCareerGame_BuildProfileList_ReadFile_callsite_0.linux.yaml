@@ -1,0 +1,5 @@
+patch_name: CCareerGame_BuildProfileList_ReadFile_callsite_0
+patch_va: '0x6e85e'
+patch_rva: '0x6e85e'
+patch_sig: E8 ED DE FF FF 85 C0
+patch_sig_disp: '0x0'

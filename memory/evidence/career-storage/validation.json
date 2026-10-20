@@ -1,0 +1,58 @@
+{
+  "scope": "static analysis and catalog consumption, no real-game storage validation",
+  "manifest_sha256": "6e1eeb7f55223387b0272f7fb246adee8db246f40b74d6f412c40e7abf5a9140",
+  "catalog_versions": 21,
+  "pruned_records": {
+    "cof-5936": 164,
+    "cstrike-10210": 20,
+    "cstrike-3248": 20,
+    "cstrike-3647": 20,
+    "cstrike-4554": 20,
+    "cstrike-6153": 20,
+    "cstrike-8684": 20,
+    "czero-10210": 23,
+    "czero-8684": 23,
+    "czeror-10210": 19,
+    "czeror-8684": 19,
+    "hl-10210": 188,
+    "hl-3248": 161,
+    "hl-3266": 160,
+    "hl-3329": 160,
+    "hl-3647": 161,
+    "hl-4554": 160,
+    "hl-6153": 161,
+    "hl-8684": 163,
+    "svencoop-10257": 141,
+    "svencoop-8948": 142
+  },
+  "hl10210_windows_new_records": 92,
+  "new_records_retained_after_pruning": 92,
+  "numbered_groups": 12,
+  "analyzer_nodes": {
+    "hl-10210/windows": {
+      "records": 92,
+      "callsites": 13
+    },
+    "hl-10210/linux": {
+      "records": 116,
+      "callsites": 19
+    },
+    "hl-8684/linux": {
+      "records": 112,
+      "callsites": 18
+    }
+  },
+  "rebuilt_artifact_byte_differences": 0,
+  "repository_tests": {
+    "run": 1552,
+    "skipped": 13,
+    "failed": 0
+  },
+  "consumer_python_tests": {
+    "run": 6,
+    "failed": 0
+  },
+  "format_check": "passed",
+  "consumer_formal_validator": "passed: 21 snapshots, manifest mode",
+  "synchronizer_integrity_and_manifest_coverage": "passed"
+}

@@ -2939,6 +2939,127 @@ modules:
     depot_windows: valve/cl_dlls/GameUI.dll
     depot_linux: valve/cl_dlls/gameui.so
     skills:
+      - name: find-GameUI-career-storage
+        expected_input:
+          - CCareerDifficultyBox_ctor.{platform}.yaml
+        expected_output:
+          - CCareerGame_BuildProfileList_ReadFile_callsite_0.{platform}.yaml
+          - CCareerGame_BuildProfileList_ReadFile_callsite_0_abi.{platform}.yaml
+          - CCareerGame_BuildProfileList_ReadFile_callsite_0_hook_strategy.{platform}.yaml
+          - CCareerGame_BuildProfileList_ReadFile_callsite_0_instruction_length.{platform}.yaml
+          - CCareerGame_BuildProfileList_ReadFile_callsite_count.{platform}.yaml
+          - CCareerGame_BuildProfileList_enumerated_path_capacity.{platform}.yaml
+          - CCareerGame_CreateBlankProfile.{platform}.yaml
+          - CCareerGame_CreateBlankProfile_profile_path_format_callsite_0.{platform}.yaml
+          - CCareerGame_CreateBlankProfile_profile_path_format_callsite_0_abi.{platform}.yaml
+          - CCareerGame_CreateBlankProfile_profile_path_format_callsite_0_hook_strategy.{platform}.yaml
+          - CCareerGame_CreateBlankProfile_profile_path_format_callsite_0_instruction_length.{platform}.yaml
+          - CCareerGame_CreateBlankProfile_profile_path_format_callsite_count.{platform}.yaml
+          - CCareerGame_CreateBlankProfile_profile_path_format_callsite_destination_capacity.{platform}.yaml
+          - CCareerGame_DeleteProfile.{platform}.yaml
+          - CCareerGame_DeleteProfile_profile_path_format_callsite_0.{platform}.yaml
+          - CCareerGame_DeleteProfile_profile_path_format_callsite_0_abi.{platform}.yaml
+          - CCareerGame_DeleteProfile_profile_path_format_callsite_0_hook_strategy.{platform}.yaml
+          - CCareerGame_DeleteProfile_profile_path_format_callsite_0_instruction_length.{platform}.yaml
+          - CCareerGame_DeleteProfile_profile_path_format_callsite_count.{platform}.yaml
+          - CCareerGame_DeleteProfile_profile_path_format_callsite_destination_capacity.{platform}.yaml
+          - CCareerGame_GetProfileForName.{platform}.yaml
+          - CCareerGame_GetProfileForName_profile_path_format_callsite_0.{platform}.yaml
+          - CCareerGame_GetProfileForName_profile_path_format_callsite_0_abi.{platform}.yaml
+          - CCareerGame_GetProfileForName_profile_path_format_callsite_0_hook_strategy.{platform}.yaml
+          - CCareerGame_GetProfileForName_profile_path_format_callsite_0_instruction_length.{platform}.yaml
+          - CCareerGame_GetProfileForName_profile_path_format_callsite_count.{platform}.yaml
+          - CCareerGame_GetProfileForName_profile_path_format_callsite_destination_capacity.{platform}.yaml
+          - CCareerGame_LoadProfile.{platform}.yaml
+          - CCareerGame_LoadProfile_profile_path_format_callsite_0.{platform}.yaml
+          - CCareerGame_LoadProfile_profile_path_format_callsite_0_abi.{platform}.yaml
+          - CCareerGame_LoadProfile_profile_path_format_callsite_0_hook_strategy.{platform}.yaml
+          - CCareerGame_LoadProfile_profile_path_format_callsite_0_instruction_length.{platform}.yaml
+          - CCareerGame_LoadProfile_profile_path_format_callsite_count.{platform}.yaml
+          - CCareerGame_LoadProfile_profile_path_format_callsite_destination_capacity.{platform}.yaml
+          - CCareerGame_SaveProfile.{platform}.yaml
+          - CCareerGame_SaveProfile_config_command_format_callsite_0.{platform}.yaml
+          - CCareerGame_SaveProfile_config_command_format_callsite_0_abi.{platform}.yaml
+          - CCareerGame_SaveProfile_config_command_format_callsite_0_hook_strategy.{platform}.yaml
+          - CCareerGame_SaveProfile_config_command_format_callsite_0_instruction_length.{platform}.yaml
+          - CCareerGame_SaveProfile_config_command_format_callsite_count.{platform}.yaml
+          - CCareerGame_SaveProfile_config_command_format_callsite_destination_capacity.{platform}.yaml
+          - CCareerGame_SaveProfile_profile_path_format_callsite_0.{platform}.yaml
+          - CCareerGame_SaveProfile_profile_path_format_callsite_0_abi.{platform}.yaml
+          - CCareerGame_SaveProfile_profile_path_format_callsite_0_hook_strategy.{platform}.yaml
+          - CCareerGame_SaveProfile_profile_path_format_callsite_0_instruction_length.{platform}.yaml
+          - CCareerGame_SaveProfile_profile_path_format_callsite_count.{platform}.yaml
+          - CCareerGame_SaveProfile_profile_path_format_callsite_destination_capacity.{platform}.yaml
+          - CCareerGame_SendMatchCommand.{platform}.yaml
+          - CCareerGame_SendMatchCommand_config_command_format_callsite_0.{platform}.yaml
+          - CCareerGame_SendMatchCommand_config_command_format_callsite_0_abi.{platform}.yaml
+          - CCareerGame_SendMatchCommand_config_command_format_callsite_0_hook_strategy.{platform}.yaml
+          - CCareerGame_SendMatchCommand_config_command_format_callsite_0_instruction_length.{platform}.yaml
+          - CCareerGame_SendMatchCommand_config_command_format_callsite_count.{platform}.yaml
+          - CCareerGame_SendMatchCommand_config_command_format_callsite_destination_capacity.{platform}.yaml
+          - CCareerGame_legacy_key_capacity.{platform}.yaml
+          - CCareerGame_profile_buffer_capacity.{platform}.yaml
+          - CCareerGame_u8hex_storage_contract_version.{platform}.yaml
+          - CCareerNewProfileBox_OnCommand.{platform}.yaml
+          - CCareerProfileFrame_OnCommand.{platform}.yaml
+          - CCareerProfileFrame_PopulateProfiles.{platform}.yaml
+          - CCareerProfileFrame_PopulateProfiles_select_command_format_callsite_0.{platform}.yaml
+          - CCareerProfileFrame_PopulateProfiles_select_command_format_callsite_0_abi.{platform}.yaml
+          - CCareerProfileFrame_PopulateProfiles_select_command_format_callsite_0_hook_strategy.{platform}.yaml
+          - CCareerProfileFrame_PopulateProfiles_select_command_format_callsite_0_instruction_length.{platform}.yaml
+          - CCareerProfileFrame_PopulateProfiles_select_command_format_callsite_count.{platform}.yaml
+          - CCareerProfileFrame_PopulateProfiles_select_command_format_callsite_destination_capacity.{platform}.yaml
+          - CCareerProfileFrame_ResumeProfile_name_set_callsite_0.{platform}.yaml
+          - CCareerProfileFrame_ResumeProfile_name_set_callsite_0_abi.{platform}.yaml
+          - CCareerProfileFrame_ResumeProfile_name_set_callsite_0_hook_strategy.{platform}.yaml
+          - CCareerProfileFrame_ResumeProfile_name_set_callsite_0_instruction_length.{platform}.yaml
+          - CCareerProfileFrame_ResumeProfile_name_set_callsite_count.{platform}.yaml
+          - CCareerProfileFrame_UpdateSelectedProfile.{platform}.yaml
+          - CCareerProfileFrame_m_name.{platform}.yaml
+          - CCareerProfileFrame_selected_name_capacity.{platform}.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_0.{platform}.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_0_abi.{platform}.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_0_hook_strategy.{platform}.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_0_instruction_length.{platform}.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_1.{platform}.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_1_abi.{platform}.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_1_hook_strategy.{platform}.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_1_instruction_length.{platform}.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_count.{platform}.yaml
+          - CProfileButton_OnMouseDoublePressed_select_command_format_callsite_0.{platform}.yaml
+          - CProfileButton_OnMouseDoublePressed_select_command_format_callsite_0_abi.{platform}.yaml
+          - CProfileButton_OnMouseDoublePressed_select_command_format_callsite_0_hook_strategy.{platform}.yaml
+          - CProfileButton_OnMouseDoublePressed_select_command_format_callsite_0_instruction_length.{platform}.yaml
+          - CProfileButton_OnMouseDoublePressed_select_command_format_callsite_count.{platform}.yaml
+          - CProfileButton_SetProfileName.{platform}.yaml
+          - CProfileButton_m_active.{platform}.yaml
+          - CProfileButton_m_name.{platform}.yaml
+          - CProfileButton_name_capacity.{platform}.yaml
+        expected_output_linux:
+          - CCareerProfileFrame_selected_name_copy_callsite_2.linux.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_2_abi.linux.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_2_hook_strategy.linux.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_2_instruction_length.linux.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_3.linux.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_3_abi.linux.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_3_hook_strategy.linux.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_3_instruction_length.linux.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_4.linux.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_4_abi.linux.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_4_hook_strategy.linux.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_4_instruction_length.linux.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_5.linux.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_5_abi.linux.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_5_hook_strategy.linux.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_5_instruction_length.linux.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_6.linux.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_6_abi.linux.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_6_hook_strategy.linux.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_6_instruction_length.linux.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_7.linux.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_7_abi.linux.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_7_hook_strategy.linux.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_7_instruction_length.linux.yaml
       - name: find-GameUI-career-player-name
         expected_input:
           - vgui2_Label_SetTextW.{platform}.yaml
@@ -3192,6 +3313,272 @@ modules:
           - vgui2_EditablePanel_OnSizeChanged_call_GetChild_callsite_0.{platform}.yaml
           - vgui2_EditablePanel_OnSizeChanged_call_SetBounds_callsite_0.{platform}.yaml
     symbols:
+      - name: CProfileButton
+        category: struct
+      - name: CCareerProfileFrame
+        category: struct
+      - name: CCareerGame_BuildProfileList_ReadFile_callsite_0
+        category: patch
+      - name: CCareerGame_BuildProfileList_ReadFile_callsite_0_abi
+        category: scalar
+      - name: CCareerGame_BuildProfileList_ReadFile_callsite_0_hook_strategy
+        category: scalar
+      - name: CCareerGame_BuildProfileList_ReadFile_callsite_0_instruction_length
+        category: scalar
+      - name: CCareerGame_BuildProfileList_ReadFile_callsite_count
+        category: scalar
+      - name: CCareerGame_BuildProfileList_enumerated_path_capacity
+        category: scalar
+      - name: CCareerGame_CreateBlankProfile
+        category: func
+      - name: CCareerGame_CreateBlankProfile_profile_path_format_callsite_0
+        category: patch
+      - name: CCareerGame_CreateBlankProfile_profile_path_format_callsite_0_abi
+        category: scalar
+      - name: CCareerGame_CreateBlankProfile_profile_path_format_callsite_0_hook_strategy
+        category: scalar
+      - name: CCareerGame_CreateBlankProfile_profile_path_format_callsite_0_instruction_length
+        category: scalar
+      - name: CCareerGame_CreateBlankProfile_profile_path_format_callsite_count
+        category: scalar
+      - name: CCareerGame_CreateBlankProfile_profile_path_format_callsite_destination_capacity
+        category: scalar
+      - name: CCareerGame_DeleteProfile
+        category: func
+      - name: CCareerGame_DeleteProfile_profile_path_format_callsite_0
+        category: patch
+      - name: CCareerGame_DeleteProfile_profile_path_format_callsite_0_abi
+        category: scalar
+      - name: CCareerGame_DeleteProfile_profile_path_format_callsite_0_hook_strategy
+        category: scalar
+      - name: CCareerGame_DeleteProfile_profile_path_format_callsite_0_instruction_length
+        category: scalar
+      - name: CCareerGame_DeleteProfile_profile_path_format_callsite_count
+        category: scalar
+      - name: CCareerGame_DeleteProfile_profile_path_format_callsite_destination_capacity
+        category: scalar
+      - name: CCareerGame_GetProfileForName
+        category: func
+      - name: CCareerGame_GetProfileForName_profile_path_format_callsite_0
+        category: patch
+      - name: CCareerGame_GetProfileForName_profile_path_format_callsite_0_abi
+        category: scalar
+      - name: CCareerGame_GetProfileForName_profile_path_format_callsite_0_hook_strategy
+        category: scalar
+      - name: CCareerGame_GetProfileForName_profile_path_format_callsite_0_instruction_length
+        category: scalar
+      - name: CCareerGame_GetProfileForName_profile_path_format_callsite_count
+        category: scalar
+      - name: CCareerGame_GetProfileForName_profile_path_format_callsite_destination_capacity
+        category: scalar
+      - name: CCareerGame_LoadProfile
+        category: func
+      - name: CCareerGame_LoadProfile_profile_path_format_callsite_0
+        category: patch
+      - name: CCareerGame_LoadProfile_profile_path_format_callsite_0_abi
+        category: scalar
+      - name: CCareerGame_LoadProfile_profile_path_format_callsite_0_hook_strategy
+        category: scalar
+      - name: CCareerGame_LoadProfile_profile_path_format_callsite_0_instruction_length
+        category: scalar
+      - name: CCareerGame_LoadProfile_profile_path_format_callsite_count
+        category: scalar
+      - name: CCareerGame_LoadProfile_profile_path_format_callsite_destination_capacity
+        category: scalar
+      - name: CCareerGame_SaveProfile
+        category: func
+      - name: CCareerGame_SaveProfile_config_command_format_callsite_0
+        category: patch
+      - name: CCareerGame_SaveProfile_config_command_format_callsite_0_abi
+        category: scalar
+      - name: CCareerGame_SaveProfile_config_command_format_callsite_0_hook_strategy
+        category: scalar
+      - name: CCareerGame_SaveProfile_config_command_format_callsite_0_instruction_length
+        category: scalar
+      - name: CCareerGame_SaveProfile_config_command_format_callsite_count
+        category: scalar
+      - name: CCareerGame_SaveProfile_config_command_format_callsite_destination_capacity
+        category: scalar
+      - name: CCareerGame_SaveProfile_profile_path_format_callsite_0
+        category: patch
+      - name: CCareerGame_SaveProfile_profile_path_format_callsite_0_abi
+        category: scalar
+      - name: CCareerGame_SaveProfile_profile_path_format_callsite_0_hook_strategy
+        category: scalar
+      - name: CCareerGame_SaveProfile_profile_path_format_callsite_0_instruction_length
+        category: scalar
+      - name: CCareerGame_SaveProfile_profile_path_format_callsite_count
+        category: scalar
+      - name: CCareerGame_SaveProfile_profile_path_format_callsite_destination_capacity
+        category: scalar
+      - name: CCareerGame_SendMatchCommand
+        category: func
+      - name: CCareerGame_SendMatchCommand_config_command_format_callsite_0
+        category: patch
+      - name: CCareerGame_SendMatchCommand_config_command_format_callsite_0_abi
+        category: scalar
+      - name: CCareerGame_SendMatchCommand_config_command_format_callsite_0_hook_strategy
+        category: scalar
+      - name: CCareerGame_SendMatchCommand_config_command_format_callsite_0_instruction_length
+        category: scalar
+      - name: CCareerGame_SendMatchCommand_config_command_format_callsite_count
+        category: scalar
+      - name: CCareerGame_SendMatchCommand_config_command_format_callsite_destination_capacity
+        category: scalar
+      - name: CCareerGame_legacy_key_capacity
+        category: scalar
+      - name: CCareerGame_profile_buffer_capacity
+        category: scalar
+      - name: CCareerGame_u8hex_storage_contract_version
+        category: scalar
+      - name: CCareerNewProfileBox_OnCommand
+        category: vfunc
+      - name: CCareerProfileFrame_OnCommand
+        category: vfunc
+      - name: CCareerProfileFrame_PopulateProfiles
+        category: func
+      - name: CCareerProfileFrame_PopulateProfiles_select_command_format_callsite_0
+        category: patch
+      - name: CCareerProfileFrame_PopulateProfiles_select_command_format_callsite_0_abi
+        category: scalar
+      - name: CCareerProfileFrame_PopulateProfiles_select_command_format_callsite_0_hook_strategy
+        category: scalar
+      - name: CCareerProfileFrame_PopulateProfiles_select_command_format_callsite_0_instruction_length
+        category: scalar
+      - name: CCareerProfileFrame_PopulateProfiles_select_command_format_callsite_count
+        category: scalar
+      - name: CCareerProfileFrame_PopulateProfiles_select_command_format_callsite_destination_capacity
+        category: scalar
+      - name: CCareerProfileFrame_ResumeProfile_name_set_callsite_0
+        category: patch
+      - name: CCareerProfileFrame_ResumeProfile_name_set_callsite_0_abi
+        category: scalar
+      - name: CCareerProfileFrame_ResumeProfile_name_set_callsite_0_hook_strategy
+        category: scalar
+      - name: CCareerProfileFrame_ResumeProfile_name_set_callsite_0_instruction_length
+        category: scalar
+      - name: CCareerProfileFrame_ResumeProfile_name_set_callsite_count
+        category: scalar
+      - name: CCareerProfileFrame_UpdateSelectedProfile
+        category: func
+      - name: CCareerProfileFrame_m_name
+        category: structmember
+        struct: CCareerProfileFrame
+        member: m_name
+      - name: CCareerProfileFrame_selected_name_capacity
+        category: scalar
+      - name: CCareerProfileFrame_selected_name_copy_callsite_0
+        category: patch
+      - name: CCareerProfileFrame_selected_name_copy_callsite_0_abi
+        category: scalar
+      - name: CCareerProfileFrame_selected_name_copy_callsite_0_hook_strategy
+        category: scalar
+      - name: CCareerProfileFrame_selected_name_copy_callsite_0_instruction_length
+        category: scalar
+      - name: CCareerProfileFrame_selected_name_copy_callsite_1
+        category: patch
+      - name: CCareerProfileFrame_selected_name_copy_callsite_1_abi
+        category: scalar
+      - name: CCareerProfileFrame_selected_name_copy_callsite_1_hook_strategy
+        category: scalar
+      - name: CCareerProfileFrame_selected_name_copy_callsite_1_instruction_length
+        category: scalar
+      - name: CCareerProfileFrame_selected_name_copy_callsite_2
+        category: patch
+        platform: linux
+      - name: CCareerProfileFrame_selected_name_copy_callsite_2_abi
+        category: scalar
+        platform: linux
+      - name: CCareerProfileFrame_selected_name_copy_callsite_2_hook_strategy
+        category: scalar
+        platform: linux
+      - name: CCareerProfileFrame_selected_name_copy_callsite_2_instruction_length
+        category: scalar
+        platform: linux
+      - name: CCareerProfileFrame_selected_name_copy_callsite_3
+        category: patch
+        platform: linux
+      - name: CCareerProfileFrame_selected_name_copy_callsite_3_abi
+        category: scalar
+        platform: linux
+      - name: CCareerProfileFrame_selected_name_copy_callsite_3_hook_strategy
+        category: scalar
+        platform: linux
+      - name: CCareerProfileFrame_selected_name_copy_callsite_3_instruction_length
+        category: scalar
+        platform: linux
+      - name: CCareerProfileFrame_selected_name_copy_callsite_4
+        category: patch
+        platform: linux
+      - name: CCareerProfileFrame_selected_name_copy_callsite_4_abi
+        category: scalar
+        platform: linux
+      - name: CCareerProfileFrame_selected_name_copy_callsite_4_hook_strategy
+        category: scalar
+        platform: linux
+      - name: CCareerProfileFrame_selected_name_copy_callsite_4_instruction_length
+        category: scalar
+        platform: linux
+      - name: CCareerProfileFrame_selected_name_copy_callsite_5
+        category: patch
+        platform: linux
+      - name: CCareerProfileFrame_selected_name_copy_callsite_5_abi
+        category: scalar
+        platform: linux
+      - name: CCareerProfileFrame_selected_name_copy_callsite_5_hook_strategy
+        category: scalar
+        platform: linux
+      - name: CCareerProfileFrame_selected_name_copy_callsite_5_instruction_length
+        category: scalar
+        platform: linux
+      - name: CCareerProfileFrame_selected_name_copy_callsite_6
+        category: patch
+        platform: linux
+      - name: CCareerProfileFrame_selected_name_copy_callsite_6_abi
+        category: scalar
+        platform: linux
+      - name: CCareerProfileFrame_selected_name_copy_callsite_6_hook_strategy
+        category: scalar
+        platform: linux
+      - name: CCareerProfileFrame_selected_name_copy_callsite_6_instruction_length
+        category: scalar
+        platform: linux
+      - name: CCareerProfileFrame_selected_name_copy_callsite_7
+        category: patch
+        platform: linux
+      - name: CCareerProfileFrame_selected_name_copy_callsite_7_abi
+        category: scalar
+        platform: linux
+      - name: CCareerProfileFrame_selected_name_copy_callsite_7_hook_strategy
+        category: scalar
+        platform: linux
+      - name: CCareerProfileFrame_selected_name_copy_callsite_7_instruction_length
+        category: scalar
+        platform: linux
+      - name: CCareerProfileFrame_selected_name_copy_callsite_count
+        category: scalar
+      - name: CProfileButton_OnMouseDoublePressed_select_command_format_callsite_0
+        category: patch
+      - name: CProfileButton_OnMouseDoublePressed_select_command_format_callsite_0_abi
+        category: scalar
+      - name: CProfileButton_OnMouseDoublePressed_select_command_format_callsite_0_hook_strategy
+        category: scalar
+      - name: CProfileButton_OnMouseDoublePressed_select_command_format_callsite_0_instruction_length
+        category: scalar
+      - name: CProfileButton_OnMouseDoublePressed_select_command_format_callsite_count
+        category: scalar
+      - name: CProfileButton_SetProfileName
+        category: func
+      - name: CProfileButton_m_active
+        category: structmember
+        struct: CProfileButton
+        member: m_active
+      - name: CProfileButton_m_name
+        category: structmember
+        struct: CProfileButton
+        member: m_name
+      - name: CProfileButton_name_capacity
+        category: scalar
       - name: CCreateMultiplayerGameGameplayPage_LoadGameOptionsList
         category: func
       - name: CCareerBaseBox

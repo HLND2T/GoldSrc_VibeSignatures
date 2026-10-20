@@ -1,0 +1,5 @@
+func_name: CCareerProfileFrame::UpdateSelectedProfile(char const*)
+func_va: '0x71010'
+func_rva: '0x71010'
+func_size: '0x80'
+func_sig: 55 B8 ?? ?? ?? ?? 57 56 53 83 EC ?? 8B 6C 24 ?? 89 44 24 ?? 8B 44 24 ?? 8D BD ?? ?? ?? ?? 89 44 24 ?? 89 3C 24

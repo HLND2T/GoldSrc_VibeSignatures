@@ -1,0 +1,5 @@
+patch_name: CCareerGame_SendMatchCommand_config_command_format_callsite_0
+patch_va: '0x66167'
+patch_rva: '0x66167'
+patch_sig: E8 50 90 14 00 A1 ?? ?? ?? ??
+patch_sig_disp: '0x0'

@@ -1,0 +1,5 @@
+patch_name: CCareerGame_SaveProfile_profile_path_format_callsite_0
+patch_va: '0xbe7a8'
+patch_rva: '0xbe7a8'
+patch_sig: E8 CF 18 11 00 A1 ?? ?? ?? ??
+patch_sig_disp: '0x0'

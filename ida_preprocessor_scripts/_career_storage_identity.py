@@ -1,0 +1,58 @@
+"""Pure validation for native storage callsites; values come from the current image.
+
+Strategy 0 is a branch redirect, 1 a filesystem Open vtable hook filtered by
+return address, and 2 an engine Cvar_Set entry hook filtered by return address.
+The latter two records are observation points, never instructions to overwrite.
+"""
+
+
+def unique(items, role):
+    items = list(items)
+    if len(items) != 1:
+        raise ValueError(f"{role}: expected one result, got {len(items)}")
+    return items[0]
+
+
+def branch_strategy(raw, semantic):
+    """Match the existing MetaHook branch API, without widening short calls."""
+    raw = bytes(raw)
+    if len(raw) == 5 and raw[0] == 0xE8:
+        return 0
+    if len(raw) == 6 and raw[:2] == b"\xff\x15":
+        return 0
+    if len(raw) >= 6 and raw[0] == 0xFF and (raw[1] >> 3) & 7 == 2 and raw[1] >> 6 == 2:
+        return 0
+    if semantic == "enumeration_open" and len(raw) in (2, 3) and raw[0] == 0xFF:
+        mod, reg = raw[1] >> 6, (raw[1] >> 3) & 7
+        if reg == 2 and mod in (0, 1):
+            return 1
+    if semantic == "resume_name_set" and len(raw) == 2 and raw[0] == 0xFF:
+        if raw[1] >> 6 == 3 and (raw[1] >> 3) & 7 == 2:
+            return 2
+    raise ValueError(f"Unsupported {semantic} instruction: {raw.hex(' ')}")
+
+
+def checked_capacity(destination, boundary, explicit=None):
+    """Bound an output by a decoded stack object and any explicit CRT limit."""
+    size = boundary - destination
+    if not 0 < size <= 1 << 20:
+        raise ValueError("Invalid stack destination boundary")
+    if explicit is not None:
+        if type(explicit) is not int or not 0 < explicit <= size:
+            raise ValueError("CRT limit exceeds the destination")
+        return explicit
+    return size
+
+
+def validate_groups(discovered, declared):
+    """Do not silently drop an inlined copy or synthesize an absent _1."""
+    if set(discovered) != set(declared):
+        raise ValueError("Callsite group inventory differs from the manifest")
+    seen = set()
+    for group, sites in discovered.items():
+        if declared[group] != list(range(len(sites))):
+            raise ValueError(f"{group}: incomplete contiguous numbering")
+        for site in sites:
+            if site["ea"] in seen:
+                raise ValueError("A native callsite has multiple semantic owners")
+            seen.add(site["ea"])
