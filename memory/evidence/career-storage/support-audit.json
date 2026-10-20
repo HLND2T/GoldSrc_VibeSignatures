@@ -1,0 +1,149 @@
+[
+  {
+    "tag": "cof-5936",
+    "platform": "windows",
+    "sha256": "8255926f84eaa08e9096f2f78dea7f2827c3733e7af8f4408efa0b423acca838",
+    "status": "unsupported",
+    "reason": "profile active byte: expected one result, got 0"
+  },
+  {
+    "tag": "hl-3248",
+    "platform": "windows",
+    "sha256": "2f1424c3e9a471c5b92d42aaaad6e63227fd6af5967915482c48c75028a8ced9",
+    "status": "unsupported",
+    "reason": "CRT limit exceeds the destination: 0x10013c40 (56, 116, 62)"
+  },
+  {
+    "tag": "hl-3266",
+    "platform": "windows",
+    "sha256": "384449b55753370586619b6908d178b4151bbef86eda0833310dea6aa1384c6a",
+    "status": "unsupported",
+    "reason": "CRT limit exceeds the destination: 0x10013c40 (56, 116, 62)"
+  },
+  {
+    "tag": "hl-3329",
+    "platform": "windows",
+    "sha256": "384449b55753370586619b6908d178b4151bbef86eda0833310dea6aa1384c6a",
+    "status": "unsupported",
+    "reason": "CRT limit exceeds the destination: 0x10013c40 (56, 116, 62)"
+  },
+  {
+    "tag": "hl-3647",
+    "platform": "windows",
+    "sha256": "b3588b7ca8f25c70cb062dc12f680e2e8abd75d271026d6e219055fe03a7b172",
+    "status": "unsupported",
+    "reason": "CRT limit exceeds the destination: 0x10013c60 (56, 116, 62)"
+  },
+  {
+    "tag": "hl-4554",
+    "platform": "windows",
+    "sha256": "5359ffc4589711c625f88ba717391a05cfa91ce273e580a26e27298ad91f38ec",
+    "status": "unsupported",
+    "reason": "CRT limit exceeds the destination: 0x10014470 (56, 116, 62)"
+  },
+  {
+    "tag": "hl-6153",
+    "platform": "windows",
+    "sha256": "0c43c0c20f33c5d79fe48e3fa0fefcf37f626ce5a74581a1048171dbf000c10b",
+    "status": "unsupported",
+    "reason": "CRT limit exceeds the destination: 0x10013ca0 (56, 116, 62)"
+  },
+  {
+    "tag": "hl-8684",
+    "platform": "windows",
+    "sha256": "684fb5615f0c3ab7d07fcf5503eb214d064c70e25eb0eb22bbf043b4d73c162f",
+    "status": "unsupported",
+    "reason": "CRT limit exceeds the destination: 0x10013ca0 (56, 116, 62)"
+  },
+  {
+    "tag": "hl-8684",
+    "platform": "linux",
+    "sha256": "fa1ff86540bd216d4d280bf18c02d8835fb7bfad5e58c8f17028bbb40b97cd74",
+    "status": "located",
+    "records": 112
+  },
+  {
+    "tag": "svencoop-10257",
+    "platform": "windows",
+    "sha256": "99382b87319d21139c0675d8a45669d64ef930f9e43dbd582461575383545f75",
+    "status": "absent",
+    "evidence": {
+      "absent": true,
+      "literals": {
+        "%s/CZProfile-*.czp": {
+          "addresses": [],
+          "owners": [],
+          "sites": []
+        },
+        "%s/CZProfile-%s.czp": {
+          "addresses": [],
+          "owners": [],
+          "sites": []
+        }
+      }
+    }
+  },
+  {
+    "tag": "svencoop-10257",
+    "platform": "linux",
+    "sha256": "7bd0deabeb1ff8537c144043d0ba591587fb3e3090d14c6b18ffe14b511e3c39",
+    "status": "absent",
+    "evidence": {
+      "absent": true,
+      "literals": {
+        "%s/CZProfile-*.czp": {
+          "addresses": [],
+          "owners": [],
+          "sites": []
+        },
+        "%s/CZProfile-%s.czp": {
+          "addresses": [],
+          "owners": [],
+          "sites": []
+        }
+      }
+    }
+  },
+  {
+    "tag": "svencoop-8948",
+    "platform": "windows",
+    "sha256": "0f653d41010add218b1baeea57ffaeb9875eba1cc78157bc0cf17d300a90a524",
+    "status": "absent",
+    "evidence": {
+      "absent": true,
+      "literals": {
+        "%s/CZProfile-*.czp": {
+          "addresses": [],
+          "owners": [],
+          "sites": []
+        },
+        "%s/CZProfile-%s.czp": {
+          "addresses": [],
+          "owners": [],
+          "sites": []
+        }
+      }
+    }
+  },
+  {
+    "tag": "svencoop-8948",
+    "platform": "linux",
+    "sha256": "b0eb4ecdc1d79853ba159346b824fc9b7665e8aae75cb5d51330084be273b6e3",
+    "status": "absent",
+    "evidence": {
+      "absent": true,
+      "literals": {
+        "%s/CZProfile-*.czp": {
+          "addresses": [],
+          "owners": [],
+          "sites": []
+        },
+        "%s/CZProfile-%s.czp": {
+          "addresses": [],
+          "owners": [],
+          "sites": []
+        }
+      }
+    }
+  }
+]

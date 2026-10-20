@@ -1,0 +1,5 @@
+patch_name: CCareerProfileFrame_PopulateProfiles_select_command_format_callsite_0
+patch_va: '0x1001ca7e'
+patch_rva: '0x1ca7e'
+patch_sig: E8 9D 6B FE FF 8B BD ?? ?? ?? ??
+patch_sig_disp: '0x0'

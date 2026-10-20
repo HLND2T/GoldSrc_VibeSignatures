@@ -1,0 +1,5 @@
+patch_name: CCareerGame_SaveProfile_profile_path_format_callsite_0
+patch_va: '0x1001a909'
+patch_rva: '0x1a909'
+patch_sig: E8 52 8D FE FF A1 ?? ?? ?? ??
+patch_sig_disp: '0x0'

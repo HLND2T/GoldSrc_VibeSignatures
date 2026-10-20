@@ -1,0 +1,5 @@
+patch_name: CCareerProfileFrame_PopulateProfiles_select_command_format_callsite_0
+patch_va: '0x70947'
+patch_rva: '0x70947'
+patch_sig: E8 70 E8 13 00 8B 45 ??
+patch_sig_disp: '0x0'

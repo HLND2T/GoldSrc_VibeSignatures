@@ -1,0 +1,5 @@
+patch_name: CCareerGame_SendMatchCommand_config_command_format_callsite_0
+patch_va: '0x100152f4'
+patch_rva: '0x152f4'
+patch_sig: E8 27 E3 FE FF 8D 85 ?? ?? ?? ??
+patch_sig_disp: '0x0'

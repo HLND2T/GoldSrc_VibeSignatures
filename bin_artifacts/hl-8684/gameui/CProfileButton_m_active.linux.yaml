@@ -1,0 +1,4 @@
+struct_name: CProfileButton
+member_name: m_active
+offset: '0x10b'
+size: '0x1'

@@ -1,0 +1,5 @@
+patch_name: CCareerGame_DeleteProfile_profile_path_format_callsite_0
+patch_va: '0x10019dd4'
+patch_rva: '0x19dd4'
+patch_sig: E8 87 98 FE FF 83 C4 ??
+patch_sig_disp: '0x0'

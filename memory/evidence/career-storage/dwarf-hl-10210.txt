@@ -1,0 +1,203 @@
+type = class CCareerGame : public ICareerUI {
+  protected:
+    class CCareerProfileData *m_currentProfile;
+    class BufferWriter *m_writer;
+    int m_reputationPoints;
+    int m_reputationPointsFlashed;
+    CharCostVector m_costAvailability;
+    bool m_queuedLoadMenu;
+    char m_queuedName[32];
+    bool m_wasMapDefeatedAtStart;
+    bool m_needAutosave;
+    static bool m_checksumsOk;
+    CharacterVec m_hiredCharacters;
+    CharacterVec m_availableCharacters;
+    MapsVec m_maps;
+    bool m_isPlaying;
+    char m_lastMapName[64];
+    class CCareerMap *m_pLastMap;
+    int m_basePoints;
+    int m_roundTime;
+    int m_bombCountdownTime;
+    int m_freezeTime;
+    int m_isCT;
+    bool m_initDone;
+    int m_botPoolSliderPosition;
+    int m_matchNumWins;
+    int m_matchWinBy;
+    int m_matchReputationGain;
+    int m_matchMapsUnlocked;
+    int m_roundTimeLength;
+    int m_winfastLength;
+    CvarLatchVector m_savedCvars;
+    enum CareerDifficultyType m_difficulty;
+    bool m_medals[4];
+    bool m_canUnpause;
+    int m_ctWins;
+    int m_tWins;
+
+  public:
+    CCareerGame();
+    ~CCareerGame();
+    static void Create();
+    void Init();
+    void Reset();
+    void SetDifficulty(enum CareerDifficultyType);
+    bool AreChecksumsOk();
+    bool LoadProfile(enum CareerDifficultyType);
+    bool SaveProfile(bool);
+    void DeleteProfile(const char *);
+    void Update();
+    static const char * GetSaveGamePlayerName(const char *);
+    CharacterVec & GetHiredCharacters();
+    CharacterVec & GetAvailableCharacters();
+    void ClearRoster();
+    void AddCharacter(class CCareerCharacter *);
+    bool Hire(const char *);
+    bool Fire(const char *);
+    int GetPoints();
+    int GetPointsRemaining();
+    void SetPoints(int);
+    int GetHighestCostAvailable(int);
+    void MarkJumpButtonsFlashed();
+    int GetPointsFlashed();
+    void AddMapTriplet(MapVec);
+    void PrintMaps();
+    char * SaveMaps(char *, int &);
+    void DefeatMap(const char *);
+    bool DoesCurrentMapUnlockTriplet();
+    const char * GetLastMap();
+    bool SetLastMap(const char *);
+    class CCareerMap * GetLastMapPtr();
+    class CCareerMap * GetPlayableMap(const char *);
+    MapsVec & GetMaps();
+    class CCareerMap * GetMap(const char *);
+    int GetMapTripletNum(const char *);
+    int GetMapTripletOffset(const char *);
+    ITaskVec * GetTaskVecForMap(const char *);
+    int GetNumTasksOnCurrentMap();
+    class ICareerTask * GetCurrentTask(int);
+    void StartMatch();
+    void StopMatch(int, int);
+    void StartLoading();
+    void SendMatchCommand();
+    void FinishMatchStart();
+    virtual bool PlayAsCT();
+    virtual bool IsPlayingMatch();
+    virtual ITaskVec * GetCurrentTaskVec();
+    virtual int GetReputationGained();
+    virtual int GetNumMapsUnlocked();
+    virtual bool DoesWinUnlockAll();
+    virtual int GetRoundTimeLength();
+    virtual int GetWinfastLength();
+    virtual enum CareerDifficultyType GetDifficulty() const;
+    virtual int GetCurrentMapTriplet(struct MapInfo *);
+    virtual void OnRoundEndMenuOpen(bool);
+    virtual void OnMatchEndMenuOpen(bool);
+    virtual void OnRoundEndMenuClose(bool);
+    virtual void OnMatchEndMenuClose(bool);
+    void SetBotPoolSliderPosition(int);
+    int GetBotPoolSliderPosition();
+    int GetMatchNumWins() const;
+    int GetMatchWinBy() const;
+    class CCareerMap * GetFirstUndefeatedMap();
+    void SetRoundTimeLength(int);
+    void SetWinfastLength(int);
+    bool IsMedalEarned(enum CareerDifficultyType);
+    class std::vector<CCareerProfileData*, std::allocator<CCareerProfileData*> > BuildProfileList();
+    class CCareerProfileData * GetProfileForName(const char *);
+    void CreateBlankProfile();
+    bool CanUnpause() const;
+  protected:
+    bool ParseSavedProfile(const unsigned char *, int, class CCareerProfileData *);
+    bool ParseMedalChunk(class CCareerProfileData *, int);
+    bool ParseDifficultyChunk(class CCareerProfileDifficultyData *, int);
+    bool ParseTutorMessageDecayChunk(class CCareerProfileData *, int);
+    void ApplySavedProfile(class CCareerProfileData *, enum CareerDifficultyType);
+    void ApplyDifficultyChunk(class CCareerProfileDifficultyData *);
+    void ApplyTutorMessageData(int *);
+    int CreateProfileBuffer(class CCareerProfileData *, unsigned char *, int, bool);
+    void WriteMedalChunk(class CCareerProfileData *);
+    void WriteDifficultyChunk(class CCareerProfileDifficultyData *);
+    void WriteTutorMessageDecayChunk(bool);
+    bool UpdateSavedProfile();
+    void UpdateMedalChunk();
+    void UpdateDifficultyChunk();
+    void AddSavedCvar(const char *, const char *, bool);
+}
+type = class CCareerProfileFrame : public CCareerBaseFrame {
+    class vgui2::Dar<CProfileButton*> m_profiles;
+    class CCareerPanelListPanel *m_pProfileList;
+    class vgui2::Label *m_pProfileSelectionBackground;
+    class vgui2::Button *m_pResumeButton;
+    class vgui2::Button *m_pDeleteButton;
+    class vgui2::Button *m_pNewButton;
+    char m_name[32];
+    class vgui2::Label *m_pMissionPackBackground;
+    class vgui2::Label *m_pMissionPackAuthor;
+    class vgui2::Label *m_pMissionPackDescription;
+    class vgui2::URLLabel *m_pMissionPackURL;
+    class vgui2::CBitmapImagePanel *m_pMissionPackLogo;
+    class vgui2::ComboBox *m_pMissionPackComboBox;
+    int m_needFocus;
+
+  public:
+    CCareerProfileFrame(class vgui2::Panel *);
+    ~CCareerProfileFrame();
+    virtual void Activate();
+    virtual void ApplySchemeSettings(class vgui2::IScheme *);
+    virtual void OnCommand(const char *);
+    virtual void OnKeyCodeTyped(enum vgui2::KeyCode);
+    virtual void PerformLayout();
+    void SelectMissionPack(const char *);
+    virtual void OnThink();
+    void QueueFocusUpdate(int);
+  private:
+    int PopulateProfiles();
+    void ChooseDifficulty();
+    void UpdateSelectedProfile(const char *);
+    void RestoreFocus();
+    void PopulateMissionPacks();
+}
+type = class CProfileButton : public vgui2::Button {
+  protected:
+    bool m_medals[4];
+    bool m_active;
+    bool m_isCoop;
+    class vgui2::IImage *m_image[4];
+    class vgui2::TextImage *m_textImage;
+    int m_preTextPad;
+    int m_postTextPad;
+    int m_interImagePad;
+    int m_postImagePad;
+    class CCareerProfileFrame *m_pParent;
+    char m_name[32];
+    class Color m_bgColor;
+    class Color m_activeBgColor;
+    class vgui2::IBorder *m_armedBorder;
+    class vgui2::IBorder *m_depressedBorder;
+
+  public:
+    CProfileButton(class CCareerProfileFrame *, const char *, const wchar_t *, bool *);
+    virtual void ApplySchemeSettings(class vgui2::IScheme *);
+    virtual void Paint();
+    virtual void OnMouseDoublePressed(enum vgui2::MouseCode);
+    void SetProfileName(const char *);
+    void SetCoop(bool);
+    bool IsCoop() const;
+    virtual class Color GetBgColor();
+    void SetActive(bool);
+    bool IsActive() const;
+    const char * GetProfileName();
+    virtual class vgui2::IBorder * GetBorder(bool, bool, bool, bool);
+}
+type = class CCareerDifficultyBox : public CCareerBaseBox {
+    class CCareerButton *m_pFocusButton;
+    class CCvarToggleCheckButton *m_pEnableTutorCheck;
+
+  public:
+    CCareerDifficultyBox(const char *, class vgui2::Panel *);
+    ~CCareerDifficultyBox();
+    virtual void ShowWindow();
+    virtual void OnCommand(const char *);
+}

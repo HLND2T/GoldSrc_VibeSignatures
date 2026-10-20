@@ -1,0 +1,5 @@
+patch_name: CProfileButton_OnMouseDoublePressed_select_command_format_callsite_0
+patch_va: '0x1043e9'
+patch_rva: '0x1043e9'
+patch_sig: E8 82 8D FE FF 8B 93 ?? ?? ?? ??
+patch_sig_disp: '0x0'

@@ -1,0 +1,5 @@
+func_name: CCareerGame::SaveProfile(bool)
+func_va: '0x1001a890'
+func_rva: '0x1a890'
+func_size: '0x1ad'
+func_sig: 55 8B EC 81 EC 08 01 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 56 8B F1 80 7E ?? ?? 75 ?? B0 01 5E 8B 4D ??

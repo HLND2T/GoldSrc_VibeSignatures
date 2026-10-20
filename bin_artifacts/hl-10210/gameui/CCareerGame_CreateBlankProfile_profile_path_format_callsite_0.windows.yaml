@@ -1,0 +1,5 @@
+patch_name: CCareerGame_CreateBlankProfile_profile_path_format_callsite_0
+patch_va: '0x10019bbd'
+patch_rva: '0x19bbd'
+patch_sig: E8 9E 9A FE FF 68 ?? ?? ?? ??
+patch_sig_disp: '0x0'

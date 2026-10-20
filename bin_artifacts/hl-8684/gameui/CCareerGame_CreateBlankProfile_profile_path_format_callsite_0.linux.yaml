@@ -1,0 +1,5 @@
+patch_name: CCareerGame_CreateBlankProfile_profile_path_format_callsite_0
+patch_va: '0xbe15a'
+patch_rva: '0xbe15a'
+patch_sig: E8 1D 1F 11 00 C7 04 24 ?? ?? ?? ??
+patch_sig_disp: '0x0'
