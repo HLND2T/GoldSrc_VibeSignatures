@@ -1,0 +1,4 @@
+struct_name: CCareerNewProfileBox
+member_name: m_pNameEntry
+offset: '0x144'
+size: '0x4'

@@ -1,0 +1,4 @@
+struct_name: CCareerDefinition
+member_name: m_saveDir
+offset: '0x18'
+size: '0x4'

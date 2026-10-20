@@ -123,9 +123,9 @@ Win profile 路径均 260，SaveProfile writecfg 命令 260，SendMatchCommand e
 
 UI 生命周期、父控件和重绘继续用公开 VGUI 接口，不复制 STL 布局。
 
-Win GameUI `vgui2::filesystem()`（RVA 0x50b90）与初始化（0x508a0）使用同一实例，factory 请求 `VFileSystem009`。用 MetaHook SDK 的 IFileSystem 公共 Open/Write/Close/Flush/IsOk；HL25 的额外虚槽通过已有 IFileSystem_HL25 分支处理，不新增互相矛盾的 filesystem slot 数据，不扫描私有实现。当前 Win Open 指令中的 byte offset0x28 与该 SDK ABI 对齐；Linux 多析构槽应遵循其平台 ABI，不能复制 Windows 槽位。
+Win GameUI `vgui2::filesystem()`（RVA 0x50b90）与初始化（0x508a0）使用同一实例，factory 请求 `VFileSystem009`。此 GameUI 实际调用 legacy IFileSystem（Open槽10、Write槽22），不能按 engine build>=10000 推断文件系统接口布局。#20 czero 10210 运行断点确认 GameUI 实例等于消费端 g_pFileSystem，g_pFileSystem_HL25 为 null；消费端安装时核对同一 legacy 公共实例后使用 SDK 的 Open/Write/Close/Flush/IsOk。MetaHook 的接口判断由实际 vtable 决定，HL25 引擎版本不保证插入 GetFileChangeTime 的接口存在。Linux 多析构槽仍需遵循自己的平台 ABI，不复制 Windows 槽位。
 
-主方案不需要发布 TheCareerGame/TheCareerDefinitions 全局地址，也不复制 CCareerProfileData STL 成员。最终路径格式化实参已经携带 activeCareer.saveDir，可在此做目的路径/写入前预检；CreateBlankProfile 的目录创建可能先发生，但 profile 文件写入在格式化之后。若消费端另外要求在操作入口、连目录创建前就得到 saveDir，该更强约束尚无 public accessor，本交付没有声称支持，需另增最小 accessor/成员证据。
+基础 v20261020b 契约仅在路径 formatter 处交付 activeCareer.saveDir，不提供操作入口的提前读取。消费端 #20 后续采用更强的入口预检和序列化溢出检查；经用户明确授权，另增 Windows hl-10210 的 runtime contract v1（14 条，尚待独立发布），见下节。只读取最小指针链/标志，不复制 CCareerProfileData STL 布局。
 
 ## Legacy 与 CZP 有界 inspector 证据
 
@@ -158,3 +158,41 @@ checksum 是对末尾 checksum 前的全部无符号字节求 `sum((i+1)*byte[i]
 消费端更新 manifest G25（hl-10210/gameui Windows，92条及12个编号组）、validator 和中英文 gamedata 文档。必须用实际完整 snapshot→metadata→JSON catalog→真实 manifest 裁剪→同步器/validator 检查；容量/策略/ABI 在裁剪后仍须存在。最终执行结果和发布版本由对应 PR/release 记录，未发布前不部署该 manifest。PR/release 应在 #390 与 #20 互链；静态成功不能替代真实游戏验收。
 
 最终本地检查：1552 项完整仓库测试通过、13 项按环境/平台/opt-in 条件跳过；消费端6项回归通过。完整21版本 catalog 通过真实 manifest 裁剪后，同步器目录哈希/coverage 与正式 validator 均通过，92条 Windows新记录全部保留；见 [验证报告](evidence/career-storage/validation.json)。原始 catalog 总记录数与裁剪记录数不同，不能仅以原始 JSON 候选存在作为消费通过。
+
+## Windows hl-10210 runtime contract v1（#20 后续，待发布）
+
+触发信号：消费端必须在创建目录前取得活动 saveDir，并在 `wb Open` 截断目标前证明完整序列化未溢出；公开 v20261020b 没有交付这些入口证据。根因/约束：serializer 即使溢出仍返回已写长度，WriteString 会以空串替代放不下的字符串，不能只检查返回长度或 checksum。
+
+`find-GameUI-career-runtime.py` / `_career_runtime_common.py` / `_career_runtime_identity.py` 从当前 IDB 的五个独立路径消费者共同恢复相同三层 pointer chain，解码真实绝对操作数生成 GV 特征；不是按旧 VA 定位。该直接 GV 方法作为比邻近全局/模型猜测更强的证据例外，原因写在 helper docstring。只注册 Windows hl-10210；输入 GameUI.dll SHA256 `b9b8c0c36bd19681627001c06ce2a15496da06b72315d561a12a3964e0265811`。
+
+新增 14 条：
+
+| 类别 | symbolName / 数据（RVA 或 member offset） |
+|---|---|
+| global | `CareerStorage_Definitions` 0xc2068；`CareerStorage_Game` 0xc206c；`CareerStorage_FileSystem` 0xc6b6c |
+| structMember | `CCareerDefinitionManager.m_activeCareer` 12 / pointer4；`CCareerDefinition.m_saveDir` 24 / pointer4（不是内联字符数组） |
+| structMember | `CCareerGame.m_profileWriter` 8 / pointer4；`BufferWriter.m_overflow` 8 / bool1；`CCareerGame.m_needAutosave` 66 / bool1 |
+| structMember | `CCareerNewProfileBox.m_pNameEntry` 324 / pointer4；`vgui2::TextEntry.m_textLength` 136 / int4 |
+| function | `CCareerGame::CreateProfileBuffer(CCareerProfileData*, unsigned char*, int, bool)` RVA 0x19c50 / size0x143；thiscall，ret16，EAX=int length |
+| virtualFunction | `vgui2::TextEntry::GetText(wchar_t*, int)` RVA0x62ec0 / size0x42；slot136，thiscall ret8；消费端忽略返回值 |
+| scalar | `CareerStorage_runtime_contract_version=1`；`CCareerNewProfileBox_native_input_capacity=64` |
+
+正确做法与指令证据：
+
+- saveDir：Create path 在 0x19ba1 载入 root，0x19bab 读取 manager+12，0x19bae **push dword ptr [active+24]**。五个消费者一致证明它是字符串指针。提前读取后仍与 formatter 的实参核对。
+- writer：Init RVA0x1950 设置 cursor+0、remaining+4、overflow+8=false、capacity+12。WriteByte0x1ad0、WriteLong0x1b00、WriteString0x1b50 在容量不足时置 overflow+8=true；WriteString 0x1b88 还会改写输入为空串。serializer 之后、Open 之前必须读取 overflow 并有界解析整个返回 buffer、核对 raw name。Create 的 serializer call0x19be2 在 wb Open0x19c00 前；Save 同样先 serializer 后 Open0x1a9b9。原生写入均一次 Write（legacy槽22），一次 Close（槽11）；不能把 bool 返回当作短写检查。
+- needAutosave：Save0x1a8a6 比较 byte[this+66]，为0则在0x1a8ac设置AL=1并于0x1a8bc ret4，完全绕过分配/formatter/I/O。消费端保留此 no-op 语义。
+- 输入：原 NewProfileBox Ok 调 Apply(1)，其 char[64] 最多取得63字节。宽 getter0x62ed8 比较 **length >= argument-1**，0x62ee0 wcsncpy 的第三实参直接为 wchar_t 元素数，随后0x62eeb写 Destination[length]=0；没有除以2。因此本 binary 的 int 参数是**字符数**，虽然外部 SDK header 写 bufLenInBytes。不要按其他 SDK 实现改成字节数。读取 m_textLength 后分配 length+1 wchar_t 并传 length+1。
+- NewProfileBox0xfa70 的 Ok 分支只做 Apply 后把 command 换成 CreateProfile；公共基类 handler0xf980 对非 close 命令 PostActionSignal(Command)，之后调用关闭虚槽。消费端可转发携带完整无损身份的私有命令跳过 Apply，保留 native 分配/销毁。当前接入用 CareerStorageNew + canonical key 传递身份，在覆盖确认与预检后才设置引擎 raw cvar，验证回读并在写入失败时恢复旧值；取消覆盖不改变 name。
+
+验证方式：标准 `ida_analyze_bin.py -gamever hl-10210 -modules gameui -skill find-GameUI-career-runtime -platform windows -oldgamever none` 已重建14条；纯 pointer-chain 合成布局/歧义负例测试、完整 unit/repository-contract、格式门禁另行记录在消费端交付说明。该节是静态 ABI 证据，不等同所有故障或兼容构建的运行保证。
+
+适用范围：仅此 Windows GameUI identity。v1..v3 CZP 的完整变长结构依指令和合成测试覆盖；现有真实样本与 #20 新创建/保存样本为 v4，不能声称已取得真实旧版本样本。
+
+## Runtime v1 本地验证补充（2026-10-20）
+
+14 条标准 analyzer 产物已重建，unit 套件通过（12 项跳过）、repository-contract 15 项通过、仓库格式门禁通过。消费端真实 manifest G26 裁剪后 hl-10210 为 202 条（原 188 + 14）；21 个版本经正式同步器离线缓存发布和 validator 检查通过。这里的本地发布指生成消费目录，公共 catalog 尚未发布 runtime v1；历史 evidence/career-storage/validation.json 仍记录基础 v20261020b 的 92 条交付，不作为本次 runtime v1 的报告。
+
+Definitions artifact 的 GV 锚点选择 Create 中较早的 0x19b1f 六字节 root load；上述 0x19ba1 五字节 load 是同函数后续 path 消费链的交叉证据，两者读取同一个 global 0xc2068。
+
+消费端 Windows x86 czero 10210 实机覆盖了两种碰撞中文名、全下划线旧键、31字节前缀相同的长名、A/a；两次实际开赛/StopMatch 保存与重启恢复独立 cfg；自建 mission pack 中 legacy-only 读取/正常保存迁移、去重、删除两份同身份 CZP 并保留 cfg；损坏 canonical、只读 Open 失败和旧 ASCII 占用 canonical namespace 均拒绝覆盖且目标哈希未变。最终 DLL 再验取消覆盖与写失败后 name 不变，正常新建进入难度框。原游戏 31 文件恢复并逐项 SHA256 核对；测试目录清理。短写/flush/overflow 失败由纯策略注入覆盖，未在真实磁盘接口注入；真实 v1..v3 样本、其他构建/CZDS 仍未做运行验收。

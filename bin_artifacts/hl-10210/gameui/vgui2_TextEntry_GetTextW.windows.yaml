@@ -1,0 +1,8 @@
+func_name: vgui2::TextEntry::GetText(wchar_t*, int)
+func_va: '0x10062ec0'
+func_rva: '0x62ec0'
+func_size: '0x42'
+func_sig: 55 8B EC 57 8B B9 ?? ?? ?? ?? 85 FF 74 ?? 8B 45 ?? 48 3B F8 56 8B 75 ?? 0F 4D F8 57 FF 71 ?? 56
+vtable_name: vgui2::TextEntry
+vfunc_offset: '0x220'
+vfunc_index: 136

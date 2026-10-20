@@ -1,0 +1,4 @@
+struct_name: BufferWriter
+member_name: m_overflow
+offset: '0x8'
+size: '0x1'
