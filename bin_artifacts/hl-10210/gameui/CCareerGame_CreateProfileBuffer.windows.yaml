@@ -1,0 +1,5 @@
+func_name: CCareerGame::CreateProfileBuffer(CCareerProfileData*, unsigned char*, int, bool)
+func_va: '0x10019c50'
+func_rva: '0x19c50'
+func_size: '0x143'
+func_sig: 55 8B EC 81 EC 08 04 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 8B 45 ?? 53 8B 5D ?? 56 57 FF 75 ?? 8B F9

@@ -1,0 +1,8 @@
+gv_name: CareerStorage_Definitions
+gv_va: '0x100c2068'
+gv_rva: '0xc2068'
+gv_sig: 55 8B EC 6A FF 68 ?? ?? ?? ?? 64 A1 ?? ?? ?? ?? 50 81 EC 24 06 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 53 56 57 50
+gv_sig_va: '0x10019a50'
+gv_inst_offset: '0xcf'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'
