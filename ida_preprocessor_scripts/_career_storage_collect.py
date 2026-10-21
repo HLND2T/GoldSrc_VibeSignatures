@@ -61,10 +61,9 @@ def capacity(ea,destination,explicit=None):
     if not ida_frame.get_func_frame(frame,f):raise ValueError('missing stack frame')
     start=destination[1]+f.frsize+f.frregs
     members=sorted((m.offset//8,m.size//8) for m in frame.iter_udt())
-    boundaries=[offset for offset,size in members if offset>start]
-    if not boundaries:raise ValueError('missing next stack object boundary')
-    try:return checked_capacity(start,min(boundaries),explicit)
-    except ValueError as exc:raise ValueError(str(exc)+': '+hex(ea)+' '+repr((start,min(boundaries),explicit)))
+    boundary=relocated_stack_boundary(start,[offset for offset,size in members],frame_relocations.get(ea,{}))
+    try:return checked_capacity(start,boundary,explicit)
+    except ValueError as exc:raise ValueError(str(exc)+': '+hex(ea)+' '+repr((start,boundary,explicit)))
 
 def primary_returns(ea):
     f=ida_funcs.get_func(ea)
@@ -72,6 +71,65 @@ def primary_returns(ea):
                    if idautils.DecodeInstruction(a).ops[0].type==idaapi.o_imm else 0
                    for a in idautils.Heads(f.start_ea,f.end_ea)
                    if idc.print_insn_mnem(a) in ('ret','retn')})
+
+def normalize_population(ea):
+    # ILocalize::ConvertANSIToUnicode has three explicit stack arguments.
+    # Its output is then the ProfileButton constructor's wide label. Older
+    # IDBs can count the loop's saved EBX as a fourth argument, shifting every
+    # subsequent local by four bytes and fabricating a 60-byte command buffer.
+    # Prove both the raw pushes and the shared output/consumer buffer before
+    # correcting only this call in our trace; never edit/save the source IDB.
+    if values['platform']!='windows':return
+    body=method(ea)
+    constructors=[c for c in body['calls'] if references(c,'ProfileButton')]
+    ctor=unique(constructors,'profile button constructor')
+    candidates=[]
+    for c in body['calls']:
+        args=c['stack_args']
+        if c['direct'] or c['ea']>=ctor['ea'] or not c['this'] or c['this'][0]!='result':continue
+        if not args[1] or args[1][0]!='stack' or not args[2] or args[2][0]!='const':continue
+        getter=next((g for g in body['calls'] if g['ea']==c['this'][1]),None)
+        if not getter or not getter['direct'] or getter['block']!=c['block']:continue
+        returned={r['value'] for r in method(getter['direct'])['returns']}
+        if primary_returns(getter['direct'])!=[0] or len(returned)!=1:continue
+        value=next(iter(returned))
+        if not value or value[0]!='load' or not value[1] or value[1][0]!='const':continue
+        items=list(idautils.Heads(getter['ea']+idc.get_item_size(getter['ea']),c['ea']))
+        if any(idc.print_insn_mnem(a).startswith(('call','j','ret')) for a in items):continue
+        pushes=[a for a in items if idc.print_insn_mnem(a)=='push']
+        if len(pushes)!=3:continue
+        if any(idc.print_insn_mnem(a) in ('pop','add','sub','mov','lea')
+               and idc.print_operand(a,0)=='esp' for a in items):continue
+        inferred=ida_frame.get_spd(ida_funcs.get_func(ea),c['ea']+idc.get_item_size(c['ea']))-ida_frame.get_spd(ida_funcs.get_func(ea),c['ea'])
+        purge=reconciled_call_cleanup(args[1],ctor['stack_args'][2],inferred,len(pushes))
+        candidates.append((c,purge,inferred))
+    # Other compiler layouts need no override. Their ordinary frame/capacity
+    # checks still apply; an unproven correction must never be attempted.
+    if not candidates:return
+    conversion,purge,inferred=unique(candidates,'localized profile label producer')
+    if purge==inferred:return
+    call=conversion['ea']
+    # Capacity/copy evidence concerns the populated loop's first iteration.
+    # The empty-list path never executes this producer; exclude that path so
+    # its uncorrected depth cannot merge with the corrected populated path.
+    blocks=first_pass_blocks([dict(start=b,succs=s,insns=[]) for b,s in body['blocks'].items()],ea)
+    excluded=edges_bypassing_block({b['start']:b['succs'] for b in blocks},conversion['block'])
+    cache[ea]=traced(ea,{call:purge},excluded)
+    converted=unique([c for c in calls(ea) if c['ea']==call],'corrected label conversion')
+    consumed=unique([c for c in calls(ea) if c['ea']==ctor['ea']],'corrected label consumer')
+    if converted['stack_args'][1]!=consumed['stack_args'][2]:
+        raise ValueError('Corrected localization output is not the constructor label')
+    # A stale frame can contain both the old and corrected names of one object.
+    # Relocate only bases independently observed at the same decoded LEA before
+    # and after correction; preserve every unrelated frame boundary.
+    f=ida_funcs.get_func(ea);origin=f.frsize+f.frregs
+    previous={a['ea']:a['value'] for a in body['addresses']}
+    relocations={}
+    for a in cache[ea]['addresses']:
+        before=previous.get(a['ea']);after=a['value']
+        if before and after and before[0]=='stack' and after[0]=='stack':
+            relocations.setdefault(before[1]+origin,set()).add(after[1]+origin)
+    frame_relocations[ea]=relocations
 
 def add_function(stem,display,ea,purge,table=None):
     returns=primary_returns(ea)
@@ -119,9 +177,9 @@ texts=('%s/CZProfile-%s.czp','%s/CZProfile-*.czp','%s/%s','wb','rb','CZP',
        'writecfg Save/%s\n','wait\nexec Save/%s.cfg\n','#Career_CorruptSaveTitle',
        'SelectProfileAndFocus %s','ReallyCreateProfile','SelectProfile ',
        'SelectProfileAndFocus ','ResumeProfile','name','SelectProfile %s','Ok','CreateProfile',
-       'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-0123456789','exec config.cfg\n')
+       'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-0123456789','exec config.cfg\n','ProfileButton')
 literals={t:literal_evidence(t) for t in texts}
-cache={};functions={};groups={};scalars={};members={}
+cache={};functions={};groups={};scalars={};members={};frame_relocations={}
 if not literals['%s/CZProfile-*.czp']['owners']:
     if any(literals[t]['owners'] for t in texts[:2]):raise ValueError('partial Career implementation')
     result=dict(absent=True)
@@ -142,6 +200,7 @@ else:
     delete=unique(remaining-{query},'profile removal')
     build=anchored('%s/CZProfile-*.czp')
     populate=anchored('SelectProfileAndFocus %s')
+    normalize_population(populate)
     double=anchored('SelectProfile %s','ResumeProfile')
     command=anchored('ReallyCreateProfile','SelectProfile ','ResumeProfile')
     send=anchored('wait\nexec Save/%s.cfg\n')

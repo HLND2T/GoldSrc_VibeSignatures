@@ -15,7 +15,7 @@ from ida_preprocessor_scripts._vgui_private_symbols_common import function_paylo
 
 
 COLLECT_COMMON = r"""
-def traced(ea):
+def traced(ea,call_purges=None,excluded_edges=()):
     preserved=stack_check_helpers([ea],stack_check_preserves_registers)
     # MSVC's cookie check preserves registers on its only returning path.
     # Verify the complete tiny helper; its failure tail must be noreturn.
@@ -31,7 +31,8 @@ def traced(ea):
         failed=ida_funcs.get_func(failure) if failure else None
         if branch.ops[0].addr==items[3] and failed and failed.flags & ida_funcs.FUNC_NORET:
             preserved.add(target)
-    return flow_at(ea,values['platform'],first_pass=True,track_memory=True,preserved_calls=preserved)
+    return flow_at(ea,values['platform'],call_purges,first_pass=True,track_memory=True,
+                   preserved_calls=preserved,excluded_edges=excluded_edges)
 
 def entries(table):
     return {int(i):int(ea,0) for i,ea in table['vtable_entries'].items()}

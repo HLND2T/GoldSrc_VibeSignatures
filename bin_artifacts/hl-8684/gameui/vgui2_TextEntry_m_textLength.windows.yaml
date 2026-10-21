@@ -1,0 +1,4 @@
+struct_name: vgui2::TextEntry
+member_name: m_textLength
+offset: '0x84'
+size: '0x4'

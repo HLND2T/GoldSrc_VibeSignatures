@@ -1,0 +1,4 @@
+func_name: VPanelWrapper::PaintTraverse
+vtable_name: VPanelWrapper
+vfunc_offset: '0xa4'
+vfunc_index: 41

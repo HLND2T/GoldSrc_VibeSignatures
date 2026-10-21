@@ -15,7 +15,7 @@ tags:
 
 对应上游 [#390](https://github.com/HLND2T/GoldSrc_VibeSignatures/issues/390)、消费端 [VGUI2Extension #20](https://github.com/MetaHookSv/VGUI2Extension/issues/20) 与原始 [MetaHookSv #939](https://github.com/MetaHookSv/MetaHookSv/issues/939)。交付语义 finder、函数/虚函数、12 组 patch、容量/策略/ABI scalar、3 个成员，以及静态证据。模块始终是共享 Half-Life `gameui`，不是 `czero/client`。
 
-Windows hl-10210 有完整静态消费契约；Linux hl-10210 和 hl-8684 独立导出用于语义/ABI 交叉核验，不代表 Windows 插件已支持 Linux。其他 GameUI 均经过调查，未证明完整性的 identity 不启用记录。插件 handler、文件迁移、游戏内验收和偶发磁盘错误仍属于消费端任务。本记录不是运行验证报告。
+Windows hl-10210、hl-8684 与 issue 940 附件 cstrikegameui-8684 有完整静态消费契约；Linux hl-10210 和 hl-8684 独立导出用于语义/ABI 交叉核验，不代表 Windows 插件已支持 Linux。其他 GameUI 均经过调查，未证明完整性的 identity 不启用记录。插件 handler、文件迁移、游戏内验收和偶发磁盘错误仍属于消费端任务。本记录不是运行验证报告。
 
 固定新键为 `u8hex-` + 完整原始 UTF-8 名字的 lowercase hex。31 字节输入得到 68 字符键，另需 NUL。不得经过旧 32 字节 sanitizer/button/selected-name 存储。原始显示名字保留在 CZP。
 
@@ -25,7 +25,7 @@ Windows hl-10210 有完整静态消费契约；Linux hl-10210 和 hl-8684 独立
 - `_career_storage_collect.py`：从全部 CZProfile 路径引用、CFG 命令、UI 命令与当前 RTTI 交集定位完整 owner，使用真实 x86 数据流恢复实参、成员和调用点；验证唯一性、原始指令、清栈及所有消费者覆盖。
 - `_career_storage_identity.py`：纯粹的分支能力、容量与连续编号检查。
 - `_career_storage_common.py`：准备完整集合后写 YAML；当前入口/调用点特征必须唯一。既有签名和调查地址均不参与发现。
-- `configs/hl-10210.yaml`：Windows/Linux；`configs/hl-8684.yaml`：仅 Linux。其余 identity 不注册此契约。
+- `configs/hl-10210.yaml` 和 `configs/hl-8684.yaml`：Windows/Linux storage，Windows runtime；`configs/cstrikegameui-8684.yaml`：issue 940 附件的 Windows storage/runtime。其余 identity 未新增注册。
 - `tests/test_career_storage_identity.py`：直接/间接调用、错误 JMP/非调用、容量、歧义、编号与重复覆盖负例。
 - [逐构建调查](evidence/career-storage/support-audit.json)、各 identity 的 JSON 机器证据与 [CZP 格式指令](evidence/career-storage/czp-format.windows.md)。JSON 绑定输入 SHA-256，保留 entry/return/call 指令、调用点附近字节、完整数据流与 owner。地址表均为测量结果，不能作为别的构建的发现常量。
 
@@ -144,10 +144,12 @@ checksum 是对末尾 checksum 前的全部无符号字节求 `sum((i+1)*byte[i]
 | hl-10210 | Windows | 导出92条，11入口、13调用点、12连续组；消费端 Windows 唯一启用 identity |
 | hl-10210 | Linux | 独立导出116条，11入口、19调用点；静态交叉核验 |
 | hl-8684 | Linux | 独立导出112条，11入口、18调用点；static clone 单独记录 |
-| hl-3248/3266/3329/3647/4554/6153/8684 | Windows | 无新记录：PopulateProfiles 当前 frame-item 边界只有60字节而 CRT 限额62，现有证据不足以证明真实临时变量边界，不标支持；不将此分析缺口认定为原版越界 |
+| hl-8684 | Windows | storage 92条 + runtime 14条；已修复间接调用清栈和旧 frame 别名造成的分析拒绝，见下文 issue 940 补充 |
+| cstrikegameui-8684 | Windows | issue 940 非 Steam GameUI 变体，独立 CRC64；storage 92条 + runtime 14条 |
+| hl-3248/3266/3329/3647/4554/6153 | Windows | 尚未重新验证：原调查的 frame-item 60/CRT 62 拒绝记录仍是历史证据，不能推断修正已覆盖这些 identity |
 | cof-5936 | Windows | 无新记录：m_active 布局/写入身份无法唯一确认 |
 | svencoop-8948/10257 | Windows/Linux | Career 路径实现不存在，无新依赖 |
-| cstrike/czero/czeror client identities | 仓库声明平台 | 没有 gameui 模块，不在 client 放共享 GameUI 记录 |
+| cstrike/czero/czeror client identities | 仓库声明平台 | 不在 client 放共享 GameUI 记录；issue 940 的 GameUI 使用独立 cstrikegameui-8684 tag |
 
 所有已配置 gameui identity 的输入 SHA-256、实际拒绝原因或 absence 负例在 support-audit.json；10210 的两项 SHA 在各自证据 JSON。未验证版本不从10210复制偏移/长度/ABI。
 
@@ -196,3 +198,15 @@ checksum 是对末尾 checksum 前的全部无符号字节求 `sum((i+1)*byte[i]
 Definitions artifact 的 GV 锚点选择 Create 中较早的 0x19b1f 六字节 root load；上述 0x19ba1 五字节 load 是同函数后续 path 消费链的交叉证据，两者读取同一个 global 0xc2068。
 
 消费端 Windows x86 czero 10210 实机覆盖了两种碰撞中文名、全下划线旧键、31字节前缀相同的长名、A/a；两次实际开赛/StopMatch 保存与重启恢复独立 cfg；自建 mission pack 中 legacy-only 读取/正常保存迁移、去重、删除两份同身份 CZP 并保留 cfg；损坏 canonical、只读 Open 失败和旧 ASCII 占用 canonical namespace 均拒绝覆盖且目标哈希未变。最终 DLL 再验取消覆盖与写失败后 name 不变，正常新建进入难度框。原游戏 31 文件恢复并逐项 SHA256 核对；测试目录清理。短写/flush/overflow 失败由纯策略注入覆盖，未在真实磁盘接口注入；真实 v1..v3 样本、其他构建/CZDS 仍未做运行验收。
+
+## Issue 940：旧 Windows 栈分析与独立 GameUI 输入（2026-10-21）
+
+- 触发信号：CS 8684 报 `CGameConsoleDialog::CGameConsoleDialog()`，状态为模块 CRC64 未登记；补做 HL10210/HL8684 覆盖比对时，旧 Windows storage 被 `CRT limit exceeds the destination` 拒绝。
+- 根因与约束：附件 GameUI.dll SHA256 `a07b97c42292aab1b12c791b3b6847e47da1c8bbb8d430c1900d2f60cd65db86`、CRC64 `647fc98d499b3a1c`，不在 CS Steam depot 清单内。不能给官方 Steam tag 虚构 depot 路径；独立注册 `cstrikegameui-8684`，仅含 GameUI 和必要的 HL8684 engine/vgui2 DAG 前驱。
+- 栈分析根因：PopulateProfiles 中局部化 vcall 只有三次实际参数 PUSH，旧 IDB 却把先前保存的 EBX 算入参数，产生16字节推测清栈而实际为12。局部化输出与 ProfileButton 构造输入因此被误认为相差4字节，frame 又保留两个同一对象的别名边界，形成虚假的60字节命令缓冲区。
+- 正确做法：`normalize_population` 同时验证三次压栈、叶 getter 返回的全局接口和局部化输出/构造输入的地址关系。只在两份证据一致时修正自身 first-pass trace；排除不执行 producer 的空列表分支，并按相同 LEA 指令的前后地址重定位 frame 对象边界。保留 `checked_capacity` 的严格上界，实际缓冲区64字节、原 CRT 限额62。无推测修正，不修改或保存原 IDB。
+- Runtime 差异：旧版以 MOV AL,[this+0x46] / TEST AL,AL 检查 autosave，不能只识别 CMP byte ptr；旧版 wb writer 是 Create/Save 共享直接子函数。由当前字节读取 provenance 与共享 writer 的 wb Open 定位，继续恢复真实 filesystem getter/global。旧版 m_needAutosave=0x46、TextEntry.m_textLength=0x84，不能复制 HL25 的0x42/0x88。
+- 验证方式：两个新 Windows storage 各重建92条、runtime各14条；HL10210 Windows 及 HL10210/HL8684 Linux 回归产物逐字节不变。额外的指令清栈、空分支、frame歧义和字节来源纯逻辑测试保留在两个 identity 测试模块。最终测试与消费端裁剪证据另见 [issue 940 验证记录](evidence/issue940-validation.json)。
+- 适用范围：本次只新增 HL8684 Windows 与 issue 940 附件的静态支持。其他旧 Windows 的历史 unsupported 调查未自动翻转；此处不是游戏运行验收报告。消费端清单请求新增记录，是否安装 Career hooks 仍服从消费端原有运行逻辑。
+
+跨仓库 tag 约束：新增 tag 前同时验证上游 `analysis_config.TAG_RE`、`gamesymbols_json.GAME_VERSION_PATTERN`、snapshot 文件名解析和消费端 `sync-gamedata.py:GAME_VERSION_PATTERN`。上游不允许下划线，消费端不允许 game 前缀内的连字符；共同可用形式是纯小写字母/数字前缀加数字 build。本次正式 tag 为 `cstrikegameui-8684`，不能使用中间讨论的其他拼写。

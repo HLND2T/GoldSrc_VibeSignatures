@@ -1,0 +1,1090 @@
+# Issue 940 supplies a GameUI variant absent from the configured Steam depots.
+# SHA-256 a07b97c42292aab1b12c791b3b6847e47da1c8bbb8d430c1900d2f60cd65db86.
+# engine/vgui2 are shared HL8684 inputs required by the GameUI analysis DAG.
+modules:
+  - name: engine
+    module_windows: hw.dll
+    skills:
+      - name: find-BaseUISurface_PaintTraverse
+        expected_input:
+          - ../gameui/ISurface_PaintTraverse.{platform}.yaml
+          - BaseUISurface_vtable.{platform}.yaml
+        expected_output:
+          - BaseUISurface_PaintTraverse.{platform}.yaml
+      - name: find-BaseUISurface_PaintTraverse-vfuncs
+        expected_input:
+          - BaseUISurface_PaintTraverse.{platform}.yaml
+        expected_output:
+          - vgui2_IPanel_IsVisible.{platform}.yaml
+          - vgui2_IPanel_Render_SetPopupVisible.{platform}.yaml
+          - vgui2_IPanel_PaintTraverse.{platform}.yaml
+      - name: find-EngineSurface-vtables
+        expected_output:
+          - EngineSurface_vtable.{platform}.yaml
+          - BaseUISurface_vtable.{platform}.yaml
+    symbols:
+      - name: BaseUISurface_PaintTraverse
+        category: vfunc
+      - name: vgui2_IPanel_IsVisible
+        category: vfunc
+      - name: vgui2_IPanel_Render_SetPopupVisible
+        category: vfunc
+      - name: vgui2_IPanel_PaintTraverse
+        category: vfunc
+      - name: EngineSurface_vtable
+        category: vtable
+      - name: BaseUISurface_vtable
+        category: vtable
+  - name: vgui2
+    module_windows: vgui2.dll
+    skills:
+      - name: find-vgui2_VPanel-vtables
+        expected_output:
+          - vgui2_VPanelWrapper_vtable.{platform}.yaml
+          - vgui2_VPanel_vtable.{platform}.yaml
+      - name: find-vgui2_VPanelWrapper_PaintTraverse
+        expected_input:
+          - ../engine/vgui2_IPanel_PaintTraverse.{platform}.yaml
+          - vgui2_VPanelWrapper_vtable.{platform}.yaml
+          - vgui2_VPanel_vtable.{platform}.yaml
+        expected_output:
+          - vgui2_VPanelWrapper_PaintTraverse.{platform}.yaml
+          - vgui2_VPanel_Client.{platform}.yaml
+          - vgui2_IClientPanel_PaintTraverse.{platform}.yaml
+      - name: find-vgui2_VPanel_SetSize
+        expected_input:
+          - ../gameui/vgui2_IPanel_SetSize.{platform}.yaml
+          - vgui2_VPanelWrapper_vtable.{platform}.yaml
+          - vgui2_VPanel_vtable.{platform}.yaml
+          - vgui2_VPanel_Client.{platform}.yaml
+        expected_output:
+          - vgui2_VPanel_SetSize.{platform}.yaml
+          - vgui2_IClientPanel_OnSizeChanged.{platform}.yaml
+    symbols:
+      - name: vgui2_VPanelWrapper_vtable
+        category: vtable
+      - name: vgui2_VPanel_vtable
+        category: vtable
+      - name: vgui2_VPanelWrapper_PaintTraverse
+        category: vfunc
+      - name: vgui2_VPanel_Client
+        category: vfunc
+      - name: vgui2_IClientPanel_PaintTraverse
+        category: vfunc
+      - name: vgui2_VPanel_SetSize
+        category: vfunc
+      - name: vgui2_IClientPanel_OnSizeChanged
+        category: vfunc
+  - name: gameui
+    module_windows: GameUI.dll
+    skills:
+      - name: find-GameUI-career-runtime
+        expected_input:
+          - CCareerGame_CreateBlankProfile.windows.yaml
+          - CCareerGame_SaveProfile.windows.yaml
+          - CCareerProfileFrame_OnCommand.windows.yaml
+          - CCareerNewProfileBox_OnCommand.windows.yaml
+        expected_output:
+          - CareerStorage_Definitions.windows.yaml
+          - CareerStorage_Game.windows.yaml
+          - CareerStorage_FileSystem.windows.yaml
+          - CCareerDefinitionManager_m_activeCareer.windows.yaml
+          - CCareerDefinition_m_saveDir.windows.yaml
+          - CCareerGame_m_profileWriter.windows.yaml
+          - BufferWriter_m_overflow.windows.yaml
+          - CCareerGame_m_needAutosave.windows.yaml
+          - CCareerNewProfileBox_m_pNameEntry.windows.yaml
+          - vgui2_TextEntry_m_textLength.windows.yaml
+          - CCareerGame_CreateProfileBuffer.windows.yaml
+          - vgui2_TextEntry_GetTextW.windows.yaml
+          - CareerStorage_runtime_contract_version.windows.yaml
+          - CCareerNewProfileBox_native_input_capacity.windows.yaml
+      - name: find-GameUI-career-storage
+        expected_input:
+          - CCareerDifficultyBox_ctor.{platform}.yaml
+        expected_output:
+          - CCareerGame_BuildProfileList_ReadFile_callsite_0.{platform}.yaml
+          - CCareerGame_BuildProfileList_ReadFile_callsite_0_abi.{platform}.yaml
+          - CCareerGame_BuildProfileList_ReadFile_callsite_0_hook_strategy.{platform}.yaml
+          - CCareerGame_BuildProfileList_ReadFile_callsite_0_instruction_length.{platform}.yaml
+          - CCareerGame_BuildProfileList_ReadFile_callsite_count.{platform}.yaml
+          - CCareerGame_BuildProfileList_enumerated_path_capacity.{platform}.yaml
+          - CCareerGame_CreateBlankProfile.{platform}.yaml
+          - CCareerGame_CreateBlankProfile_profile_path_format_callsite_0.{platform}.yaml
+          - CCareerGame_CreateBlankProfile_profile_path_format_callsite_0_abi.{platform}.yaml
+          - CCareerGame_CreateBlankProfile_profile_path_format_callsite_0_hook_strategy.{platform}.yaml
+          - CCareerGame_CreateBlankProfile_profile_path_format_callsite_0_instruction_length.{platform}.yaml
+          - CCareerGame_CreateBlankProfile_profile_path_format_callsite_count.{platform}.yaml
+          - CCareerGame_CreateBlankProfile_profile_path_format_callsite_destination_capacity.{platform}.yaml
+          - CCareerGame_DeleteProfile.{platform}.yaml
+          - CCareerGame_DeleteProfile_profile_path_format_callsite_0.{platform}.yaml
+          - CCareerGame_DeleteProfile_profile_path_format_callsite_0_abi.{platform}.yaml
+          - CCareerGame_DeleteProfile_profile_path_format_callsite_0_hook_strategy.{platform}.yaml
+          - CCareerGame_DeleteProfile_profile_path_format_callsite_0_instruction_length.{platform}.yaml
+          - CCareerGame_DeleteProfile_profile_path_format_callsite_count.{platform}.yaml
+          - CCareerGame_DeleteProfile_profile_path_format_callsite_destination_capacity.{platform}.yaml
+          - CCareerGame_GetProfileForName.{platform}.yaml
+          - CCareerGame_GetProfileForName_profile_path_format_callsite_0.{platform}.yaml
+          - CCareerGame_GetProfileForName_profile_path_format_callsite_0_abi.{platform}.yaml
+          - CCareerGame_GetProfileForName_profile_path_format_callsite_0_hook_strategy.{platform}.yaml
+          - CCareerGame_GetProfileForName_profile_path_format_callsite_0_instruction_length.{platform}.yaml
+          - CCareerGame_GetProfileForName_profile_path_format_callsite_count.{platform}.yaml
+          - CCareerGame_GetProfileForName_profile_path_format_callsite_destination_capacity.{platform}.yaml
+          - CCareerGame_LoadProfile.{platform}.yaml
+          - CCareerGame_LoadProfile_profile_path_format_callsite_0.{platform}.yaml
+          - CCareerGame_LoadProfile_profile_path_format_callsite_0_abi.{platform}.yaml
+          - CCareerGame_LoadProfile_profile_path_format_callsite_0_hook_strategy.{platform}.yaml
+          - CCareerGame_LoadProfile_profile_path_format_callsite_0_instruction_length.{platform}.yaml
+          - CCareerGame_LoadProfile_profile_path_format_callsite_count.{platform}.yaml
+          - CCareerGame_LoadProfile_profile_path_format_callsite_destination_capacity.{platform}.yaml
+          - CCareerGame_SaveProfile.{platform}.yaml
+          - CCareerGame_SaveProfile_config_command_format_callsite_0.{platform}.yaml
+          - CCareerGame_SaveProfile_config_command_format_callsite_0_abi.{platform}.yaml
+          - CCareerGame_SaveProfile_config_command_format_callsite_0_hook_strategy.{platform}.yaml
+          - CCareerGame_SaveProfile_config_command_format_callsite_0_instruction_length.{platform}.yaml
+          - CCareerGame_SaveProfile_config_command_format_callsite_count.{platform}.yaml
+          - CCareerGame_SaveProfile_config_command_format_callsite_destination_capacity.{platform}.yaml
+          - CCareerGame_SaveProfile_profile_path_format_callsite_0.{platform}.yaml
+          - CCareerGame_SaveProfile_profile_path_format_callsite_0_abi.{platform}.yaml
+          - CCareerGame_SaveProfile_profile_path_format_callsite_0_hook_strategy.{platform}.yaml
+          - CCareerGame_SaveProfile_profile_path_format_callsite_0_instruction_length.{platform}.yaml
+          - CCareerGame_SaveProfile_profile_path_format_callsite_count.{platform}.yaml
+          - CCareerGame_SaveProfile_profile_path_format_callsite_destination_capacity.{platform}.yaml
+          - CCareerGame_SendMatchCommand.{platform}.yaml
+          - CCareerGame_SendMatchCommand_config_command_format_callsite_0.{platform}.yaml
+          - CCareerGame_SendMatchCommand_config_command_format_callsite_0_abi.{platform}.yaml
+          - CCareerGame_SendMatchCommand_config_command_format_callsite_0_hook_strategy.{platform}.yaml
+          - CCareerGame_SendMatchCommand_config_command_format_callsite_0_instruction_length.{platform}.yaml
+          - CCareerGame_SendMatchCommand_config_command_format_callsite_count.{platform}.yaml
+          - CCareerGame_SendMatchCommand_config_command_format_callsite_destination_capacity.{platform}.yaml
+          - CCareerGame_legacy_key_capacity.{platform}.yaml
+          - CCareerGame_profile_buffer_capacity.{platform}.yaml
+          - CCareerGame_u8hex_storage_contract_version.{platform}.yaml
+          - CCareerNewProfileBox_OnCommand.{platform}.yaml
+          - CCareerProfileFrame_OnCommand.{platform}.yaml
+          - CCareerProfileFrame_PopulateProfiles.{platform}.yaml
+          - CCareerProfileFrame_PopulateProfiles_select_command_format_callsite_0.{platform}.yaml
+          - CCareerProfileFrame_PopulateProfiles_select_command_format_callsite_0_abi.{platform}.yaml
+          - CCareerProfileFrame_PopulateProfiles_select_command_format_callsite_0_hook_strategy.{platform}.yaml
+          - CCareerProfileFrame_PopulateProfiles_select_command_format_callsite_0_instruction_length.{platform}.yaml
+          - CCareerProfileFrame_PopulateProfiles_select_command_format_callsite_count.{platform}.yaml
+          - CCareerProfileFrame_PopulateProfiles_select_command_format_callsite_destination_capacity.{platform}.yaml
+          - CCareerProfileFrame_ResumeProfile_name_set_callsite_0.{platform}.yaml
+          - CCareerProfileFrame_ResumeProfile_name_set_callsite_0_abi.{platform}.yaml
+          - CCareerProfileFrame_ResumeProfile_name_set_callsite_0_hook_strategy.{platform}.yaml
+          - CCareerProfileFrame_ResumeProfile_name_set_callsite_0_instruction_length.{platform}.yaml
+          - CCareerProfileFrame_ResumeProfile_name_set_callsite_count.{platform}.yaml
+          - CCareerProfileFrame_UpdateSelectedProfile.{platform}.yaml
+          - CCareerProfileFrame_m_name.{platform}.yaml
+          - CCareerProfileFrame_selected_name_capacity.{platform}.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_0.{platform}.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_0_abi.{platform}.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_0_hook_strategy.{platform}.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_0_instruction_length.{platform}.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_1.{platform}.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_1_abi.{platform}.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_1_hook_strategy.{platform}.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_1_instruction_length.{platform}.yaml
+          - CCareerProfileFrame_selected_name_copy_callsite_count.{platform}.yaml
+          - CProfileButton_OnMouseDoublePressed_select_command_format_callsite_0.{platform}.yaml
+          - CProfileButton_OnMouseDoublePressed_select_command_format_callsite_0_abi.{platform}.yaml
+          - CProfileButton_OnMouseDoublePressed_select_command_format_callsite_0_hook_strategy.{platform}.yaml
+          - CProfileButton_OnMouseDoublePressed_select_command_format_callsite_0_instruction_length.{platform}.yaml
+          - CProfileButton_OnMouseDoublePressed_select_command_format_callsite_count.{platform}.yaml
+          - CProfileButton_SetProfileName.{platform}.yaml
+          - CProfileButton_m_active.{platform}.yaml
+          - CProfileButton_m_name.{platform}.yaml
+          - CProfileButton_name_capacity.{platform}.yaml
+      - name: find-GameUI-career-player-name
+        expected_input:
+          - vgui2_Label_SetTextW.{platform}.yaml
+        expected_output:
+          - CCareerDifficultyBox_ctor.{platform}.yaml
+          - CCareerBaseFrame_Activate.{platform}.yaml
+          - CCareerBaseBox_m_pTextLabel.{platform}.yaml
+          - CCareerBaseFrame_m_pPlayerName.{platform}.yaml
+      - name: find-GameUI-career-bot-cost
+        expected_input:
+          - vgui2_TextImage_SetTextW.{platform}.yaml
+        expected_output:
+          - CBotButton_SetCharacter.{platform}.yaml
+          - CCareerCharacter_GetPoints.{platform}.yaml
+          - CBotButton_m_pText.{platform}.yaml
+      - name: find-vgui2_Label-SetText
+        expected_input:
+          - vgui2_TextImage_SetTextW.{platform}.yaml
+        expected_output:
+          - vgui2_Label_SetTextW.{platform}.yaml
+      - name: find-vgui2_TextImage-SetText
+        expected_output:
+          - vgui2_TextImage_vtable.{platform}.yaml
+          - vgui2_TextImage_SetTextW.{platform}.yaml
+      - name: find-vgui2_Panel-bounds-callsites
+        expected_input:
+          - vgui2_Panel_Init.{platform}.yaml
+        expected_output:
+          - vgui2_Panel_SetBounds_Const_callsite_0.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_1.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_2.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_3.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_4.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_5.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_6.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_7.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_8.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_9.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_10.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_11.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_12.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_13.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_14.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_15.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_16.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_17.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_18.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_19.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_20.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_21.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_22.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_23.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_24.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_25.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_26.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_27.{platform}.yaml
+      - name: find-vgui2_Panel-size-callsites
+        expected_input:
+          - vgui2_Panel_Init.{platform}.yaml
+        expected_output:
+          - vgui2_Panel_SetSize_Const_callsite_0.{platform}.yaml
+          - vgui2_Panel_SetSize_Const_callsite_1.{platform}.yaml
+          - vgui2_Panel_SetSize_Const_callsite_2.{platform}.yaml
+          - vgui2_Panel_SetSize_Const_callsite_3.{platform}.yaml
+          - vgui2_Panel_SetSize_Const_callsite_4.{platform}.yaml
+          - vgui2_Panel_SetSize_Const_callsite_5.{platform}.yaml
+          - vgui2_Panel_SetSize_Const_callsite_6.{platform}.yaml
+          - vgui2_Panel_SetSize_Const_callsite_7.{platform}.yaml
+          - vgui2_Panel_SetSize_Const_callsite_8.{platform}.yaml
+          - vgui2_Panel_SetSize_Const_callsite_9.{platform}.yaml
+          - vgui2_Panel_SetSize_Const_callsite_10.{platform}.yaml
+          - vgui2_Panel_SetSize_Const_callsite_11.{platform}.yaml
+          - vgui2_Panel_SetSize_Const_callsite_12.{platform}.yaml
+          - vgui2_Panel_SetSize_Const_callsite_13.{platform}.yaml
+          - vgui2_Panel_SetSize_Const_callsite_14.{platform}.yaml
+          - vgui2_Panel_SetSize_Const_callsite_15.{platform}.yaml
+          - vgui2_Panel_SetSize_Const_callsite_16.{platform}.yaml
+          - vgui2_Panel_SetSize_Const_callsite_17.{platform}.yaml
+          - vgui2_Panel_SetSize_Const_callsite_18.{platform}.yaml
+          - vgui2_Panel_SetSize_Const_callsite_19.{platform}.yaml
+          - vgui2_Panel_SetMinimumSize_Const_callsite_0.{platform}.yaml
+          - vgui2_Panel_SetMinimumSize_Const_callsite_1.{platform}.yaml
+          - vgui2_Panel_SetMinimumSize_Const_callsite_2.{platform}.yaml
+          - vgui2_Panel_SetMinimumSize_Const_callsite_3.{platform}.yaml
+          - vgui2_Panel_SetMinimumSize_Const_callsite_4.{platform}.yaml
+          - vgui2_Panel_SetMinimumSize_Const_callsite_5.{platform}.yaml
+        expected_output_windows:
+          - vgui2_Panel_SetMinimumSize_Const_callsite_6.{platform}.yaml
+      - name: find-GameUI-base-taskbar
+        expected_input:
+          - CTaskbar_QuitConfirmationOwner.{platform}.yaml
+        expected_output:
+          - CBasePanel_ctor.{platform}.yaml
+          - CTaskbar_ctor.{platform}.yaml
+          - CTaskbar_vtable.{platform}.yaml
+          - CTaskbar_OnCommand.{platform}.yaml
+      - name: find-vgui2_Panel_Init
+        expected_output:
+          - vgui2_Panel_Init.{platform}.yaml
+      - name: find-client-vgui-keyvalues
+        expected_output:
+          - KeyValues_vtable.{platform}.yaml
+          - KeyValues_LoadFromFile.{platform}.yaml
+          - KeyValues_ctor.{platform}.yaml
+      - name: find-CGameUI_RunFrame
+        expected_output:
+          - CGameUI_RunFrame.{platform}.yaml
+      - name: find-CGameUI_RunFrame-vfuncs
+        expected_input:
+          - CGameUI_RunFrame.{platform}.yaml
+        expected_output:
+          - ISurface_GetModalPanel.{platform}.yaml
+          - ISurface_PaintTraverse.{platform}.yaml
+      - name: find-CContentControlDialog_ctor
+        expected_output:
+          - CContentControlDialog_ctor.{platform}.yaml
+      - name: find-GameUI-dialog-constructors
+        expected_output:
+          - CGameConsoleDialog_ctor.{platform}.yaml
+          - CCreateMultiplayerGameDialog_ctor.{platform}.yaml
+          - COptionsDialog_ctor.{platform}.yaml
+      - name: find-GameUI-options-sub-constructors
+        expected_output:
+          - COptionsSubAudio_ctor.{platform}.yaml
+          - COptionsSubVideo_ctor.{platform}.yaml
+      - name: find-COptionsSubMultiplayer_ctor
+        expected_output:
+          - COptionsSubMultiplayer_ctor.{platform}.yaml
+      - name: find-COptionsSubVideo-ApplyVidSettings
+        expected_input:
+          - COptionsSubVideo_ctor.{platform}.yaml
+        expected_output:
+          - COptionsSubVideo_ApplyVidSettings.{platform}.yaml
+      - name: find-GameUI_RichText_OnThink
+        expected_input:
+          - CGameConsoleDialog_ctor.{platform}.yaml
+        expected_output:
+          - GameUI_RichText_OnThink.{platform}.yaml
+      - name: find-CGameConsoleDialog_DumpConsoleTextToFile
+        expected_output:
+          - CGameConsoleDialog_DumpConsoleTextToFile.{platform}.yaml
+      - name: find-GameUI-condump-print-target
+        expected_input:
+          - CGameConsoleDialog_DumpConsoleTextToFile.{platform}.yaml
+        expected_output_windows:
+          - CGameConsoleDialog_Print.{platform}.yaml
+      - name: find-GameUI-RichText-print-callees
+        expected_input:
+          - CGameConsoleDialog_Print.{platform}.yaml
+        expected_output:
+          - GameUI_RichText_InsertStringA.{platform}.yaml
+      - name: find-GameUI-RichText-wide
+        expected_input:
+          - GameUI_RichText_InsertStringA.{platform}.yaml
+        expected_output:
+          - GameUI_RichText_InsertStringW.{platform}.yaml
+      - name: find-GameUI-RichText-char
+        expected_input:
+          - GameUI_RichText_InsertStringW.{platform}.yaml
+        expected_output:
+          - GameUI_RichText_InsertChar.{platform}.yaml
+      - name: find-GameUI-RichText-cr-branch
+        expected_input_windows:
+          - GameUI_RichText_InsertChar.{platform}.yaml
+        expected_output:
+          - GameUI_RichText_CarriageReturn_branch.{platform}.yaml
+      - name: find-GameUI-ComboBox
+        expected_input:
+          - vgui2_Menu_vtable.{platform}.yaml
+          - KeyValues_vtable.{platform}.yaml
+        expected_output:
+          - vgui2_ComboBox_vtable.{platform}.yaml
+          - vgui2_Label_vtable.{platform}.yaml
+          - vgui2_BuildModeDialog_vtable.{platform}.yaml
+          - vgui2_BuildModeDialog_SetActiveControl.{platform}.yaml
+          - vgui2_ComboBox_AddItemA.{platform}.yaml
+          - vgui2_ComboBox_AddItemW.{platform}.yaml
+          - vgui2_ComboBox_GetMenu.{platform}.yaml
+          - vgui2_Menu_AddMenuItem_Message.{platform}.yaml
+          - vgui2_ComboBox_m_pDropDown.{platform}.yaml
+          - vgui2_Label_SetTextA.{platform}.yaml
+          - vgui2_Label_SetTextColorState.{platform}.yaml
+          - vgui2_Label_SetContentAlignment.{platform}.yaml
+      - name: find-GameUI-Menu
+        expected_input:
+          - GameUI_PropertySheet_PerformLayout.{platform}.yaml
+        expected_output:
+          - vgui2_Menu_vtable.{platform}.yaml
+          - vgui2_Menu_PerformLayout.{platform}.yaml
+      - name: find-GameUI-Menu-PerformLayout-decompiles
+        expected_input:
+          - vgui2_Menu_vtable.{platform}.yaml
+          - vgui2_Menu_PerformLayout.{platform}.yaml
+        expected_output:
+          - vgui2_Menu_MakeItemsVisibleInScrollRange.{platform}.yaml
+          - vgui2_Menu_m_pScroller.{platform}.yaml
+      - name: find-GameUI-private-symbols
+        expected_input:
+          - CGameConsoleDialog_ctor.{platform}.yaml
+          - COptionsSubAudio_ctor.{platform}.yaml
+          - COptionsSubMultiplayer_ctor.{platform}.yaml
+          - CBasePanel_ctor.{platform}.yaml
+          - COptionsSubVideo_ApplyVidSettings.{platform}.yaml
+        expected_output:
+          - GameUI_TabCatchingTextEntry_vtable.{platform}.yaml
+          - GameUI_TabCatchingTextEntry_OnKeyCodeTyped.{platform}.yaml
+          - GameUI_TextEntry_InsertChar.{platform}.yaml
+          - GameUI_TextEntry_LayoutVerticalScrollBarSlider.{platform}.yaml
+          - GameUI_TextEntry_GetStartDrawIndex.{platform}.yaml
+          - GameUI_PropertySheet_ctor.{platform}.yaml
+          - GameUI_PropertySheet_vtable.{platform}.yaml
+          - GameUI_PropertyDialog__propertySheet.{platform}.yaml
+          - GameUI_PropertySheet_HasHotkey.{platform}.yaml
+          - GameUI_PropertySheet_PerformLayout.{platform}.yaml
+          - GameUI_MessageBox_ctor.{platform}.yaml
+          - GameUI_MessageBox_vtable.{platform}.yaml
+          - GameUI_MessageBox_ApplySchemeSettings.{platform}.yaml
+          - GameUI_Panel_SetSize.{platform}.yaml
+          - GameUI_MessageBox_ApplySchemeSettings_to_Panel_SetSize_callsite_0.{platform}.yaml
+          - vgui2_Panel_SetProportional.{platform}.yaml
+          - GameUI_EditablePanel_m_NavGroup.{platform}.yaml
+          - GameUI_EditablePanel_GetFocusNavGroup.{platform}.yaml
+          - GameUI_FocusNavGroup_GetCurrentFocus.{platform}.yaml
+          - GameUI_PropertySheet_AddPage.{platform}.yaml
+          - GameUI_PropertySheet_SetActivePage.{platform}.yaml
+          - GameUI_PropertySheet_SetTabWidth.{platform}.yaml
+          - GameUI_PropertySheet_GetActivePage.{platform}.yaml
+          - GameUI_PropertySheet_ResetAllData.{platform}.yaml
+          - GameUI_PropertySheet_ApplyChanges.{platform}.yaml
+          - GameUI_PropertySheet_GetPage.{platform}.yaml
+          - GameUI_PropertySheet_DeletePage.{platform}.yaml
+          - GameUI_PropertySheet_GetActiveTab.{platform}.yaml
+          - GameUI_PropertySheet_GetActiveTabTitle.{platform}.yaml
+          - GameUI_PropertySheet_GetTabTitle.{platform}.yaml
+          - GameUI_PropertySheet_GetActivePageNum.{platform}.yaml
+          - GameUI_PropertySheet_GetNumPages.{platform}.yaml
+          - GameUI_PropertySheet_DisablePage.{platform}.yaml
+          - GameUI_PropertySheet_EnablePage.{platform}.yaml
+          - GameUI_PropertySheet_ChangeActiveTab.{platform}.yaml
+          - COptionsSubAudio_OnApplyChanges.{platform}.yaml
+          - COptionsSubMultiplayer_OnApplyChanges.{platform}.yaml
+          - CBasePanel_ApplySchemeSettings.{platform}.yaml
+          - GameUI_FocusNavGroup__currentFocus.{platform}.yaml
+          - GameUI_PropertySheet__activePage.{platform}.yaml
+          - ISurface_SupportsFeature.{platform}.yaml
+          - IInput_GetAppModalSurface.{platform}.yaml
+          - ISchemeManager_ReloadSchemes.{platform}.yaml
+          - COptionsSubVideo_OnApplyChanges.{platform}.yaml
+      - name: find-CTaskbar_QuitConfirmationOwner
+        expected_output:
+          - CTaskbar_QuitConfirmationOwner.{platform}.yaml
+      - name: find-QueryBox_ctor
+        expected_input:
+          - CTaskbar_QuitConfirmationOwner.{platform}.yaml
+        expected_output:
+          - QueryBox_ctor.{platform}.yaml
+      - name: find-GameUI-career-frame-constructors
+        expected_output:
+          - CCareerProfileFrame_ctor.{platform}.yaml
+          - CCareerMapFrame_ctor.{platform}.yaml
+          - CCareerBotFrame_ctor.{platform}.yaml
+      - name: find-vgui2_IPanel_SetSize
+        expected_input:
+          - vgui2_Panel_Init.{platform}.yaml
+        expected_output:
+          - vgui2_IPanel_SetSize.{platform}.yaml
+      - name: find-GameUI-OnSizeChanged
+        expected_input:
+          - vgui2_Panel_Init.{platform}.yaml
+          - ../vgui2/vgui2_IClientPanel_OnSizeChanged.{platform}.yaml
+        expected_output:
+          - vgui2_Panel_vtable.{platform}.yaml
+          - vgui2_EditablePanel_vtable.{platform}.yaml
+          - vgui2_Panel_OnSizeChanged.{platform}.yaml
+          - vgui2_EditablePanel_OnSizeChanged.{platform}.yaml
+          - vgui2_EditablePanel_OnSizeChanged_call_GetChild_callsite_0.{platform}.yaml
+          - vgui2_EditablePanel_OnSizeChanged_call_SetBounds_callsite_0.{platform}.yaml
+      - name: find-GameUI-default-server-name
+        expected_output:
+          - CCreateMultiplayerGameGameplayPage_LoadGameOptionsList.{platform}.yaml
+    symbols:
+      - name: CProfileButton
+        category: struct
+      - name: CareerStorage_Definitions
+        category: gv
+      - name: CareerStorage_Game
+        category: gv
+      - name: CareerStorage_FileSystem
+        category: gv
+      - name: CCareerDefinitionManager
+        category: struct
+      - name: CCareerDefinition
+        category: struct
+      - name: CCareerGame
+        category: struct
+      - name: BufferWriter
+        category: struct
+      - name: CCareerNewProfileBox
+        category: struct
+      - name: vgui2::TextEntry
+        category: struct
+      - name: CCareerDefinitionManager_m_activeCareer
+        category: structmember
+        struct: CCareerDefinitionManager
+        member: m_activeCareer
+      - name: CCareerDefinition_m_saveDir
+        category: structmember
+        struct: CCareerDefinition
+        member: m_saveDir
+      - name: CCareerGame_m_profileWriter
+        category: structmember
+        struct: CCareerGame
+        member: m_profileWriter
+      - name: BufferWriter_m_overflow
+        category: structmember
+        struct: BufferWriter
+        member: m_overflow
+      - name: CCareerGame_m_needAutosave
+        category: structmember
+        struct: CCareerGame
+        member: m_needAutosave
+      - name: CCareerNewProfileBox_m_pNameEntry
+        category: structmember
+        struct: CCareerNewProfileBox
+        member: m_pNameEntry
+      - name: vgui2_TextEntry_m_textLength
+        category: structmember
+        struct: vgui2::TextEntry
+        member: m_textLength
+      - name: CCareerGame_CreateProfileBuffer
+        category: func
+      - name: vgui2_TextEntry_GetTextW
+        category: vfunc
+      - name: CareerStorage_runtime_contract_version
+        category: scalar
+      - name: CCareerNewProfileBox_native_input_capacity
+        category: scalar
+      - name: CCareerProfileFrame
+        category: struct
+      - name: CCareerGame_BuildProfileList_ReadFile_callsite_0
+        category: patch
+      - name: CCareerGame_BuildProfileList_ReadFile_callsite_0_abi
+        category: scalar
+      - name: CCareerGame_BuildProfileList_ReadFile_callsite_0_hook_strategy
+        category: scalar
+      - name: CCareerGame_BuildProfileList_ReadFile_callsite_0_instruction_length
+        category: scalar
+      - name: CCareerGame_BuildProfileList_ReadFile_callsite_count
+        category: scalar
+      - name: CCareerGame_BuildProfileList_enumerated_path_capacity
+        category: scalar
+      - name: CCareerGame_CreateBlankProfile
+        category: func
+      - name: CCareerGame_CreateBlankProfile_profile_path_format_callsite_0
+        category: patch
+      - name: CCareerGame_CreateBlankProfile_profile_path_format_callsite_0_abi
+        category: scalar
+      - name: CCareerGame_CreateBlankProfile_profile_path_format_callsite_0_hook_strategy
+        category: scalar
+      - name: CCareerGame_CreateBlankProfile_profile_path_format_callsite_0_instruction_length
+        category: scalar
+      - name: CCareerGame_CreateBlankProfile_profile_path_format_callsite_count
+        category: scalar
+      - name: CCareerGame_CreateBlankProfile_profile_path_format_callsite_destination_capacity
+        category: scalar
+      - name: CCareerGame_DeleteProfile
+        category: func
+      - name: CCareerGame_DeleteProfile_profile_path_format_callsite_0
+        category: patch
+      - name: CCareerGame_DeleteProfile_profile_path_format_callsite_0_abi
+        category: scalar
+      - name: CCareerGame_DeleteProfile_profile_path_format_callsite_0_hook_strategy
+        category: scalar
+      - name: CCareerGame_DeleteProfile_profile_path_format_callsite_0_instruction_length
+        category: scalar
+      - name: CCareerGame_DeleteProfile_profile_path_format_callsite_count
+        category: scalar
+      - name: CCareerGame_DeleteProfile_profile_path_format_callsite_destination_capacity
+        category: scalar
+      - name: CCareerGame_GetProfileForName
+        category: func
+      - name: CCareerGame_GetProfileForName_profile_path_format_callsite_0
+        category: patch
+      - name: CCareerGame_GetProfileForName_profile_path_format_callsite_0_abi
+        category: scalar
+      - name: CCareerGame_GetProfileForName_profile_path_format_callsite_0_hook_strategy
+        category: scalar
+      - name: CCareerGame_GetProfileForName_profile_path_format_callsite_0_instruction_length
+        category: scalar
+      - name: CCareerGame_GetProfileForName_profile_path_format_callsite_count
+        category: scalar
+      - name: CCareerGame_GetProfileForName_profile_path_format_callsite_destination_capacity
+        category: scalar
+      - name: CCareerGame_LoadProfile
+        category: func
+      - name: CCareerGame_LoadProfile_profile_path_format_callsite_0
+        category: patch
+      - name: CCareerGame_LoadProfile_profile_path_format_callsite_0_abi
+        category: scalar
+      - name: CCareerGame_LoadProfile_profile_path_format_callsite_0_hook_strategy
+        category: scalar
+      - name: CCareerGame_LoadProfile_profile_path_format_callsite_0_instruction_length
+        category: scalar
+      - name: CCareerGame_LoadProfile_profile_path_format_callsite_count
+        category: scalar
+      - name: CCareerGame_LoadProfile_profile_path_format_callsite_destination_capacity
+        category: scalar
+      - name: CCareerGame_SaveProfile
+        category: func
+      - name: CCareerGame_SaveProfile_config_command_format_callsite_0
+        category: patch
+      - name: CCareerGame_SaveProfile_config_command_format_callsite_0_abi
+        category: scalar
+      - name: CCareerGame_SaveProfile_config_command_format_callsite_0_hook_strategy
+        category: scalar
+      - name: CCareerGame_SaveProfile_config_command_format_callsite_0_instruction_length
+        category: scalar
+      - name: CCareerGame_SaveProfile_config_command_format_callsite_count
+        category: scalar
+      - name: CCareerGame_SaveProfile_config_command_format_callsite_destination_capacity
+        category: scalar
+      - name: CCareerGame_SaveProfile_profile_path_format_callsite_0
+        category: patch
+      - name: CCareerGame_SaveProfile_profile_path_format_callsite_0_abi
+        category: scalar
+      - name: CCareerGame_SaveProfile_profile_path_format_callsite_0_hook_strategy
+        category: scalar
+      - name: CCareerGame_SaveProfile_profile_path_format_callsite_0_instruction_length
+        category: scalar
+      - name: CCareerGame_SaveProfile_profile_path_format_callsite_count
+        category: scalar
+      - name: CCareerGame_SaveProfile_profile_path_format_callsite_destination_capacity
+        category: scalar
+      - name: CCareerGame_SendMatchCommand
+        category: func
+      - name: CCareerGame_SendMatchCommand_config_command_format_callsite_0
+        category: patch
+      - name: CCareerGame_SendMatchCommand_config_command_format_callsite_0_abi
+        category: scalar
+      - name: CCareerGame_SendMatchCommand_config_command_format_callsite_0_hook_strategy
+        category: scalar
+      - name: CCareerGame_SendMatchCommand_config_command_format_callsite_0_instruction_length
+        category: scalar
+      - name: CCareerGame_SendMatchCommand_config_command_format_callsite_count
+        category: scalar
+      - name: CCareerGame_SendMatchCommand_config_command_format_callsite_destination_capacity
+        category: scalar
+      - name: CCareerGame_legacy_key_capacity
+        category: scalar
+      - name: CCareerGame_profile_buffer_capacity
+        category: scalar
+      - name: CCareerGame_u8hex_storage_contract_version
+        category: scalar
+      - name: CCareerNewProfileBox_OnCommand
+        category: vfunc
+      - name: CCareerProfileFrame_OnCommand
+        category: vfunc
+      - name: CCareerProfileFrame_PopulateProfiles
+        category: func
+      - name: CCareerProfileFrame_PopulateProfiles_select_command_format_callsite_0
+        category: patch
+      - name: CCareerProfileFrame_PopulateProfiles_select_command_format_callsite_0_abi
+        category: scalar
+      - name: CCareerProfileFrame_PopulateProfiles_select_command_format_callsite_0_hook_strategy
+        category: scalar
+      - name: CCareerProfileFrame_PopulateProfiles_select_command_format_callsite_0_instruction_length
+        category: scalar
+      - name: CCareerProfileFrame_PopulateProfiles_select_command_format_callsite_count
+        category: scalar
+      - name: CCareerProfileFrame_PopulateProfiles_select_command_format_callsite_destination_capacity
+        category: scalar
+      - name: CCareerProfileFrame_ResumeProfile_name_set_callsite_0
+        category: patch
+      - name: CCareerProfileFrame_ResumeProfile_name_set_callsite_0_abi
+        category: scalar
+      - name: CCareerProfileFrame_ResumeProfile_name_set_callsite_0_hook_strategy
+        category: scalar
+      - name: CCareerProfileFrame_ResumeProfile_name_set_callsite_0_instruction_length
+        category: scalar
+      - name: CCareerProfileFrame_ResumeProfile_name_set_callsite_count
+        category: scalar
+      - name: CCareerProfileFrame_UpdateSelectedProfile
+        category: func
+      - name: CCareerProfileFrame_m_name
+        category: structmember
+        struct: CCareerProfileFrame
+        member: m_name
+      - name: CCareerProfileFrame_selected_name_capacity
+        category: scalar
+      - name: CCareerProfileFrame_selected_name_copy_callsite_0
+        category: patch
+      - name: CCareerProfileFrame_selected_name_copy_callsite_0_abi
+        category: scalar
+      - name: CCareerProfileFrame_selected_name_copy_callsite_0_hook_strategy
+        category: scalar
+      - name: CCareerProfileFrame_selected_name_copy_callsite_0_instruction_length
+        category: scalar
+      - name: CCareerProfileFrame_selected_name_copy_callsite_1
+        category: patch
+      - name: CCareerProfileFrame_selected_name_copy_callsite_1_abi
+        category: scalar
+      - name: CCareerProfileFrame_selected_name_copy_callsite_1_hook_strategy
+        category: scalar
+      - name: CCareerProfileFrame_selected_name_copy_callsite_1_instruction_length
+        category: scalar
+      - name: CCareerProfileFrame_selected_name_copy_callsite_count
+        category: scalar
+      - name: CProfileButton_OnMouseDoublePressed_select_command_format_callsite_0
+        category: patch
+      - name: CProfileButton_OnMouseDoublePressed_select_command_format_callsite_0_abi
+        category: scalar
+      - name: CProfileButton_OnMouseDoublePressed_select_command_format_callsite_0_hook_strategy
+        category: scalar
+      - name: CProfileButton_OnMouseDoublePressed_select_command_format_callsite_0_instruction_length
+        category: scalar
+      - name: CProfileButton_OnMouseDoublePressed_select_command_format_callsite_count
+        category: scalar
+      - name: CProfileButton_SetProfileName
+        category: func
+      - name: CProfileButton_m_active
+        category: structmember
+        struct: CProfileButton
+        member: m_active
+      - name: CProfileButton_m_name
+        category: structmember
+        struct: CProfileButton
+        member: m_name
+      - name: CProfileButton_name_capacity
+        category: scalar
+      - name: CCareerBaseBox
+        category: struct
+      - name: CCareerBaseBox_m_pTextLabel
+        category: structmember
+        struct: CCareerBaseBox
+        member: m_pTextLabel
+      - name: CCareerBaseFrame
+        category: struct
+      - name: CCareerBaseFrame_m_pPlayerName
+        category: structmember
+        struct: CCareerBaseFrame
+        member: m_pPlayerName
+      - name: CCareerDifficultyBox_ctor
+        category: func
+      - name: CCareerBaseFrame_Activate
+        category: func
+      - name: CBotButton
+        category: struct
+      - name: CBotButton_SetCharacter
+        category: func
+      - name: CCareerCharacter_GetPoints
+        category: func
+      - name: CBotButton_m_pText
+        category: structmember
+        struct: CBotButton
+        member: m_pText
+      - name: vgui2_Label_SetTextW
+        category: vfunc
+      - name: vgui2_TextImage_vtable
+        category: vtable
+      - name: vgui2_TextImage_SetTextW
+        category: vfunc
+      - name: vgui2_Panel_SetBounds_Const_callsite_0
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_1
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_2
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_3
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_4
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_5
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_6
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_7
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_8
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_9
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_10
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_11
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_12
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_13
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_14
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_15
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_16
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_17
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_18
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_19
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_20
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_21
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_22
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_23
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_24
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_25
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_26
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_27
+        category: patch
+      - name: vgui2_Panel_SetSize_Const_callsite_0
+        category: patch
+      - name: vgui2_Panel_SetSize_Const_callsite_1
+        category: patch
+      - name: vgui2_Panel_SetSize_Const_callsite_2
+        category: patch
+      - name: vgui2_Panel_SetSize_Const_callsite_3
+        category: patch
+      - name: vgui2_Panel_SetSize_Const_callsite_4
+        category: patch
+      - name: vgui2_Panel_SetSize_Const_callsite_5
+        category: patch
+      - name: vgui2_Panel_SetSize_Const_callsite_6
+        category: patch
+      - name: vgui2_Panel_SetSize_Const_callsite_7
+        category: patch
+      - name: vgui2_Panel_SetSize_Const_callsite_8
+        category: patch
+      - name: vgui2_Panel_SetSize_Const_callsite_9
+        category: patch
+      - name: vgui2_Panel_SetSize_Const_callsite_10
+        category: patch
+      - name: vgui2_Panel_SetSize_Const_callsite_11
+        category: patch
+      - name: vgui2_Panel_SetSize_Const_callsite_12
+        category: patch
+      - name: vgui2_Panel_SetSize_Const_callsite_13
+        category: patch
+      - name: vgui2_Panel_SetSize_Const_callsite_14
+        category: patch
+      - name: vgui2_Panel_SetSize_Const_callsite_15
+        category: patch
+      - name: vgui2_Panel_SetSize_Const_callsite_16
+        category: patch
+      - name: vgui2_Panel_SetSize_Const_callsite_17
+        category: patch
+      - name: vgui2_Panel_SetSize_Const_callsite_18
+        category: patch
+      - name: vgui2_Panel_SetSize_Const_callsite_19
+        category: patch
+      - name: vgui2_Panel_SetMinimumSize_Const_callsite_0
+        category: patch
+      - name: vgui2_Panel_SetMinimumSize_Const_callsite_1
+        category: patch
+      - name: vgui2_Panel_SetMinimumSize_Const_callsite_2
+        category: patch
+      - name: vgui2_Panel_SetMinimumSize_Const_callsite_3
+        category: patch
+      - name: vgui2_Panel_SetMinimumSize_Const_callsite_4
+        category: patch
+      - name: vgui2_Panel_SetMinimumSize_Const_callsite_5
+        category: patch
+      - name: vgui2_Panel_SetMinimumSize_Const_callsite_6
+        category: patch
+      - name: CBasePanel_ctor
+        category: func
+      - name: vgui2_ComboBox
+        category: struct
+      - name: vgui2_ComboBox_m_pDropDown
+        category: structmember
+        struct: vgui2_ComboBox
+        member: m_pDropDown
+      - name: vgui2_ComboBox_vtable
+        category: vtable
+      - name: vgui2_Label_vtable
+        category: vtable
+      - name: vgui2_BuildModeDialog_vtable
+        category: vtable
+      - name: vgui2_BuildModeDialog_SetActiveControl
+        category: vfunc
+      - name: vgui2_ComboBox_AddItemA
+        category: vfunc
+      - name: vgui2_ComboBox_AddItemW
+        category: vfunc
+      - name: vgui2_ComboBox_GetMenu
+        category: vfunc
+      - name: vgui2_Menu_AddMenuItem_Message
+        category: vfunc
+      - name: vgui2_Label_SetTextA
+        category: vfunc
+      - name: vgui2_Label_SetTextColorState
+        category: vfunc
+      - name: vgui2_Label_SetContentAlignment
+        category: vfunc
+      - name: vgui2_Menu_vtable
+        category: vtable
+      - name: vgui2_Menu_PerformLayout
+        category: vfunc
+      - name: vgui2_Menu_MakeItemsVisibleInScrollRange
+        category: vfunc
+      - name: vgui2::Menu
+        category: struct
+      - name: vgui2_Menu_m_pScroller
+        category: structmember
+        struct: vgui2::Menu
+        member: m_pScroller
+      - name: CTaskbar_ctor
+        category: func
+      - name: CTaskbar_vtable
+        category: vtable
+      - name: CTaskbar_OnCommand
+        category: vfunc
+      - name: KeyValues_ctor
+        category: func
+      - name: vgui2_Panel_Init
+        category: func
+      - name: KeyValues_vtable
+        category: vtable
+      - name: KeyValues_LoadFromFile
+        category: vfunc
+      - name: CGameUI_RunFrame
+        category: vfunc
+      - name: ISurface_GetModalPanel
+        category: vfunc
+      - name: ISurface_PaintTraverse
+        category: vfunc
+      - name: CGameConsoleDialog_ctor
+        category: func
+      - name: GameUI_TabCatchingTextEntry_vtable
+        category: vtable
+      - name: GameUI_TabCatchingTextEntry_OnKeyCodeTyped
+        category: vfunc
+      - name: GameUI_TextEntry_InsertChar
+        category: vfunc
+      - name: GameUI_TextEntry_LayoutVerticalScrollBarSlider
+        category: vfunc
+      - name: GameUI_TextEntry_GetStartDrawIndex
+        category: vfunc
+      - name: GameUI_PropertySheet_ctor
+        category: func
+      - name: GameUI_PropertySheet_vtable
+        category: vtable
+      - name: vgui2::PropertyDialog
+        category: struct
+      - name: GameUI_PropertyDialog__propertySheet
+        category: structmember
+        struct: vgui2::PropertyDialog
+        member: _propertySheet
+      - name: GameUI_PropertySheet_HasHotkey
+        category: vfunc
+      - name: GameUI_PropertySheet_PerformLayout
+        category: vfunc
+      - name: GameUI_MessageBox_ctor
+        category: func
+      - name: GameUI_MessageBox_vtable
+        category: vtable
+      - name: GameUI_MessageBox_ApplySchemeSettings
+        category: vfunc
+      - name: GameUI_Panel_SetSize
+        category: func
+      - name: GameUI_MessageBox_ApplySchemeSettings_to_Panel_SetSize_callsite_0
+        category: patch
+      - name: CCreateMultiplayerGameDialog_ctor
+        category: func
+      - name: COptionsDialog_ctor
+        category: func
+      - name: CContentControlDialog_ctor
+        category: func
+      - name: COptionsSubAudio_ctor
+        category: func
+      - name: COptionsSubVideo_ctor
+        category: func
+      - name: COptionsSubMultiplayer_ctor
+        category: func
+      - name: COptionsSubVideo_ApplyVidSettings
+        category: func
+      - name: GameUI_RichText_OnThink
+        category: vfunc
+      - name: GameUI_RichText_InsertStringW
+        category: func
+      - name: GameUI_RichText_InsertChar
+        category: func
+      - name: GameUI_RichText_CarriageReturn_branch
+        category: patch
+      - name: CGameConsoleDialog_DumpConsoleTextToFile
+        category: func
+      - name: CGameConsoleDialog_Print
+        category: func
+      - name: GameUI_RichText_InsertStringA
+        category: func
+      - name: CTaskbar_QuitConfirmationOwner
+        category: func
+      - name: QueryBox_ctor
+        category: func
+      - name: CCareerProfileFrame_ctor
+        category: func
+      - name: CCareerMapFrame_ctor
+        category: func
+      - name: CCareerBotFrame_ctor
+        category: func
+      - name: vgui2::EditablePanel
+        category: struct
+      - name: vgui2::FocusNavGroup
+        category: struct
+      - name: vgui2::PropertySheet
+        category: struct
+      - name: vgui2_Panel_SetProportional
+        category: vfunc
+      - name: GameUI_EditablePanel_m_NavGroup
+        category: structmember
+        struct: vgui2::EditablePanel
+        member: m_NavGroup
+      - name: GameUI_EditablePanel_GetFocusNavGroup
+        category: vfunc
+      - name: GameUI_FocusNavGroup_GetCurrentFocus
+        category: vfunc
+      - name: GameUI_PropertySheet_AddPage
+        category: vfunc
+      - name: GameUI_PropertySheet_SetActivePage
+        category: vfunc
+      - name: GameUI_PropertySheet_SetTabWidth
+        category: vfunc
+      - name: GameUI_PropertySheet_GetActivePage
+        category: vfunc
+      - name: GameUI_PropertySheet_ResetAllData
+        category: vfunc
+      - name: GameUI_PropertySheet_ApplyChanges
+        category: vfunc
+      - name: GameUI_PropertySheet_GetPage
+        category: vfunc
+      - name: GameUI_PropertySheet_DeletePage
+        category: vfunc
+      - name: GameUI_PropertySheet_GetActiveTab
+        category: vfunc
+      - name: GameUI_PropertySheet_GetActiveTabTitle
+        category: vfunc
+      - name: GameUI_PropertySheet_GetTabTitle
+        category: vfunc
+      - name: GameUI_PropertySheet_GetActivePageNum
+        category: vfunc
+      - name: GameUI_PropertySheet_GetNumPages
+        category: vfunc
+      - name: GameUI_PropertySheet_DisablePage
+        category: vfunc
+      - name: GameUI_PropertySheet_EnablePage
+        category: vfunc
+      - name: GameUI_PropertySheet_ChangeActiveTab
+        category: vfunc
+      - name: COptionsSubAudio_OnApplyChanges
+        category: vfunc
+      - name: COptionsSubMultiplayer_OnApplyChanges
+        category: vfunc
+      - name: CBasePanel_ApplySchemeSettings
+        category: vfunc
+      - name: GameUI_FocusNavGroup__currentFocus
+        category: structmember
+        struct: vgui2::FocusNavGroup
+        member: _currentFocus
+      - name: GameUI_PropertySheet__activePage
+        category: structmember
+        struct: vgui2::PropertySheet
+        member: _activePage
+      - name: ISurface_SupportsFeature
+        category: vfunc
+      - name: IInput_GetAppModalSurface
+        category: vfunc
+      - name: ISchemeManager_ReloadSchemes
+        category: vfunc
+      - name: COptionsSubVideo_OnApplyChanges
+        category: vfunc
+      - name: vgui2_IPanel_SetSize
+        category: vfunc
+      - name: vgui2_Panel_vtable
+        category: vtable
+      - name: vgui2_EditablePanel_vtable
+        category: vtable
+      - name: vgui2_Panel_OnSizeChanged
+        category: vfunc
+      - name: vgui2_EditablePanel_OnSizeChanged
+        category: vfunc
+      - name: vgui2_EditablePanel_OnSizeChanged_call_GetChild_callsite_0
+        category: patch
+      - name: vgui2_EditablePanel_OnSizeChanged_call_SetBounds_callsite_0
+        category: patch
+      - name: CCreateMultiplayerGameGameplayPage_LoadGameOptionsList
+        category: func

@@ -1,0 +1,5 @@
+patch_name: CCareerGame_LoadProfile_profile_path_format_callsite_0
+patch_va: '0x10011859'
+patch_rva: '0x11859'
+patch_sig: E8 63 8D 06 00 8D 44 24 ??
+patch_sig_disp: '0x0'

@@ -1,0 +1,5 @@
+func_name: CCreateMultiplayerGameGameplayPage::LoadGameOptionsList()
+func_va: '0xc5bc0'
+func_rva: '0xc5bc0'
+func_size: '0x316'
+func_sig: 55 57 56 53 83 EC ?? 8B 54 24 ?? 8B 9A ?? ?? ?? ?? 85 DB 75 ?? EB ??

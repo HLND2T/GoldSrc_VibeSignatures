@@ -1,0 +1,4 @@
+struct_name: CCareerProfileFrame
+member_name: m_name
+offset: '0x1f0'
+size: '0x20'

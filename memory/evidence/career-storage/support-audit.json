@@ -52,8 +52,34 @@
     "tag": "hl-8684",
     "platform": "windows",
     "sha256": "684fb5615f0c3ab7d07fcf5503eb214d064c70e25eb0eb22bbf043b4d73c162f",
-    "status": "unsupported",
-    "reason": "CRT limit exceeds the destination: 0x10013ca0 (56, 116, 62)"
+    "status": "located",
+    "records": 92,
+    "runtime_records": 14,
+    "previous_refusal": "CRT limit exceeds the destination: 0x10013ca0 (56, 116, 62)",
+    "trace_correction": {
+      "owner": "0x10013ca0",
+      "localization_call": "0x10013d22",
+      "inferred_cleanup": 16,
+      "verified_cleanup": 12,
+      "decoded_argument_pushes": 3,
+      "corrected_command_frame_offset": 52,
+      "corrected_next_object_frame_offset": 116,
+      "physical_capacity": 64,
+      "crt_limit": 62,
+      "source_idb_saved": false
+    }
+  },
+  {
+    "tag": "cstrikegameui-8684",
+    "platform": "windows",
+    "sha256": "a07b97c42292aab1b12c791b3b6847e47da1c8bbb8d430c1900d2f60cd65db86",
+    "crc64": "647fc98d499b3a1c",
+    "status": "located",
+    "records": 92,
+    "runtime_records": 14,
+    "source_issue": "https://github.com/MetaHookSv/MetaHookSv/issues/940",
+    "source_url": "https://github.com/user-attachments/files/33749368/GameUI.zip",
+    "source_is_steam_depot": false
   },
   {
     "tag": "hl-8684",

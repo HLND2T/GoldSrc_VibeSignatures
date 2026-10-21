@@ -1,0 +1,4 @@
+func_name: vgui2::IClientPanel::PaintTraverse
+vtable_name: vgui2::IClientPanel
+vfunc_offset: '0xc'
+vfunc_index: 3

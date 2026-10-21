@@ -21,7 +21,17 @@ from ida_analyze_util import (
 OWNER = "CGameConsoleDialog_DumpConsoleTextToFile"
 PRINT = "CGameConsoleDialog_Print"
 INSERT = "GameUI_RichText_InsertStringA"
-OLD_WINDOWS = {"hl-3248", "hl-3266", "hl-3329", "hl-3647", "hl-4554", "hl-6153", "hl-8684", "cof-5936"}
+OLD_WINDOWS = {
+    "hl-3248",
+    "hl-3266",
+    "hl-3329",
+    "hl-3647",
+    "hl-4554",
+    "hl-6153",
+    "hl-8684",
+    "cof-5936",
+    "cstrikegameui-8684",
+}
 REAL_NAMES = {
     PRINT: "CGameConsoleDialog::Print(char const*)",
     INSERT: "vgui2::RichText::InsertString(char const*)",
