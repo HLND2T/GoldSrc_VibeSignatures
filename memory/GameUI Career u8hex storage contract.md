@@ -171,7 +171,7 @@ checksum 是对末尾 checksum 前的全部无符号字节求 `sum((i+1)*byte[i]
 
 | 类别 | symbolName / 数据（RVA 或 member offset） |
 |---|---|
-| global | `CareerStorage_Definitions` 0xc2068；`CareerStorage_Game` 0xc206c；`CareerStorage_FileSystem` 0xc6b6c |
+| global | `TheCareerDefinitions` 0xc2068；`TheCareerGame` 0xc206c；`vgui2::g_pFileSystemInterface` 0xc6b6c（产物键 `vgui2_g_pFileSystemInterface`） |
 | structMember | `CCareerDefinitionManager.m_activeCareer` 12 / pointer4；`CCareerDefinition.m_saveDir` 24 / pointer4（不是内联字符数组） |
 | structMember | `CCareerGame.m_profileWriter` 8 / pointer4；`BufferWriter.m_overflow` 8 / bool1；`CCareerGame.m_needAutosave` 66 / bool1 |
 | structMember | `CCareerNewProfileBox.m_pNameEntry` 324 / pointer4；`vgui2::TextEntry.m_textLength` 136 / int4 |

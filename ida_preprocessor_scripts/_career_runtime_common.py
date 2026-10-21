@@ -57,12 +57,12 @@ command=functions['CCareerProfileFrame_OnCommand']['ea']
 new_command=functions['CCareerNewProfileBox_OnCommand']['ea']
 paths=[sites[0]['stack_args'][2] for group,sites in groups.items() if group.endswith('_profile_path_format_callsite')]
 root,offsets=common_pointer_chain(paths,3)
-globals={'CareerStorage_Definitions':reference(create,root)}
+globals={'TheCareerDefinitions':reference(create,root)}
 members={'CCareerDefinitionManager_m_activeCareer':('CCareerDefinitionManager','m_activeCareer',offsets[0],4),
          'CCareerDefinition_m_saveDir':('CCareerDefinition','m_saveDir',offsets[1],4)}
 receivers=[c['this'] for c in method(command)['calls'] if c['direct']==create]
 game_root,_=common_pointer_chain(receivers,1)
-globals['CareerStorage_Game']=reference(command,game_root)
+globals['TheCareerGame']=reference(command,game_root)
 
 # The serializer is the same complete thiscall selected by both write owners.
 buffer=storage['analysis_functions']['CCareerGame::CreateProfileBuffer(CCareerProfileData*, unsigned char*, int, bool)']['ea']
@@ -101,7 +101,7 @@ writer,opened=unique(opens,'native profile Open')
 getter=unique([c for c in method(writer)['calls'] if c['direct'] and opened['this']==('result',c['ea'])],'filesystem getter')
 returned=unique({r['value'] for r in method(getter['direct'])['returns']},'filesystem leaf return')
 fs_root,_=pointer_chain(returned,1)
-globals['CareerStorage_FileSystem']=reference(getter['direct'],fs_root)
+globals['vgui2_g_pFileSystemInterface']=reference(getter['direct'],fs_root)
 
 # The name entry must be captured before its native 64-byte apply buffer.
 apply=unique([c for c in method(new_command)['calls'] if c['direct'] and c['this'] and c['this'][:2]==('load',THIS)
@@ -170,7 +170,7 @@ async def preprocess_runtime(session, expected_outputs, directory, platform, ima
             if not owner or resolution is None:
                 raise ValueError("Cannot validate the actual global pointer operand")
             payloads[stem] = dict(
-                gv_name=stem,
+                gv_name="vgui2::g_pFileSystemInterface" if stem == "vgui2_g_pFileSystemInterface" else stem,
                 gv_va=hex(item["gv_ea"]),
                 gv_rva=hex(item["gv_ea"] - image_base),
                 gv_sig=owner["func_sig"],
