@@ -1,0 +1,5 @@
+func_name: CCareerGame::LoadProfile(CareerDifficultyType)
+func_va: '0x10011830'
+func_rva: '0x11830'
+func_size: '0xab'
+func_sig: A1 ?? ?? ?? ?? 81 EC 08 01 00 00 55 56 8B F1 8B 48 ?? 57 6A 00 8B 79 ?? E8 ?? ?? ?? ?? 50 57 8D 54 24 ??

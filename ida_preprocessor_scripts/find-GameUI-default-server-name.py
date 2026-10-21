@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Locate HL25's Steam-persona default hostname generation, before TextEntry insertion.
+"""Locate the gameplay options list builder on both GameUI generations.
 
-The older configured GameUI binaries use settings.scr's default instead and
-contain no "%s's Server" literal. Only hl-10210 declares this finder. Both
-PE32 and ELF32 have one owner of that literal, also referencing hostname and
-DescEdit; it is LoadGameOptionsList, not the dialog's OnOK command builder.
+LoadGameOptionsList constructs the script's checkbox, label and edit controls.
+Their three exact literals share one owner on PE32 and ELF32. Older GameUI
+uses the script's default hostname; only HL25 adds the Steam-persona format.
+The control literals identify the complete method in either implementation.
 """
 
 from ida_analyze_util import _load_yaml_mapping, _output_for_symbol, preprocess_common_skill, write_func_yaml
@@ -30,7 +30,10 @@ async def preprocess_skill(
         image_base=image_base,
         func_names=[SYMBOL],
         func_xrefs=[
-            {"func_name": SYMBOL, "xref_strings": ["FULLMATCH:%s's Server", "FULLMATCH:hostname", "FULLMATCH:DescEdit"]}
+            {
+                "func_name": SYMBOL,
+                "xref_strings": ["FULLMATCH:DescCheckButton", "FULLMATCH:DescLabel", "FULLMATCH:DescEdit"],
+            }
         ],
         generate_yaml_desired_fields=[(SYMBOL, ["func_name", "func_va", "func_rva", "func_size", "func_sig"])],
         debug=debug,

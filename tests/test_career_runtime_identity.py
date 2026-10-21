@@ -1,9 +1,16 @@
 import unittest
 
-from ida_preprocessor_scripts._career_runtime_identity import common_pointer_chain, pointer_chain
+from ida_preprocessor_scripts._career_runtime_identity import byte_member_offsets, common_pointer_chain, pointer_chain
 
 
 class PointerPathTests(unittest.TestCase):
+    def test_byte_guard_can_compare_memory_or_a_previously_loaded_register(self):
+        member = ("load", ("arg", 0), 70)
+        self.assertEqual({70}, byte_member_offsets(member, ("arg", 0), {70}))
+        self.assertEqual({70}, byte_member_offsets(("narrow", member, 1), ("arg", 0), {70}))
+        self.assertEqual(set(), byte_member_offsets(member, ("arg", 0), set()))
+        self.assertEqual(set(), byte_member_offsets(member, ("arg", 1), {70}))
+
     def test_distinct_layouts_are_decoded(self):
         for root, active, directory in ((0x1000, 12, 24), (0x2000, 20, 36)):
             value = ("load", ("load", ("load", ("const", root), 0), active), directory)

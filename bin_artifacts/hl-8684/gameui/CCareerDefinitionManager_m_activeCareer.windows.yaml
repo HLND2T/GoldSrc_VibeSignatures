@@ -1,0 +1,4 @@
+struct_name: CCareerDefinitionManager
+member_name: m_activeCareer
+offset: '0xc'
+size: '0x4'

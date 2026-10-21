@@ -1,0 +1,4 @@
+struct_name: CCareerGame
+member_name: m_needAutosave
+offset: '0x46'
+size: '0x1'

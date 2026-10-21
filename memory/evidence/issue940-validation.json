@@ -1,0 +1,157 @@
+{
+  "date": "2026-10-21",
+  "issue": "https://github.com/MetaHookSv/MetaHookSv/issues/940",
+  "attachment": "https://github.com/user-attachments/files/33749368/GameUI.zip",
+  "gameui_crc64_xz": "647fc98d499b3a1c",
+  "inputs": {
+    "bin/cstrikegameui-8684/engine/hw.dll": {
+      "size": 1641376,
+      "sha256": "be45f76049a133392423679d334c69c8e1e7e82dc873eebdd229ea0341ba1b10"
+    },
+    "bin/cstrikegameui-8684/gameui/GameUI.dll": {
+      "size": 840360,
+      "sha256": "a07b97c42292aab1b12c791b3b6847e47da1c8bbb8d430c1900d2f60cd65db86"
+    },
+    "bin/cstrikegameui-8684/vgui2/vgui2.dll": {
+      "size": 240536,
+      "sha256": "5ed6b4b10317ea24f41e4b825fd68bb09dc16c301c7267b0b355656f88b112b6"
+    }
+  },
+  "added_artifact_files": {
+    "hl-8684": 110,
+    "cstrikegameui-8684": 283
+  },
+  "new_tag_artifact_modules": {
+    "engine": 6,
+    "vgui2": 7,
+    "gameui": 270
+  },
+  "hl8684_additions": {
+    "Draw_MiptexTexture_linux": 1,
+    "Mod_LoadSpriteGroup_windows": 1,
+    "LoadGameOptionsList_windows_linux": 2,
+    "career_storage_windows": 92,
+    "career_runtime_windows": 14
+  },
+  "remaining_hl10210_only_artifacts": {
+    "hl25_scaled_constants_vs_legacy_const": [
+      "engine/vgui2_Panel_SetMinimumSize_ScaledConst_callsite_0.linux.yaml",
+      "engine/vgui2_Panel_SetMinimumSize_ScaledConst_callsite_0.windows.yaml",
+      "gameui/vgui2_Panel_SetBounds_ScaledConst_callsite_0.linux.yaml",
+      "gameui/vgui2_Panel_SetBounds_ScaledConst_callsite_0.windows.yaml",
+      "gameui/vgui2_Panel_SetBounds_ScaledConst_callsite_1.linux.yaml",
+      "gameui/vgui2_Panel_SetBounds_ScaledConst_callsite_1.windows.yaml",
+      "gameui/vgui2_Panel_SetBounds_ScaledConst_callsite_2.linux.yaml",
+      "gameui/vgui2_Panel_SetBounds_ScaledConst_callsite_2.windows.yaml",
+      "gameui/vgui2_Panel_SetBounds_ScaledConst_callsite_3.linux.yaml",
+      "gameui/vgui2_Panel_SetBounds_ScaledConst_callsite_3.windows.yaml",
+      "gameui/vgui2_Panel_SetBounds_ScaledConst_callsite_4.linux.yaml",
+      "gameui/vgui2_Panel_SetBounds_ScaledConst_callsite_4.windows.yaml",
+      "gameui/vgui2_Panel_SetBounds_ScaledConst_callsite_5.linux.yaml",
+      "gameui/vgui2_Panel_SetBounds_ScaledConst_callsite_5.windows.yaml",
+      "gameui/vgui2_Panel_SetBounds_ScaledConst_callsite_6.linux.yaml",
+      "gameui/vgui2_Panel_SetBounds_ScaledConst_callsite_6.windows.yaml",
+      "gameui/vgui2_Panel_SetBounds_ScaledConst_callsite_7.linux.yaml",
+      "gameui/vgui2_Panel_SetBounds_ScaledConst_callsite_7.windows.yaml",
+      "gameui/vgui2_Panel_SetMinimumSize_ScaledConst_callsite_0.linux.yaml",
+      "gameui/vgui2_Panel_SetMinimumSize_ScaledConst_callsite_0.windows.yaml",
+      "gameui/vgui2_Panel_SetMinimumSize_ScaledConst_callsite_1.linux.yaml",
+      "gameui/vgui2_Panel_SetMinimumSize_ScaledConst_callsite_1.windows.yaml",
+      "gameui/vgui2_Panel_SetMinimumSize_ScaledConst_callsite_2.linux.yaml",
+      "gameui/vgui2_Panel_SetMinimumSize_ScaledConst_callsite_2.windows.yaml",
+      "gameui/vgui2_Panel_SetMinimumSize_ScaledConst_callsite_3.linux.yaml",
+      "gameui/vgui2_Panel_SetMinimumSize_ScaledConst_callsite_3.windows.yaml",
+      "gameui/vgui2_Panel_SetMinimumSize_ScaledConst_callsite_4.linux.yaml",
+      "gameui/vgui2_Panel_SetMinimumSize_ScaledConst_callsite_4.windows.yaml",
+      "gameui/vgui2_Panel_SetMinimumSize_ScaledConst_callsite_5.windows.yaml",
+      "gameui/vgui2_Panel_SetSize_ScaledConst_callsite_0.linux.yaml",
+      "gameui/vgui2_Panel_SetSize_ScaledConst_callsite_0.windows.yaml",
+      "gameui/vgui2_Panel_SetSize_ScaledConst_callsite_1.linux.yaml",
+      "gameui/vgui2_Panel_SetSize_ScaledConst_callsite_1.windows.yaml",
+      "gameui/vgui2_Panel_SetSize_ScaledConst_callsite_2.linux.yaml",
+      "gameui/vgui2_Panel_SetSize_ScaledConst_callsite_2.windows.yaml",
+      "gameui/vgui2_Panel_SetSize_ScaledConst_callsite_3.linux.yaml",
+      "gameui/vgui2_Panel_SetSize_ScaledConst_callsite_3.windows.yaml",
+      "gameui/vgui2_Panel_SetSize_ScaledConst_callsite_4.linux.yaml",
+      "gameui/vgui2_Panel_SetSize_ScaledConst_callsite_4.windows.yaml",
+      "serverbrowser/vgui2_Panel_SetMinimumSize_ScaledConst_callsite_0.linux.yaml",
+      "serverbrowser/vgui2_Panel_SetMinimumSize_ScaledConst_callsite_0.windows.yaml",
+      "serverbrowser/vgui2_Panel_SetMinimumSize_ScaledConst_callsite_1.linux.yaml",
+      "serverbrowser/vgui2_Panel_SetMinimumSize_ScaledConst_callsite_1.windows.yaml",
+      "serverbrowser/vgui2_Panel_SetMinimumSize_ScaledConst_callsite_2.linux.yaml",
+      "serverbrowser/vgui2_Panel_SetMinimumSize_ScaledConst_callsite_2.windows.yaml",
+      "serverbrowser/vgui2_Panel_SetMinimumSize_ScaledConst_callsite_3.linux.yaml",
+      "serverbrowser/vgui2_Panel_SetMinimumSize_ScaledConst_callsite_3.windows.yaml",
+      "serverbrowser/vgui2_Panel_SetMinimumSize_ScaledConst_callsite_4.linux.yaml",
+      "serverbrowser/vgui2_Panel_SetMinimumSize_ScaledConst_callsite_4.windows.yaml",
+      "serverbrowser/vgui2_Panel_SetMinimumSize_ScaledConst_callsite_5.linux.yaml",
+      "serverbrowser/vgui2_Panel_SetSize_ScaledConst_callsite_0.linux.yaml",
+      "serverbrowser/vgui2_Panel_SetSize_ScaledConst_callsite_0.windows.yaml",
+      "serverbrowser/vgui2_Panel_SetSize_ScaledConst_callsite_1.linux.yaml",
+      "serverbrowser/vgui2_Panel_SetSize_ScaledConst_callsite_1.windows.yaml",
+      "serverbrowser/vgui2_Panel_SetSize_ScaledConst_callsite_2.linux.yaml",
+      "serverbrowser/vgui2_Panel_SetSize_ScaledConst_callsite_2.windows.yaml",
+      "serverbrowser/vgui2_Panel_SetSize_ScaledConst_callsite_3.windows.yaml"
+    ],
+    "hl25_startup_video": [
+      "engine/CGame_DrawStartupVideo.linux.yaml",
+      "engine/CGame_DrawStartupVideo.windows.yaml",
+      "engine/CVideoMode_Common_PlayStartupSequence.linux.yaml",
+      "engine/CVideoMode_Common_PlayStartupSequence.windows.yaml"
+    ],
+    "linux_eighth_selected_name_copy": [
+      "gameui/CCareerProfileFrame_selected_name_copy_callsite_7.linux.yaml",
+      "gameui/CCareerProfileFrame_selected_name_copy_callsite_7_abi.linux.yaml",
+      "gameui/CCareerProfileFrame_selected_name_copy_callsite_7_hook_strategy.linux.yaml",
+      "gameui/CCareerProfileFrame_selected_name_copy_callsite_7_instruction_length.linux.yaml"
+    ],
+    "linux_fourth_heap_patch": [
+      "engine/Sys_InitMemory_HeapLimitPatches_3.linux.yaml"
+    ]
+  },
+  "remaining_difference_policy": "Version-specific implementations and actual callsite counts are retained; absent functions/sites are not synthesized or aliased.",
+  "validation": {
+    "full_test_suite": {
+      "ran": 1559,
+      "passed": 1543,
+      "skipped": 16,
+      "failed": 0,
+      "log": ".tmp/issue940-tests-final.log"
+    },
+    "final_tag_repository_contract": {
+      "passed": 15,
+      "failed": 0,
+      "log": ".tmp/issue940-contract-accepted.log"
+    },
+    "new_tag_real_ida_analysis": {
+      "successful_nodes": 41,
+      "failed_nodes": 0,
+      "skipped_nodes": 0,
+      "log": ".tmp/issue940-accepted-cs.log"
+    },
+    "unchanged_generated_regression_outputs": 336,
+    "consumer_tests": {
+      "passed": 7,
+      "failed": 0,
+      "log": ".tmp/issue940-consumer-tests-final.log"
+    },
+    "snapshot_metadata_json_guards": [
+      "hl-10210",
+      "hl-8684",
+      "cstrikegameui-8684"
+    ],
+    "other_cached_datasets": "19 unchanged datasets verified by SHA-256 and byte size before reuse",
+    "consumer_manifest": "D:/MetaHookSv/Plugins/VGUI2Extension/scripts/manifests/vgui2extension.json",
+    "isolated_consumer_output": ".tmp/issue940-catalog-accepted/metahook/gamedata/vgui2extension",
+    "consumer_snapshots": 22,
+    "consumer_gates": [
+      "sync.update_game_data real manifest pruning and isolated publication",
+      "validate-gamedata.py --manifest",
+      "sync-gamedata.py --validate-only"
+    ],
+    "formatting": "passed",
+    "artifact_contract": "passed",
+    "runtime_gameplay": "not performed",
+    "public_catalog_publication": "not performed"
+  }
+}

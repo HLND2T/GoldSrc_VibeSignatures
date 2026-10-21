@@ -5,6 +5,9 @@ import unittest
 from ida_preprocessor_scripts._career_storage_identity import (
     branch_strategy,
     checked_capacity,
+    edges_bypassing_block,
+    reconciled_call_cleanup,
+    relocated_stack_boundary,
     unique,
     validate_groups,
 )
@@ -41,6 +44,40 @@ class StorageBoundaryTests(unittest.TestCase):
         for items in ([], [1, 2]):
             with self.assertRaises(ValueError):
                 unique(items, "owner")
+
+    def test_matching_output_and_constructor_buffers_recover_call_cleanup(self):
+        self.assertEqual(12, reconciled_call_cleanup(("stack", -124), ("stack", -120), 16, 3))
+        self.assertEqual(12, reconciled_call_cleanup(("stack", -124), ("stack", -124), 12, 3))
+
+    def test_cleanup_requires_independent_push_and_buffer_evidence(self):
+        for before, after, inferred, pushes in (
+            (("stack", -124), ("stack", -120), 16, 2),
+            (("stack", -124), ("stack", -128), 16, 3),
+            (("const", 124), ("stack", -120), 16, 3),
+            (("stack", -124), None, 16, 3),
+            (("stack", -124), ("stack", -120), 15, 3),
+            (("stack", -124), ("stack", -120), 16, True),
+        ):
+            with self.subTest(before=before, after=after, inferred=inferred, pushes=pushes):
+                with self.assertRaises(ValueError):
+                    reconciled_call_cleanup(before, after, inferred, pushes)
+
+    def test_producer_path_excludes_empty_branch_but_keeps_later_choices(self):
+        graph = {10: [20, 50], 20: [30, 40], 30: [40], 40: [50, 60], 50: [60], 60: []}
+        self.assertEqual({(10, 50)}, edges_bypassing_block(graph, 40))
+        self.assertEqual(set(), edges_bypassing_block(graph, 10))
+        with self.assertRaises(ValueError):
+            edges_bypassing_block(graph, 70)
+
+    def test_corrected_frame_does_not_split_one_buffer_into_two_objects(self):
+        members = [24, 28, 32, 36, 40, 44, 56, 116, 120, 240]
+        relocations = {56: {52}, 120: {116}}
+        self.assertEqual(116, relocated_stack_boundary(52, members, relocations))
+        self.assertEqual(62, checked_capacity(52, relocated_stack_boundary(52, members, relocations), 62))
+        with self.assertRaises(ValueError):
+            relocated_stack_boundary(52, members, {56: {52, 56}})
+        with self.assertRaises(ValueError):
+            relocated_stack_boundary(240, members, {})
 
     def test_inline_copies_cannot_be_dropped(self):
         sites = {"copy": [{"ea": 10}, {"ea": 30}]}

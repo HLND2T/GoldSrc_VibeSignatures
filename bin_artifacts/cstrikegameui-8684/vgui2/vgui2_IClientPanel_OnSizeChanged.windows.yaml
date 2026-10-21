@@ -1,0 +1,4 @@
+func_name: vgui2::IClientPanel::OnSizeChanged
+vtable_name: vgui2::IClientPanel
+vfunc_offset: '0x24'
+vfunc_index: 9

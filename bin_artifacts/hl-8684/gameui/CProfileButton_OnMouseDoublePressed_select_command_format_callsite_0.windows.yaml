@@ -1,0 +1,5 @@
+patch_name: CProfileButton_OnMouseDoublePressed_select_command_format_callsite_0
+patch_va: '0x10013270'
+patch_rva: '0x13270'
+patch_sig: E8 3B 5D 02 00 8B 8E ?? ?? ?? ??
+patch_sig_disp: '0x0'

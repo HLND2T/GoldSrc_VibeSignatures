@@ -1,0 +1,5 @@
+patch_name: CCareerProfileFrame_selected_name_copy_callsite_0
+patch_va: '0x10013dec'
+patch_rva: '0x13dec'
+patch_sig: E8 1F 69 06 00 83 C4 ??
+patch_sig_disp: '0x0'

@@ -1,0 +1,4 @@
+func_name: vgui2::IPanel::PaintTraverse
+vtable_name: vgui2::IPanel
+vfunc_offset: '0xa4'
+vfunc_index: 41

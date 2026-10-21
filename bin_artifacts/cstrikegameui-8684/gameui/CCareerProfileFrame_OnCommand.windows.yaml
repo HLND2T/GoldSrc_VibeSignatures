@@ -1,0 +1,8 @@
+func_name: CCareerProfileFrame::OnCommand(char const*)
+func_va: '0x10014150'
+func_rva: '0x14150'
+func_size: '0x51f'
+func_sig: 81 EC 10 04 00 00 53 8B 9C 24 ?? ?? ?? ?? 55 56 57 68 ?? ?? ?? ?? 53 8B E9 E8 ?? ?? ?? ?? 83 C4 08 85 C0 75 ??
+vtable_name: CCareerProfileFrame
+vfunc_offset: '0x15c'
+vfunc_index: 87

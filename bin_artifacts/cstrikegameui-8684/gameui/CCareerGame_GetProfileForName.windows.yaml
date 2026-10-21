@@ -1,0 +1,5 @@
+func_name: CCareerGame::GetProfileForName(char const*)
+func_va: '0x10011310'
+func_rva: '0x11310'
+func_size: '0x173'
+func_sig: 81 EC 14 01 00 00 8B 84 24 ?? ?? ?? ?? 89 4C 24 ?? 8B 0D ?? ?? ?? ?? 53 56 57 8B 51 ?? 50 8D 4C 24 ?? 8B 42 ??

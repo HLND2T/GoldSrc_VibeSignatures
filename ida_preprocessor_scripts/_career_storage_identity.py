@@ -44,6 +44,63 @@ def checked_capacity(destination, boundary, explicit=None):
     return size
 
 
+def reconciled_call_cleanup(output_buffer, consumed_buffer, inferred_cleanup, pushed_arguments):
+    """Reconcile one stack-output producer with its independently proven consumer.
+
+    IDA can attribute a saved register to an indirect call's arguments. Require
+    both the producer/consumer address difference and the actual argument
+    pushes to agree before overriding that call's stack cleanup in the trace.
+    """
+    word_size = 4
+    for value in (output_buffer, consumed_buffer):
+        if not isinstance(value, tuple) or len(value) != 2 or value[0] != "stack" or type(value[1]) is not int:
+            raise ValueError("Producer and consumer must address local stack buffers")
+    if (
+        type(inferred_cleanup) is not int
+        or inferred_cleanup < 0
+        or inferred_cleanup % word_size
+        or type(pushed_arguments) is not int
+        or pushed_arguments <= 0
+    ):
+        raise ValueError("Invalid x86 call cleanup evidence")
+    cleanup = inferred_cleanup + output_buffer[1] - consumed_buffer[1]
+    if cleanup != pushed_arguments * word_size:
+        raise ValueError("Stack buffer identity disagrees with the decoded argument pushes")
+    return cleanup
+
+
+def edges_bypassing_block(graph, target):
+    """Select paths reaching a producer in an already acyclic first-pass CFG."""
+    if target not in graph:
+        raise ValueError("Producer block is absent from the trace graph")
+    ancestors = {target}
+    while True:
+        expanded = ancestors | {start for start, successors in graph.items() if ancestors.intersection(successors)}
+        if expanded == ancestors:
+            break
+        ancestors = expanded
+    return {
+        (start, successor) for start in ancestors - {target} for successor in graph[start] if successor not in ancestors
+    }
+
+
+def relocated_stack_boundary(destination, members, relocations):
+    """Keep frame object boundaries consistent with proven address relocations."""
+    boundaries = []
+    for offset in members:
+        candidates = relocations.get(offset, {offset})
+        if len(candidates) != 1:
+            if offset >= destination or any(value > destination for value in candidates):
+                raise ValueError("Stack object relocation is ambiguous")
+            continue
+        resolved = next(iter(candidates))
+        if resolved > destination:
+            boundaries.append(resolved)
+    if not boundaries:
+        raise ValueError("Missing next stack object boundary")
+    return min(boundaries)
+
+
 def validate_groups(discovered, declared):
     """Do not silently drop an inlined copy or synthesize an absent _1."""
     if set(discovered) != set(declared):

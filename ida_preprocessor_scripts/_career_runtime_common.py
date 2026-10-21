@@ -3,7 +3,7 @@
 The direct GV locator is deliberate: all five independently selected profile
 consumers must agree on the complete pointer path, and actual operand bytes
 must name its root. This is stronger than choosing a nearby global or an LLM
-guess. Only the explicitly requested Windows hl-10210 node registers it.
+guess. Windows HL10210, HL8684 and the issue #940 CS GameUI register it.
 """
 
 from pathlib import Path
@@ -76,23 +76,29 @@ overflow_offset=overflow['address'][2]
 members['CCareerGame_m_profileWriter']=('CCareerGame','m_profileWriter',writer_offset,4)
 members['BufferWriter_m_overflow']=('BufferWriter','m_overflow',overflow_offset,1)
 first_path=groups['CCareerGame_SaveProfile_profile_path_format_callsite'][0]['ea']
-def nested_values(value):
-    if not isinstance(value,tuple):return []
-    return [value]+[nested for child in value for nested in nested_values(child)]
 autosave_offsets=set()
 for comparison in method(save)['comparisons']:
     if comparison['ea']>=first_path:continue
     insn=idautils.DecodeInstruction(comparison['ea'])
-    if not any(op.type==idaapi.o_displ and ida_ua.get_dtype_size(op.dtype)==1 for op in insn.ops):continue
-    autosave_offsets.update(v[2] for value in comparison['values'] for v in nested_values(value)
-                            if len(v)==3 and v[:2]==('load',THIS) and v[2]>0)
+    byte_offsets={signed32(op.addr) for op in insn.ops
+                  if op.type==idaapi.o_displ and ida_ua.get_dtype_size(op.dtype)==1}
+    byte_offsets.update(r['address'][2] for r in method(save)['loads']
+                        if r['ea']<=comparison['ea'] and r['width']==1 and r['address']
+                        and r['address'][:2]==('address',THIS))
+    for value in comparison['values']:
+        autosave_offsets.update(offset for offset in byte_member_offsets(value,THIS,byte_offsets) if offset>0)
 members['CCareerGame_m_needAutosave']=('CCareerGame','m_needAutosave',unique(autosave_offsets,'early autosave guard'),1)
 if primary_returns(buffer)!=[16]:raise ValueError('Serializer ABI cleanup changed')
 
-# Recover the real filesystem instance through the leaf getter used for wb Open.
-opens=[c for c in method(create)['calls'] if c['stack_args'][1] in {('const',a) for a in literal_evidence('wb')['addresses']}]
-opened=unique(opens,'native profile Open')
-getter=unique([c for c in method(create)['calls'] if c['direct'] and opened['this']==('result',c['ea'])],'filesystem getter')
+# Older GameUI factors the native writer out of both Create and Save. Follow
+# only a shared direct child owning wb Open, or Create's own inlined writer.
+wb=literal_evidence('wb')
+shared_writers={c['direct'] for c in method(create)['calls'] if c['direct']} & {
+                c['direct'] for c in method(save)['calls'] if c['direct']} & set(wb['owners'])
+opens=[(owner,c) for owner in {create}|shared_writers for c in method(owner)['calls']
+       if c['stack_args'][1] in {('const',a) for a in wb['addresses']}]
+writer,opened=unique(opens,'native profile Open')
+getter=unique([c for c in method(writer)['calls'] if c['direct'] and opened['this']==('result',c['ea'])],'filesystem getter')
 returned=unique({r['value'] for r in method(getter['direct'])['returns']},'filesystem leaf return')
 fs_root,_=pointer_chain(returned,1)
 globals['CareerStorage_FileSystem']=reference(getter['direct'],fs_root)

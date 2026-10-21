@@ -1,0 +1,4 @@
+struct_name: CCareerGame
+member_name: m_profileWriter
+offset: '0x8'
+size: '0x4'
