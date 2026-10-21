@@ -88,13 +88,13 @@ modules:
           - TheCareerDefinitions.windows.yaml
           - TheCareerGame.windows.yaml
           - vgui2_g_pFileSystemInterface.windows.yaml
-          - CCareerDefinitionManager_m_activeCareer.windows.yaml
-          - CCareerDefinition_m_saveDir.windows.yaml
-          - CCareerGame_m_profileWriter.windows.yaml
+          - CareerDefinitionManager_m_activeCareer.windows.yaml
+          - CareerDefinition_m_saveDir.windows.yaml
+          - CCareerGame_m_writer.windows.yaml
           - BufferWriter_m_overflow.windows.yaml
           - CCareerGame_m_needAutosave.windows.yaml
-          - CCareerNewProfileBox_m_pNameEntry.windows.yaml
-          - vgui2_TextEntry_m_textLength.windows.yaml
+          - CCareerNewProfileBox_m_pEntry.windows.yaml
+          - vgui2_TextEntry_m_TextStream_m_Size.windows.yaml
           - CCareerGame_CreateProfileBuffer.windows.yaml
           - vgui2_TextEntry_GetTextW.windows.yaml
           - CareerStorage_runtime_contract_version.windows.yaml
@@ -484,9 +484,9 @@ modules:
         category: gv
       - name: vgui2_g_pFileSystemInterface
         category: gv
-      - name: CCareerDefinitionManager
+      - name: CareerDefinitionManager
         category: struct
-      - name: CCareerDefinition
+      - name: CareerDefinition
         category: struct
       - name: CCareerGame
         category: struct
@@ -496,18 +496,18 @@ modules:
         category: struct
       - name: vgui2::TextEntry
         category: struct
-      - name: CCareerDefinitionManager_m_activeCareer
+      - name: CareerDefinitionManager_m_activeCareer
         category: structmember
-        struct: CCareerDefinitionManager
+        struct: CareerDefinitionManager
         member: m_activeCareer
-      - name: CCareerDefinition_m_saveDir
+      - name: CareerDefinition_m_saveDir
         category: structmember
-        struct: CCareerDefinition
+        struct: CareerDefinition
         member: m_saveDir
-      - name: CCareerGame_m_profileWriter
+      - name: CCareerGame_m_writer
         category: structmember
         struct: CCareerGame
-        member: m_profileWriter
+        member: m_writer
       - name: BufferWriter_m_overflow
         category: structmember
         struct: BufferWriter
@@ -516,14 +516,14 @@ modules:
         category: structmember
         struct: CCareerGame
         member: m_needAutosave
-      - name: CCareerNewProfileBox_m_pNameEntry
+      - name: CCareerNewProfileBox_m_pEntry
         category: structmember
         struct: CCareerNewProfileBox
-        member: m_pNameEntry
-      - name: vgui2_TextEntry_m_textLength
+        member: m_pEntry
+      - name: vgui2_TextEntry_m_TextStream_m_Size
         category: structmember
         struct: vgui2::TextEntry
-        member: m_textLength
+        member: m_TextStream.m_Size
       - name: CCareerGame_CreateProfileBuffer
         category: func
       - name: vgui2_TextEntry_GetTextW

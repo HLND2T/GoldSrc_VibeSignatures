@@ -172,9 +172,9 @@ checksum 是对末尾 checksum 前的全部无符号字节求 `sum((i+1)*byte[i]
 | 类别 | symbolName / 数据（RVA 或 member offset） |
 |---|---|
 | global | `TheCareerDefinitions` 0xc2068；`TheCareerGame` 0xc206c；`vgui2::g_pFileSystemInterface` 0xc6b6c（产物键 `vgui2_g_pFileSystemInterface`） |
-| structMember | `CCareerDefinitionManager.m_activeCareer` 12 / pointer4；`CCareerDefinition.m_saveDir` 24 / pointer4（不是内联字符数组） |
-| structMember | `CCareerGame.m_profileWriter` 8 / pointer4；`BufferWriter.m_overflow` 8 / bool1；`CCareerGame.m_needAutosave` 66 / bool1 |
-| structMember | `CCareerNewProfileBox.m_pNameEntry` 324 / pointer4；`vgui2::TextEntry.m_textLength` 136 / int4 |
+| structMember | `CareerDefinitionManager.m_activeCareer` 12 / pointer4；`CareerDefinition.m_saveDir` 24 / pointer4（不是内联字符数组） |
+| structMember | `CCareerGame.m_writer` 8 / pointer4；`BufferWriter.m_overflow` 8 / bool1；`CCareerGame.m_needAutosave` 66 / bool1 |
+| structMember | `CCareerNewProfileBox.m_pEntry` 324 / pointer4；`vgui2::TextEntry.m_TextStream.m_Size` 136 / int4 |
 | function | `CCareerGame::CreateProfileBuffer(CCareerProfileData*, unsigned char*, int, bool)` RVA 0x19c50 / size0x143；thiscall，ret16，EAX=int length |
 | virtualFunction | `vgui2::TextEntry::GetText(wchar_t*, int)` RVA0x62ec0 / size0x42；slot136，thiscall ret8；消费端忽略返回值 |
 | scalar | `CareerStorage_runtime_contract_version=1`；`CCareerNewProfileBox_native_input_capacity=64` |
@@ -184,7 +184,7 @@ checksum 是对末尾 checksum 前的全部无符号字节求 `sum((i+1)*byte[i]
 - saveDir：Create path 在 0x19ba1 载入 root，0x19bab 读取 manager+12，0x19bae **push dword ptr [active+24]**。五个消费者一致证明它是字符串指针。提前读取后仍与 formatter 的实参核对。
 - writer：Init RVA0x1950 设置 cursor+0、remaining+4、overflow+8=false、capacity+12。WriteByte0x1ad0、WriteLong0x1b00、WriteString0x1b50 在容量不足时置 overflow+8=true；WriteString 0x1b88 还会改写输入为空串。serializer 之后、Open 之前必须读取 overflow 并有界解析整个返回 buffer、核对 raw name。Create 的 serializer call0x19be2 在 wb Open0x19c00 前；Save 同样先 serializer 后 Open0x1a9b9。原生写入均一次 Write（legacy槽22），一次 Close（槽11）；不能把 bool 返回当作短写检查。
 - needAutosave：Save0x1a8a6 比较 byte[this+66]，为0则在0x1a8ac设置AL=1并于0x1a8bc ret4，完全绕过分配/formatter/I/O。消费端保留此 no-op 语义。
-- 输入：原 NewProfileBox Ok 调 Apply(1)，其 char[64] 最多取得63字节。宽 getter0x62ed8 比较 **length >= argument-1**，0x62ee0 wcsncpy 的第三实参直接为 wchar_t 元素数，随后0x62eeb写 Destination[length]=0；没有除以2。因此本 binary 的 int 参数是**字符数**，虽然外部 SDK header 写 bufLenInBytes。不要按其他 SDK 实现改成字节数。读取 m_textLength 后分配 length+1 wchar_t 并传 length+1。
+- 输入：原 NewProfileBox Ok 调 Apply(1)，其 char[64] 最多取得63字节。宽 getter0x62ed8 比较 **length >= argument-1**，0x62ee0 wcsncpy 的第三实参直接为 wchar_t 元素数，随后0x62eeb写 Destination[length]=0；没有除以2。因此本 binary 的 int 参数是**字符数**，虽然外部 SDK header 写 bufLenInBytes。不要按其他 SDK 实现改成字节数。读取 m_TextStream.m_Size 后分配 length+1 wchar_t 并传 length+1。
 - NewProfileBox0xfa70 的 Ok 分支只做 Apply 后把 command 换成 CreateProfile；公共基类 handler0xf980 对非 close 命令 PostActionSignal(Command)，之后调用关闭虚槽。消费端可转发携带完整无损身份的私有命令跳过 Apply，保留 native 分配/销毁。当前接入用 CareerStorageNew + canonical key 传递身份，在覆盖确认与预检后才设置引擎 raw cvar，验证回读并在写入失败时恢复旧值；取消覆盖不改变 name。
 
 验证方式：标准 `ida_analyze_bin.py -gamever hl-10210 -modules gameui -skill find-GameUI-career-runtime -platform windows -oldgamever none` 已重建14条；纯 pointer-chain 合成布局/歧义负例测试、完整 unit/repository-contract、格式门禁另行记录在消费端交付说明。该节是静态 ABI 证据，不等同所有故障或兼容构建的运行保证。
@@ -205,8 +205,17 @@ Definitions artifact 的 GV 锚点选择 Create 中较早的 0x19b1f 六字节 r
 - 根因与约束：附件 GameUI.dll SHA256 `a07b97c42292aab1b12c791b3b6847e47da1c8bbb8d430c1900d2f60cd65db86`、CRC64 `647fc98d499b3a1c`，不在 CS Steam depot 清单内。不能给官方 Steam tag 虚构 depot 路径；独立注册 `cstrikegameui-8684`，仅含 GameUI 和必要的 HL8684 engine/vgui2 DAG 前驱。
 - 栈分析根因：PopulateProfiles 中局部化 vcall 只有三次实际参数 PUSH，旧 IDB 却把先前保存的 EBX 算入参数，产生16字节推测清栈而实际为12。局部化输出与 ProfileButton 构造输入因此被误认为相差4字节，frame 又保留两个同一对象的别名边界，形成虚假的60字节命令缓冲区。
 - 正确做法：`normalize_population` 同时验证三次压栈、叶 getter 返回的全局接口和局部化输出/构造输入的地址关系。只在两份证据一致时修正自身 first-pass trace；排除不执行 producer 的空列表分支，并按相同 LEA 指令的前后地址重定位 frame 对象边界。保留 `checked_capacity` 的严格上界，实际缓冲区64字节、原 CRT 限额62。无推测修正，不修改或保存原 IDB。
-- Runtime 差异：旧版以 MOV AL,[this+0x46] / TEST AL,AL 检查 autosave，不能只识别 CMP byte ptr；旧版 wb writer 是 Create/Save 共享直接子函数。由当前字节读取 provenance 与共享 writer 的 wb Open 定位，继续恢复真实 filesystem getter/global。旧版 m_needAutosave=0x46、TextEntry.m_textLength=0x84，不能复制 HL25 的0x42/0x88。
+- Runtime 差异：旧版以 MOV AL,[this+0x46] / TEST AL,AL 检查 autosave，不能只识别 CMP byte ptr；旧版 wb writer 是 Create/Save 共享直接子函数。由当前字节读取 provenance 与共享 writer 的 wb Open 定位，继续恢复真实 filesystem getter/global。旧版 m_needAutosave=0x46、TextEntry.m_TextStream.m_Size=0x84，不能复制 HL25 的0x42/0x88。
 - 验证方式：两个新 Windows storage 各重建92条、runtime各14条；HL10210 Windows 及 HL10210/HL8684 Linux 回归产物逐字节不变。额外的指令清栈、空分支、frame歧义和字节来源纯逻辑测试保留在两个 identity 测试模块。最终测试与消费端裁剪证据另见 [issue 940 验证记录](evidence/issue940-validation.json)。
 - 适用范围：本次只新增 HL8684 Windows 与 issue 940 附件的静态支持。其他旧 Windows 的历史 unsupported 调查未自动翻转；此处不是游戏运行验收报告。消费端清单请求新增记录，是否安装 Career hooks 仍服从消费端原有运行逻辑。
 
 跨仓库 tag 约束：新增 tag 前同时验证上游 `analysis_config.TAG_RE`、`gamesymbols_json.GAME_VERSION_PATTERN`、snapshot 文件名解析和消费端 `sync-gamedata.py:GAME_VERSION_PATTERN`。上游不允许下划线，消费端不允许 game 前缀内的连字符；共同可用形式是纯小写字母/数字前缀加数字 build。本次正式 tag 为 `cstrikegameui-8684`，不能使用中间讨论的其他拼写。
+
+## 原始成员名称与嵌套路径（2026-10-21）
+
+- 触发信号：对 #391/#392 的 334 条 YAML 与真实 Linux ELF/DWARF 逐项核对，发现 runtime finder 的成员位置虽有指令证据，类型名和成员名仍采用了推断别名。
+- 根因/约束：从数据流恢复偏移不等于恢复原始名称。两份 SHA 绑定的 Linux 输入均明确声明 `CareerDefinitionManager::m_activeCareer`、`CareerDefinition::m_saveDir`、`CCareerGame::m_writer`、`CCareerNewProfileBox::m_pEntry`，finder、三个 Windows tag 的配置与产物使用这些身份。
+- 正确做法：TextEntry 长度按真实嵌套路径 `vgui2::TextEntry.m_TextStream.m_Size` 发布，`struct_name: vgui2::TextEntry`、`member_name: m_TextStream.m_Size`，文件键 `vgui2_TextEntry_m_TextStream_m_Size`。offset 是相对 TextEntry 的累计偏移，不能只改为虚构的直接 m_Size 成员。
+- 验证方式：Linux10210 的 TextEntry.m_TextStream DWARF DIE 0x3b6f55 为 +0x7c，其 CUtlVector<wchar_t>.m_Size 为 +0xc，合计 +0x88；Linux8684 对应 DIE 0x2af27e 为 +0x78，合计 +0x84。真实 wide getter 分别在 0x11be83 / 0x14c493 读取该累计偏移。原始类型及成员见对应 binary 的 DWARF；二进制 SHA 与 evidence/career-storage 的 identity JSON 一致。
+- 适用范围：三个 Windows runtime tag 一起迁移名称，所有 offset/size/地址/特征保持原值。消费端同步 manifest、validator 与 runtime lookup key；#394 的三个原始 global key 也必须同时采用。此名称核验不是新增平台的游戏运行验证。
+- 交付验证：1540 项 unit 测试完成（12 项平台/opt-in 跳过），15 项 repository-contract 通过；后者和格式门禁使用临时 Git 索引纳入全部重命名文件，不改变实际暂存区。15 个新 YAML 均符合 canonical 编码，逐字段对比原记录仅名称变化。三个 tag 重新导出候选 snapshot/metadata/JSON 后，与其他版本合计 22 个 snapshot 经真实消费端同步器及 manifest validator 验证通过；五个成员身份和三个 global 均在裁剪后保留。消费端 Release 构建、8 项 CTest、7 项 Python 测试及 pinned format-check 通过。本轮未部署、未进行游戏运行验证。

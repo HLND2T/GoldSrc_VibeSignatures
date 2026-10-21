@@ -58,8 +58,8 @@ new_command=functions['CCareerNewProfileBox_OnCommand']['ea']
 paths=[sites[0]['stack_args'][2] for group,sites in groups.items() if group.endswith('_profile_path_format_callsite')]
 root,offsets=common_pointer_chain(paths,3)
 globals={'TheCareerDefinitions':reference(create,root)}
-members={'CCareerDefinitionManager_m_activeCareer':('CCareerDefinitionManager','m_activeCareer',offsets[0],4),
-         'CCareerDefinition_m_saveDir':('CCareerDefinition','m_saveDir',offsets[1],4)}
+members={'CareerDefinitionManager_m_activeCareer':('CareerDefinitionManager','m_activeCareer',offsets[0],4),
+         'CareerDefinition_m_saveDir':('CareerDefinition','m_saveDir',offsets[1],4)}
 receivers=[c['this'] for c in method(command)['calls'] if c['direct']==create]
 game_root,_=common_pointer_chain(receivers,1)
 globals['TheCareerGame']=reference(command,game_root)
@@ -73,7 +73,7 @@ writer_offset=member(init['this'])
 overflow=unique([s for s in method(init['direct'])['stores'] if s['width']==1 and s['value']==('const',0)
                  and s['address'] and s['address'][:2]==('address',THIS)],'writer overflow flag')
 overflow_offset=overflow['address'][2]
-members['CCareerGame_m_profileWriter']=('CCareerGame','m_profileWriter',writer_offset,4)
+members['CCareerGame_m_writer']=('CCareerGame','m_writer',writer_offset,4)
 members['BufferWriter_m_overflow']=('BufferWriter','m_overflow',overflow_offset,1)
 first_path=groups['CCareerGame_SaveProfile_profile_path_format_callsite'][0]['ea']
 autosave_offsets=set()
@@ -106,7 +106,7 @@ globals['vgui2_g_pFileSystemInterface']=reference(getter['direct'],fs_root)
 # The name entry must be captured before its native 64-byte apply buffer.
 apply=unique([c for c in method(new_command)['calls'] if c['direct'] and c['this'] and c['this'][:2]==('load',THIS)
               and c['stack_args'][0]==('const',1)],'new profile name apply')
-members['CCareerNewProfileBox_m_pNameEntry']=('CCareerNewProfileBox','m_pNameEntry',member(apply['this']),4)
+members['CCareerNewProfileBox_m_pEntry']=('CCareerNewProfileBox','m_pEntry',member(apply['this']),4)
 tables=values['tables'];entry_table=tables['CCvarTextEntry'];text_table=tables['vgui2::TextEntry']
 reads=[c for c in method(apply['direct'])['calls'] if c['this']==THIS and c['stack_args'][0]
        and c['stack_args'][0][0]=='stack' and c['stack_args'][1] and c['stack_args'][1][0]=='const']
@@ -130,7 +130,9 @@ for index,address in text_table['vtable_entries'].items():
     if entry_table['vtable_entries'][index]!=address:raise ValueError('Name entry overrides wide getter')
     wide.append(dict(ea=ea,index=int(index),table='vgui2::TextEntry',length=length_loads[0]['address'][2]))
 wide=unique(wide,'bounded wide TextEntry getter')
-members['vgui2_TextEntry_m_textLength']=('vgui2::TextEntry','m_textLength',wide['length'],4)
+# DWARF names the length as the nested vector's m_Size. Keep its cumulative
+# TextEntry-relative offset, as used by the actual getter, in the artifact.
+members['vgui2_TextEntry_m_TextStream_m_Size']=('vgui2::TextEntry','m_TextStream.m_Size',wide['length'],4)
 result=dict(globals=globals,members=members,serializer=buffer,wide=wide,
             input_capacity=read['stack_args'][1][1],writer_init=init['direct'],overflow_store=overflow['ea'])
 """
