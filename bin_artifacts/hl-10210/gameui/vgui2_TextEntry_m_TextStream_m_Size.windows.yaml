@@ -1,4 +1,4 @@
 struct_name: vgui2::TextEntry
-member_name: m_textLength
+member_name: m_TextStream.m_Size
 offset: '0x88'
 size: '0x4'

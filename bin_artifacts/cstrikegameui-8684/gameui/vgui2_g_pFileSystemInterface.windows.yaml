@@ -1,4 +1,4 @@
-gv_name: CareerStorage_FileSystem
+gv_name: vgui2::g_pFileSystemInterface
 gv_va: '0x100ca2fc'
 gv_rva: '0xca2fc'
 gv_sig: A1 ?? ?? ?? ?? C3 90 90 90 90 90 90 90 90 90 90 A1 ?? ?? ?? ?? C3 90 90 90 90 90 90 90 90 90 90 8B 44 24 ?? 56 57

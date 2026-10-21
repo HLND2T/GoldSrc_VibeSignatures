@@ -1,4 +1,4 @@
-struct_name: CCareerDefinitionManager
+struct_name: CareerDefinitionManager
 member_name: m_activeCareer
 offset: '0xc'
 size: '0x4'

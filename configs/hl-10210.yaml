@@ -2947,16 +2947,16 @@ modules:
           - CCareerProfileFrame_OnCommand.windows.yaml
           - CCareerNewProfileBox_OnCommand.windows.yaml
         expected_output:
-          - CareerStorage_Definitions.windows.yaml
-          - CareerStorage_Game.windows.yaml
-          - CareerStorage_FileSystem.windows.yaml
-          - CCareerDefinitionManager_m_activeCareer.windows.yaml
-          - CCareerDefinition_m_saveDir.windows.yaml
-          - CCareerGame_m_profileWriter.windows.yaml
+          - TheCareerDefinitions.windows.yaml
+          - TheCareerGame.windows.yaml
+          - vgui2_g_pFileSystemInterface.windows.yaml
+          - CareerDefinitionManager_m_activeCareer.windows.yaml
+          - CareerDefinition_m_saveDir.windows.yaml
+          - CCareerGame_m_writer.windows.yaml
           - BufferWriter_m_overflow.windows.yaml
           - CCareerGame_m_needAutosave.windows.yaml
-          - CCareerNewProfileBox_m_pNameEntry.windows.yaml
-          - vgui2_TextEntry_m_textLength.windows.yaml
+          - CCareerNewProfileBox_m_pEntry.windows.yaml
+          - vgui2_TextEntry_m_TextStream_m_Size.windows.yaml
           - CCareerGame_CreateProfileBuffer.windows.yaml
           - vgui2_TextEntry_GetTextW.windows.yaml
           - CareerStorage_runtime_contract_version.windows.yaml
@@ -3337,19 +3337,19 @@ modules:
     symbols:
       - name: CProfileButton
         category: struct
-      - name: CareerStorage_Definitions
+      - name: TheCareerDefinitions
         category: gv
         platform: windows
-      - name: CareerStorage_Game
+      - name: TheCareerGame
         category: gv
         platform: windows
-      - name: CareerStorage_FileSystem
+      - name: vgui2_g_pFileSystemInterface
         category: gv
         platform: windows
-      - name: CCareerDefinitionManager
+      - name: CareerDefinitionManager
         category: struct
         platform: windows
-      - name: CCareerDefinition
+      - name: CareerDefinition
         category: struct
         platform: windows
       - name: CCareerGame
@@ -3364,20 +3364,20 @@ modules:
       - name: vgui2::TextEntry
         category: struct
         platform: windows
-      - name: CCareerDefinitionManager_m_activeCareer
+      - name: CareerDefinitionManager_m_activeCareer
         category: structmember
-        struct: CCareerDefinitionManager
+        struct: CareerDefinitionManager
         member: m_activeCareer
         platform: windows
-      - name: CCareerDefinition_m_saveDir
+      - name: CareerDefinition_m_saveDir
         category: structmember
-        struct: CCareerDefinition
+        struct: CareerDefinition
         member: m_saveDir
         platform: windows
-      - name: CCareerGame_m_profileWriter
+      - name: CCareerGame_m_writer
         category: structmember
         struct: CCareerGame
-        member: m_profileWriter
+        member: m_writer
         platform: windows
       - name: BufferWriter_m_overflow
         category: structmember
@@ -3389,15 +3389,15 @@ modules:
         struct: CCareerGame
         member: m_needAutosave
         platform: windows
-      - name: CCareerNewProfileBox_m_pNameEntry
+      - name: CCareerNewProfileBox_m_pEntry
         category: structmember
         struct: CCareerNewProfileBox
-        member: m_pNameEntry
+        member: m_pEntry
         platform: windows
-      - name: vgui2_TextEntry_m_textLength
+      - name: vgui2_TextEntry_m_TextStream_m_Size
         category: structmember
         struct: vgui2::TextEntry
-        member: m_textLength
+        member: m_TextStream.m_Size
         platform: windows
       - name: CCareerGame_CreateProfileBuffer
         category: func
