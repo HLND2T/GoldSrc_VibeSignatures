@@ -1,3 +1,9 @@
+---
+title: ASExtHook server functions
+type: note
+permalink: goldsrc-vibesignatures/locators/asexthook-server-functions
+---
+
 # ASExtHook server functions — Issue #395
 
 ## 范围与定位证据
