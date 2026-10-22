@@ -4146,6 +4146,19 @@ modules:
     depot_windows: svencoop/dlls/server.dll
     depot_linux: svencoop/dlls/server.so
     skills:
+      - name: find-asexthook-server-functions
+        expected_output:
+          - GrappleGetMonsterType.{platform}.yaml
+          - ApacheTraceAttack.{platform}.yaml
+          - OspreyTraceAttack.{platform}.yaml
+          - TurretTraceAttack.{platform}.yaml
+          - BreakableTraceAttack.{platform}.yaml
+          - BreakableTakeDamage.{platform}.yaml
+          - BreakableKilled.{platform}.yaml
+          - BaseMonsterTraceAttack.{platform}.yaml
+          - PlayerPostTakeDamage.{platform}.yaml
+          - PlayerTakeHealth.{platform}.yaml
+          - IRelationship.{platform}.yaml
       - name: find-CScriptDictionary-registration
         expected_output_windows:
           - RegisterScriptDictionary.windows.yaml
@@ -4338,6 +4351,28 @@ modules:
         expected_output:
           - PM_PlaySoundFX_SERVER.linux.yaml
     symbols:
+      - name: GrappleGetMonsterType
+        category: func
+      - name: ApacheTraceAttack
+        category: func
+      - name: OspreyTraceAttack
+        category: func
+      - name: TurretTraceAttack
+        category: func
+      - name: BreakableTraceAttack
+        category: func
+      - name: BreakableTakeDamage
+        category: func
+      - name: BreakableKilled
+        category: func
+      - name: BaseMonsterTraceAttack
+        category: func
+      - name: PlayerPostTakeDamage
+        category: func
+      - name: PlayerTakeHealth
+        category: func
+      - name: IRelationship
+        category: func
       - name: RegisterScriptDictionary
         category: func
         platform: windows

@@ -1,0 +1,5 @@
+func_name: PlayerPostTakeDamage
+func_va: '0x10213380'
+func_rva: '0x213380'
+func_size: '0x656'
+func_sig: 83 EC 20 0F 57 C9 53 55 56 8B F1 57 8B 46 ?? F3 0F 10 80 ?? ?? ?? ?? 0F 2E C1 9F F6 C4 44

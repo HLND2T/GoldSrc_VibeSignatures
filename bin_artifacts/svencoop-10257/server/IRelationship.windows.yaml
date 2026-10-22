@@ -1,0 +1,5 @@
+func_name: IRelationship
+func_va: '0x101c89a0'
+func_rva: '0x1c89a0'
+func_size: '0x85'
+func_sig: 53 56 8B 74 24 ?? 57 8B F9 85 F6 74 ?? 8B 46 ?? 8B 80 ?? ?? ?? ?? C1 E8 07 A8 01 74 ?? 80 7C 24 ?? ??
