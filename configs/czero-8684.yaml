@@ -9,6 +9,11 @@ modules:
     depot_windows: czero/cl_dlls/client.dll
     depot_linux: czero/cl_dlls/client.so
     skills:
+      - name: find-CCSCareerRoundEndMenu_OnCommand
+        expected_input:
+          - CCSCareerRoundEndMenu_vtable.{platform}.yaml
+        expected_output:
+          - CCSCareerRoundEndMenu_OnCommand.{platform}.yaml
       - name: find-client-frame-keys
         expected_output:
           - vgui2_Frame_OnKeyCodePressed.{platform}.yaml
@@ -166,6 +171,8 @@ modules:
           - CCSBackGroundPanel_YOffset.{platform}.yaml
           - ISurface_GetScreenSize.{platform}.yaml
     symbols:
+      - name: CCSCareerRoundEndMenu_OnCommand
+        category: vfunc
       - name: CCSCareerRoundEndMenu_vtable
         category: vtable
       - name: vgui2_Frame_OnKeyCodePressed
