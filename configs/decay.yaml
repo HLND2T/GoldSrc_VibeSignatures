@@ -1,0 +1,88 @@
+# Half-Life: Decay (ModDB), supplied for MetaHookSv issue 947.
+# client.dll SHA-256: 95255c217d94ce6bc237680ed478ad57c216cd50a9c744dc34ebde08ce2a4795
+modules:
+  - name: client
+    module_windows: client.dll
+    alias_windows:
+      - client_orig.dll
+      - client_original.dll
+      - client_org.dll
+    skills:
+      - name: find-IN_Accumulate
+        expected_output:
+          - IN_Accumulate.{platform}.yaml
+      - name: find-client-mouse-guards
+        expected_input:
+          - IN_Accumulate.{platform}.yaml
+        expected_output:
+          - iMouseInUse.{platform}.yaml
+          - g_iVisibleMouse.{platform}.yaml
+      - name: find-CL_IsThirdPerson-decompiles
+        expected_input:
+          - CL_IsThirdPerson.{platform}.yaml
+        expected_output:
+          - g_iUser1.{platform}.yaml
+          - g_iUser2.{platform}.yaml
+      - name: find-GameStudioRenderer_StudioDrawModel-decompiles
+        expected_input:
+          - GameStudioRenderer_StudioDrawModel.{platform}.yaml
+          - GameStudioRenderer_vtable.{platform}.yaml
+        expected_output:
+          - GameStudioRenderer_StudioDrawPlayer.{platform}.yaml
+          - GameStudioRenderer_StudioSetupBones.{platform}.yaml
+          - GameStudioRenderer_StudioCalcAttachments.{platform}.yaml
+          - GameStudioRenderer_StudioSaveBones.{platform}.yaml
+          - GameStudioRenderer_StudioMergeBones.{platform}.yaml
+          - GameStudioRenderer_StudioRenderModel.{platform}.yaml
+      - name: find-GameStudioRenderer_StudioRenderModel-decompiles
+        expected_input:
+          - GameStudioRenderer_StudioRenderModel.{platform}.yaml
+          - GameStudioRenderer_vtable.{platform}.yaml
+        expected_output:
+          - GameStudioRenderer_StudioRenderFinal.{platform}.yaml
+      - name: find-client-studio-interface
+        expected_input:
+          - HUD_GetStudioModelInterface.{platform}.yaml
+        expected_output:
+          - GameStudioRenderer_vtable.{platform}.yaml
+          - GameStudioRenderer_StudioDrawModel.{platform}.yaml
+          - g_pGameStudioRenderer.{platform}.yaml
+      - name: find-client-private-predecessors
+        expected_output:
+          - HUD_GetStudioModelInterface.{platform}.yaml
+          - CL_IsThirdPerson.{platform}.yaml
+    symbols:
+      - name: IN_Accumulate
+        category: func
+      - name: iMouseInUse
+        category: gv
+      - name: g_iVisibleMouse
+        category: gv
+      - name: GameStudioRenderer_StudioSetupBones
+        category: vfunc
+      - name: GameStudioRenderer_StudioSaveBones
+        category: vfunc
+      - name: GameStudioRenderer_StudioMergeBones
+        category: vfunc
+      - name: GameStudioRenderer_StudioRenderModel
+        category: vfunc
+      - name: GameStudioRenderer_StudioRenderFinal
+        category: vfunc
+      - name: GameStudioRenderer_StudioCalcAttachments
+        category: vfunc
+      - name: GameStudioRenderer_vtable
+        category: vtable
+      - name: GameStudioRenderer_StudioDrawModel
+        category: vfunc
+      - name: GameStudioRenderer_StudioDrawPlayer
+        category: vfunc
+      - name: g_pGameStudioRenderer
+        category: gv
+      - name: g_iUser1
+        category: gv
+      - name: g_iUser2
+        category: gv
+      - name: HUD_GetStudioModelInterface
+        category: func
+      - name: CL_IsThirdPerson
+        category: func

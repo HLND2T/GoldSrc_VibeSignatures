@@ -1,0 +1,37 @@
+func_name: "CL_IsThirdPerson"
+func_va: "0x1001e6c0"
+disasm_code: |-
+  .text:1001E6C0                 ; ; Exported entry 475. CL_IsThirdPerson
+  .text:1001E6C0                 push    ebp
+  .text:1001E6C1                 mov     ebp, esp
+  .text:1001E6C3                 sub     esp, 44h
+  .text:1001E6C6                 push    ebx
+  .text:1001E6C7                 push    esi
+  .text:1001E6C8                 push    edi
+  .text:1001E6C9                 xor     eax, eax
+  .text:1001E6CB                 cmp     cam_thirdperson, 0
+  .text:1001E6D2                 setnz   al
+  .text:1001E6D5                 test    eax, eax
+  .text:1001E6D7                 jnz     short loc_1001E6FB
+  .text:1001E6D9                 cmp     g_iUser1, 0
+  .text:1001E6E0                 jz      short loc_1001E6F2
+  .text:1001E6E2                 ; gEngfuncs.GetLocalPlayer; official HL source matches this Decay predicate; cl_entity_t prefix only.
+  .text:1001E6E2                 call    pfnGetLocalPlayer; gEngfuncs.GetLocalPlayer; official HL source matches this Decay predicate; cl_entity_t prefix only.
+  .text:1001E6E8                 mov     ecx, g_iUser2
+  .text:1001E6EE                 cmp     ecx, [eax]
+  .text:1001E6F0                 jz      short loc_1001E6FB
+  .text:1001E6F2                 mov     [ebp+var_44], 0
+  .text:1001E6F9                 jmp     short loc_1001E702
+  .text:1001E6FB                 mov     [ebp+var_44], 1
+  .text:1001E702                 mov     eax, [ebp+var_44]
+  .text:1001E705                 pop     edi
+  .text:1001E706                 pop     esi
+  .text:1001E707                 pop     ebx
+  .text:1001E708                 mov     esp, ebp
+  .text:1001E70A                 pop     ebp
+  .text:1001E70B                 retn
+procedure: |-
+  int __cdecl CL_IsThirdPerson()
+  {
+    return cam_thirdperson || g_iUser1 && g_iUser2 == pfnGetLocalPlayer()->index;
+  }

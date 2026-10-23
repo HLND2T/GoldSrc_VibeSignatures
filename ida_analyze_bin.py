@@ -41,6 +41,7 @@ from analysis_batch import (
 )
 from analysis_config import (
     AnalysisConfigError,
+    UNVERSIONED_MOD_TAGS,
     iter_analysis_config_tags,
     resolve_analysis_config,
     validated_tag,
@@ -1418,6 +1419,8 @@ def _split_gamever(gamever: str) -> tuple[str, int]:
 
 
 def resolve_oldgamever(gamever: str, bin_dir: str | Path) -> str | None:
+    if validated_tag(gamever) in UNVERSIONED_MOD_TAGS:
+        return None
     family, current_build = _split_gamever(gamever)
     root = Path(bin_dir)
     try:
@@ -2818,6 +2821,8 @@ def parse_args(argv=None):
             if args.oldgamever.casefold() == "none":
                 args.oldgamever = None
             else:
+                if gamever in UNVERSIONED_MOD_TAGS:
+                    parser.error("-oldgamever requires a versioned -gamever")
                 try:
                     old_family, _old_build = _split_gamever(args.oldgamever)
                 except (AnalysisConfigError, ValueError) as exc:
