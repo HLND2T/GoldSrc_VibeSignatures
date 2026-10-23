@@ -1,0 +1,182 @@
+[
+  {
+    "tag": "cstrike-3248",
+    "platform": "windows",
+    "sha256": "2bc13327c5324a79872d36508d80db7c9ef74af925d50ebc9d1b45b6aef6ef7b",
+    "va": "0x1926720",
+    "rva": "0x26720",
+    "ap": "0x19c39ac",
+    "index": 87,
+    "offset": "0x15c",
+    "thunk": false,
+    "abi": "x86 thiscall: ECX=this, stack command, ret 4"
+  },
+  {
+    "tag": "cstrike-3647",
+    "platform": "windows",
+    "sha256": "2bc13327c5324a79872d36508d80db7c9ef74af925d50ebc9d1b45b6aef6ef7b",
+    "va": "0x1926720",
+    "rva": "0x26720",
+    "ap": "0x19c39ac",
+    "index": 87,
+    "offset": "0x15c",
+    "thunk": false,
+    "abi": "x86 thiscall: ECX=this, stack command, ret 4"
+  },
+  {
+    "tag": "cstrike-4554",
+    "platform": "windows",
+    "sha256": "733d4b48a64991d2cd2a60c20d99f72b6533cc401c47f97cc0e6073bd482b6dc",
+    "va": "0x19277e0",
+    "rva": "0x277e0",
+    "ap": "0x19c99c0",
+    "index": 87,
+    "offset": "0x15c",
+    "thunk": false,
+    "abi": "x86 thiscall: ECX=this, stack command, ret 4"
+  },
+  {
+    "tag": "cstrike-6153",
+    "platform": "windows",
+    "sha256": "221f4c8f8eb6348f90c72c11c252fcf0024d3b3032e503cfab80b3f4c5bee841",
+    "va": "0x1926430",
+    "rva": "0x26430",
+    "ap": "0x19c9a0c",
+    "index": 87,
+    "offset": "0x15c",
+    "thunk": false,
+    "abi": "x86 thiscall: ECX=this, stack command, ret 4"
+  },
+  {
+    "tag": "cstrike-6153",
+    "platform": "linux",
+    "sha256": "0d379680b7545ed352a696539a8049432651edb7056efbf2ce8354347d0feded",
+    "va": "0xdc1a0",
+    "rva": "0xdc1a0",
+    "ap": "0x1c0748",
+    "index": 88,
+    "offset": "0x160",
+    "thunk": false,
+    "abi": "i386 SysV/cdecl: stack this and command, ret"
+  },
+  {
+    "tag": "cstrike-8684",
+    "platform": "windows",
+    "sha256": "ef7a0f40989cb79ba95d40f528534da36866892ee871147ca82e133b7a5edc3d",
+    "va": "0x19264c0",
+    "rva": "0x264c0",
+    "ap": "0x19caa0c",
+    "index": 87,
+    "offset": "0x15c",
+    "thunk": false,
+    "abi": "x86 thiscall: ECX=this, stack command, ret 4"
+  },
+  {
+    "tag": "cstrike-8684",
+    "platform": "linux",
+    "sha256": "40283f3e0c4b6bd21f9281304957ab93c04c60ce5f3d2794cdaf58b3c11ab798",
+    "va": "0xdb3c0",
+    "rva": "0xdb3c0",
+    "ap": "0x1bfc68",
+    "index": 88,
+    "offset": "0x160",
+    "thunk": false,
+    "abi": "i386 SysV/cdecl: stack this and command, ret"
+  },
+  {
+    "tag": "cstrike-10210",
+    "platform": "windows",
+    "sha256": "b434b1c09b10b011be6c42e4154955da0c3ca46e95746988ebea1aa316a2a9f2",
+    "va": "0x1002cbc0",
+    "rva": "0x2cbc0",
+    "ap": "0x100c8c8c",
+    "index": 87,
+    "offset": "0x15c",
+    "thunk": false,
+    "abi": "x86 thiscall: ECX=this, stack command, ret 4"
+  },
+  {
+    "tag": "cstrike-10210",
+    "platform": "linux",
+    "sha256": "2e799ef31931c0f4372ff31ad30f0aab529b16461ed3b0928dfbd958183b2e5a",
+    "va": "0x840c0",
+    "rva": "0x840c0",
+    "ap": "0x17fbc0",
+    "index": 88,
+    "offset": "0x160",
+    "thunk": false,
+    "abi": "i386 SysV/cdecl: stack this and command, ret"
+  },
+  {
+    "tag": "czero-8684",
+    "platform": "windows",
+    "sha256": "b017e06a5551f3db8c7c817b72a65433362d8b3c8394edb02cac919528e3f73c",
+    "va": "0x19264c0",
+    "rva": "0x264c0",
+    "ap": "0x19caa0c",
+    "index": 87,
+    "offset": "0x15c",
+    "thunk": false,
+    "abi": "x86 thiscall: ECX=this, stack command, ret 4"
+  },
+  {
+    "tag": "czero-8684",
+    "platform": "linux",
+    "sha256": "40283f3e0c4b6bd21f9281304957ab93c04c60ce5f3d2794cdaf58b3c11ab798",
+    "va": "0xdb3c0",
+    "rva": "0xdb3c0",
+    "ap": "0x1bfc68",
+    "index": 88,
+    "offset": "0x160",
+    "thunk": false,
+    "abi": "i386 SysV/cdecl: stack this and command, ret"
+  },
+  {
+    "tag": "czero-10210",
+    "platform": "windows",
+    "sha256": "b434b1c09b10b011be6c42e4154955da0c3ca46e95746988ebea1aa316a2a9f2",
+    "va": "0x1002cbc0",
+    "rva": "0x2cbc0",
+    "ap": "0x100c8c8c",
+    "index": 87,
+    "offset": "0x15c",
+    "thunk": false,
+    "abi": "x86 thiscall: ECX=this, stack command, ret 4"
+  },
+  {
+    "tag": "czero-10210",
+    "platform": "linux",
+    "sha256": "2e799ef31931c0f4372ff31ad30f0aab529b16461ed3b0928dfbd958183b2e5a",
+    "va": "0x840c0",
+    "rva": "0x840c0",
+    "ap": "0x17fbc0",
+    "index": 88,
+    "offset": "0x160",
+    "thunk": false,
+    "abi": "i386 SysV/cdecl: stack this and command, ret"
+  },
+  {
+    "tag": "czeror-8684",
+    "platform": "windows",
+    "sha256": "e28ef031c1810a913227fbdf8075a367a60165d209b8071a94020a448ff76286",
+    "status": "class absent"
+  },
+  {
+    "tag": "czeror-8684",
+    "platform": "linux",
+    "sha256": "515bf1bc95ae8ec161cb99a2d25f53efe0744375dde85879b567710074844971",
+    "status": "class absent"
+  },
+  {
+    "tag": "czeror-10210",
+    "platform": "windows",
+    "sha256": "7eccfa2fd50e391dfeca4ada44110b5e6336523f9d5dd1433f043a0daecbb584",
+    "status": "class absent"
+  },
+  {
+    "tag": "czeror-10210",
+    "platform": "linux",
+    "sha256": "37933b1a6afa92c584b4a0b01cc93401317c288bce0eee268d45035ce5ab9890",
+    "status": "class absent"
+  }
+]
