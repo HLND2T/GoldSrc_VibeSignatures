@@ -51,7 +51,7 @@ class ReleaseBundleTests(unittest.TestCase):
         records = [*document["assets"], release_bundle._asset_record(bundle, manifest_path.name)]
         (bundle / f"SHA256SUMS-{version}.txt").write_bytes(release_bundle._checksum_bytes(records))
 
-    def fixture(self, root: Path):
+    def fixture(self, root: Path, *, tag: str = "game-1"):
         repo = root / "repo"
         repo.mkdir()
         subprocess.run(["git", "init", "-q", str(repo)], check=True)
@@ -60,17 +60,17 @@ class ReleaseBundleTests(unittest.TestCase):
         subprocess.run(["git", "-C", str(repo), "config", "user.name", "Test"], check=True)
         configs = repo / "configs"
         configs.mkdir()
-        (configs / "config.yaml").write_text("gamevers:\n  - game-1\n", encoding="utf-8")
+        (configs / "config.yaml").write_text(f"gamevers:\n  - {tag}\n", encoding="utf-8")
         config = write_config(
-            configs / "game-1.yaml",
+            configs / f"{tag}.yaml",
             skill={"name": "find", "expected_output": ["Demo.windows.yaml"]},
             symbols=[{"name": "Demo", "category": "func", "platform": "windows"}],
             both_platforms=False,
         )
-        artifact = repo / "bin_artifacts" / "game-1" / "engine" / "Demo.windows.yaml"
+        artifact = repo / "bin_artifacts" / tag / "engine" / "Demo.windows.yaml"
         artifact.parent.mkdir(parents=True)
         artifact.write_bytes(canonical_symbol_yaml_bytes({"func_name": "Demo", "func_va": "0x10"}))
-        binary = repo / "bin" / "game-1" / "engine" / "hw.dll"
+        binary = repo / "bin" / tag / "engine" / "hw.dll"
         write_pe32(binary)
 
         subprocess.run(["git", "-C", str(repo / "bin"), "init", "-q"], check=True)
@@ -91,9 +91,9 @@ class ReleaseBundleTests(unittest.TestCase):
         generated = root / "generated"
         gamesymbols = generated / "gamesymbols"
         gamesymbols.mkdir(parents=True)
-        snapshot = gamesymbols / "game-1.yaml"
+        snapshot = gamesymbols / f"{tag}.yaml"
         pack_snapshot(
-            "game-1",
+            tag,
             repo / "bin",
             config,
             snapshot,
@@ -103,14 +103,14 @@ class ReleaseBundleTests(unittest.TestCase):
         write_metadata(
             snapshot_path=snapshot,
             config_path=config,
-            game_version="game-1",
-            output_path=gamesymbols / "game-1.metadata.yaml",
+            game_version=tag,
+            output_path=gamesymbols / f"{tag}.metadata.yaml",
         )
         gamesymbols_json = generated / "gamesymbols-json"
         gamesymbols_json.mkdir()
-        dataset = encode_dataset(snapshot.read_bytes(), (gamesymbols / "game-1.metadata.yaml").read_bytes(), "game-1")
+        dataset = encode_dataset(snapshot.read_bytes(), (gamesymbols / f"{tag}.metadata.yaml").read_bytes(), tag)
         raw = canonical_json_bytes(dataset)
-        (gamesymbols_json / f"game-1.{sha256_bytes(raw)}.json").write_bytes(raw)
+        (gamesymbols_json / f"{tag}.{sha256_bytes(raw)}.json").write_bytes(raw)
         evidence = generated / "evidence"
         evidence.mkdir()
         (evidence / "ida-runtime.json").write_bytes(
@@ -125,7 +125,7 @@ class ReleaseBundleTests(unittest.TestCase):
                     "bin_commit": bin_commit,
                     "entries": [
                         {
-                            "tag": "game-1",
+                            "tag": tag,
                             "platform": "windows",
                             "cache_key": "a" * 64,
                             "generation": "generation-1",

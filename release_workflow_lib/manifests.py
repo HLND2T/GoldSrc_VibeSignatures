@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import re
 
+from analysis_config import TAG_RE as GAMEVER_RE
 from release_workflow_lib.errors import ReleaseWorkflowError
 from release_workflow_lib.hashing import SHA256_PATTERN
 
-GAMEVER_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*-[0-9]+$")
 VERSION_RE = re.compile(r"^v[0-9]{8}[a-z]?\Z")
 SHA_RE = re.compile(r"^[0-9a-fA-F]{40}$")
 

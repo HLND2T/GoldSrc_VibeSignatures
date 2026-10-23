@@ -16,12 +16,12 @@ import re
 from functools import cmp_to_key
 from pathlib import Path
 
+from analysis_config import TAG_RE as GAME_VERSION_PATTERN
 from gamesymbol_snapshot_lib.candidate_session import CandidateContractError, absolute_path, ensure_real_path
 from gamesymbol_snapshot_lib.codec import parse_snapshot_bytes
 from gamesymbol_snapshot_lib.metadata import parse_metadata_bytes
 from release_workflow_lib.hashing import canonical_json_bytes, sha256_bytes, sha256_file, write_canonical_json
 
-GAME_VERSION_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*-[0-9]+$")
 SYMBOL_PATH_PATTERN = re.compile(r"^([^/]+)/([^/]+)\.(windows|linux)\.yaml$")
 SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 PLATFORMS = ("windows", "linux")
@@ -200,8 +200,8 @@ def _attach_aliases(dataset: dict, metadata: dict, expected_game_version: str) -
 def _parse_builds(value: str) -> tuple[str, str]:
     if not GAME_VERSION_PATTERN.fullmatch(value):
         raise GamesymbolsJsonError(f"Invalid GoldSrc game version: {value}")
-    separator = value.rindex("-")
-    return value[:separator], value[separator + 1 :]
+    family, separator, build = value.rpartition("-")
+    return (family, build) if separator else (value, "")
 
 
 def _compare_builds_descending(left: str, right: str) -> int:

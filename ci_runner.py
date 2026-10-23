@@ -20,6 +20,7 @@ from pathlib import Path
 import yaml
 
 import ci_s3_cache
+from analysis_config import TAG_RE
 from release_workflow_lib.hashing import sha256_file, write_canonical_json
 
 MAX_TAIL_CONCURRENCY = 32
@@ -569,9 +570,7 @@ def gamevers():
     if (
         not isinstance(versions, list)
         or not versions
-        or any(
-            not isinstance(tag, str) or not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*-[0-9]+", tag) for tag in versions
-        )
+        or any(not isinstance(tag, str) or not TAG_RE.fullmatch(tag) for tag in versions)
     ):
         raise ValueError("configs/config.yaml contains invalid game versions")
     return versions

@@ -194,17 +194,23 @@ class EncoderTests(unittest.TestCase):
     def test_encode_index_sorts_family_ascending_build_descending(self):
         datasets = [
             {"schemaVersion": 4, "source": self._source(gamever), "binaries": {}, "modules": [], "records": []}
-            for gamever in ("svencoop-9999", "hl-3647", "svencoop-10257", "hl-4554", "cstrike-10210")
+            for gamever in ("svencoop-9999", "decay", "hl-3647", "svencoop-10257", "hl-4554", "cstrike-10210")
         ]
         index = encode_index(datasets)
         self.assertEqual(4, index["schemaVersion"])
         self.assertEqual(
-            ["cstrike-10210", "hl-4554", "hl-3647", "svencoop-10257", "svencoop-9999"],
+            ["cstrike-10210", "decay", "hl-4554", "hl-3647", "svencoop-10257", "svencoop-9999"],
             [entry["gameVersion"] for entry in index["versions"]],
         )
         for entry in index["versions"]:
             self.assertEqual(entry["url"], f"{entry['gameVersion']}.{entry['sha256']}.json")
             self.assertEqual(64, len(entry["sha256"]))
+
+    def test_encode_index_rejects_unsupported_and_unsafe_tags(self):
+        for tag in ("unknown", "../decay", "Decay", "decay\n"):
+            datasets = [{"source": self._source(gamever)} for gamever in ("hl-10210", tag)]
+            with self.subTest(tag=tag), self.assertRaises(GamesymbolsJsonError):
+                encode_index(datasets)
 
     @staticmethod
     def _source(gamever: str) -> dict:

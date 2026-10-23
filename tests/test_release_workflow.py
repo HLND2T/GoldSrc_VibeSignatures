@@ -10,12 +10,13 @@ class ReleaseIdentifierTests(unittest.TestCase):
     def test_version_gamever_and_digest_validators(self):
         self.assertEqual("v20260825a", require_version("v20260825a"))
         self.assertEqual("hl-10210", require_gamever("hl-10210"))
+        self.assertEqual("decay", require_gamever("decay"))
         self.assertEqual("a" * 40, require_sha("A" * 40))
         self.assertEqual("b" * 64, require_sha256("b" * 64, "digest"))
         for bad in ("20260825a", "v2026082", "v20260825ab"):
             with self.subTest(bad=bad), self.assertRaises(ReleaseWorkflowError):
                 require_version(bad)
-        for bad in ("10210", "HL-10210", "hl-", "hl-10210-extra"):
+        for bad in ("10210", "HL-10210", "hl-", "hl-10210-extra", "unknown", "../decay", "decay\n", None, 123):
             with self.subTest(bad=bad), self.assertRaises(ReleaseWorkflowError):
                 require_gamever(bad)
         with self.assertRaises(ReleaseWorkflowError):

@@ -13,14 +13,33 @@ import ci_runner as ci
 
 
 class CiRunnerTests(unittest.TestCase):
+    def test_gamevers_accepts_supported_unversioned_mod_in_declared_order(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "configs").mkdir()
+            (root / "configs/config.yaml").write_text(
+                "gamevers:\n  - hl-10210\n  - decay\n  - cof-5936\n", encoding="utf-8"
+            )
+            with patch.dict(os.environ, GITHUB_WORKSPACE=str(root)):
+                self.assertEqual(["hl-10210", "decay", "cof-5936"], ci.gamevers())
+
+    def test_gamevers_rejects_unsupported_and_unsafe_tags(self):
+        for value in ("unknown", "../decay", "decay/../hl-10210", "Decay", "decay\n", "", 123, None):
+            with self.subTest(value=value), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                (root / "configs").mkdir()
+                (root / "configs/config.yaml").write_text(json.dumps({"gamevers": [value]}), encoding="utf-8")
+                with patch.dict(os.environ, GITHUB_WORKSPACE=str(root)), self.assertRaises(ValueError):
+                    ci.gamevers()
+
     def test_release_tracked_and_rebuild_use_real_cli_and_keep_manifest_contract(self):
         from tests.test_release_bundle import ReleaseBundleTests
 
         source = Path(ci.__file__).parent
-        for mode in ("tracked", "rebuild"):
-            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as temporary:
+        for mode, tag in (("tracked", "game-1"), ("rebuild", "game-1"), ("tracked", "decay"), ("rebuild", "decay")):
+            with self.subTest(mode=mode, tag=tag), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary)
-                repo, generated, sha = ReleaseBundleTests().fixture(root)
+                repo, generated, sha = ReleaseBundleTests().fixture(root, tag=tag)
                 runner_temp = root / "runner-temp"
                 runner_temp.mkdir()
                 bundle = runner_temp / "idb-cache-selection"
