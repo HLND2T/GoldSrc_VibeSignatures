@@ -1,0 +1,9 @@
+func_name: vgui2::Frame::OnKeyCodeTyped(vgui2::KeyCode)
+func_va: '0x1006c900'
+func_rva: '0x6c900'
+func_size: '0x2c8'
+func_sig: 55 8B EC 6A FF 68 ?? ?? ?? ?? 64 A1 ?? ?? ?? ?? 50 51 53 56 57 A1 ?? ?? ?? ?? 33 C5 50 8D 45 ?? 64 A3 ?? ?? ?? ??
+  8B D9 E8 B3 C1 FF FF
+vtable_name: vgui2::Frame
+vfunc_offset: '0x194'
+vfunc_index: 101

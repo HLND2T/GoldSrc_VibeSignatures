@@ -50,6 +50,7 @@ GROUP_FILES = {
         "test_panel_bounds_identity.py",
         "test_x86_first_pass.py",
         "test_vgui_private_method_identity.py",
+        "test_frame_key_identity.py",
         "test_combobox_unicode_identity.py",
         "test_teammenu_identity.py",
         "test_richtext_identity.py",
