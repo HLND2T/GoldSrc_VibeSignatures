@@ -4,11 +4,11 @@ import os
 import re
 from pathlib import Path, PurePosixPath, PureWindowsPath
 
-from analysis_config import validated_tag
+from analysis_config import TAG_PATTERN, validated_tag
 from gamesymbol_snapshot_lib.errors import SnapshotConfigError, SnapshotSchemaError
 
-SNAPSHOT_FILENAME_RE = re.compile(r"^(?P<tag>[a-z0-9]+(?:-[a-z0-9]+)*-[0-9]+)\.yaml$")
-METADATA_FILENAME_RE = re.compile(r"^(?P<tag>[a-z0-9]+(?:-[a-z0-9]+)*-[0-9]+)\.metadata\.yaml$")
+SNAPSHOT_FILENAME_RE = re.compile(rf"^(?P<tag>{TAG_PATTERN})\.yaml$")
+METADATA_FILENAME_RE = re.compile(rf"^(?P<tag>{TAG_PATTERN})\.metadata\.yaml$")
 
 
 def snapshot_tag_from_filename(filename: str) -> str | None:

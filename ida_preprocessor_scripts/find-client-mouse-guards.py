@@ -39,7 +39,9 @@ def operand_size(op):
 
 
 def early_return(ea):
-    for _ in range(5):
+    # Frame-pointer builds restore edi/esi/ebx, esp and ebp before the ret.
+    max_epilogue_instructions = 8
+    for _ in range(max_epilogue_instructions):
         mnemonic = (idc.print_insn_mnem(ea) or '').lower()
         if mnemonic in ('ret', 'retn'):
             return True

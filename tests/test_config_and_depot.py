@@ -23,6 +23,21 @@ class TagAndConfigTests(unittest.TestCase):
         self.assertEqual("cstrike-10210", validated_tag("cstrike-10210"))
         self.assertEqual("game-mod-123", validated_tag("game-mod-123"))
 
+    def test_accepts_decay_mod_tag_without_a_build_number(self):
+        self.assertEqual("decay", validated_tag("decay"))
+
+    def test_snapshot_filenames_use_the_shared_tag_contract(self):
+        from gamesymbol_snapshot_lib.paths import metadata_tag_from_filename, snapshot_tag_from_filename
+
+        for tag in ("decay", "hl-10210"):
+            with self.subTest(tag=tag):
+                self.assertEqual(tag, snapshot_tag_from_filename(f"{tag}.yaml"))
+                self.assertEqual(tag, metadata_tag_from_filename(f"{tag}.metadata.yaml"))
+        for tag in ("cstrike", "../decay", "Decay", "decay-latest"):
+            with self.subTest(tag=tag):
+                self.assertIsNone(snapshot_tag_from_filename(f"{tag}.yaml"))
+                self.assertIsNone(metadata_tag_from_filename(f"{tag}.metadata.yaml"))
+
     def test_rejects_unsafe_or_unversioned_tags(self):
         for value in ("cstrike", "CStrike-1", "../game-1", "game-latest", "game_1"):
             with self.subTest(value=value), self.assertRaises(AnalysisConfigError):

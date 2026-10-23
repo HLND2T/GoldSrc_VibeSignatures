@@ -1,0 +1,9 @@
+func_name: GameStudioRenderer_StudioRenderModel
+func_va: '0x100327c0'
+func_rva: '0x327c0'
+func_size: '0xc8'
+vtable_name: GameStudioRenderer
+vfunc_offset: '0x48'
+vfunc_index: 18
+vfunc_sig: 55 8B EC 83 EC 44 53 56 57 89 4D ?? FF 15 ?? ?? ?? ?? 6A 00 FF 15 ?? ?? ?? ?? 83 C4 04 8B 45 ?? 8B 48 ??
+vfunc_sig_allow_across_function_boundary: true

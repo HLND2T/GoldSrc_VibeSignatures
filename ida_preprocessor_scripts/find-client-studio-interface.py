@@ -212,6 +212,8 @@ def constructor_tables(object_access, obj):
     frame_delta = None
     tables = set()
     addresses = {}
+    # Unoptimized MSVC constructors spill this to a frame local across calls.
+    frame_this_aliases = set()
     for cursor in linear_body(target):
         insn = idautils.DecodeInstruction(cursor)
         if not insn:
@@ -227,6 +229,10 @@ def constructor_tables(object_access, obj):
         dest_name = idc.print_operand(cursor, 0).lower()
         source_name = idc.print_operand(cursor, 1).lower()
         if mnemonic == 'mov':
+            if dest.type == ida_ua.o_displ and '[ebp' in dest_name:
+                frame_this_aliases.discard(dest_name)
+                if source.type == ida_ua.o_reg and source_name in aliases:
+                    frame_this_aliases.add(dest_name)
             if dest.type in (ida_ua.o_phrase, ida_ua.o_displ) and dest.addr == 0 and source.type == ida_ua.o_reg:
                 operand = dest_name.replace('dword ptr ', '')
                 if operand in {'[' + register + ']' for register in aliases}:
@@ -238,6 +244,8 @@ def constructor_tables(object_access, obj):
             if dest.type == ida_ua.o_reg:
                 addresses[dest_name] = expand(refs(cursor)) if source.type != ida_ua.o_reg else addresses.get(source_name, set())
                 source_is_this = source.type == ida_ua.o_reg and source_name in aliases
+                if source.type == ida_ua.o_displ and source_name in frame_this_aliases:
+                    source_is_this = True
                 if stack_this and source.type == ida_ua.o_displ:
                     if '[esp' in source_name and int(source.addr) == 4 - stack_delta:
                         source_is_this = True

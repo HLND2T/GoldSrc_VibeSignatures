@@ -8,7 +8,10 @@ from pathlib import Path
 
 import yaml
 
-TAG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*-[0-9]+$", re.ASCII)
+# Standalone mod inputs without a declared engine build use explicit identities.
+UNVERSIONED_MOD_TAGS = frozenset({"decay"})
+TAG_PATTERN = r"[a-z0-9]+(?:-[a-z0-9]+)*-[0-9]+|" + "|".join(re.escape(tag) for tag in sorted(UNVERSIONED_MOD_TAGS))
+TAG_RE = re.compile(rf"^(?:{TAG_PATTERN})$", re.ASCII)
 REPO_ROOT = Path(__file__).resolve().parent
 FAMILY_REFERENCE_GAMEVERS = {"svencoop": "svencoop-10257"}
 
@@ -21,7 +24,8 @@ def validated_tag(tag: str) -> str:
     value = str(tag)
     if not TAG_RE.fullmatch(value):
         raise AnalysisConfigError(
-            f"Invalid tag {tag!r}; expected lowercase game and numeric version segments separated by hyphens"
+            f"Invalid tag {tag!r}; expected lowercase game and numeric version segments separated by hyphens "
+            "or an explicitly supported unversioned mod"
         )
     return value
 

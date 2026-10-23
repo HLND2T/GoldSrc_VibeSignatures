@@ -580,6 +580,15 @@ class CliContractTests(unittest.TestCase):
                 ]
             )
 
+    def test_unversioned_mod_has_no_automatic_history(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "decay-2008").mkdir()
+            self.assertIsNone(resolve_oldgamever("decay", root))
+            args = self.parse_args(["-gamever", "decay", "-bindir", str(root)])
+            self.assertIsNone(args.oldgamever)
+            self.assert_parse_error(["-gamever", "decay", "-oldgamever", "decay-2008"])
+
     def test_major_update_flag_disables_auto_history_selection(self):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "download.yaml"

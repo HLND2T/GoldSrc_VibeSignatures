@@ -175,3 +175,7 @@ helper 必须显式使用并 fail closed；Source2 专用 dispatch 协议保持�
 Production finder 的覆盖范围与依赖链声明在 `configs/<GAMEVER>.yaml` 中。Config 是当前清单的唯一事实来源，
 Analyzer 根据其中的 input/output 构建执行 DAG。可复用的 finder 模式参见
 [创建符号分析 skill](creating-skills.md)。
+
+独立 Mod `decay` 使用显式允许的无版本 tag，输入位于 `bin/decay/`，不自动选择历史 build。
+`configs/decay.yaml` 覆盖 ModDB 原版 Windows 客户端的 17 个符号，用于 MetaHookSv issue #947；
+服务端 DLL 保留为二进制输入，目前未注册服务端分析节点。
