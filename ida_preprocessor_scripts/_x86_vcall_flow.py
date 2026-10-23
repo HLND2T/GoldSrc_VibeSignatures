@@ -221,6 +221,10 @@ def _transfer(block, incoming, platform, static_loads, collect=False):
 
     for insn in block["insns"]:
         ea, mnemonic, operands = insn["ea"], insn["mnem"], insn["ops"]
+        # GCC uses xchg ax, ax as alignment. Even a partial-register self
+        # exchange preserves the entire register and flags.
+        if mnemonic == "xchg" and len(operands) == 2 and operands[0] == operands[1] and operands[0][0] == "reg":
+            continue
         if mnemonic not in (
             "cmp",
             "test",

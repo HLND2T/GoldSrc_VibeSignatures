@@ -9,6 +9,10 @@ modules:
     depot_windows: czeror/cl_dlls/client.dll
     depot_linux: czeror/cl_dlls/client.so
     skills:
+      - name: find-client-frame-keys
+        expected_output:
+          - vgui2_Frame_OnKeyCodePressed.{platform}.yaml
+          - vgui2_Frame_OnKeyCodeTyped.{platform}.yaml
       - name: find-vgui2_Panel-size-callsites
         expected_input:
           - ClientVGUI_Panel_Init.{platform}.yaml
@@ -122,6 +126,10 @@ modules:
           - CWorldMapMissionSelect_PaintBackground.{platform}.yaml
           - ISurface_GetScreenSize.{platform}.yaml
     symbols:
+      - name: vgui2_Frame_OnKeyCodePressed
+        category: vfunc
+      - name: vgui2_Frame_OnKeyCodeTyped
+        category: vfunc
       - name: vgui2_Panel_SetMinimumSize_ScaledConst_callsite_0
         category: patch
       - name: __g_CZEROViewPort_singleton

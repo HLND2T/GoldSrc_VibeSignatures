@@ -9,6 +9,11 @@ modules:
     depot_windows: cstrike/cl_dlls/client.dll
     depot_linux: cstrike/cl_dlls/client.so
     skills:
+      - name: find-client-frame-keys
+        expected_output:
+          - vgui2_Frame_OnKeyCodePressed.{platform}.yaml
+          - vgui2_Frame_OnKeyCodeTyped.{platform}.yaml
+          - CCSCareerRoundEndMenu_vtable.{platform}.yaml
       - name: find-vgui2_Panel-size-callsites
         expected_input:
           - ClientVGUI_Panel_Init.{platform}.yaml
@@ -156,6 +161,12 @@ modules:
           - CCSBackGroundPanel_YOffset.{platform}.yaml
           - ISurface_GetScreenSize.{platform}.yaml
     symbols:
+      - name: CCSCareerRoundEndMenu_vtable
+        category: vtable
+      - name: vgui2_Frame_OnKeyCodePressed
+        category: vfunc
+      - name: vgui2_Frame_OnKeyCodeTyped
+        category: vfunc
       - name: vgui2_Panel_SetSize_Const_callsite_0
         category: patch
       - name: vgui2_Panel_SetSize_Const_callsite_1

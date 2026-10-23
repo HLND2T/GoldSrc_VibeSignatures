@@ -9,6 +9,11 @@ modules:
     depot_windows: czero/cl_dlls/client.dll
     depot_linux: czero/cl_dlls/client.so
     skills:
+      - name: find-client-frame-keys
+        expected_output:
+          - vgui2_Frame_OnKeyCodePressed.{platform}.yaml
+          - vgui2_Frame_OnKeyCodeTyped.{platform}.yaml
+          - CCSCareerRoundEndMenu_vtable.{platform}.yaml
       - name: find-client-career-popup
         expected_output:
           - CounterStrikeViewport_OnTick.{platform}.yaml
@@ -151,6 +156,12 @@ modules:
           - CCSBackGroundPanel_YOffset.{platform}.yaml
           - ISurface_GetScreenSize.{platform}.yaml
     symbols:
+      - name: CCSCareerRoundEndMenu_vtable
+        category: vtable
+      - name: vgui2_Frame_OnKeyCodePressed
+        category: vfunc
+      - name: vgui2_Frame_OnKeyCodeTyped
+        category: vfunc
       - name: CounterStrikeViewport_OnTick
         category: vfunc
       - name: CCareerBaseBox_BringToFront

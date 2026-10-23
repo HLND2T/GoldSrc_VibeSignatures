@@ -56,6 +56,17 @@ class StagedPrivateWalkTests(unittest.IsolatedAsyncioTestCase):
 
 
 class VcallFlowTests(unittest.TestCase):
+    def test_self_exchange_alignment_preserves_full_return_value(self):
+        for width in (1, 2, 4):
+            operand = ("reg", "eax", width)
+            code = [
+                instruction(1, "mov", reg("eax"), imm(0x12345678)),
+                instruction(2, "xchg", operand, operand, writes=["eax"]),
+                instruction(3, "ret"),
+            ]
+            flow = trace_function([dict(start=1, succs=[], insns=code)], 1, "linux")
+            self.assertEqual(("const", 0x12345678), flow["returns"][0]["value"])
+
     def test_conditional_move_retains_both_possible_pointer_origins(self):
         for mnemonic in ("cmovz", "cmovnz", "cmova", "cmovbe"):
             with self.subTest(mnemonic=mnemonic):
