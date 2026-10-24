@@ -5,6 +5,10 @@ modules:
     depot_windows: hw.dll
     depot_linux: hw.so
     skills:
+      - name: find-CCDAudio-MP3
+        expected_output:
+          - CCDAudio__MP3_InitStream.{platform}.yaml
+          - CCDAudio__MP3_SetVolume.{platform}.yaml
       - name: find-udp-download-symbols
         expected_input:
           - Cmd_ExecuteString.{platform}.yaml
@@ -1807,6 +1811,16 @@ modules:
         expected_output:
           - CL_IsDevOverviewMode.{platform}.yaml
     symbols:
+      - name: CCDAudio__MP3_InitStream
+        category: func
+        alias:
+          - CCDAudio::MP3_InitStream(int, bool)
+          - _ZN8CCDAudio14MP3_InitStreamEib
+      - name: CCDAudio__MP3_SetVolume
+        category: func
+        alias:
+          - CCDAudio::MP3_SetVolume(float)
+          - _ZN8CCDAudio13MP3_SetVolumeEf
       - name: SV_BeginFileDownload_f
         category: func
       - name: SV_DropClient

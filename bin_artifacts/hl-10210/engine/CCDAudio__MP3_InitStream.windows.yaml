@@ -1,0 +1,5 @@
+func_name: CCDAudio__MP3_InitStream
+func_va: '0x101943a0'
+func_rva: '0x1943a0'
+func_size: '0x15d'
+func_sig: 55 8B EC 81 EC 04 02 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 53 8B 5D ?? 57 8B F9 83 FB 01 7E ??
