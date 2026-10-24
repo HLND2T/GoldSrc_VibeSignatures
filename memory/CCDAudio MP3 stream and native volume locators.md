@@ -117,3 +117,13 @@ Read-only exploration used shared-supervisor idb_list then exact idb_open, verif
 - All 12 snapshot candidates passed metadata verification, guarded JSON catalog and gamedata generation, companion marking and local candidate publication. Reopened records retained engine/function identity, aliases, exact snapshot payloads and binary SHA256; the content-addressed catalog index contains all 32 MP3 records.
 - Repository format checks, targeted Ruff (excluding N999 for the required hyphenated finder filename), whitespace checks and an independent finder/ABI/coverage review passed.
 - These local candidate checks do not constitute a formal release. The immutable release workflow must publish the merged source and its manifest before downstream delivery is complete.
+
+## Stripped PIC thunk names (PR validation)
+
+- Trigger: initial remote PR analysis rejected Sven 10257 Linux's standalone setter, although all local warm-IDB inputs passed.
+- Root cause: the surveyed local IDB named the PIC helper `get_pc_thunk`, while a pristine IDB and CI named it `sub_*`. The extra-call exclusion depended on that name.
+- Correct handling: recognize the helper's decoded return-address load from `[esp]`, plain return and caller's immediately following addition to the same GOT-base register. Keep the Miles API/cache/clamp/stream checks unchanged; do not rename a callee or depend on saved exploratory names.
+- Verification: reproduced the rejection from a new temporary copy of the original Sven 10257 ELF with default auto-analysis; the corrected walk recovered Init `0x17bb70` and float setter `0x17bac0` with the unnamed helper. Closed the owned session with save=true/saved=true.
+- Scope: this finder’s stripped Linux PIC setup; downstream runtime behavior is unchanged.
+
+The corrected finder was rerun across all 16 configured engine inputs; all 32 regenerated artifacts remain byte-identical. Local candidate catalog verification also checks that every index URL resolves to the exact guarded dataset bytes (build the index from original encoded datasets, since reloading JSON changes numeric vtable-key sorting). The existing downstream manifest pruner and production MetaHook GameData Query/Resolve passed for all 24 Windows MP3 records using original-file CRC64, including BLOB identities and opposite-ABI absence. A temporary x86 harness registered inert image ranges and did not execute engine functions; formal release consumption is verified separately.

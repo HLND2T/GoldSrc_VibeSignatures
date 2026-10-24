@@ -80,6 +80,31 @@ def api_owners(api):
     return owners
 
 
+def pic_setup(entry, target):
+    # Stripped IDBs may not name GCC's get_pc_thunk. Verify its return-address
+    # load and the caller's matching GOT-base addition instead of trusting a name.
+    if values['platform'] != 'linux' or not is_code_address(target):
+        return False
+    load, ret, addition = ida_ua.insn_t(), ida_ua.insn_t(), ida_ua.insn_t()
+    if not ida_ua.decode_insn(load, target) or load.get_canon_mnem().lower() != 'mov':
+        return False
+    dst, src = load.ops[0], load.ops[1]
+    if (int(dst.type) != int(idaapi.o_reg) or int(dst.dtype) != int(ida_ua.dt_dword)
+            or int(src.type) not in (int(idaapi.o_phrase), int(idaapi.o_displ))
+            or reg4(src) != 'esp' or int(src.addr) != 0):
+        return False
+    if (not ida_ua.decode_insn(ret, target + int(load.size))
+            or ret.get_canon_mnem().lower() not in ('ret', 'retn')
+            or int(ret.ops[0].type) != int(idaapi.o_void)):
+        return False
+    following = entry['ea'] + int(entry['insn'].size)
+    return bool(ida_ua.decode_insn(addition, following)
+                and addition.get_canon_mnem().lower() == 'add'
+                and int(addition.ops[0].type) == int(idaapi.o_reg)
+                and reg4(addition.ops[0]) == reg4(dst)
+                and int(addition.ops[1].type) == int(idaapi.o_imm))
+
+
 def calls(entries):
     registers = {}
     found = []
@@ -91,9 +116,8 @@ def calls(entries):
             api = api_addresses.get(target)
             if int(op.type) == int(idaapi.o_reg):
                 api = registers.get(reg4(op))
-            name = idc.get_name(target) if int(op.type) != int(idaapi.o_reg) else ''
             # GCC's PIC base thunk is the only permitted non-Miles setter call.
-            pic = bool(name and 'get_pc_thunk' in name)
+            pic = int(op.type) != int(idaapi.o_reg) and pic_setup(entry, target)
             found.append((ea, api, pic))
             for reg in ('eax', 'ecx', 'edx'):
                 registers.pop(reg, None)
