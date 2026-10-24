@@ -91,6 +91,43 @@ afterEach(async () => {
 })
 
 describe('immutable game-symbol asset verification', () => {
+  it('verifies Decay through repeated archive merges and remote byte verification', async () => {
+    const root = await temporaryRoot()
+    const current = join(root, 'current')
+    const archive = join(root, 'archive')
+    const asset = await writeCurrentAssets(current, 'decay', 'client-only Decay')
+
+    await expect(mergeImmutableArchive(current, archive)).resolves.toEqual(expect.objectContaining({ added: 1, archived: 1 }))
+    await expect(mergeImmutableArchive(current, archive)).resolves.toEqual(expect.objectContaining({ added: 0, archived: 1 }))
+    const manifest = await writeGameSymbolVerificationManifest(current, join(root, 'verification.json'))
+    expect(manifest.snapshots).toEqual([
+      { gameVersion: 'decay', url: asset.url, sha256: asset.digest, size: asset.bytes.byteLength },
+    ])
+    vi.stubGlobal('fetch', vi.fn(async (input) => {
+      const url = new URL(String(input))
+      return new Response(await readFile(join(current, url.pathname.split('/').at(-1))))
+    }))
+    await expect(verifyRemoteGameSymbolAssets('https://example.test/gamesymbols/', manifest, {
+      attempts: 1,
+    })).resolves.toEqual(expect.objectContaining({ verified: 1 }))
+
+    await writeFile(join(archive, asset.url), Buffer.from('tampered', 'utf8'))
+    await expect(mergeImmutableArchive(current, archive)).rejects.toThrow(/filename SHA-256/)
+  })
+
+  it('rejects unknown unversioned identities in current assets and archived filenames', async () => {
+    const root = await temporaryRoot()
+    const current = join(root, 'current')
+    const archive = join(root, 'archive')
+    await writeCurrentAssets(current, 'othermod', 'invalid tag')
+    await expect(verifyGameSymbolAssetDirectory(current)).rejects.toThrow(/gameVersion is invalid/)
+
+    await rm(current, { recursive: true, force: true })
+    await writeCurrentAssets(current, 'hl-10210', 'valid current')
+    await writeLegacySnapshot(archive, 'othermod', 'invalid archive tag')
+    await expect(mergeImmutableArchive(current, archive)).rejects.toThrow(/unexpected archive file/)
+  })
+
   it('verifies index v4 metadata against the exact snapshot bytes', async () => {
     const root = await temporaryRoot()
     const current = join(root, 'current')

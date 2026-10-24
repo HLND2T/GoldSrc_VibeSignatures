@@ -1,9 +1,7 @@
 import { readFile, readdir } from 'node:fs/promises'
 import { basename, join, resolve } from 'node:path'
 import type { Plugin } from 'vite'
-import { GAME_SYMBOL_ASSET_PATH_PATTERN } from './src/features/symbols/gameVersion'
-
-const DATASET_FILE_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*-[0-9]+\.[0-9a-f]{64}\.json$/
+import { GAME_SYMBOL_ASSET_PATH_PATTERN, GAME_SYMBOL_FILE_PATTERN } from './src/features/symbols/gameVersion'
 
 // The release ships the exact browser-consumable JSON bytes; this plugin only
 // relays them into the Vite dev server and build output. Derivation and
@@ -14,7 +12,7 @@ export function gameSymbolsPlugin(symbolsDirectory: string): Plugin {
   async function assetFiles(): Promise<string[]> {
     const entries = await readdir(root, { withFileTypes: true })
     return entries
-      .filter((entry) => entry.isFile() && (entry.name === 'index.json' || DATASET_FILE_PATTERN.test(entry.name)))
+      .filter((entry) => entry.isFile() && (entry.name === 'index.json' || GAME_SYMBOL_FILE_PATTERN.test(entry.name)))
       .map((entry) => join(root, entry.name))
       .sort()
   }

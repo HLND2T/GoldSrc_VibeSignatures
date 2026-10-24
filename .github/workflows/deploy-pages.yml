@@ -103,7 +103,7 @@ jobs:
           if git ls-remote --exit-code --heads origin refs/heads/pages-snapshots >/dev/null 2>&1; then
             git fetch --no-tags origin refs/heads/pages-snapshots:refs/remotes/origin/pages-snapshots
             git -C "$archive_root" checkout -B pages-snapshots refs/remotes/origin/pages-snapshots
-            invalid_history="$(git -C "$archive_root" log --format= --name-status --no-renames | awk 'NF && ($1 != "A" || $2 !~ /^gamesymbols\/[a-z0-9]+(-[a-z0-9]+)*-[0-9]+\.[0-9a-f]{64}\.json$/) { print }')"
+            invalid_history="$(git -C "$archive_root" log --format= --name-status --no-renames | awk 'NF && ($1 != "A" || $2 !~ /^gamesymbols\/([a-z0-9]+(-[a-z0-9]+)*-[0-9]+|decay)\.[0-9a-f]{64}\.json$/) { print }')"
             if [[ -n "$invalid_history" ]]; then
               echo "pages-snapshots history is not append-only:" >&2
               echo "$invalid_history" >&2
