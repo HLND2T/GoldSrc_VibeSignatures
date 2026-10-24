@@ -5,6 +5,10 @@ modules:
   - name: engine
     module_windows: hw.dll
     skills:
+      - name: find-CCDAudio-MP3
+        expected_output:
+          - CCDAudio__MP3_InitStream.{platform}.yaml
+          - CCDAudio__MP3_SetVolume.{platform}.yaml
       - name: find-BaseUISurface_PaintTraverse
         expected_input:
           - ../gameui/ISurface_PaintTraverse.{platform}.yaml
@@ -23,6 +27,16 @@ modules:
           - EngineSurface_vtable.{platform}.yaml
           - BaseUISurface_vtable.{platform}.yaml
     symbols:
+      - name: CCDAudio__MP3_InitStream
+        category: func
+        alias:
+          - CCDAudio::MP3_InitStream(int, bool)
+          - _ZN8CCDAudio14MP3_InitStreamEib
+      - name: CCDAudio__MP3_SetVolume
+        category: func
+        alias:
+          - CCDAudio::MP3_SetVolume(float)
+          - _ZN8CCDAudio13MP3_SetVolumeEf
       - name: BaseUISurface_PaintTraverse
         category: vfunc
       - name: vgui2_IPanel_IsVisible

@@ -1,0 +1,5 @@
+func_name: CCDAudio__MP3_SetVolume
+func_va: '0x101946b0'
+func_rva: '0x1946b0'
+func_size: '0x86'
+func_sig: 55 8B EC F3 0F 10 45 ?? 0F 57 C9 0F 2F C8 56 8B F1 77 ?? F3 0F 10 0D ?? ?? ?? ?? F3 0F 5D C8
