@@ -4,12 +4,14 @@ import { copyFile, mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
-const GAME_VERSION_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*-[0-9]+$/
+// Keep the standalone deployment verifier aligned with the browser tag contract.
+const GAME_VERSION_SOURCE = '(?:[a-z0-9]+(?:-[a-z0-9]+)*-[0-9]+|decay)'
+const GAME_VERSION_PATTERN = new RegExp(`^${GAME_VERSION_SOURCE}$`)
 const SHA256_PATTERN = /^[0-9a-f]{64}$/
 const MD5_PATTERN = /^[0-9a-f]{32}$/
 const CRC32_PATTERN = /^[0-9a-f]{8}$/
 const CRC64_PATTERN = /^[0-9a-f]{16}$/
-const SNAPSHOT_FILE_PATTERN = /^([a-z0-9]+(?:-[a-z0-9]+)*-[0-9]+)\.([0-9a-f]{64})\.json$/
+const SNAPSHOT_FILE_PATTERN = new RegExp(String.raw`^(${GAME_VERSION_SOURCE})\.([0-9a-f]{64})\.json$`)
 const CURRENT_DATASET_SCHEMA_VERSION = 5
 const REQUIRED_SNAPSHOT_SCHEMA_VERSION = 8
 

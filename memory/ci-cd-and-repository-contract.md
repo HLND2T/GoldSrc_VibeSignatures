@@ -71,6 +71,14 @@ minimal JSON fixture; production always sets the explicit downloaded asset direc
 supported — dispatch for an old tag fails fast. Pages never hosts the Process API (see
 [[process-reporting-and-scheduler]]).
 
+### Decay Pages tag compatibility (2026-10-24)
+
+- Trigger: Release v20261024a published successfully, but Deploy Pages run 39986914425 failed at `verify:gamesymbols` with `versions[14].gameVersion is invalid`, leaving the previous online index in place.
+- Root cause: Pages still required a numeric build suffix in the standalone asset verifier, browser tag parser, Vite dataset filename filter and append-only archive history guard. Release-side support for `decay` did not update these independent consumers.
+- Correct handling: explicitly allow only `decay` alongside the existing versioned syntax. Represent it as family `decay` with an empty build string, share browser/build filename matching, and preserve snapshot digest validation plus the archive's addition-only rule. Unknown unversioned tags remain invalid.
+- Verification: the new parser and archive/remote-verification regression cases reproduced rejection before the fix. All 55 Pages tests, lint, TypeScript/Vite production build, 5 existing Chromium E2E tests and 15 repository-contract tests passed. Building from the hash-verified v20261024a archive emitted all 28 release files (index plus 27 datasets) byte-for-byte. The actual workflow's AWK program accepted Decay additions and rejected modifications, deletions, renames, unknown tags, invalid digests and traversal paths in seven execution cases.
+- Recovery after merge: dispatch `Deploy Pages` on a commit containing the fix with `release_tag=v20261024a`. Reuse the published immutable release; do not move its tag or regenerate its assets. Let the normal archive merge and deployed CDN verification finish, then rerun dependent consumer CI. This repair does not itself publish Pages or verify live CDN contents.
+
 ## Activation of full-analysis concurrency in the release build
 
 The release build job maps `GSVIBE_ANALYSIS_MAX_CONCURRENCY` (default `1`) and `GSVIBE_ANALYSIS_MAX_MEMORY_MIB`

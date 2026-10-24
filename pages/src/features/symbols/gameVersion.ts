@@ -1,6 +1,11 @@
-export const GAME_VERSION_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*-[0-9]+$/
-export const SNAPSHOT_FILE_PATTERN = /^([a-z0-9]+(?:-[a-z0-9]+)*-[0-9]+)\.yaml$/
-export const GAME_SYMBOL_ASSET_PATH_PATTERN = /\/gamesymbols\/([a-z0-9]+(?:-[a-z0-9]+)*-[0-9]+)\.([0-9a-f]{64})\.json$/
+// Decay is the only explicitly supported tag without a build number.
+const GAME_VERSION_SOURCE = '(?:[a-z0-9]+(?:-[a-z0-9]+)*-[0-9]+|decay)'
+const GAME_SYMBOL_FILE_SOURCE = String.raw`(${GAME_VERSION_SOURCE})\.([0-9a-f]{64})\.json`
+
+export const GAME_VERSION_PATTERN = new RegExp(`^${GAME_VERSION_SOURCE}$`)
+export const SNAPSHOT_FILE_PATTERN = new RegExp(String.raw`^(${GAME_VERSION_SOURCE})\.yaml$`)
+export const GAME_SYMBOL_FILE_PATTERN = new RegExp(`^${GAME_SYMBOL_FILE_SOURCE}$`)
+export const GAME_SYMBOL_ASSET_PATH_PATTERN = new RegExp(`/gamesymbols/${GAME_SYMBOL_FILE_SOURCE}$`)
 
 export interface ParsedGameVersion {
   family: string
@@ -15,6 +20,7 @@ export interface GameVersionGroup {
 export function parseGameVersion(value: string): ParsedGameVersion {
   if (!GAME_VERSION_PATTERN.test(value)) throw new Error(`Invalid GoldSrc game version: ${value}`)
   const separator = value.lastIndexOf('-')
+  if (separator === -1) return { family: value, build: '' }
   return { family: value.slice(0, separator), build: value.slice(separator + 1) }
 }
 
