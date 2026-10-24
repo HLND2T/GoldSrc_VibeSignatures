@@ -1,0 +1,9 @@
+gv_name: pmove
+gv_va: '0x4b2140'
+gv_rva: '0x4b2140'
+gv_sig: 8B 83 ?? ?? ?? ?? 89 44 24 ?? 8B 44 24 ?? 8B 70 ?? 83 C0 ?? 89 44 24 ?? 8B 83 ?? ?? ?? ?? 89 44 24 ?? EB ??
+gv_sig_va: '0x122162'
+gv_inst_offset: '0x0'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'
+gv_pic_addend: '0x4b2424'

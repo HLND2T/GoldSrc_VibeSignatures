@@ -1,0 +1,1617 @@
+[
+  {
+    "tag": "hl-3248",
+    "platform": "windows",
+    "image_base": "0x1d00000",
+    "sha256": "7311ec923c5644a4c81fb1c887d1062f7732c3b7152ad0469ff367bc0094feb0",
+    "validated": 9,
+    "functions_and_globals": [
+      {
+        "name": "SV_CopyEdictToPhysent",
+        "va": "0x1db6020",
+        "rva": "0xb6020",
+        "entry_cover": 6,
+        "continuation_rva": "0xb6026",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1db63f7"
+        ]
+      },
+      {
+        "name": "SV_AddLinksToPM_",
+        "va": "0x1db6330",
+        "rva": "0xb6330",
+        "entry_cover": 8,
+        "continuation_rva": "0xb6338",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1db674d"
+        ]
+      },
+      {
+        "name": "NUM_FOR_EDICT",
+        "va": "0x1d7ad10",
+        "rva": "0x7ad10",
+        "entry_cover": 10,
+        "continuation_rva": "0x7ad1a",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1d5c888",
+          "0x1d762d6",
+          "0x1d764ec",
+          "0x1d77536",
+          "0x1d77639",
+          "0x1d77a91",
+          "0x1d77b65",
+          "0x1d78114",
+          "0x1d782b2",
+          "0x1d7864f",
+          "0x1d78f96",
+          "0x1d78ff7",
+          "0x1d79015",
+          "0x1d792b8",
+          "0x1d793e4",
+          "0x1d796f7",
+          "0x1d79b85",
+          "0x1d79e05",
+          "0x1d79eb6",
+          "0x1d7a0b5",
+          "0x1d7a105",
+          "0x1d7a165",
+          "0x1d7a205",
+          "0x1d7a3fb",
+          "0x1d7a515",
+          "0x1d7b085",
+          "0x1da275b",
+          "0x1da32c3",
+          "0x1da3436",
+          "0x1da3911",
+          "0x1db63c3",
+          "0x1db71c2"
+        ]
+      },
+      {
+        "name": "sv_models",
+        "va": "0x2549190",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "sv_player",
+        "va": "0x25069bc",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "host_client",
+        "va": "0x280dee8",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "g_groupop",
+        "va": "0x243325c",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      }
+    ],
+    "walker_calls_copy": true
+  },
+  {
+    "tag": "hl-3266",
+    "platform": "windows",
+    "image_base": "0x1d00000",
+    "sha256": "d00aed229438f2b3dbe0c77f37657b903e6c35893ee1d39e4695afbfffefee21",
+    "validated": 9,
+    "functions_and_globals": [
+      {
+        "name": "SV_CopyEdictToPhysent",
+        "va": "0x1db6020",
+        "rva": "0xb6020",
+        "entry_cover": 6,
+        "continuation_rva": "0xb6026",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1db63f7"
+        ]
+      },
+      {
+        "name": "SV_AddLinksToPM_",
+        "va": "0x1db6330",
+        "rva": "0xb6330",
+        "entry_cover": 8,
+        "continuation_rva": "0xb6338",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1db674d"
+        ]
+      },
+      {
+        "name": "NUM_FOR_EDICT",
+        "va": "0x1d7acf0",
+        "rva": "0x7acf0",
+        "entry_cover": 10,
+        "continuation_rva": "0x7acfa",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1d5c868",
+          "0x1d762b6",
+          "0x1d764cc",
+          "0x1d77516",
+          "0x1d77619",
+          "0x1d77a71",
+          "0x1d77b45",
+          "0x1d780f4",
+          "0x1d78292",
+          "0x1d7862f",
+          "0x1d78f76",
+          "0x1d78fd7",
+          "0x1d78ff5",
+          "0x1d79298",
+          "0x1d793c4",
+          "0x1d796d7",
+          "0x1d79b65",
+          "0x1d79de5",
+          "0x1d79e96",
+          "0x1d7a095",
+          "0x1d7a0e5",
+          "0x1d7a145",
+          "0x1d7a1e5",
+          "0x1d7a3db",
+          "0x1d7a4f5",
+          "0x1d7b065",
+          "0x1da273b",
+          "0x1da32a3",
+          "0x1da3416",
+          "0x1da38f1",
+          "0x1db63c3",
+          "0x1db71c2"
+        ]
+      },
+      {
+        "name": "sv_models",
+        "va": "0x2549190",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "sv_player",
+        "va": "0x25069bc",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "host_client",
+        "va": "0x280dee8",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "g_groupop",
+        "va": "0x243325c",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      }
+    ],
+    "walker_calls_copy": true
+  },
+  {
+    "tag": "hl-3329",
+    "platform": "windows",
+    "image_base": "0x1d00000",
+    "sha256": "4b42b89992cda6ef5b84c1bb56556f5b15b1e0c2a3a7b9f04fe053dcf24c4480",
+    "validated": 9,
+    "functions_and_globals": [
+      {
+        "name": "SV_CopyEdictToPhysent",
+        "va": "0x1db5660",
+        "rva": "0xb5660",
+        "entry_cover": 6,
+        "continuation_rva": "0xb5666",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1db5a37"
+        ]
+      },
+      {
+        "name": "SV_AddLinksToPM_",
+        "va": "0x1db5970",
+        "rva": "0xb5970",
+        "entry_cover": 8,
+        "continuation_rva": "0xb5978",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1db5d8d"
+        ]
+      },
+      {
+        "name": "NUM_FOR_EDICT",
+        "va": "0x1d7abd0",
+        "rva": "0x7abd0",
+        "entry_cover": 10,
+        "continuation_rva": "0x7abda",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1d5c59a",
+          "0x1d76016",
+          "0x1d7622c",
+          "0x1d77276",
+          "0x1d77379",
+          "0x1d777d1",
+          "0x1d778a5",
+          "0x1d77e54",
+          "0x1d77ff2",
+          "0x1d7838f",
+          "0x1d78cd6",
+          "0x1d78d36",
+          "0x1d78d55",
+          "0x1d78ff8",
+          "0x1d79124",
+          "0x1d79437",
+          "0x1d798c5",
+          "0x1d79b45",
+          "0x1d79bf6",
+          "0x1d79df5",
+          "0x1d79e45",
+          "0x1d79ea5",
+          "0x1d79f45",
+          "0x1d7a14b",
+          "0x1d7a326",
+          "0x1d7a3a6",
+          "0x1d7af45",
+          "0x1da1ebb",
+          "0x1da2a23",
+          "0x1da2b96",
+          "0x1da3071",
+          "0x1db5a03",
+          "0x1db6802"
+        ]
+      },
+      {
+        "name": "sv_models",
+        "va": "0x2515ab0",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "sv_player",
+        "va": "0x24d32dc",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "host_client",
+        "va": "0x27da808",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "g_groupop",
+        "va": "0x2400104",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      }
+    ],
+    "walker_calls_copy": true
+  },
+  {
+    "tag": "hl-3647",
+    "platform": "windows",
+    "image_base": "0x1d00000",
+    "sha256": "7d4bee5d199c40d738c0bc2ed668c0fd8830278e2fed1f320b07832fda993110",
+    "validated": 9,
+    "functions_and_globals": [
+      {
+        "name": "SV_CopyEdictToPhysent",
+        "va": "0x1db4840",
+        "rva": "0xb4840",
+        "entry_cover": 6,
+        "continuation_rva": "0xb4846",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1db4c17"
+        ]
+      },
+      {
+        "name": "SV_AddLinksToPM_",
+        "va": "0x1db4b50",
+        "rva": "0xb4b50",
+        "entry_cover": 8,
+        "continuation_rva": "0xb4b58",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1db4f6d"
+        ]
+      },
+      {
+        "name": "NUM_FOR_EDICT",
+        "va": "0x1d7ad40",
+        "rva": "0x7ad40",
+        "entry_cover": 10,
+        "continuation_rva": "0x7ad4a",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1d5c6fa",
+          "0x1d76186",
+          "0x1d7639c",
+          "0x1d773e6",
+          "0x1d774e9",
+          "0x1d77941",
+          "0x1d77a15",
+          "0x1d77fc4",
+          "0x1d78162",
+          "0x1d784ff",
+          "0x1d78e46",
+          "0x1d78ea6",
+          "0x1d78ec5",
+          "0x1d79168",
+          "0x1d79294",
+          "0x1d795a7",
+          "0x1d79a35",
+          "0x1d79cb5",
+          "0x1d79d66",
+          "0x1d79f65",
+          "0x1d79fb5",
+          "0x1d7a015",
+          "0x1d7a0b5",
+          "0x1d7a2bb",
+          "0x1d7a496",
+          "0x1d7a516",
+          "0x1d7b0b5",
+          "0x1da0edb",
+          "0x1da1a43",
+          "0x1da1bb6",
+          "0x1da2091",
+          "0x1db4be3",
+          "0x1db59e2"
+        ]
+      },
+      {
+        "name": "sv_models",
+        "va": "0x2514930",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "sv_player",
+        "va": "0x24d215c",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "host_client",
+        "va": "0x27d9688",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "g_groupop",
+        "va": "0x23fefac",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      }
+    ],
+    "walker_calls_copy": true
+  },
+  {
+    "tag": "hl-4554",
+    "platform": "windows",
+    "image_base": "0x1d00000",
+    "sha256": "482871315f4a713a8aa72c5e2a73092d261bacb618890a4523630e9e168eb2a3",
+    "validated": 9,
+    "functions_and_globals": [
+      {
+        "name": "SV_CopyEdictToPhysent",
+        "va": "0x1dc02c0",
+        "rva": "0xc02c0",
+        "entry_cover": 6,
+        "continuation_rva": "0xc02c6",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1dc0697"
+        ]
+      },
+      {
+        "name": "SV_AddLinksToPM_",
+        "va": "0x1dc05d0",
+        "rva": "0xc05d0",
+        "entry_cover": 5,
+        "continuation_rva": "0xc05d5",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1dc09dd"
+        ]
+      },
+      {
+        "name": "NUM_FOR_EDICT",
+        "va": "0x1d85ea0",
+        "rva": "0x85ea0",
+        "entry_cover": 10,
+        "continuation_rva": "0x85eaa",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1d67130",
+          "0x1d81296",
+          "0x1d814a9",
+          "0x1d824d6",
+          "0x1d825da",
+          "0x1d82a21",
+          "0x1d82af5",
+          "0x1d830a4",
+          "0x1d83242",
+          "0x1d8362f",
+          "0x1d83f56",
+          "0x1d83fb1",
+          "0x1d83fd5",
+          "0x1d84298",
+          "0x1d843c4",
+          "0x1d846cd",
+          "0x1d84b55",
+          "0x1d84dd5",
+          "0x1d84e76",
+          "0x1d85075",
+          "0x1d850c5",
+          "0x1d85125",
+          "0x1d851b5",
+          "0x1d853bb",
+          "0x1d85596",
+          "0x1d85606",
+          "0x1d86235",
+          "0x1dad4d9",
+          "0x1dae043",
+          "0x1dae1b6",
+          "0x1dae6a1",
+          "0x1dc0663",
+          "0x1dc144e"
+        ]
+      },
+      {
+        "name": "sv_models",
+        "va": "0x24fe510",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "sv_player",
+        "va": "0x24bbd9c",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "host_client",
+        "va": "0x278343c",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "g_groupop",
+        "va": "0x23e92c8",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      }
+    ],
+    "walker_calls_copy": true
+  },
+  {
+    "tag": "hl-6153",
+    "platform": "windows",
+    "image_base": "0x1d00000",
+    "sha256": "5d9958f8111197f5fb22cc2a44f05239f4d5c9a48b8795f2bc287d507258a257",
+    "validated": 9,
+    "functions_and_globals": [
+      {
+        "name": "SV_CopyEdictToPhysent",
+        "va": "0x1da4dd0",
+        "rva": "0xa4dd0",
+        "entry_cover": 5,
+        "continuation_rva": "0xa4dd5",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1da51a9"
+        ]
+      },
+      {
+        "name": "SV_AddLinksToPM_",
+        "va": "0x1da50e0",
+        "rva": "0xa50e0",
+        "entry_cover": 6,
+        "continuation_rva": "0xa50e6",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1da54fa"
+        ]
+      },
+      {
+        "name": "NUM_FOR_EDICT",
+        "va": "0x1d6fff0",
+        "rva": "0x6fff0",
+        "entry_cover": 6,
+        "continuation_rva": "0x6fff6",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1d5a70d",
+          "0x1d6b5f8",
+          "0x1d6b824",
+          "0x1d6c7a8",
+          "0x1d6c8ac",
+          "0x1d6cd03",
+          "0x1d6cdd7",
+          "0x1d6d334",
+          "0x1d6d4ac",
+          "0x1d6d882",
+          "0x1d6e158",
+          "0x1d6e1b4",
+          "0x1d6e1d7",
+          "0x1d6e49b",
+          "0x1d6e5b7",
+          "0x1d6e8c3",
+          "0x1d6ed57",
+          "0x1d6efd7",
+          "0x1d6f078",
+          "0x1d6f277",
+          "0x1d6f2c7",
+          "0x1d6f327",
+          "0x1d6f3c7",
+          "0x1d6f5db",
+          "0x1d6f7a8",
+          "0x1d6f828",
+          "0x1d703f7",
+          "0x1d91dff",
+          "0x1d92962",
+          "0x1d92ad5",
+          "0x1d92fb1",
+          "0x1da5176",
+          "0x1da5f72"
+        ]
+      },
+      {
+        "name": "sv_models",
+        "va": "0x2535550",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "sv_player",
+        "va": "0x24f2de4",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "host_client",
+        "va": "0x27b403c",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "g_groupop",
+        "va": "0x2355304",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      }
+    ],
+    "walker_calls_copy": true
+  },
+  {
+    "tag": "hl-8684",
+    "platform": "windows",
+    "image_base": "0x1d00000",
+    "sha256": "be45f76049a133392423679d334c69c8e1e7e82dc873eebdd229ea0341ba1b10",
+    "validated": 9,
+    "functions_and_globals": [
+      {
+        "name": "SV_CopyEdictToPhysent",
+        "va": "0x1da6ef0",
+        "rva": "0xa6ef0",
+        "entry_cover": 5,
+        "continuation_rva": "0xa6ef5",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1da72c9"
+        ]
+      },
+      {
+        "name": "SV_AddLinksToPM_",
+        "va": "0x1da7200",
+        "rva": "0xa7200",
+        "entry_cover": 6,
+        "continuation_rva": "0xa7206",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1da761a"
+        ]
+      },
+      {
+        "name": "NUM_FOR_EDICT",
+        "va": "0x1d71920",
+        "rva": "0x71920",
+        "entry_cover": 6,
+        "continuation_rva": "0x71926",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1d5bd2d",
+          "0x1d6cf08",
+          "0x1d6d134",
+          "0x1d6e0d8",
+          "0x1d6e1dc",
+          "0x1d6e633",
+          "0x1d6e707",
+          "0x1d6ec64",
+          "0x1d6eddc",
+          "0x1d6f1b2",
+          "0x1d6fa88",
+          "0x1d6fae4",
+          "0x1d6fb07",
+          "0x1d6fdcb",
+          "0x1d6fee7",
+          "0x1d701f3",
+          "0x1d70687",
+          "0x1d70907",
+          "0x1d709a8",
+          "0x1d70ba7",
+          "0x1d70bf7",
+          "0x1d70c57",
+          "0x1d70cf7",
+          "0x1d70f0b",
+          "0x1d710d8",
+          "0x1d71158",
+          "0x1d71d67",
+          "0x1d93bff",
+          "0x1d94762",
+          "0x1d94900",
+          "0x1d94de1",
+          "0x1da7296",
+          "0x1da8092"
+        ]
+      },
+      {
+        "name": "sv_models",
+        "va": "0x2538a50",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "sv_player",
+        "va": "0x24f6304",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "host_client",
+        "va": "0x27b753c",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "g_groupop",
+        "va": "0x235881c",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      }
+    ],
+    "walker_calls_copy": true
+  },
+  {
+    "tag": "hl-8684",
+    "platform": "linux",
+    "image_base": "0x0",
+    "sha256": "1e775773292407106ac17c98bc19f0444e8f1525d46e592de5cc53afad2b89e1",
+    "validated": 9,
+    "functions_and_globals": [
+      {
+        "name": "SV_CopyEdictToPhysent",
+        "va": "0x15add0",
+        "rva": "0x15add0",
+        "entry_cover": 5,
+        "continuation_rva": "0x15add5",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x15b2b2"
+        ]
+      },
+      {
+        "name": "SV_AddLinksToPM_",
+        "va": "0x15b1c0",
+        "rva": "0x15b1c0",
+        "entry_cover": 7,
+        "continuation_rva": "0x15b1c7",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x15b7dc",
+          "0x15cfa4"
+        ]
+      },
+      {
+        "name": "NUM_FOR_EDICT",
+        "va": "0x129390",
+        "rva": "0x129390",
+        "entry_cover": 10,
+        "continuation_rva": "0x12939a",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1164f5",
+          "0x12314a",
+          "0x123394",
+          "0x12489c",
+          "0x124a03",
+          "0x124eb0",
+          "0x124f63",
+          "0x12563d",
+          "0x125835",
+          "0x125dde",
+          "0x1268c6",
+          "0x12692d",
+          "0x12696b",
+          "0x126cf8",
+          "0x126e88",
+          "0x127298",
+          "0x1277fa",
+          "0x127b2a",
+          "0x127c36",
+          "0x127f0a",
+          "0x127f5f",
+          "0x127fda",
+          "0x12809a",
+          "0x128336",
+          "0x128447",
+          "0x1285ec",
+          "0x128686",
+          "0x12872e",
+          "0x13ef86",
+          "0x13f79b",
+          "0x1403ae",
+          "0x1405e2",
+          "0x145903",
+          "0x15b26f",
+          "0x15ccfd"
+        ]
+      },
+      {
+        "name": "sv_models",
+        "va": "0xa02c28",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "sv_player",
+        "va": "0xbab940",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "host_client",
+        "va": "0x963980",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "g_groupop",
+        "va": "0x2f1920",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      }
+    ],
+    "walker_calls_copy": true
+  },
+  {
+    "tag": "hl-10210",
+    "platform": "windows",
+    "image_base": "0x10000000",
+    "sha256": "9ba9a2db5e07598fd59afa35507a98c86162e4e15b3835177b78c11842cd2295",
+    "validated": 9,
+    "functions_and_globals": [
+      {
+        "name": "SV_CopyEdictToPhysent",
+        "va": "0x1021be40",
+        "rva": "0x21be40",
+        "entry_cover": 6,
+        "continuation_rva": "0x21be46",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1021ba8b"
+        ]
+      },
+      {
+        "name": "SV_AddLinksToPM_",
+        "va": "0x1021b9c0",
+        "rva": "0x21b9c0",
+        "entry_cover": 6,
+        "continuation_rva": "0x21b9c6",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1021b9a3"
+        ]
+      },
+      {
+        "name": "NUM_FOR_EDICT",
+        "va": "0x101e90a0",
+        "rva": "0x1e90a0",
+        "entry_cover": 6,
+        "continuation_rva": "0x1e90a6",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x101cc238",
+          "0x101e3a16",
+          "0x101e3cb2",
+          "0x101e3ee9",
+          "0x101e44ad",
+          "0x101e453b",
+          "0x101e4632",
+          "0x101e4816",
+          "0x101e4ad6",
+          "0x101e4cb2",
+          "0x101e4cf6",
+          "0x101e4d46",
+          "0x101e4eaa",
+          "0x101e521e",
+          "0x101e52e9",
+          "0x101e5475",
+          "0x101e5628",
+          "0x101e56e6",
+          "0x101e5fb4",
+          "0x101e6446",
+          "0x101e6d26",
+          "0x101e6d57",
+          "0x101e6dac",
+          "0x101e6e97",
+          "0x101e7528",
+          "0x101e7598",
+          "0x10206f7d",
+          "0x1020de58",
+          "0x1020e090",
+          "0x10210634",
+          "0x1021ba5a",
+          "0x1021d3de"
+        ]
+      },
+      {
+        "name": "sv_models",
+        "va": "0x11001950",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "sv_player",
+        "va": "0x10f779d8",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "host_client",
+        "va": "0x11249e90",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "g_groupop",
+        "va": "0x104d13f0",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      }
+    ],
+    "walker_calls_copy": true
+  },
+  {
+    "tag": "hl-10210",
+    "platform": "linux",
+    "image_base": "0x0",
+    "sha256": "fca6628b5a4d76a945e11b9796f327004edc65420d9f9cc23f883143508edd78",
+    "validated": 31,
+    "functions_and_globals": [
+      {
+        "name": "SV_CopyEdictToPhysent",
+        "va": "0xfbca0",
+        "rva": "0xfbca0",
+        "entry_cover": 7,
+        "continuation_rva": "0xfbca7",
+        "relative_in_entry": [],
+        "external_calls": []
+      },
+      {
+        "name": "pmove",
+        "va": "0x2d7e60",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "pr_strings",
+        "va": "0xb46f40",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "svs_maxclients",
+        "va": "0x9bbee8",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "sv_unlag_value",
+        "va": "0x2be024",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "truepositions",
+        "va": "0x343a60",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "SV_AddLinksToPM_",
+        "va": "0xfc130",
+        "rva": "0xfc130",
+        "entry_cover": 7,
+        "continuation_rva": "0xfc137",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0xfcc8f"
+        ]
+      },
+      {
+        "name": "NUM_FOR_EDICT",
+        "va": "0xc58e0",
+        "rva": "0xc58e0",
+        "entry_cover": 6,
+        "continuation_rva": "0xc58e6",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0xb00d8",
+          "0xbe31a",
+          "0xbe53e",
+          "0xc0581",
+          "0xc06fe",
+          "0xc0bf9",
+          "0xc0caf",
+          "0xc11fc",
+          "0xc14a3",
+          "0xc1841",
+          "0xc1aec",
+          "0xc1f7e",
+          "0xc2a76",
+          "0xc2aed",
+          "0xc2b2b",
+          "0xc2ee3",
+          "0xc3060",
+          "0xc3475",
+          "0xc35d8",
+          "0xc3aea",
+          "0xc3e0e",
+          "0xc3ef3",
+          "0xc42ea",
+          "0xc433f",
+          "0xc43ba",
+          "0xc446a",
+          "0xc4746",
+          "0xc4857",
+          "0xc49fc",
+          "0xc4a96",
+          "0xc4b3e",
+          "0xdd64c",
+          "0xdea2f",
+          "0xded0f",
+          "0xdfd28",
+          "0xfc1d2",
+          "0xff22f"
+        ]
+      },
+      {
+        "name": "sv_models",
+        "va": "0x9ec8c8",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "sv_player",
+        "va": "0xb9655c",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "host_client",
+        "va": "0x94d680",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "g_groupop",
+        "va": "0x2d7f40",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      }
+    ],
+    "walker_calls_copy": false
+  },
+  {
+    "tag": "cof-5936",
+    "platform": "windows",
+    "image_base": "0x1d00000",
+    "sha256": "9dd34e536c4bb7cda3bc1bc4f0f5f6163687566a16f35c0ea0be59f93da62875",
+    "validated": 9,
+    "functions_and_globals": [
+      {
+        "name": "SV_CopyEdictToPhysent",
+        "va": "0x1dee365",
+        "rva": "0xee365",
+        "entry_cover": 7,
+        "continuation_rva": "0xee36c",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1dee9ab"
+        ]
+      },
+      {
+        "name": "SV_AddLinksToPM_",
+        "va": "0x1dee87d",
+        "rva": "0xee87d",
+        "entry_cover": 6,
+        "continuation_rva": "0xee883",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1deee21"
+        ]
+      },
+      {
+        "name": "NUM_FOR_EDICT",
+        "va": "0x1da8405",
+        "rva": "0xa8405",
+        "entry_cover": 7,
+        "continuation_rva": "0xa840c",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1d847ee",
+          "0x1da2979",
+          "0x1da2bc5",
+          "0x1da3f30",
+          "0x1da404d",
+          "0x1da44c9",
+          "0x1da45a2",
+          "0x1da4c7e",
+          "0x1da4e9d",
+          "0x1da53f1",
+          "0x1da5d8e",
+          "0x1da5dfc",
+          "0x1da5e22",
+          "0x1da61d5",
+          "0x1da6300",
+          "0x1da6686",
+          "0x1da6b85",
+          "0x1da6eb4",
+          "0x1da6f87",
+          "0x1da722f",
+          "0x1da728b",
+          "0x1da72f5",
+          "0x1da7399",
+          "0x1da764c",
+          "0x1da7876",
+          "0x1da7905",
+          "0x1da87ca",
+          "0x1dd660e",
+          "0x1dd73b8",
+          "0x1dd75d8",
+          "0x1dd7cb2",
+          "0x1dee959",
+          "0x1def99c"
+        ]
+      },
+      {
+        "name": "sv_models",
+        "va": "0x25620f0",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "sv_player",
+        "va": "0x250e07c",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "host_client",
+        "va": "0x27fc11c",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "g_groupop",
+        "va": "0x242f310",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      }
+    ],
+    "walker_calls_copy": true
+  },
+  {
+    "tag": "svencoop-8948",
+    "platform": "windows",
+    "image_base": "0x1d00000",
+    "sha256": "22fd4d1ad0d3e11a44e7cd5643fe9f6b8ded1234cce819cc242ba5a3fd338ce8",
+    "validated": 9,
+    "functions_and_globals": [
+      {
+        "name": "SV_CopyEdictToPhysent",
+        "va": "0x1db78d0",
+        "rva": "0xb78d0",
+        "entry_cover": 5,
+        "continuation_rva": "0xb78d5",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1db7d0f"
+        ]
+      },
+      {
+        "name": "SV_AddLinksToPM_",
+        "va": "0x1db7c40",
+        "rva": "0xb7c40",
+        "entry_cover": 8,
+        "continuation_rva": "0xb7c48",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1db8110"
+        ]
+      },
+      {
+        "name": "NUM_FOR_EDICT",
+        "va": "0x1d80800",
+        "rva": "0x80800",
+        "entry_cover": 9,
+        "continuation_rva": "0x80809",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1d6c9d9",
+          "0x1d7bdb4",
+          "0x1d7c005",
+          "0x1d7c0e5",
+          "0x1d7c169",
+          "0x1d7c2fc",
+          "0x1d7cb32",
+          "0x1d7d755",
+          "0x1d7db1e",
+          "0x1d7dbc4",
+          "0x1d7deb4",
+          "0x1d7e0c5",
+          "0x1d7e11b",
+          "0x1d7e137",
+          "0x1d7e234",
+          "0x1d7e2c6",
+          "0x1d7e326",
+          "0x1d7e78f",
+          "0x1d7eab4",
+          "0x1d7eb04",
+          "0x1d7eb64",
+          "0x1d7eefa",
+          "0x1d7f0cc",
+          "0x1d7f364",
+          "0x1d7f54b",
+          "0x1d7f5b6",
+          "0x1d7f626",
+          "0x1d7fb42",
+          "0x1d803ca",
+          "0x1d80632",
+          "0x1d80746",
+          "0x1d9fa2d",
+          "0x1da2f9f",
+          "0x1da3173",
+          "0x1da3675",
+          "0x1db5785",
+          "0x1db7cdc"
+        ]
+      },
+      {
+        "name": "sv_models",
+        "va": "0x9088990",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "sv_player",
+        "va": "0x955bb68",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "host_client",
+        "va": "0x8406af8",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "g_groupop",
+        "va": "0x851b534",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      }
+    ],
+    "walker_calls_copy": true
+  },
+  {
+    "tag": "svencoop-8948",
+    "platform": "linux",
+    "image_base": "0x0",
+    "sha256": "aad1299bf2389070f9fa27a7413543e028f8b26ef50d7ecfaa11504be26e4b0e",
+    "validated": 30,
+    "functions_and_globals": [
+      {
+        "name": "pmove",
+        "va": "0x4b2140",
+        "pic_addend": "0x4b2424",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "pr_strings",
+        "va": "0xf677f0",
+        "pic_addend": "0xf67938",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "svs_maxclients",
+        "va": "0xfb7200",
+        "pic_addend": "0xfb77b4",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "sv_unlag_value",
+        "va": "0x33d7bc",
+        "pic_addend": "0x33a000",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "_ZL13truepositions",
+        "va": "0x149f440",
+        "pic_addend": "0x33a000",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "_Z16SV_AddLinksToPM_P10areanode_sPfS1_",
+        "va": "0x122150",
+        "rva": "0x122150",
+        "entry_cover": 9,
+        "continuation_rva": "0x122159",
+        "relative_in_entry": [
+          "0x122154"
+        ],
+        "external_calls": [
+          "0x122d47"
+        ]
+      },
+      {
+        "name": "_Z13NUM_FOR_EDICTPK7edict_s",
+        "va": "0xedac0",
+        "rva": "0xedac0",
+        "entry_cover": 7,
+        "continuation_rva": "0xedac7",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x9f630"
+        ]
+      },
+      {
+        "name": "sv_models",
+        "va": "0x122d3e8",
+        "pic_addend": "0xfb72a0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "sv_player",
+        "va": "0x149f388",
+        "pic_addend": "0x33a000",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "host_client",
+        "va": "0x357a5c",
+        "pic_addend": "0x358004",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "g_groupop",
+        "va": "0x4b23c0",
+        "pic_addend": "0x4b2928",
+        "address_offset": "0x0"
+      }
+    ],
+    "walker_calls_copy": false
+  },
+  {
+    "tag": "svencoop-10257",
+    "platform": "windows",
+    "image_base": "0x1d00000",
+    "sha256": "e3c7f374b70845fb6f45c05906e4b5fe3dc9f394ab37bb653501d3b6a3282596",
+    "validated": 9,
+    "functions_and_globals": [
+      {
+        "name": "SV_CopyEdictToPhysent",
+        "va": "0x1db8ec0",
+        "rva": "0xb8ec0",
+        "entry_cover": 5,
+        "continuation_rva": "0xb8ec5",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1db92ef"
+        ]
+      },
+      {
+        "name": "SV_AddLinksToPM_",
+        "va": "0x1db9220",
+        "rva": "0xb9220",
+        "entry_cover": 8,
+        "continuation_rva": "0xb9228",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1db96d0"
+        ]
+      },
+      {
+        "name": "NUM_FOR_EDICT",
+        "va": "0x1d814f0",
+        "rva": "0x814f0",
+        "entry_cover": 9,
+        "continuation_rva": "0x814f9",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1d6d01f",
+          "0x1d7c9f4",
+          "0x1d7cc45",
+          "0x1d7cd25",
+          "0x1d7cda9",
+          "0x1d7cf3c",
+          "0x1d7d77a",
+          "0x1d7e395",
+          "0x1d7e75e",
+          "0x1d7e804",
+          "0x1d7eaf4",
+          "0x1d7ed25",
+          "0x1d7ed7b",
+          "0x1d7ed97",
+          "0x1d7ee94",
+          "0x1d7ef26",
+          "0x1d7ef86",
+          "0x1d7f3ff",
+          "0x1d7f734",
+          "0x1d7f784",
+          "0x1d7f7e4",
+          "0x1d7fb6b",
+          "0x1d7fd36",
+          "0x1d7ffd4",
+          "0x1d801bb",
+          "0x1d80226",
+          "0x1d80296",
+          "0x1d807b2",
+          "0x1d8103a",
+          "0x1d81322",
+          "0x1d81436",
+          "0x1da0a8d",
+          "0x1da3fe6",
+          "0x1da41b9",
+          "0x1da46c5",
+          "0x1db6d2d",
+          "0x1db92bc"
+        ]
+      },
+      {
+        "name": "sv_models",
+        "va": "0x935d178",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "sv_player",
+        "va": "0x95d1398",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "host_client",
+        "va": "0x8446c88",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "g_groupop",
+        "va": "0x855b6bc",
+        "pic_addend": "0x0",
+        "address_offset": "0x0"
+      }
+    ],
+    "walker_calls_copy": true
+  },
+  {
+    "tag": "svencoop-10257",
+    "platform": "linux",
+    "image_base": "0x0",
+    "sha256": "8cead76a51204a4ba1036c85cc2099b7c3542950d924846a9aa2ccf619df7dfd",
+    "validated": 30,
+    "functions_and_globals": [
+      {
+        "name": "pmove",
+        "va": "0x464b80",
+        "pic_addend": "0x2ee000",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "pr_strings",
+        "va": "0xf1ae30",
+        "pic_addend": "0x2ee000",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "svs_maxclients",
+        "va": "0xf9fee8",
+        "pic_addend": "0x2ee000",
+        "address_offset": "0x8"
+      },
+      {
+        "name": "sv_unlag_value",
+        "va": "0x2f01dc",
+        "pic_addend": "0x2ee000",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "truepositions",
+        "va": "0x1488120",
+        "pic_addend": "0x2ee000",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "SV_AddLinksToPM_",
+        "va": "0xd3c80",
+        "rva": "0xd3c80",
+        "entry_cover": 9,
+        "continuation_rva": "0xd3c89",
+        "relative_in_entry": [
+          "0xd3c84"
+        ],
+        "external_calls": [
+          "0xd4847"
+        ]
+      },
+      {
+        "name": "NUM_FOR_EDICT",
+        "va": "0x9ef80",
+        "rva": "0x9ef80",
+        "entry_cover": 7,
+        "continuation_rva": "0x9ef87",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x81ff0",
+          "0x96dc7",
+          "0x96fc9",
+          "0x980f3",
+          "0x983e5",
+          "0x99325",
+          "0x99459",
+          "0x99ab4",
+          "0x99b35",
+          "0x9a163",
+          "0x9a4c1",
+          "0x9a8d4",
+          "0x9ab94",
+          "0x9b38a",
+          "0x9bec1",
+          "0x9bf19",
+          "0x9bf67",
+          "0x9c355",
+          "0x9c4e9",
+          "0x9c989",
+          "0x9cfc6",
+          "0x9d2f7",
+          "0x9d3dd",
+          "0x9d8b6",
+          "0x9d916",
+          "0x9d986",
+          "0x9da56",
+          "0x9dd75",
+          "0x9de84",
+          "0x9e045",
+          "0x9e0f7",
+          "0x9e197",
+          "0xb7013",
+          "0xb84ee",
+          "0xb883a",
+          "0xb9a71",
+          "0xd3d32",
+          "0xd6173"
+        ]
+      },
+      {
+        "name": "sv_models",
+        "va": "0x12160c8",
+        "pic_addend": "0xf9ff80",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "sv_player",
+        "va": "0x1488068",
+        "pic_addend": "0x2ee000",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "host_client",
+        "va": "0x30a49c",
+        "pic_addend": "0x2ee000",
+        "address_offset": "0x0"
+      },
+      {
+        "name": "g_groupop",
+        "va": "0x464e00",
+        "pic_addend": "0x2ee000",
+        "address_offset": "0x0"
+      }
+    ],
+    "walker_calls_copy": false
+  },
+  {
+    "tag": "cstrikegameui-8684",
+    "platform": "windows",
+    "image_base": "0x1d00000",
+    "sha256": "be45f76049a133392423679d334c69c8e1e7e82dc873eebdd229ea0341ba1b10",
+    "validated": 3,
+    "functions_and_globals": [
+      {
+        "name": "SV_CopyEdictToPhysent",
+        "va": "0x1da6ef0",
+        "rva": "0xa6ef0",
+        "entry_cover": 5,
+        "continuation_rva": "0xa6ef5",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1da72c9"
+        ]
+      },
+      {
+        "name": "SV_AddLinksToPM_",
+        "va": "0x1da7200",
+        "rva": "0xa7200",
+        "entry_cover": 6,
+        "continuation_rva": "0xa7206",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1da761a"
+        ]
+      },
+      {
+        "name": "NUM_FOR_EDICT",
+        "va": "0x1d71920",
+        "rva": "0x71920",
+        "entry_cover": 6,
+        "continuation_rva": "0x71926",
+        "relative_in_entry": [],
+        "external_calls": [
+          "0x1d5bd2d",
+          "0x1d6cf08",
+          "0x1d6d134",
+          "0x1d6e0d8",
+          "0x1d6e1dc",
+          "0x1d6e633",
+          "0x1d6e707",
+          "0x1d6ec64",
+          "0x1d6eddc",
+          "0x1d6f1b2",
+          "0x1d6fa88",
+          "0x1d6fae4",
+          "0x1d6fb07",
+          "0x1d6fdcb",
+          "0x1d6fee7",
+          "0x1d701f3",
+          "0x1d70687",
+          "0x1d70907",
+          "0x1d709a8",
+          "0x1d70ba7",
+          "0x1d70bf7",
+          "0x1d70c57",
+          "0x1d70cf7",
+          "0x1d70f0b",
+          "0x1d710d8",
+          "0x1d71158",
+          "0x1d71d67",
+          "0x1d93bff",
+          "0x1d94762",
+          "0x1d94900",
+          "0x1d94de1",
+          "0x1da7296",
+          "0x1da8092"
+        ]
+      }
+    ],
+    "walker_calls_copy": true
+  }
+]

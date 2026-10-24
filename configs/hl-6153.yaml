@@ -2,6 +2,15 @@ modules:
   - name: engine
     module_windows: hw.dll
     skills:
+      - name: find-SV_AddLinksToPM_-decompiles
+        expected_input:
+          - SV_AddLinksToPM_.{platform}.yaml
+        expected_output:
+          - SV_CopyEdictToPhysent.{platform}.yaml
+      - name: find-server-physent-owners
+        expected_output:
+          - SV_AddLinksToPM_.{platform}.yaml
+          - NUM_FOR_EDICT.{platform}.yaml
       - name: find-CCDAudio-MP3
         expected_output:
           - CCDAudio__MP3_InitStream.{platform}.yaml
@@ -1667,6 +1676,13 @@ modules:
         expected_output:
           - CL_IsDevOverviewMode.{platform}.yaml
     symbols:
+      - name: SV_AddLinksToPM_
+        category: func
+        artifact: SV_AddLinksToPM_.{platform}.yaml
+      - name: SV_CopyEdictToPhysent
+        category: func
+      - name: NUM_FOR_EDICT
+        category: func
       - name: CCDAudio__MP3_InitStream
         category: func
         alias:

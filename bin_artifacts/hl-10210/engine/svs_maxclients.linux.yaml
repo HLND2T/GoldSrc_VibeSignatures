@@ -1,0 +1,8 @@
+gv_name: svs_maxclients
+gv_va: '0x9bbee8'
+gv_rva: '0x9bbee8'
+gv_sig: A1 ?? ?? ?? ?? 39 C1 0F 8E ?? ?? ?? ?? 89 DA 89 D8 C1 E2 ?? 31 C9 C1 E0 ?? 29 D0 89 8C 06 ?? ?? ?? ?? 89 DA 89 D8
+gv_sig_va: '0xfc23a'
+gv_inst_offset: '0x0'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'
