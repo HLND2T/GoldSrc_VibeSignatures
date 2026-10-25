@@ -1,0 +1,7 @@
+struct_name: vgui2::PanelListPanel
+member_name: m_SortedItems_m_Size
+offset: '0xa8'
+size: '0x4'
+offset_sig: 8B 44 24 ?? 8B 54 24 ?? 85 C0 78 ?? 3B 82 ?? ?? ?? ?? 7D ?? 8B 8A ?? ?? ?? ?? 8B 04 81 8B 4A ?? 8D 04 40 8D 04
+  81
+offset_sig_disp: '0xc'

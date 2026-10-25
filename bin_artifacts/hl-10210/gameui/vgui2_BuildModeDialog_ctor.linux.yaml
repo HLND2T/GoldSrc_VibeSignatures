@@ -1,0 +1,5 @@
+func_name: vgui2::BuildModeDialog::BuildModeDialog(vgui2::BuildGroup *)
+func_va: '0x12feb0'
+func_rva: '0x12feb0'
+func_size: '0x1222'
+func_sig: 55 31 C0 57 31 C9 56 BA ?? ?? ?? ?? 53 31 F6 83 EC ?? 8B 5C 24 ?? 89 44 24 ?? 89 54 24 ?? 89 4C 24 ??

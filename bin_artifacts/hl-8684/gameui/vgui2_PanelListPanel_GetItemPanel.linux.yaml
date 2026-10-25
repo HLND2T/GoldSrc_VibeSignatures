@@ -1,0 +1,9 @@
+func_name: vgui2::PanelListPanel::GetItemPanel(int)
+func_va: '0x160e50'
+func_rva: '0x160e50'
+func_size: '0x41'
+func_sig: 53 8B 54 24 ?? 8B 5C 24 ?? 89 D0 F7 D0 C1 E8 ?? 84 C0 74 ?? 3B 93 ?? ?? ?? ?? 7D ?? 8B 43 ?? 8D 0C 52 8D 0C 88 3B
+  51 ?? 74 ?? 8B 01 5B 8B 00 C3 31 C0 5B C3
+vtable_name: vgui2::PanelListPanel
+vfunc_offset: '0x22c'
+vfunc_index: 139

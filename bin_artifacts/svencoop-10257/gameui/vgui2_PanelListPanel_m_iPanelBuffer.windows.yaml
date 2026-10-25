@@ -1,0 +1,7 @@
+struct_name: vgui2::PanelListPanel
+member_name: m_iPanelBuffer
+offset: '0xc0'
+size: '0x4'
+offset_sig: 55 8B EC 83 EC 08 53 56 57 8B F9 33 DB 33 F6 39 9F ?? ?? ?? ?? 7E ?? 66 0F 1F 84 00 ?? ?? ?? ?? 8B 87 ?? ?? ??
+  ??
+offset_sig_disp: '0x45'

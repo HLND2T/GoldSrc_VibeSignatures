@@ -1,0 +1,8 @@
+func_name: vgui2::Frame::GetClientArea(int&, int&, int&, int&)
+func_va: '0x1002d1e0'
+func_rva: '0x2d1e0'
+func_size: '0x75'
+func_sig: 55 8B EC 51 8B 45 ?? 53 56 FF 75 ?? 8B F1 C7 00 05 00 00 00 FF 75 ?? 89 75 ?? E8 ?? ?? ?? ?? 80 BE ?? ?? ?? ?? ??
+vtable_name: vgui2::Frame
+vfunc_offset: '0x2e8'
+vfunc_index: 186

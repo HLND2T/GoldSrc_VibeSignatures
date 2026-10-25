@@ -1,0 +1,6 @@
+struct_name: vgui2::PanelListPanel
+member_name: m_iFirstColumnWidth
+offset: '0xb4'
+size: '0x4'
+offset_sig: 55 57 31 FF 56 53 83 EC ?? 8B 5C 24 ?? 8D 44 24 ?? 89 44 24 ?? 8D 44 24 ?? 89 44 24 ?? 89 1C 24
+offset_sig_disp: '0x1da'

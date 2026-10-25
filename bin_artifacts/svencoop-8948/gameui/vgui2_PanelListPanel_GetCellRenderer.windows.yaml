@@ -1,0 +1,8 @@
+func_name: vgui2::PanelListPanel::GetCellRenderer(int)
+func_va: '0x100548c0'
+func_rva: '0x548c0'
+func_size: '0x35'
+func_sig: 55 8B EC 8B 55 ?? 56 8B F1 85 D2 78 ?? 3B 96 ?? ?? ?? ?? 7D ?? 8B 86 ?? ?? ?? ?? 8B 04 90 8D 0C 40 8B 46 ??
+vtable_name: vgui2::PanelListPanel
+vfunc_offset: '0x234'
+vfunc_index: 141

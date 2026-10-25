@@ -1,0 +1,9 @@
+func_name: vgui2::BuildModeDialog::PerformLayout()
+func_va: '0x1004fe60'
+func_rva: '0x4fe60'
+func_size: '0x1e0'
+func_sig: 55 8B EC 83 EC 0C 53 56 8B D9 57 89 5D ?? E8 ?? ?? ?? ?? 8D 45 ?? 8B CB 50 8D 45 ?? 50 E8 ?? ?? ?? ?? 8B 8B ?? ??
+  ?? ??
+vtable_name: vgui2::BuildModeDialog
+vfunc_offset: '0x1bc'
+vfunc_index: 111

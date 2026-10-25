@@ -1,0 +1,4 @@
+struct_name: vgui2::PanelListPanel
+member_name: m_SortedItems_m_Size
+offset: '0xa4'
+size: '0x4'
