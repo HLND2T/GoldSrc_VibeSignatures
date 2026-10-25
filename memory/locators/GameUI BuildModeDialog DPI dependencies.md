@@ -76,6 +76,7 @@ Issue #407 supplies module-local native build-editor gamedata for the downstream
 ### Reusable debugging lessons
 
 - Trigger: early optimized getter loses node-index provenance. Root cause: LEA + SHL or constant IMUL was unsupported in the shared tracer. Correct approach: preserve full-width constant scaling, fail closed on truncated/unknown operands, and compare equivalent arithmetic expressions. Verify with synthetic instruction tests and real HL3248/3266/3329 binaries.
+- Trigger: PR #408's full analysis fails in existing private-symbol recovery with `SetFocus has no complete Panel-map registration evidence` on HL3248/3266. Root cause: preserving SHL exposed `scaledIndex + arrayPointer`, while message-map storage ownership only followed the first ADD operand. Correct approach: also follow the second operand when its scale is exactly one; reject scaled pointers, other maps and unproven destination alternatives. Verify with the synthetic ownership regression and forced private-symbol analysis in addition to the new finder; a new-finder-only matrix cannot validate shared tracer consumers.
 - Trigger: debug getter return is a joined null/pointer expression through multiple helpers. Root constraint: logical size and allocation capacity are separate fields; assertions introduce extra comparisons. Correct approach: project actual helper parameters and prove the row-rejection branch returns null. Verify that native item-ID getters and row renderer select the same DATAITEM.
 - Trigger: raw Linux table pointers disagree with IDA values. Root cause: ELF R_386_32 relocations, especially HL8684. Apply symbol/addend relocations before independent raw-file table checks.
 - Trigger: strict analyzer refuses an IDB after research. Constraint: original directories retain IDA sidecars. Correct approach: use byte-identical temporary binary and packed-IDB copies, verify SHA-256 before use, keep restored/no-save analysis, and leave original scratch unstaged.
@@ -88,6 +89,7 @@ Issue #407 supplies module-local native build-editor gamedata for the downstream
 - Full unit run: 1567 tests OK, 12 existing skips. Final `tests/run_test_suite.py all -b --durations 30`: 1586 tests OK, 16 skips (Windows/POSIX differences, opt-in CLI/IDA tests and unavailable Redis). Actual IDA evidence is the successful 16-node analyzer batch, independent of the opt-in test skip.
 - `format_repo_files.py --check` and `git diff --cached --check`: exit 0. No concrete finder inventory/config text was frozen in tests.
 - Temporary selection/audit/log scripts and binary/IDA copies remain under ignored `.tmp/`; no new runtime/SDK object or plugin hook is implemented here.
+- PR #408 regression follow-up: the synthetic storage-order case failed before the fix and passed afterward. Forced batch `analysis-batch-20261025T192415-0f5c0ce01b864670950d69515a393a32` reran both private-symbols and BuildModeDialog on all 16 binaries: 32 succeeded, 0 failed, 0 skipped, with no artifact changes. Full suite: 1587 tests OK, 16 environment-related skips; format and whitespace checks passed.
 
 ## Callers
 
