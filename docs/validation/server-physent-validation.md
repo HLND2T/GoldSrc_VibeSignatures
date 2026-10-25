@@ -7,6 +7,9 @@ Source-branch regressions do not validate these binary hooks.
 
 The exact hashes, all inspected function entry windows/callers, and decoded
 GV addresses are in [server-physent-evidence.json](server-physent-evidence.json).
+These validation records live under `docs/validation`: they are not analysis
+inputs consumed by a preprocessor. `ida_preprocessor_scripts/references` is
+reserved for analysis resources with mapped consumers in the PR impact plan.
 Each new function/GV signature and the reused sv_models, sv_player, host_client,
 and g_groupop signatures was independently rescanned for uniqueness; VAs/RVAs
 and the encoded address + PIC addend + field offset were checked in its own IDB.
