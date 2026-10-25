@@ -370,7 +370,13 @@ def map_storage_owned(value, roots, stored_values=(), project_result=lambda valu
     seen = (*seen, value)
     if value[0] == "choice":
         return all(map_storage_owned(v, roots, stored_values, project_result, seen) for v in value[1:])
-    if value[0] in ("indexed", "address"):
+    if value[0] == "indexed":
+        # ADD can place a scaled record index before the array pointer. Only
+        # an unscaled second operand can supply the storage base.
+        return map_storage_owned(value[1], roots, stored_values, project_result, seen) or (
+            value[3] == 1 and map_storage_owned(value[2], roots, stored_values, project_result, seen)
+        )
+    if value[0] == "address":
         return map_storage_owned(value[1], roots, stored_values, project_result, seen)
     if value[0] == "result":
         return map_storage_owned(project_result(value), roots, stored_values, project_result, seen)

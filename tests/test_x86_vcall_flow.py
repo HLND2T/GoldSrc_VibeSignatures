@@ -56,6 +56,58 @@ class StagedPrivateWalkTests(unittest.IsolatedAsyncioTestCase):
 
 
 class VcallFlowTests(unittest.TestCase):
+    def test_imul_tracks_constant_array_stride_in_two_and_three_operand_forms(self):
+        for operands in (
+            (("reg", "eax", 4), imm(12)),
+            (("reg", "eax", 4), reg("eax"), imm(12)),
+        ):
+            code = [
+                instruction(1, "mov", reg("eax"), mem("esp", 4)),
+                instruction(2, "imul", *operands, writes=["eax"]),
+                instruction(3, "ret"),
+            ]
+            flow = trace_function([dict(start=1, succs=[], insns=code)], 1, "windows", symbolic_indices=True)
+            self.assertEqual(("indexed", ("const", 0), ("arg", 1), 12), flow["returns"][0]["value"])
+            flow = trace_function([dict(start=1, succs=[], insns=code)], 1, "windows")
+            self.assertIsNone(flow["returns"][0]["value"])
+
+    def test_imul_does_not_keep_partial_register_or_unknown_multiplier(self):
+        for operands in ((("reg", "eax", 2), imm(12)), (("reg", "eax", 4), reg("edx"))):
+            code = [
+                instruction(1, "mov", reg("eax"), mem("esp", 4)),
+                instruction(2, "imul", *operands, writes=["eax"]),
+                instruction(3, "ret"),
+            ]
+            flow = trace_function([dict(start=1, succs=[], insns=code)], 1, "windows", symbolic_indices=True)
+            self.assertIsNone(flow["returns"][0]["value"])
+
+    def test_symbolic_shift_preserves_full_width_array_index(self):
+        for mnemonic in ("shl", "sal"):
+            code = [
+                instruction(1, "mov", reg("edx"), mem("esp", 4)),
+                instruction(2, "lea", reg("eax"), ("mem", "edx", 0, "edx", 2)),
+                instruction(3, mnemonic, ("reg", "eax", 4), imm(2), writes=["eax"]),
+                instruction(4, "ret"),
+            ]
+            flow = trace_function([dict(start=1, succs=[], insns=code)], 1, "windows", symbolic_indices=True)
+            self.assertEqual(
+                ("indexed", ("const", 0), ("indexed", ("arg", 1), ("arg", 1), 2), 4),
+                flow["returns"][0]["value"],
+            )
+            code[2]["ops"][0] = ("reg", "eax", 2)
+            flow = trace_function([dict(start=1, succs=[], insns=code)], 1, "windows", symbolic_indices=True)
+            self.assertIsNone(flow["returns"][0]["value"])
+
+    def test_shift_masks_count_and_truncates_constant_to_x86_word(self):
+        for shift, expected in ((0, 0x80000001), (1, 2), (32, 0x80000001), (33, 2)):
+            code = [
+                instruction(1, "mov", reg("eax"), imm(0x80000001)),
+                instruction(2, "shl", ("reg", "eax", 4), imm(shift)),
+                instruction(3, "ret"),
+            ]
+            flow = trace_function([dict(start=1, succs=[], insns=code)], 1, "windows")
+            self.assertEqual(("const", expected), flow["returns"][0]["value"])
+
     def test_self_exchange_alignment_preserves_full_return_value(self):
         for width in (1, 2, 4):
             operand = ("reg", "eax", width)

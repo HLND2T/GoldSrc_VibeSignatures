@@ -360,6 +360,16 @@ def frame_focus_fixture():
 
 
 class StageIdentityTests(unittest.TestCase):
+    def test_message_copy_accepts_array_base_after_scaled_index(self):
+        storage = ("load", ("result", 10), 0x24)
+        index = ("indexed", ("const", 0), ("arg", 1), 64)
+        destination = ("indexed", index, storage, 1)
+        self.assertTrue(map_storage_owned(destination, {storage}))
+        self.assertTrue(map_storage_owned(("address", destination, 4), {storage}))
+        self.assertFalse(map_storage_owned(("indexed", index, storage, 4), {storage}))
+        self.assertFalse(map_storage_owned(destination, {("load", ("result", 11), 0x24)}))
+        self.assertFalse(map_storage_owned(("choice", destination, ("const", 0)), {storage}))
+
     def test_message_copy_rejects_another_map_unknown_destination_and_scalar_stores(self):
         panel = ("result", 10)
         storage = ("load", panel, 0x24)

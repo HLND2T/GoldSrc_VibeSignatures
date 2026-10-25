@@ -327,6 +327,37 @@ def _transfer(block, incoming, platform, static_loads, collect=False):
             state[("stack", sp - WORD_SIZE)] = read(operands[0])
         elif mnemonic == "pop":
             write(operands[0], state.get(("stack", sp)), ea)
+        elif mnemonic in ("shl", "sal") and len(operands) == 2:
+            value, shift = read(operands[0]), read(operands[1])
+            result = None
+            # x86 masks a 32-bit shift count to five bits. Preserve symbolic
+            # scaling only for a complete register; truncated pointers cannot
+            # establish native object/array identity.
+            if (
+                operands[0][0] == "reg"
+                and len(operands[0]) >= 3
+                and operands[0][2] == WORD_SIZE
+                and shift
+                and shift[0] == "const"
+            ):
+                bits = shift[1] & 31
+                if value and value[0] == "const":
+                    result = ("const", (value[1] << bits) & 0xFFFFFFFF)
+                elif value is not None and state.get("symbolic_indices") == ("const", 1):
+                    result = value if bits == 0 else ("indexed", ("const", 0), value, 1 << bits)
+            write(operands[0], result, ea)
+        elif mnemonic == "imul" and len(operands) in (2, 3):
+            left = read(operands[0] if len(operands) == 2 else operands[1])
+            right = read(operands[-1])
+            result = None
+            if operands[0][0] == "reg" and len(operands[0]) >= 3 and operands[0][2] == WORD_SIZE:
+                if left and right and left[0] == right[0] == "const":
+                    result = ("const", (left[1] * right[1]) & 0xFFFFFFFF)
+                elif state.get("symbolic_indices") == ("const", 1):
+                    factor, value = (right, left) if right and right[0] == "const" else (left, right)
+                    if factor and factor[0] == "const" and value is not None:
+                        result = ("indexed", ("const", 0), value, factor[1])
+            write(operands[0], result, ea)
         elif mnemonic in ("add", "sub") and len(operands) == 2:
             value = read(operands[1])
             result = (

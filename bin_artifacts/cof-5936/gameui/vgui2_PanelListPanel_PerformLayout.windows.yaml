@@ -1,0 +1,9 @@
+func_name: vgui2::PanelListPanel::PerformLayout()
+func_va: '0x100ac275'
+func_rva: '0xac275'
+func_size: '0x284'
+func_sig: 55 8B EC 83 EC 2C 89 4D ?? 8D 45 ?? 50 8D 4D ?? 51 8B 4D ?? E8 BC 1E FB FF 8B 55 ?? 8B 02 8B 4D ?? FF 90 ?? ?? ??
+  ??
+vtable_name: vgui2::PanelListPanel
+vfunc_offset: '0x1bc'
+vfunc_index: 111

@@ -1,0 +1,8 @@
+func_name: vgui2::PanelListPanel::computeVPixelsNeeded(void)
+func_va: '0x160950'
+func_rva: '0x160950'
+func_size: '0x77'
+func_sig: 55 57 31 FF 56 53 83 EC ?? 8B 74 24 ?? 8B 86 ?? ?? ?? ?? 85 C0 7E ?? 31 DB 8D 6C 24 ?? 8D 76 ?? 8B 96 ?? ?? ?? ??
+vtable_name: vgui2::PanelListPanel
+vfunc_offset: '0x21c'
+vfunc_index: 135

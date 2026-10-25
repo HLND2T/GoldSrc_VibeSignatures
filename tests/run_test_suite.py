@@ -52,6 +52,7 @@ GROUP_FILES = {
         "test_vgui_private_method_identity.py",
         "test_frame_key_identity.py",
         "test_combobox_unicode_identity.py",
+        "test_buildmode_identity.py",
         "test_teammenu_identity.py",
         "test_richtext_identity.py",
         "test_host_basepal_store.py",

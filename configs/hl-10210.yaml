@@ -3364,6 +3364,31 @@ modules:
           - GameUI_RichText_InsertStringW.{platform}.yaml
         expected_output:
           - GameUI_RichText_CarriageReturn_branch.{platform}.yaml
+      - name: find-GameUI-BuildModeDialog
+        expected_input:
+          - GameUI_PropertySheet_PerformLayout.{platform}.yaml
+          - GameUI_MessageBox_ApplySchemeSettings.{platform}.yaml
+          - GameUI_Panel_SetSize.{platform}.yaml
+        expected_output:
+          - vgui2_BuildModeDialog_ctor.{platform}.yaml
+          - vgui2_BuildModeDialog_PerformLayout.{platform}.yaml
+          - vgui2_BuildModeDialog_ApplySchemeSettings.{platform}.yaml
+          - vgui2_BuildModeDialog_m_pAddNewControlCombo.{platform}.yaml
+          - vgui2_Frame_GetClientArea.{platform}.yaml
+          - vgui2_Panel_GetVPanel.{platform}.yaml
+          - vgui2_PanelListPanel_vtable.{platform}.yaml
+          - vgui2_PanelListPanel_PerformLayout.{platform}.yaml
+          - vgui2_PanelListPanel_computeVPixelsNeeded.{platform}.yaml
+          - vgui2_PanelListPanel_GetItemCount.{platform}.yaml
+          - vgui2_PanelListPanel_GetItemLabel.{platform}.yaml
+          - vgui2_PanelListPanel_GetItemPanel.{platform}.yaml
+          - vgui2_PanelListPanel_GetCellRenderer.{platform}.yaml
+          - vgui2_PanelListPanel_m_SortedItems_m_pMemory.{platform}.yaml
+          - vgui2_PanelListPanel_m_SortedItems_m_Size.{platform}.yaml
+          - vgui2_PanelListPanel_m_iPanelBuffer.{platform}.yaml
+          - vgui2_PanelListPanel_m_iFirstColumnWidth.{platform}.yaml
+        expected_output_linux:
+          - vgui2_PanelListPanel_SetFirstColumnWidth.linux.yaml
       - name: find-GameUI-ComboBox
         expected_input:
           - vgui2_Menu_vtable.{platform}.yaml
@@ -3917,6 +3942,57 @@ modules:
         category: vtable
       - name: vgui2_Label_vtable
         category: vtable
+      - name: vgui2_BuildModeDialog_ctor
+        category: func
+      - name: vgui2_BuildModeDialog_PerformLayout
+        category: vfunc
+      - name: vgui2_BuildModeDialog_ApplySchemeSettings
+        category: vfunc
+      - name: vgui2::BuildModeDialog
+        category: struct
+      - name: vgui2_BuildModeDialog_m_pAddNewControlCombo
+        category: structmember
+        struct: vgui2::BuildModeDialog
+        member: m_pAddNewControlCombo
+      - name: vgui2_Frame_GetClientArea
+        category: vfunc
+      - name: vgui2_Panel_GetVPanel
+        category: vfunc
+      - name: vgui2_PanelListPanel_vtable
+        category: vtable
+      - name: vgui2_PanelListPanel_PerformLayout
+        category: vfunc
+      - name: vgui2_PanelListPanel_computeVPixelsNeeded
+        category: vfunc
+      - name: vgui2_PanelListPanel_GetItemCount
+        category: vfunc
+      - name: vgui2_PanelListPanel_GetItemLabel
+        category: vfunc
+      - name: vgui2_PanelListPanel_GetItemPanel
+        category: vfunc
+      - name: vgui2_PanelListPanel_GetCellRenderer
+        category: vfunc
+      - name: vgui2_PanelListPanel_SetFirstColumnWidth
+        category: func
+        platform: linux
+      - name: vgui2::PanelListPanel
+        category: struct
+      - name: vgui2_PanelListPanel_m_SortedItems_m_pMemory
+        category: structmember
+        struct: vgui2::PanelListPanel
+        member: m_SortedItems_m_pMemory
+      - name: vgui2_PanelListPanel_m_SortedItems_m_Size
+        category: structmember
+        struct: vgui2::PanelListPanel
+        member: m_SortedItems_m_Size
+      - name: vgui2_PanelListPanel_m_iPanelBuffer
+        category: structmember
+        struct: vgui2::PanelListPanel
+        member: m_iPanelBuffer
+      - name: vgui2_PanelListPanel_m_iFirstColumnWidth
+        category: structmember
+        struct: vgui2::PanelListPanel
+        member: m_iFirstColumnWidth
       - name: vgui2_BuildModeDialog_vtable
         category: vtable
       - name: vgui2_BuildModeDialog_SetActiveControl

@@ -1,0 +1,6 @@
+struct_name: vgui2::BuildModeDialog
+member_name: m_pAddNewControlCombo
+offset: '0x14c'
+size: '0x4'
+offset_sig: 83 EC 20 53 56 57 6A 1C 8B F1 E8 ?? ?? ?? ?? 83 C4 04 85 C0 74 ?? C7 00 00 00 00 00 C7 40 ?? ?? ?? ?? ??
+offset_sig_disp: '0x1a7'

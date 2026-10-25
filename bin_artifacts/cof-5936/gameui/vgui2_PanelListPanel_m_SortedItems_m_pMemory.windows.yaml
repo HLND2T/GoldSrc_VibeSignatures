@@ -1,0 +1,4 @@
+struct_name: vgui2::PanelListPanel
+member_name: m_SortedItems_m_pMemory
+offset: '0x98'
+size: '0x4'

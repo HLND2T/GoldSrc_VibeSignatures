@@ -1,0 +1,9 @@
+func_name: vgui2::Frame::ApplySchemeSettings(vgui2::IScheme*)
+func_va: '0x100692ce'
+func_rva: '0x692ce'
+func_size: '0x18f'
+func_sig: 55 8B EC 83 EC 18 89 4D ?? 8B 45 ?? 50 8B 4D ?? E8 ?? ?? ?? ?? 8B 4D ?? 51 68 ?? ?? ?? ?? 8D 55 ?? 52 8B 45 ?? 8B
+  10
+vtable_name: vgui2::BuildModeDialog
+vfunc_offset: '0x13c'
+vfunc_index: 79
