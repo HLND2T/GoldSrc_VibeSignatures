@@ -1,0 +1,933 @@
+func_name: "SV_AddLinksToPM_"
+func_va: "0xfc130"
+disasm_code: |-
+  .text:000FC130                 push    ebp
+  .text:000FC131                 push    edi
+  .text:000FC132                 push    esi
+  .text:000FC133                 push    ebx
+  .text:000FC134                 sub     esp, 3Ch
+  .text:000FC137                 mov     eax, [esp+4Ch+node]
+  .text:000FC13B                 mov     [esp+4Ch+var_28], eax
+  .text:000FC13F                 mov     eax, [esp+4Ch+pmove_mins]
+  .text:000FC143                 mov     [esp+4Ch+var_20], eax
+  .text:000FC147                 mov     eax, [esp+4Ch+pmove_maxs]
+  .text:000FC14B                 mov     [esp+4Ch+var_24], eax
+  .text:000FC14F                 mov     eax, [esp+4Ch+var_28]
+  .text:000FC153                 mov     ebp, [eax+1Ch]
+  .text:000FC156                 add     eax, 18h
+  .text:000FC159                 mov     [esp+4Ch+var_38], eax
+  .text:000FC15D                 jmp     short loc_FC19E
+  .text:000FC160                 mov     edx, ds:g_groupop
+  .text:000FC166                 test    edx, edx
+  .text:000FC168                 jnz     loc_FC6B0
+  .text:000FC16E                 mov     edx, ds:sv_player
+  .text:000FC174                 test    [edx+2C0h], eax
+  .text:000FC17A                 jz      short loc_FC19A
+  .text:000FC17C                 lea     esi, [esi+0]
+  .text:000FC180                 cmp     [l+210h], edx
+  .text:000FC186                 jz      short loc_FC19A
+  .text:000FC188                 mov     eax, [l+184h]
+  .text:000FC18E                 lea     edx, [eax-2]
+  .text:000FC191                 cmp     edx, 2
+  .text:000FC194                 jbe     short loc_FC1C8
+  .text:000FC196                 test    eax, eax
+  .text:000FC198                 jz      short loc_FC1C8
+  .text:000FC19A                 mov     l, [esp+4Ch+next]
+  .text:000FC19E                 cmp     l, [esp+4Ch+var_38]
+  .text:000FC1A2                 jz      loc_FC970
+  .text:000FC1A8                 mov     eax, [l+4]
+  .text:000FC1AB                 mov     [esp+4Ch+next], eax
+  .text:000FC1AF                 mov     next_0, [l+2B8h]
+  .text:000FC1B5                 test    eax, eax
+  .text:000FC1B7                 jnz     short loc_FC160
+  .text:000FC1B9                 mov     edx, ds:sv_player
+  .text:000FC1BF                 jmp     short loc_FC180
+  .text:000FC1C8                 lea     eax, [l-8]
+  .text:000FC1CB                 ; e
+  .text:000FC1CB                 mov     [esp+4Ch+var_4C], eax; e
+  .text:000FC1CE                 mov     [esp+4Ch+fmax], eax
+  .text:000FC1D2                 call    NUM_FOR_EDICT
+  .text:000FC1D7                 mov     esi, ds:pmove
+  .text:000FC1DD                 mov     ebx, [esi+24754h]
+  .text:000FC1E3                 mov     ecx, eax
+  .text:000FC1E5                 mov     [esp+4Ch+e], eax
+  .text:000FC1E9                 lea     e_0, [ebx+1]
+  .text:000FC1EC                 mov     edx, ebx
+  .text:000FC1EE                 mov     [esi+24754h], eax
+  .text:000FC1F4                 mov     eax, ebx
+  .text:000FC1F6                 shl     edx, 5
+  .text:000FC1F9                 shl     eax, 8
+  .text:000FC1FC                 sub     eax, edx
+  .text:000FC1FE                 add     eax, esi
+  .text:000FC200                 test    e_0, e_0
+  .text:000FC202                 mov     dword ptr ds:stru_247A8.r_offset[eax], e_0
+  .text:000FC208                 movss   xmm0, dword ptr [l+80h]
+  .text:000FC210                 movss   dword ptr [eax+2477Ch], xmm0
+  .text:000FC218                 movss   xmm1, dword ptr [l+84h]
+  .text:000FC220                 movss   dword ptr ds:stru_24780.r_offset[eax], xmm1
+  .text:000FC228                 movss   xmm2, dword ptr [l+88h]
+  .text:000FC230                 movss   dword ptr [eax+24784h], xmm2
+  .text:000FC238                 jle     short loc_FC247
+  .text:000FC23A                 mov     eax, ds:svs.maxclients; gv: svs_maxclients (int field address)
+  .text:000FC23F                 cmp     e_0, eax
+  .text:000FC241                 jle     loc_FC7D0
+  .text:000FC247                 mov     edx, ebx
+  .text:000FC249                 mov     eax, ebx
+  .text:000FC24B                 shl     edx, 5
+  .text:000FC24E                 xor     e_0, e_0
+  .text:000FC250                 shl     eax, 8
+  .text:000FC253                 sub     eax, edx
+  .text:000FC255                 mov     dword ptr ds:stru_24778.r_offset[esi+eax], ecx
+  .text:000FC25C                 mov     edx, ebx
+  .text:000FC25E                 mov     eax, ebx
+  .text:000FC260                 movss   xmm3, dword ptr [l+0C8h]
+  .text:000FC268                 shl     edx, 5
+  .text:000FC26B                 shl     eax, 8
+  .text:000FC26E                 sub     eax, edx
+  .text:000FC270                 xor     edx, edx
+  .text:000FC272                 lea     edi, [esi+eax]
+  .text:000FC275                 movss   dword ptr [edi+247ACh], xmm3
+  .text:000FC27D                 movss   xmm4, dword ptr [l+0CCh]
+  .text:000FC285                 movss   dword ptr ds:stru_247B0.r_offset[edi], xmm4
+  .text:000FC28D                 movss   xmm5, dword ptr [l+0D0h]
+  .text:000FC295                 mov     [edi+2478Ch], edx
+  .text:000FC29B                 movss   dword ptr [edi+247B4h], xmm5
+  .text:000FC2A3                 mov     edx, [l+1C0h]
+  .text:000FC2A9                 mov     dword ptr ds:stru_247C0.r_offset[edi], edx
+  .text:000FC2AF                 mov     edx, [l+184h]
+  .text:000FC2B5                 cmp     edx, 4
+  .text:000FC2B8                 jz      loc_FC790
+  .text:000FC2BE                 test    edx, edx
+  .text:000FC2C0                 jnz     loc_FC6D0
+  .text:000FC2C6                 mov     edx, [l+12Ch]
+  .text:000FC2CC                 test    edx, edx
+  .text:000FC2CE                 jnz     loc_FC796
+  .text:000FC2D4                 xor     eax, eax
+  .text:000FC2D6                 mov     dword ptr ds:stru_24788.r_offset[edi], eax
+  .text:000FC2DC                 mov     ecx, [l+184h]
+  .text:000FC2E2                 mov     edx, ebx
+  .text:000FC2E4                 mov     eax, ebx
+  .text:000FC2E6                 shl     edx, 5
+  .text:000FC2E9                 shl     eax, 8
+  .text:000FC2EC                 sub     eax, edx
+  .text:000FC2EE                 lea     edi, [esi+eax]
+  .text:000FC2F1                 mov     dword ptr ds:stru_247B8.r_offset[edi], ecx
+  .text:000FC2F7                 lea     eax, stru_247C0.r_offset[esi+eax]
+  .text:000FC2FE                 mov     edx, [l+188h]
+  .text:000FC304                 mov     [esp+4Ch+var_34], eax
+  .text:000FC308                 mov     [edi+247BCh], edx
+  .text:000FC30E                 movss   xmm6, dword ptr [l+1A8h]
+  .text:000FC316                 movss   dword ptr [edi+247C4h], xmm6
+  .text:000FC31E                 mov     edx, [l+1A0h]
+  .text:000FC324                 mov     dword ptr ds:stru_247C8.r_offset[edi], edx
+  .text:000FC32A                 mov     edx, 4
+  .text:000FC32F                 ; count
+  .text:000FC32F                 mov     [esp+4Ch+count], edx; count
+  .text:000FC333                 lea     edx, [l+1B4h]
+  .text:000FC339                 ; src
+  .text:000FC339                 mov     [esp+4Ch+src], edx; src
+  .text:000FC33D                 lea     edx, [eax+0Ch]
+  .text:000FC340                 ; dest
+  .text:000FC340                 mov     [esp+4Ch+var_4C], edx; dest
+  .text:000FC343                 call    Q_memcpy
+  .text:000FC348                 mov     eax, [esp+4Ch+var_34]
+  .text:000FC34C                 mov     ecx, 2
+  .text:000FC351                 lea     edx, [l+1B8h]
+  .text:000FC357                 ; count
+  .text:000FC357                 mov     [esp+4Ch+count], ecx; count
+  .text:000FC35B                 ; src
+  .text:000FC35B                 mov     [esp+4Ch+src], edx; src
+  .text:000FC35F                 add     eax, 10h
+  .text:000FC362                 ; dest
+  .text:000FC362                 mov     [esp+4Ch+var_4C], eax; dest
+  .text:000FC365                 call    Q_memcpy
+  .text:000FC36A                 mov     eax, [l+180h]
+  .text:000FC370                 mov     [edi+247D4h], eax
+  .text:000FC376                 xor     eax, eax
+  .text:000FC378                 mov     dword ptr ds:stru_247D8.r_offset[edi], eax
+  .text:000FC37E                 xor     eax, eax
+  .text:000FC380                 mov     [edi+247DCh], eax
+  .text:000FC386                 mov     eax, [l+2BCh]
+  .text:000FC38C                 mov     dword ptr ds:stru_247E8.r_offset[edi], eax
+  .text:000FC392                 mov     eax, [l+2C0h]
+  .text:000FC398                 mov     [edi+247ECh], eax
+  .text:000FC39E                 mov     eax, [l+2C4h]
+  .text:000FC3A4                 mov     dword ptr ds:stru_247F0.r_offset[edi], eax
+  .text:000FC3AA                 mov     eax, [l+2C8h]
+  .text:000FC3B0                 mov     [edi+247F4h], eax
+  .text:000FC3B6                 movss   xmm7, dword ptr [l+2CCh]
+  .text:000FC3BE                 movss   dword ptr ds:stru_247F8.r_offset[edi], xmm7
+  .text:000FC3C6                 movss   xmm0, dword ptr [l+2D0h]
+  .text:000FC3CE                 movss   dword ptr [edi+247FCh], xmm0
+  .text:000FC3D6                 movss   xmm1, dword ptr [l+2D4h]
+  .text:000FC3DE                 movss   dword ptr ds:stru_24800.r_offset[edi], xmm1
+  .text:000FC3E6                 movss   xmm2, dword ptr [l+2D8h]
+  .text:000FC3EE                 movss   dword ptr [edi+24804h], xmm2
+  .text:000FC3F6                 movss   xmm3, dword ptr [l+2DCh]
+  .text:000FC3FE                 movss   dword ptr ds:stru_24808.r_offset[edi], xmm3
+  .text:000FC406                 movss   xmm4, dword ptr [l+2E0h]
+  .text:000FC40E                 movss   dword ptr [edi+2480Ch], xmm4
+  .text:000FC416                 movss   xmm5, dword ptr [l+2E4h]
+  .text:000FC41E                 movss   dword ptr ds:stru_24810.r_offset[edi], xmm5
+  .text:000FC426                 movss   xmm6, dword ptr [l+2E8h]
+  .text:000FC42E                 movss   dword ptr [edi+24814h], xmm6
+  .text:000FC436                 movss   xmm7, dword ptr [l+2ECh]
+  .text:000FC43E                 movss   dword ptr ds:stru_24818.r_offset[edi], xmm7
+  .text:000FC446                 movss   xmm0, dword ptr [l+2F0h]
+  .text:000FC44E                 movss   dword ptr [edi+2481Ch], xmm0
+  .text:000FC456                 movss   xmm1, dword ptr [l+2F4h]
+  .text:000FC45E                 movss   dword ptr ds:stru_24820.r_offset[edi], xmm1
+  .text:000FC466                 movss   xmm2, dword ptr [l+2F8h]
+  .text:000FC46E                 movss   dword ptr [edi+24824h], xmm2
+  .text:000FC476                 movss   xmm3, dword ptr [l+2FCh]
+  .text:000FC47E                 movss   dword ptr ds:stru_24828.r_offset[edi], xmm3
+  .text:000FC486                 movss   xmm4, dword ptr [l+300h]
+  .text:000FC48E                 movss   dword ptr [edi+2482Ch], xmm4
+  .text:000FC496                 movss   xmm5, dword ptr [l+304h]
+  .text:000FC49E                 movss   dword ptr ds:stru_24830.r_offset[edi], xmm5
+  .text:000FC4A6                 movss   xmm6, dword ptr [l+308h]
+  .text:000FC4AE                 movss   dword ptr [edi+24834h], xmm6
+  .text:000FC4B6                 mov     eax, [l+184h]
+  .text:000FC4BC                 test    eax, eax
+  .text:000FC4BE                 jnz     loc_FC688
+  .text:000FC4C4                 mov     eax, [l+188h]
+  .text:000FC4CA                 test    eax, eax
+  .text:000FC4CC                 jz      loc_FC19A
+  .text:000FC4D2                 mov     eax, [l+12Ch]
+  .text:000FC4D8                 test    eax, eax
+  .text:000FC4DA                 jz      loc_FC19A
+  .text:000FC4E0                 mov     edx, [l+21Ch]
+  .text:000FC4E6                 mov     eax, [esp+4Ch+fmax]
+  .text:000FC4EA                 cmp     eax, ds:sv_player
+  .text:000FC4F0                 jz      loc_FC19A
+  .text:000FC4F6                 test    dl, 8
+  .text:000FC4F9                 jz      short loc_FC50F
+  .text:000FC4FB                 fldz
+  .text:000FC4FD                 fld     dword ptr [l+1D8h]
+  .text:000FC503                 fxch    st(1)
+  .text:000FC505                 fucomip st, st(1)
+  .text:000FC507                 fstp    st
+  .text:000FC509                 jnb     loc_FC19A
+  .text:000FC50F                 fld     dword ptr [l+15Ch]
+  .text:000FC515                 fldz
+  .text:000FC517                 fxch    st(1)
+  .text:000FC519                 fucomip st, st(1)
+  .text:000FC51B                 fstp    st
+  .text:000FC51D                 jp      short loc_FC537
+  .text:000FC51F                 jnz     short loc_FC537
+  .text:000FC521                 fld     dword ptr [l+168h]
+  .text:000FC527                 fld1
+  .text:000FC529                 fxch    st(1)
+  .text:000FC52B                 fucomip st, st(1)
+  .text:000FC52D                 fstp    st
+  .text:000FC52F                 jp      short loc_FC537
+  .text:000FC531                 jz      loc_FC19A
+  .text:000FC537                 lea     eax, [l+16Ch]
+  .text:000FC53D                 ; v
+  .text:000FC53D                 mov     [esp+4Ch+var_4C], eax; v
+  .text:000FC540                 call    Length
+  .text:000FC545                 fldz
+  .text:000FC547                 fxch    st(1)
+  .text:000FC549                 fucomip st, st(1)
+  .text:000FC54B                 fstp    st
+  .text:000FC54D                 jp      short loc_FC555
+  .text:000FC54F                 jz      loc_FC19A
+  .text:000FC555                 test    byte ptr [l+21Ch], 8
+  .text:000FC55C                 lea     eax, [l+148h]
+  .text:000FC562                 lea     ecx, [l+13Ch]
+  .text:000FC568                 mov     [esp+4Ch+fmax], eax
+  .text:000FC56C                 jnz     loc_FC9B0
+  .text:000FC572                 mov     eax, [esp+4Ch+var_24]
+  .text:000FC576                 fld     dword ptr [eax]
+  .text:000FC578                 fst     [esp+4Ch+var_34]
+  .text:000FC57C                 fld     dword ptr [fmin]
+  .text:000FC57E                 fucomip st, st(1)
+  .text:000FC580                 fstp    st
+  .text:000FC582                 ja      loc_FC19A
+  .text:000FC588                 mov     edi, [esp+4Ch+var_20]
+  .text:000FC58C                 mov     edx, [esp+4Ch+fmax]
+  .text:000FC590                 fld     dword ptr [edi]
+  .text:000FC592                 fst     [esp+4Ch+var_34]
+  .text:000FC596                 fld     dword ptr [edx]
+  .text:000FC598                 fxch    st(1)
+  .text:000FC59A                 fucomip st, st(1)
+  .text:000FC59C                 fstp    st
+  .text:000FC59E                 ja      loc_FC19A
+  .text:000FC5A4                 fld     dword ptr [eax+4]
+  .text:000FC5A7                 fst     [esp+4Ch+var_34]
+  .text:000FC5AB                 fld     dword ptr [fmin+4]
+  .text:000FC5AE                 fucomip st, st(1)
+  .text:000FC5B0                 fstp    st
+  .text:000FC5B2                 ja      loc_FC19A
+  .text:000FC5B8                 fld     dword ptr [edi+4]
+  .text:000FC5BB                 fst     [esp+4Ch+var_34]
+  .text:000FC5BF                 fld     dword ptr [edx+4]
+  .text:000FC5C2                 fxch    st(1)
+  .text:000FC5C4                 fucomip st, st(1)
+  .text:000FC5C6                 fstp    st
+  .text:000FC5C8                 ja      loc_FC19A
+  .text:000FC5CE                 fld     dword ptr [fmin+8]
+  .text:000FC5D1                 fld     dword ptr [eax+8]
+  .text:000FC5D4                 fst     [esp+4Ch+var_34]
+  .text:000FC5D8                 fxch    st(1)
+  .text:000FC5DA                 fucomip st, st(1)
+  .text:000FC5DC                 fstp    st
+  .text:000FC5DE                 ja      loc_FC19A
+  .text:000FC5E4                 fld     dword ptr [edi+8]
+  .text:000FC5E7                 fst     [esp+4Ch+var_34]
+  .text:000FC5EB                 fld     dword ptr [edx+8]
+  .text:000FC5EE                 fxch    st(1)
+  .text:000FC5F0                 fucomip st, st(1)
+  .text:000FC5F2                 fstp    st
+  .text:000FC5F4                 ja      loc_FC19A
+  .text:000FC5FA                 mov     eax, [l+184h]
+  .text:000FC600                 test    eax, eax
+  .text:000FC602                 jnz     short loc_FC620
+  .text:000FC604                 cmp     dword ptr [l+188h], 0FFFFFFF0h
+  .text:000FC60B                 jz      loc_FCAB6
+  .text:000FC611                 jmp     short loc_FC620
+  .text:000FC620                 mov     edx, ds:pmove
+  .text:000FC626                 mov     eax, [edx+24Ch]
+  .text:000FC62C                 cmp     eax, 257h
+  .text:000FC631                 jg      loc_FCAE6
+  .text:000FC637                 mov     edi, eax
+  .text:000FC639                 mov     fmin, eax
+  .text:000FC63B                 shl     edi, 5
+  .text:000FC63E                 inc     eax
+  .text:000FC63F                 shl     ecx, 8
+  .text:000FC642                 sub     ecx, edi
+  .text:000FC644                 lea     ecx, [edx+ecx+250h]
+  .text:000FC64B                 mov     [edx+24Ch], eax
+  .text:000FC651                 mov     eax, ebx
+  .text:000FC653                 shl     eax, 5
+  .text:000FC656                 shl     ebx, 8
+  .text:000FC659                 sub     ebx, eax
+  .text:000FC65B                 xor     eax, eax
+  .text:000FC65D                 lea     edx, stru_24750.r_offset[esi+ebx]
+  .text:000FC664                 mov     esi, [edx+eax+8]
+  .text:000FC668                 mov     ebx, [edx+eax+0Ch]
+  .text:000FC66C                 mov     [pe+eax], esi
+  .text:000FC66F                 mov     [pe+eax+4], ebx
+  .text:000FC673                 add     eax, 8
+  .text:000FC676                 cmp     eax, 0E0h
+  .text:000FC67B                 jb      short loc_FC664
+  .text:000FC67D                 jmp     loc_FC19A
+  .text:000FC688                 mov     edx, [l+21Ch]
+  .text:000FC68E                 test    edx, 800000h
+  .text:000FC694                 jz      loc_FC4E6
+  .text:000FC69A                 cmp     eax, 4
+  .text:000FC69D                 jz      loc_FC19A
+  .text:000FC6A3                 jmp     loc_FC4E6
+  .text:000FC6B0                 dec     edx
+  .text:000FC6B1                 jnz     loc_FC1B9
+  .text:000FC6B7                 mov     edx, ds:sv_player
+  .text:000FC6BD                 test    [edx+2C0h], eax
+  .text:000FC6C3                 jnz     loc_FC19A
+  .text:000FC6C9                 jmp     loc_FC180
+  .text:000FC6D0                 xor     ecx, ecx
+  .text:000FC6D2                 cmp     edx, 2
+  .text:000FC6D5                 mov     dword ptr ds:stru_24788.r_offset[edi], ecx
+  .text:000FC6DB                 jz      loc_FC8B8
+  .text:000FC6E1                 movss   xmm7, dword ptr [l+154h]
+  .text:000FC6E9                 movss   dword ptr ds:stru_24790.r_offset[edi], xmm7
+  .text:000FC6F1                 movss   xmm7, dword ptr [l+158h]
+  .text:000FC6F9                 movss   dword ptr [edi+24794h], xmm7
+  .text:000FC701                 movss   xmm7, dword ptr [l+15Ch]
+  .text:000FC709                 movss   dword ptr ds:stru_24798.r_offset[edi], xmm7
+  .text:000FC711                 movss   xmm7, dword ptr [l+160h]
+  .text:000FC719                 movss   dword ptr [edi+2479Ch], xmm7
+  .text:000FC721                 movss   xmm0, dword ptr [l+164h]
+  .text:000FC729                 movss   dword ptr ds:stru_247A0.r_offset[edi], xmm0
+  .text:000FC731                 movss   xmm1, dword ptr [l+168h]
+  .text:000FC739                 movss   dword ptr [edi+247A4h], xmm1
+  .text:000FC741                 mov     edx, [l+78h]
+  .text:000FC744                 test    edx, edx
+  .text:000FC746                 jz      loc_FC8A0
+  .text:000FC74C                 mov     ecx, ds:pr_strings
+  .text:000FC752                 mov     edi, 20h ; ' '
+  .text:000FC757                 lea     eax, stru_24758.r_offset[esi+eax]
+  .text:000FC75E                 ; count
+  .text:000FC75E                 mov     [esp+4Ch+count], edi; count
+  .text:000FC762                 ; dest
+  .text:000FC762                 mov     [esp+4Ch+var_4C], eax; dest
+  .text:000FC765                 add     edx, ecx
+  .text:000FC767                 ; src
+  .text:000FC767                 mov     [esp+4Ch+src], edx; src
+  .text:000FC76B                 call    Q_strncpy
+  .text:000FC770                 mov     edx, ebx
+  .text:000FC772                 mov     eax, ebx
+  .text:000FC774                 shl     edx, 5
+  .text:000FC777                 shl     eax, 8
+  .text:000FC77A                 sub     eax, edx
+  .text:000FC77C                 xor     edx, edx
+  .text:000FC77E                 mov     [esi+eax+24777h], dl
+  .text:000FC785                 jmp     loc_FC2DC
+  .text:000FC790                 mov     edx, [l+12Ch]
+  .text:000FC796                 mov     edx, ds:sv.models[edx*4]
+  .text:000FC79D                 mov     ecx, 20h ; ' '
+  .text:000FC7A2                 lea     eax, stru_24758.r_offset[esi+eax]
+  .text:000FC7A9                 mov     dword ptr ds:stru_24788.r_offset[edi], edx
+  .text:000FC7AF                 ; count
+  .text:000FC7AF                 mov     [esp+4Ch+count], ecx; count
+  .text:000FC7B3                 ; src
+  .text:000FC7B3                 mov     [esp+4Ch+src], edx; src
+  .text:000FC7B7                 ; dest
+  .text:000FC7B7                 mov     [esp+4Ch+var_4C], eax; dest
+  .text:000FC7BA                 call    Q_strncpy
+  .text:000FC7BF                 mov     byte ptr [edi+24777h], 0
+  .text:000FC7C6                 jmp     loc_FC2DC
+  .text:000FC7D0                 mov     e_0, ds:host_client
+  .text:000FC7D6                 mov     edx, [ecx+6544h]
+  .text:000FC7DC                 test    edx, edx
+  .text:000FC7DE                 jz      loc_FC880
+  .text:000FC7E4                 mov     edi, [ecx+6548h]
+  .text:000FC7EA                 test    edi, edi
+  .text:000FC7EC                 jz      loc_FC880
+  .text:000FC7F2                 fld     sv_unlag.value; gv: sv_unlag_value (float field address)
+  .text:000FC7F8                 fldz
+  .text:000FC7FA                 fxch    st(1)
+  .text:000FC7FC                 fucomip st, st(1)
+  .text:000FC7FE                 fstp    st
+  .text:000FC800                 jp      short loc_FC804
+  .text:000FC802                 jz      short loc_FC880
+  .text:000FC804                 cmp     eax, 1
+  .text:000FC807                 jle     short loc_FC880
+  .text:000FC809                 mov     edi, [esp+4Ch+e]
+  .text:000FC80D                 dec     edi
+  .text:000FC80E                 cmp     eax, edi
+  .text:000FC810                 mov     eax, edi
+  .text:000FC812                 setle   dl
+  .text:000FC815                 shr     eax, 1Fh
+  .text:000FC818                 or      dl, al
+  .text:000FC81A                 jnz     short loc_FC880
+  .text:000FC81C                 mov     ecx, [ecx]
+  .text:000FC81E                 test    ecx, ecx
+  .text:000FC820                 jz      short loc_FC880
+  .text:000FC822                 lea     eax, [edi+edi*4]
+  .text:000FC825                 lea     eax, [edi+eax*2]
+  .text:000FC828                 shl     eax, 3
+  .text:000FC82B                 mov     edx, dword ptr ds:truepositions.active[eax]
+  .text:000FC831                 lea     ecx, truepositions.active[eax]
+  .text:000FC837                 test    edx, edx
+  .text:000FC839                 jz      short loc_FC880
+  .text:000FC83B                 mov     edi, ds:truepositions.needrelink[eax]
+  .text:000FC841                 test    edi, edi
+  .text:000FC843                 jz      short loc_FC880
+  .text:000FC845                 mov     edx, ebx
+  .text:000FC847                 mov     eax, ebx
+  .text:000FC849                 movss   xmm3, dword ptr [ecx+14h]
+  .text:000FC84E                 shl     edx, 5
+  .text:000FC851                 shl     eax, 8
+  .text:000FC854                 sub     eax, edx
+  .text:000FC856                 lea     edx, stru_24770.r_offset[esi+eax]
+  .text:000FC85D                 movss   dword ptr [edx+0Ch], xmm3
+  .text:000FC862                 movss   xmm4, dword ptr [ecx+18h]
+  .text:000FC867                 movss   dword ptr [edx+10h], xmm4
+  .text:000FC86C                 movss   xmm5, dword ptr [ecx+1Ch]
+  .text:000FC871                 movss   dword ptr [edx+14h], xmm5
+  .text:000FC876                 lea     esi, [esi+0]
+  .text:000FC879                 lea     edi, [edi+0]
+  .text:000FC880                 mov     edx, ebx
+  .text:000FC882                 mov     eax, ebx
+  .text:000FC884                 shl     edx, 5
+  .text:000FC887                 shl     eax, 8
+  .text:000FC88A                 sub     eax, edx
+  .text:000FC88C                 add     eax, esi
+  .text:000FC88E                 mov     edx, dword ptr ds:stru_247A8.r_offset[eax]
+  .text:000FC894                 mov     dword ptr ds:stru_24778.r_offset[eax], edx
+  .text:000FC89A                 jmp     loc_FC25C
+  .text:000FC8A0                 mov     ecx, 3Fh ; '?'
+  .text:000FC8A5                 mov     word ptr ds:stru_24758.r_offset[esi+eax], cx
+  .text:000FC8AD                 jmp     loc_FC770
+  .text:000FC8B8                 mov     edx, [l+12Ch]
+  .text:000FC8BE                 test    edx, edx
+  .text:000FC8C0                 jz      short loc_FC8FA
+  .text:000FC8C2                 mov     edx, ds:sv.models[edx*4]
+  .text:000FC8C9                 test    edx, edx
+  .text:000FC8CB                 jz      short loc_FC8FA
+  .text:000FC8CD                 test    byte ptr [edx+51h], 2
+  .text:000FC8D1                 jnz     loc_FCA68
+  .text:000FC8D7                 mov     ecx, 20h ; ' '
+  .text:000FC8DC                 lea     eax, stru_24758.r_offset[esi+eax]
+  .text:000FC8E3                 ; count
+  .text:000FC8E3                 mov     [esp+4Ch+count], ecx; count
+  .text:000FC8E7                 ; src
+  .text:000FC8E7                 mov     [esp+4Ch+src], edx; src
+  .text:000FC8EB                 ; dest
+  .text:000FC8EB                 mov     [esp+4Ch+var_4C], eax; dest
+  .text:000FC8EE                 call    Q_strncpy
+  .text:000FC8F3                 mov     byte ptr [edi+24777h], 0
+  .text:000FC8FA                 mov     edx, ebx
+  .text:000FC8FC                 mov     eax, ebx
+  .text:000FC8FE                 movss   xmm2, dword ptr [l+154h]
+  .text:000FC906                 shl     edx, 5
+  .text:000FC909                 shl     eax, 8
+  .text:000FC90C                 sub     eax, edx
+  .text:000FC90E                 add     eax, esi
+  .text:000FC910                 movss   dword ptr ds:stru_24790.r_offset[eax], xmm2
+  .text:000FC918                 movss   xmm3, dword ptr [l+158h]
+  .text:000FC920                 movss   dword ptr [eax+24794h], xmm3
+  .text:000FC928                 movss   xmm4, dword ptr [l+15Ch]
+  .text:000FC930                 movss   dword ptr ds:stru_24798.r_offset[eax], xmm4
+  .text:000FC938                 movss   xmm5, dword ptr [l+160h]
+  .text:000FC940                 movss   dword ptr [eax+2479Ch], xmm5
+  .text:000FC948                 movss   xmm6, dword ptr [l+164h]
+  .text:000FC950                 movss   dword ptr ds:stru_247A0.r_offset[eax], xmm6
+  .text:000FC958                 movss   xmm2, dword ptr [l+168h]
+  .text:000FC960                 movss   dword ptr [eax+247A4h], xmm2
+  .text:000FC968                 jmp     loc_FC2DC
+  .text:000FC970                 mov     esi, [esp+4Ch+var_28]
+  .text:000FC974                 mov     eax, [esi]
+  .text:000FC976                 cmp     eax, 0FFFFFFFFh
+  .text:000FC979                 jz      short loc_FC9A7
+  .text:000FC97B                 fld     dword ptr [esi+4]
+  .text:000FC97E                 shl     eax, 2
+  .text:000FC981                 mov     esi, [esp+4Ch+var_24]
+  .text:000FC985                 fld     dword ptr [esi+eax]
+  .text:000FC988                 fst     [esp+4Ch+next]
+  .text:000FC98C                 fucomip st, st(1)
+  .text:000FC98E                 ja      loc_FCA88
+  .text:000FC994                 mov     esi, [esp+4Ch+var_20]
+  .text:000FC998                 fld     dword ptr [esi+eax]
+  .text:000FC99B                 fxch    st(1)
+  .text:000FC99D                 fucomip st, st(1)
+  .text:000FC99F                 fstp    st
+  .text:000FC9A1                 ja      loc_FCA78
+  .text:000FC9A7                 add     esp, 3Ch
+  .text:000FC9AA                 pop     ebx
+  .text:000FC9AB                 pop     esi
+  .text:000FC9AC                 pop     edi
+  .text:000FC9AD                 pop     l
+  .text:000FC9AE                 retn
+  .text:000FC9B0                 mov     edi, ds:host_client
+  .text:000FC9B6                 mov     fmax_0, [edi+6544h]
+  .text:000FC9BC                 test    eax, eax
+  .text:000FC9BE                 jz      loc_FC572
+  .text:000FC9C4                 mov     eax, [edi+6548h]
+  .text:000FC9CA                 test    eax, eax
+  .text:000FC9CC                 jz      loc_FC572
+  .text:000FC9D2                 fld     sv_unlag.value
+  .text:000FC9D8                 fldz
+  .text:000FC9DA                 fxch    st(1)
+  .text:000FC9DC                 fucomip st, st(1)
+  .text:000FC9DE                 fstp    st
+  .text:000FC9E0                 jp      short loc_FC9E8
+  .text:000FC9E2                 jz      loc_FC572
+  .text:000FC9E8                 mov     eax, ds:svs.maxclients
+  .text:000FC9ED                 cmp     eax, 1
+  .text:000FC9F0                 jle     loc_FC572
+  .text:000FC9F6                 mov     edx, [esp+4Ch+e]
+  .text:000FC9FA                 dec     edx
+  .text:000FC9FB                 cmp     edx, eax
+  .text:000FC9FD                 mov     [esp+4Ch+var_34], edx
+  .text:000FCA01                 setnl   byte ptr [esp+4Ch+e]
+  .text:000FCA06                 mov     eax, [esp+4Ch+var_34]
+  .text:000FCA0A                 movzx   edx, byte ptr [esp+4Ch+e]
+  .text:000FCA0F                 shr     eax, 1Fh
+  .text:000FCA12                 or      dl, al
+  .text:000FCA14                 jnz     loc_FC572
+  .text:000FCA1A                 mov     edi, [edi]
+  .text:000FCA1C                 test    edi, edi
+  .text:000FCA1E                 jz      loc_FC572
+  .text:000FCA24                 mov     edx, [esp+4Ch+var_34]
+  .text:000FCA28                 lea     eax, [edx+edx*4]
+  .text:000FCA2B                 lea     eax, [edx+eax*2]
+  .text:000FCA2E                 shl     eax, 3
+  .text:000FCA31                 mov     edx, dword ptr ds:truepositions.active[eax]
+  .text:000FCA37                 test    edx, edx
+  .text:000FCA39                 jz      loc_FC572
+  .text:000FCA3F                 mov     edi, ds:truepositions.needrelink[eax]
+  .text:000FCA45                 test    edi, edi
+  .text:000FCA47                 jz      loc_FC572
+  .text:000FCA4D                 lea     fmin, truepositions.oldabsmin[eax]
+  .text:000FCA53                 add     eax, offset truepositions.oldabsmax
+  .text:000FCA58                 mov     [esp+4Ch+fmax], eax
+  .text:000FCA5C                 jmp     loc_FC572
+  .text:000FCA68                 mov     [edi+2478Ch], edx
+  .text:000FCA6E                 jmp     loc_FC8D7
+  .text:000FCA78                 mov     eax, [esp+4Ch+var_28]
+  .text:000FCA7C                 mov     eax, [eax+0Ch]
+  .text:000FCA7F                 mov     [esp+4Ch+var_28], eax
+  .text:000FCA83                 jmp     loc_FC153
+  .text:000FCA88                 fstp    st
+  .text:000FCA8A                 mov     eax, [esp+4Ch+var_20]
+  .text:000FCA8E                 ; pmove_maxs
+  .text:000FCA8E                 mov     [esp+4Ch+count], esi; pmove_maxs
+  .text:000FCA92                 mov     esi, [esp+4Ch+var_28]
+  .text:000FCA96                 ; pmove_mins
+  .text:000FCA96                 mov     [esp+4Ch+src], eax; pmove_mins
+  .text:000FCA9A                 mov     eax, [esi+8]
+  .text:000FCA9D                 ; node
+  .text:000FCA9D                 mov     [esp+4Ch+var_4C], eax; node
+  .text:000FCAA0                 call    SV_AddLinksToPM_
+  .text:000FCAA5                 mov     eax, [esi]
+  .text:000FCAA7                 mov     [esp+4Ch+next], eax
+  .text:000FCAAB                 shl     eax, 2
+  .text:000FCAAE                 fld     dword ptr [esi+4]
+  .text:000FCAB1                 jmp     loc_FC994
+  .text:000FCAB6                 mov     fmax_0, ds:pmove
+  .text:000FCABC                 mov     edi, dword ptr ds:stru_20F50.r_offset[edx]
+  .text:000FCAC2                 cmp     edi, 3Fh ; '?'
+  .text:000FCAC5                 jg      short loc_FCAFB
+  .text:000FCAC7                 mov     fmin, edi
+  .text:000FCAC9                 mov     eax, edi
+  .text:000FCACB                 shl     ecx, 5
+  .text:000FCACE                 inc     edi
+  .text:000FCACF                 shl     eax, 8
+  .text:000FCAD2                 sub     eax, ecx
+  .text:000FCAD4                 lea     ecx, [edx+eax+20F54h]
+  .text:000FCADB                 mov     dword ptr ds:stru_20F50.r_offset[edx], edi
+  .text:000FCAE1                 jmp     loc_FC651
+  .text:000FCAE6                 mov     edx, offset aSvAddlinkstopm; "SV_AddLinksToPM:  pmove->numphysent >= "...
+  .text:000FCAEB                 ; fmt
+  .text:000FCAEB                 mov     [esp+4Ch+node], edx; fmt
+  .text:000FCAEF                 add     esp, 3Ch
+  .text:000FCAF2                 pop     ebx
+  .text:000FCAF3                 pop     esi
+  .text:000FCAF4                 pop     edi
+  .text:000FCAF5                 pop     l
+  .text:000FCAF6                 jmp     Con_DPrintf
+  .text:000FCAFB                 mov     [esp+4Ch+var_4C], offset aSvAddlinkstopm_0; "SV_AddLinksToPM:  pmove->nummoveent >= "...
+  .text:000FCB02                 call    Con_DPrintf
+  .text:000FCB07                 jmp     loc_FC19A
+procedure: |-
+  void __cdecl SV_AddLinksToPM_(areanode_t *node, float *pmove_mins, float *pmove_maxs)
+  {
+    areanode_t *v3; // eax
+    link_s *v4; // ebp
+    edict_t_0 *v5; // edx
+    link_s *v6; // eax
+    link_s *prev; // eax
+    int v8; // eax
+    playermove_t *v9; // esi
+    int numvisent; // ebx
+    int v11; // ecx
+    char *v12; // eax
+    int v13; // eax
+    char *v14; // edi
+    link_s *v15; // xmm5_4
+    link_s *v16; // edx
+    link_s *v17; // edx
+    int *v18; // edi
+    link_s *v19; // eax
+    link_s *v20; // edx
+    vec_t *p_next; // ecx
+    int numphysent; // eax
+    physent_t *v23; // ecx
+    unsigned int v24; // eax
+    char *v25; // edx
+    int v26; // ebx
+    link_s *v27; // edx
+    model_s *src; // edx
+    int v29; // edi
+    sv_adjusted_positions_t *v30; // ecx
+    _DWORD *v31; // edx
+    link_s *v32; // edx
+    model_s *v33; // edx
+    int *v34; // eax
+    long double dist; // fst7
+    int axis; // eax
+    int v37; // eax
+    int v38; // edi
+    link_t *next; // [esp+10h] [ebp-3Ch]
+    link_t *p_solid_edicts; // [esp+14h] [ebp-38h]
+    int v41; // [esp+18h] [ebp-34h]
+    float *fmax; // [esp+1Ch] [ebp-30h]
+    int e; // [esp+20h] [ebp-2Ch]
+    areanode_t *v44; // [esp+24h] [ebp-28h]
+
+    v44 = node;
+    v3 = node;
+    while ( 2 )
+    {
+      v4 = v3->solid_edicts.next;
+      p_solid_edicts = &v3->solid_edicts;
+      while ( v4 != p_solid_edicts )
+      {
+        next = v4->next;
+        prev = v4[87].prev;
+        if ( !prev )
+          goto LABEL_11;
+        if ( g_groupop )
+        {
+          if ( g_groupop != 1 )
+          {
+  LABEL_11:
+            v5 = sv_player;
+            goto LABEL_5;
+          }
+          v5 = sv_player;
+          if ( ((unsigned int)prev & sv_player->v.groupinfo) != 0 )
+            goto LABEL_8;
+        }
+        else
+        {
+          v5 = sv_player;
+          if ( ((unsigned int)prev & sv_player->v.groupinfo) == 0 )
+            goto LABEL_8;
+        }
+  LABEL_5:
+        if ( (edict_t_0 *)v4[66].prev == v5 )
+          goto LABEL_8;
+        v6 = v4[48].next;
+        if ( (unsigned int)&v6[-1].next + 2 > 2 )
+        {
+          if ( v6 )
+            goto LABEL_8;
+        }
+        v8 = NUM_FOR_EDICT((const edict_t_0 *)&v4[-1]);
+        v9 = pmove;
+        numvisent = pmove->numvisent;
+        v11 = v8;
+        e = v8;
+        pmove->numvisent = numvisent + 1;
+        v12 = (char *)v9 + 224 * numvisent;
+        *(unsigned __int32 *)((char *)&stru_247A8[0].r_offset + (_DWORD)v12) = v11;
+        *((_DWORD *)v12 + 37343) = v4[16].prev;
+        *(unsigned __int32 *)((char *)&stru_24780.r_offset + (_DWORD)v12) = (unsigned __int32)v4[16].next;
+        *((_DWORD *)v12 + 37345) = v4[17].prev;
+        // svs_maxclients is the field address; SV_CopyEdictToPhysent is inlined here.
+        if ( v11 > 0 && v11 <= svs.maxclients )
+        {
+          if ( host_client->lw )
+          {
+            if ( host_client->lc )
+            {
+              // sv_unlag_value denotes this float field, not the enclosing cvar.
+              if ( sv_unlag.value != 0.0 && svs.maxclients > 1 )
+              {
+                v29 = e - 1;
+                if ( e - 1 >= 0 && svs.maxclients > e - 1 )
+                {
+                  if ( host_client->active )
+                  {
+                    v30 = &truepositions[v29];
+                    if ( v30->active )
+                    {
+                      if ( truepositions[v29].needrelink )
+                      {
+                        v31 = (unsigned __int32 *)((char *)&stru_24770[0].r_offset + (_DWORD)v9 + 224 * numvisent);
+                        v31[3] = LODWORD(v30->oldorg[0]);
+                        v31[4] = LODWORD(v30->oldorg[1]);
+                        v31[5] = LODWORD(v30->oldorg[2]);
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          *(unsigned __int32 *)((char *)&stru_24778[0].r_offset + (_DWORD)v9 + 224 * numvisent) = *(unsigned __int32 *)((char *)&stru_247A8[0].r_offset + (_DWORD)v9 + 224 * numvisent);
+        }
+        else
+        {
+          *(unsigned __int32 *)((char *)&stru_24778[0].r_offset + (_DWORD)v9 + 224 * numvisent) = 0;
+        }
+        v13 = 224 * numvisent;
+        v14 = (char *)v9 + 224 * numvisent;
+        *((_DWORD *)v14 + 37355) = v4[25].prev;
+        *(unsigned __int32 *)((char *)&stru_247B0.r_offset + (_DWORD)v14) = (unsigned __int32)v4[25].next;
+        v15 = v4[26].prev;
+        *((_DWORD *)v14 + 37347) = 0;
+        *((_DWORD *)v14 + 37357) = v15;
+        *(unsigned __int32 *)((char *)&stru_247C0.r_offset + (_DWORD)v14) = (unsigned __int32)v4[56].prev;
+        v16 = v4[48].next;
+        if ( v16 == (link_s *)&pIn )
+        {
+          v17 = v4[37].next;
+  LABEL_54:
+          src = sv.models[(_DWORD)v17];
+          *(unsigned __int32 *)((char *)&stru_24788.r_offset + (_DWORD)v14) = (unsigned __int32)src;
+          Q_strncpy((char *)&stru_24758 + (_DWORD)v9 + v13, src->name, 32);
+          v14[149367] = 0;
+          goto LABEL_19;
+        }
+        if ( v16 )
+        {
+          *(unsigned __int32 *)((char *)&stru_24788.r_offset + (_DWORD)v14) = 0;
+          if ( v16 == (link_s *)((char *)&dword_0 + 2) )
+          {
+            v32 = v4[37].next;
+            if ( v32 )
+            {
+              v33 = sv.models[(_DWORD)v32];
+              if ( v33 )
+              {
+                if ( (v33->flags & 0x200) != 0 )
+                  *((_DWORD *)v14 + 37347) = v33;
+                Q_strncpy((char *)&stru_24758 + (_DWORD)v9 + v13, v33->name, 32);
+                v14[149367] = 0;
+              }
+            }
+            v34 = &v9->player_index + 56 * numvisent;
+            *(unsigned __int32 *)((char *)&stru_24790.r_offset + (_DWORD)v34) = (unsigned __int32)v4[42].next;
+            v34[37349] = (int)v4[43].prev;
+            *(unsigned __int32 *)((char *)&stru_24798.r_offset + (_DWORD)v34) = (unsigned __int32)v4[43].next;
+            v34[37351] = (int)v4[44].prev;
+            *(unsigned __int32 *)((char *)&stru_247A0.r_offset + (_DWORD)v34) = (unsigned __int32)v4[44].next;
+            v34[37353] = (int)v4[45].prev;
+          }
+          else
+          {
+            *(unsigned __int32 *)((char *)&stru_24790.r_offset + (_DWORD)v14) = (unsigned __int32)v4[42].next;
+            *((_DWORD *)v14 + 37349) = v4[43].prev;
+            *(unsigned __int32 *)((char *)&stru_24798.r_offset + (_DWORD)v14) = (unsigned __int32)v4[43].next;
+            *((_DWORD *)v14 + 37351) = v4[44].prev;
+            *(unsigned __int32 *)((char *)&stru_247A0.r_offset + (_DWORD)v14) = (unsigned __int32)v4[44].next;
+            *((_DWORD *)v14 + 37353) = v4[45].prev;
+            v27 = v4[15].prev;
+            if ( v27 )
+              Q_strncpy((char *)&stru_24758 + (_DWORD)v9 + v13, (const char *)v27 + (_DWORD)pr_strings, 32);
+            else
+              *(_WORD *)((char *)&stru_24758.r_offset + (_DWORD)v9 + v13) = 63;
+            v9->visents[numvisent].name[31] = 0;
+          }
+          goto LABEL_19;
+        }
+        v17 = v4[37].next;
+        if ( v17 )
+          goto LABEL_54;
+        *(unsigned __int32 *)((char *)&stru_24788.r_offset + (_DWORD)v14) = 0;
+  LABEL_19:
+        v18 = &v9->player_index + 56 * numvisent;
+        *(unsigned __int32 *)((char *)&stru_247B8.r_offset + (_DWORD)v18) = (unsigned __int32)v4[48].next;
+        v18[37359] = (int)v4[49].prev;
+        v18[37361] = (int)v4[53].prev;
+        *(unsigned __int32 *)((char *)&stru_247C8.r_offset + (_DWORD)v18) = (unsigned __int32)v4[52].prev;
+        Q_memcpy((char *)&stru_247C0 + (_DWORD)v18 + 12, &v4[54].next, 4);
+        Q_memcpy((char *)&stru_247C0 + (_DWORD)v18 + 16, &v4[55], 2);
+        v18[37365] = (int)v4[48].prev;
+        *(unsigned __int32 *)((char *)&stru_247D8.r_offset + (_DWORD)v18) = 0;
+        v18[37367] = 0;
+        *(unsigned __int32 *)((char *)&stru_247E8.r_offset + (_DWORD)v18) = (unsigned __int32)v4[87].next;
+        v18[37371] = (int)v4[88].prev;
+        *(unsigned __int32 *)((char *)&stru_247F0.r_offset + (_DWORD)v18) = (unsigned __int32)v4[88].next;
+        v18[37373] = (int)v4[89].prev;
+        *(unsigned __int32 *)((char *)&stru_247F8.r_offset + (_DWORD)v18) = (unsigned __int32)v4[89].next;
+        v18[37375] = (int)v4[90].prev;
+        *(unsigned __int32 *)((char *)&stru_24800.r_offset + (_DWORD)v18) = (unsigned __int32)v4[90].next;
+        v18[37377] = (int)v4[91].prev;
+        *(unsigned __int32 *)((char *)&stru_24808.r_offset + (_DWORD)v18) = (unsigned __int32)v4[91].next;
+        v18[37379] = (int)v4[92].prev;
+        *(unsigned __int32 *)((char *)&stru_24810.r_offset + (_DWORD)v18) = (unsigned __int32)v4[92].next;
+        v18[37381] = (int)v4[93].prev;
+        *(unsigned __int32 *)((char *)&stru_24818.r_offset + (_DWORD)v18) = (unsigned __int32)v4[93].next;
+        v18[37383] = (int)v4[94].prev;
+        *(unsigned __int32 *)((char *)&stru_24820.r_offset + (_DWORD)v18) = (unsigned __int32)v4[94].next;
+        v18[37385] = (int)v4[95].prev;
+        *(unsigned __int32 *)((char *)&stru_24828.r_offset + (_DWORD)v18) = (unsigned __int32)v4[95].next;
+        v18[37387] = (int)v4[96].prev;
+        *(unsigned __int32 *)((char *)&stru_24830.r_offset + (_DWORD)v18) = (unsigned __int32)v4[96].next;
+        v18[37389] = (int)v4[97].prev;
+        v19 = v4[48].next;
+        if ( v19 )
+        {
+          v20 = v4[67].next;
+          if ( ((unsigned int)v20 & 0x800000) != 0 && v19 == (link_s *)&pIn )
+            goto LABEL_8;
+        }
+        else
+        {
+          if ( !v4[49].prev || !v4[37].next )
+            goto LABEL_8;
+          v20 = v4[67].next;
+        }
+        if ( &v4[-1] != (link_s *)sv_player
+          && (((unsigned __int8)v20 & 8) == 0 || *(float *)&v4[59].prev > 0.0)
+          && (*(float *)&v4[43].next != 0.0 || *(float *)&v4[45].prev != 1.0)
+          && Length((const vec_t *)&v4[45].next) != 0.0 )
+        {
+          p_next = (vec_t *)&v4[39].next;
+          fmax = (float *)&v4[41];
+          if ( ((int)v4[67].next & 8) != 0 )
+          {
+            if ( host_client->lw )
+            {
+              if ( host_client->lc )
+              {
+                if ( sv_unlag.value != 0.0 && svs.maxclients > 1 )
+                {
+                  v41 = e - 1;
+                  if ( e - 1 >= 0 && e - 1 < svs.maxclients )
+                  {
+                    if ( host_client->active )
+                    {
+                      v37 = v41;
+                      if ( truepositions[v41].active )
+                      {
+                        if ( truepositions[v41].needrelink )
+                        {
+                          p_next = truepositions[v37].oldabsmin;
+                          fmax = truepositions[v37].oldabsmax;
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          if ( *p_next <= (long double)*pmove_maxs
+            && *pmove_mins <= (long double)*fmax
+            && p_next[1] <= (long double)pmove_maxs[1]
+            && pmove_mins[1] <= (long double)fmax[1]
+            && p_next[2] <= (long double)pmove_maxs[2]
+            && pmove_mins[2] <= (long double)fmax[2] )
+          {
+            if ( !v4[48].next && v4[49].prev == (link_s *)-16 )
+            {
+              v38 = *(unsigned __int32 *)((char *)&stru_20F50.r_offset + (_DWORD)pmove);
+              if ( v38 > 63 )
+              {
+                Con_DPrintf("SV_AddLinksToPM:  pmove->nummoveent >= MAX_MOVEENTS\n");
+                goto LABEL_8;
+              }
+              v23 = &pmove->moveents[*(unsigned __int32 *)((char *)&stru_20F50.r_offset + (_DWORD)pmove)];
+              *(unsigned __int32 *)((char *)&stru_20F50.r_offset + (_DWORD)pmove) = v38 + 1;
+            }
+            else
+            {
+              numphysent = pmove->numphysent;
+              if ( numphysent > 599 )
+              {
+                Con_DPrintf("SV_AddLinksToPM:  pmove->numphysent >= MAX_PHYSENTS\n");
+                return;
+              }
+              v23 = &pmove->physents[pmove->numphysent];
+              pmove->numphysent = numphysent + 1;
+            }
+            v24 = 0;
+            v25 = (char *)stru_24750 + (_DWORD)v9 + 224 * numvisent;
+            do
+            {
+              v26 = *(_DWORD *)&v25[v24 + 12];
+              *(_DWORD *)&v23->name[v24] = *(_DWORD *)&v25[v24 + 8];
+              *(_DWORD *)&v23->name[v24 + 4] = v26;
+              v24 += 8;
+            }
+            while ( v24 < 0xE0 );
+          }
+        }
+  LABEL_8:
+        v4 = next;
+      }
+      if ( v44->axis != -1 )
+      {
+        dist = v44->dist;
+        axis = v44->axis;
+        if ( pmove_maxs[axis] > dist )
+        {
+          SV_AddLinksToPM_(v44->children[0], pmove_mins, pmove_maxs);
+          axis = v44->axis;
+          dist = v44->dist;
+        }
+        if ( dist > pmove_mins[axis] )
+        {
+          v3 = v44->children[1];
+          v44 = v3;
+          continue;
+        }
+      }
+      break;
+    }
+  }

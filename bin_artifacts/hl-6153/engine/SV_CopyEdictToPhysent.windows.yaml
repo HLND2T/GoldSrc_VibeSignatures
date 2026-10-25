@@ -1,0 +1,6 @@
+func_name: SV_CopyEdictToPhysent
+func_va: '0x1da4dd0'
+func_rva: '0xa4dd0'
+func_size: '0x306'
+func_sig: 55 8B EC 53 56 8B 75 ?? 57 8B 7D ?? 8B 45 ?? 8D 4E ?? 33 DB 8B 97 ?? ?? ?? ?? 83 F8 01 89 11 8B 97 ?? ?? ?? ??
+func_sig_allow_across_function_boundary: true

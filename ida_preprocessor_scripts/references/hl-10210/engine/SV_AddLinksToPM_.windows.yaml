@@ -1,0 +1,390 @@
+func_name: "SV_AddLinksToPM_"
+func_va: "0x1021b9c0"
+disasm_code: |-
+  .text:1021B9C0                 push    ebp
+  .text:1021B9C1                 mov     ebp, esp
+  .text:1021B9C3                 sub     esp, 14h
+  .text:1021B9C6                 push    ebx
+  .text:1021B9C7                 mov     ebx, [ebp+node]
+  .text:1021B9CA                 push    esi
+  .text:1021B9CB                 ; ArgList
+  .text:1021B9CB                 push    edi; ArgList
+  .text:1021B9CC                 nop     dword ptr [eax+00h]
+  .text:1021B9D0                 mov     edi, [ebx+1Ch]
+  .text:1021B9D3                 lea     eax, [ebx+18h]
+  .text:1021B9D6                 mov     [ebp+var_14], eax
+  .text:1021B9D9                 cmp     edi, eax
+  .text:1021B9DB                 jz      loc_1021BC8C
+  .text:1021B9E1                 mov     eax, [edi+4]
+  .text:1021B9E4                 add     edi, 0FFFFFFF8h
+  .text:1021B9E7                 mov     [ebp+var_10], eax
+  .text:1021B9EA                 mov     ecx, [edi+2C0h]
+  .text:1021B9F0                 test    ecx, ecx
+  .text:1021B9F2                 jz      short loc_1021BA2A
+  .text:1021B9F4                 cmp     g_groupop, 0
+  .text:1021B9FB                 jnz     short loc_1021BA10
+  .text:1021B9FD                 mov     eax, ent2
+  .text:1021BA02                 test    [eax+2C0h], ecx
+  .text:1021BA08                 jz      loc_1021BC7B
+  .text:1021BA0E                 jmp     short loc_1021BA2A
+  .text:1021BA10                 cmp     g_groupop, 1
+  .text:1021BA17                 jnz     short loc_1021BA2A
+  .text:1021BA19                 mov     eax, ent2
+  .text:1021BA1E                 test    [eax+2C0h], ecx
+  .text:1021BA24                 jnz     loc_1021BC7B
+  .text:1021BA2A                 mov     eax, [edi+218h]
+  .text:1021BA30                 cmp     eax, ent2
+  .text:1021BA36                 jz      loc_1021BC7B
+  .text:1021BA3C                 mov     eax, [edi+18Ch]
+  .text:1021BA42                 cmp     eax, 4
+  .text:1021BA45                 jz      short loc_1021BA59
+  .text:1021BA47                 cmp     eax, 2
+  .text:1021BA4A                 jz      short loc_1021BA59
+  .text:1021BA4C                 cmp     eax, 3
+  .text:1021BA4F                 jz      short loc_1021BA59
+  .text:1021BA51                 test    eax, eax
+  .text:1021BA53                 jnz     loc_1021BC7B
+  .text:1021BA59                 push    edi
+  .text:1021BA5A                 call    NUM_FOR_EDICT
+  .text:1021BA5F                 mov     esi, pmove
+  .text:1021BA65                 push    edi
+  .text:1021BA66                 push    eax
+  .text:1021BA67                 mov     [ebp+var_8], eax
+  .text:1021BA6A                 mov     edx, [esi+24754h]
+  .text:1021BA70                 lea     ebx, [esi+24758h]
+  .text:1021BA76                 imul    ecx, edx, 0E0h
+  .text:1021BA7C                 add     ebx, ecx
+  .text:1021BA7E                 lea     ecx, [edx+1]
+  .text:1021BA81                 push    ebx
+  .text:1021BA82                 mov     [ebp+var_C], ebx
+  .text:1021BA85                 mov     [esi+24754h], ecx
+  .text:1021BA8B                 call    SV_CopyEdictToPhysent
+  .text:1021BA90                 mov     ecx, [edi+18Ch]
+  .text:1021BA96                 add     esp, 10h
+  .text:1021BA99                 test    ecx, ecx
+  .text:1021BA9B                 jnz     short loc_1021BAB5
+  .text:1021BA9D                 cmp     [edi+190h], ecx
+  .text:1021BAA3                 jz      loc_1021BC7B
+  .text:1021BAA9                 cmp     [edi+134h], ecx
+  .text:1021BAAF                 jz      loc_1021BC7B
+  .text:1021BAB5                 mov     eax, [edi+224h]
+  .text:1021BABB                 test    eax, 800000h
+  .text:1021BAC0                 jz      short loc_1021BACB
+  .text:1021BAC2                 cmp     ecx, 4
+  .text:1021BAC5                 jz      loc_1021BC7B
+  .text:1021BACB                 cmp     edi, ent2
+  .text:1021BAD1                 jz      loc_1021BC7B
+  .text:1021BAD7                 xorps   xmm1, xmm1
+  .text:1021BADA                 test    al, 8
+  .text:1021BADC                 jz      short loc_1021BAEB
+  .text:1021BADE                 comiss  xmm1, dword ptr [edi+1E0h]
+  .text:1021BAE5                 jnb     loc_1021BC7B
+  .text:1021BAEB                 movss   xmm0, dword ptr [edi+164h]
+  .text:1021BAF3                 ucomiss xmm0, xmm1
+  .text:1021BAF6                 lahf
+  .text:1021BAF7                 test    ah, 44h
+  .text:1021BAFA                 jp      short loc_1021BB15
+  .text:1021BAFC                 movss   xmm0, dword ptr [edi+170h]
+  .text:1021BB04                 ucomiss xmm0, ds:flt_103064A8
+  .text:1021BB0B                 lahf
+  .text:1021BB0C                 test    ah, 44h
+  .text:1021BB0F                 jnp     loc_1021BC7B
+  .text:1021BB15                 lea     eax, [edi+174h]
+  .text:1021BB1B                 push    eax
+  .text:1021BB1C                 call    sub_101D99C0
+  .text:1021BB21                 fstp    [ebp+var_4]
+  .text:1021BB24                 movss   xmm0, [ebp+var_4]
+  .text:1021BB29                 add     esp, 4
+  .text:1021BB2C                 xorps   xmm1, xmm1
+  .text:1021BB2F                 ucomiss xmm0, xmm1
+  .text:1021BB32                 lahf
+  .text:1021BB33                 test    ah, 44h
+  .text:1021BB36                 jnp     loc_1021BC7B
+  .text:1021BB3C                 test    byte ptr [edi+224h], 8
+  .text:1021BB43                 lea     esi, [edi+144h]
+  .text:1021BB49                 lea     ebx, [edi+150h]
+  .text:1021BB4F                 jz      short loc_1021BBB6
+  .text:1021BB51                 mov     ecx, dword_11249E90
+  .text:1021BB57                 mov     edx, [ebp+var_8]
+  .text:1021BB5A                 dec     edx
+  .text:1021BB5B                 cmp     dword ptr [ecx+6664h], 0
+  .text:1021BB62                 jz      short loc_1021BBB6
+  .text:1021BB64                 cmp     dword ptr [ecx+6668h], 0
+  .text:1021BB6B                 jz      short loc_1021BBB6
+  .text:1021BB6D                 movss   xmm0, dword_1031D394
+  .text:1021BB75                 ucomiss xmm0, xmm1
+  .text:1021BB78                 lahf
+  .text:1021BB79                 test    ah, 44h
+  .text:1021BB7C                 jnp     short loc_1021BBB6
+  .text:1021BB7E                 mov     eax, nPlayers
+  .text:1021BB83                 cmp     eax, 1
+  .text:1021BB86                 jle     short loc_1021BBB6
+  .text:1021BB88                 cmp     dword ptr [ecx], 0
+  .text:1021BB8B                 jz      short loc_1021BBB6
+  .text:1021BB8D                 test    edx, edx
+  .text:1021BB8F                 js      short loc_1021BBB6
+  .text:1021BB91                 cmp     edx, eax
+  .text:1021BB93                 jge     short loc_1021BBB6
+  .text:1021BB95                 imul    eax, edx, 58h ; 'X'
+  .text:1021BB98                 cmp     dword_10537EA8[eax], 0
+  .text:1021BB9F                 jz      short loc_1021BBB6
+  .text:1021BBA1                 cmp     dword_10537EAC[eax], 0
+  .text:1021BBA8                 jz      short loc_1021BBB6
+  .text:1021BBAA                 lea     esi, unk_10537ED4[eax]
+  .text:1021BBB0                 lea     ebx, unk_10537EE0[eax]
+  .text:1021BBB6                 mov     edx, [ebp+pmove_maxs]
+  .text:1021BBB9                 xor     ecx, ecx
+  .text:1021BBBB                 mov     eax, edx
+  .text:1021BBBD                 sub     esi, edx
+  .text:1021BBBF                 sub     ebx, edx
+  .text:1021BBC1                 mov     edx, [ebp+pmove_mins]
+  .text:1021BBC4                 sub     edx, eax
+  .text:1021BBC6                 nop     word ptr [eax+eax+00000000h]
+  .text:1021BBD0                 movss   xmm0, dword ptr [esi+eax]
+  .text:1021BBD5                 comiss  xmm0, dword ptr [eax]
+  .text:1021BBD8                 ja      loc_1021BC7B
+  .text:1021BBDE                 movss   xmm0, dword ptr [edx+eax]
+  .text:1021BBE3                 comiss  xmm0, dword ptr [ebx+eax]
+  .text:1021BBE7                 ja      short loc_1021BBF2
+  .text:1021BBE9                 inc     ecx
+  .text:1021BBEA                 add     eax, 4
+  .text:1021BBED                 cmp     ecx, 3
+  .text:1021BBF0                 jl      short loc_1021BBD0
+  .text:1021BBF2                 cmp     ecx, 3
+  .text:1021BBF5                 jnz     loc_1021BC7B
+  .text:1021BBFB                 cmp     dword ptr [edi+18Ch], 0
+  .text:1021BC02                 jnz     short loc_1021BC46
+  .text:1021BC04                 cmp     dword ptr [edi+190h], 0FFFFFFF0h
+  .text:1021BC0B                 jnz     short loc_1021BC46
+  .text:1021BC0D                 mov     ecx, pmove
+  .text:1021BC13                 mov     edx, [ecx+20F50h]
+  .text:1021BC19                 cmp     edx, 40h ; '@'
+  .text:1021BC1C                 jl      short loc_1021BC2D
+  .text:1021BC1E                 push    offset aSvAddlinkstopm; "SV_AddLinksToPM:  pmove->nummoveent >= "...
+  .text:1021BC23                 call    Con_DPrintf
+  .text:1021BC28                 add     esp, 4
+  .text:1021BC2B                 jmp     short loc_1021BC7B
+  .text:1021BC2D                 imul    eax, edx, 0E0h
+  .text:1021BC33                 lea     edi, [ecx+20F54h]
+  .text:1021BC39                 add     edi, eax
+  .text:1021BC3B                 lea     eax, [edx+1]
+  .text:1021BC3E                 mov     [ecx+20F50h], eax
+  .text:1021BC44                 jmp     short loc_1021BC71
+  .text:1021BC46                 mov     ecx, pmove
+  .text:1021BC4C                 mov     edx, [ecx+24Ch]
+  .text:1021BC52                 cmp     edx, 258h
+  .text:1021BC58                 jge     short loc_1021BCCF
+  .text:1021BC5A                 imul    eax, edx, 0E0h
+  .text:1021BC60                 lea     edi, [ecx+250h]
+  .text:1021BC66                 add     edi, eax
+  .text:1021BC68                 lea     eax, [edx+1]
+  .text:1021BC6B                 mov     [ecx+24Ch], eax
+  .text:1021BC71                 mov     esi, [ebp+var_C]
+  .text:1021BC74                 mov     ecx, 38h ; '8'
+  .text:1021BC79                 rep movsd
+  .text:1021BC7B                 mov     eax, [ebp+var_10]
+  .text:1021BC7E                 mov     edi, eax
+  .text:1021BC80                 cmp     eax, [ebp+var_14]
+  .text:1021BC83                 jnz     loc_1021B9E1
+  .text:1021BC89                 mov     ebx, [ebp+node]
+  .text:1021BC8C                 mov     eax, [ebx]
+  .text:1021BC8E                 cmp     eax, 0FFFFFFFFh
+  .text:1021BC91                 jz      short loc_1021BCDC
+  .text:1021BC93                 mov     ecx, [ebp+pmove_maxs]
+  .text:1021BC96                 movss   xmm1, dword ptr [ebx+4]
+  .text:1021BC9B                 movss   xmm0, dword ptr [ecx+eax*4]
+  .text:1021BCA0                 comiss  xmm0, xmm1
+  .text:1021BCA3                 jbe     short loc_1021BCBB
+  .text:1021BCA5                 push    ecx
+  .text:1021BCA6                 push    [ebp+pmove_mins]
+  .text:1021BCA9                 push    dword ptr [ebx+8]
+  .text:1021BCAC                 call    SV_AddLinksToPM_
+  .text:1021BCB1                 mov     eax, [ebx]
+  .text:1021BCB3                 add     esp, 0Ch
+  .text:1021BCB6                 movss   xmm1, dword ptr [ebx+4]
+  .text:1021BCBB                 mov     ecx, [ebp+pmove_mins]
+  .text:1021BCBE                 comiss  xmm1, dword ptr [ecx+eax*4]
+  .text:1021BCC2                 jbe     short loc_1021BCDC
+  .text:1021BCC4                 mov     ebx, [ebx+0Ch]
+  .text:1021BCC7                 mov     [ebp+node], ebx
+  .text:1021BCCA                 jmp     loc_1021B9D0
+  .text:1021BCCF                 push    offset aSvAddlinkstopm_0; "SV_AddLinksToPM:  pmove->numphysent >= "...
+  .text:1021BCD4                 call    Con_DPrintf
+  .text:1021BCD9                 add     esp, 4
+  .text:1021BCDC                 pop     edi
+  .text:1021BCDD                 pop     esi
+  .text:1021BCDE                 pop     ebx
+  .text:1021BCDF                 mov     esp, ebp
+  .text:1021BCE1                 pop     ebp
+  .text:1021BCE2                 retn
+procedure: |-
+  void __cdecl SV_AddLinksToPM_(areanode_t *node, float *pmove_mins, float *pmove_maxs)
+  {
+    areanode_t *i; // ebx
+    struct gsv_link_s *v4; // edi
+    struct gsv_link_s *v5; // eax
+    struct gsv_link_s *check; // edi
+    struct gsv_link_s *prev; // ecx
+    struct gsv_link_s *v8; // eax
+    int v9; // edx
+    struct gsv_link_s *v10; // ecx
+    struct gsv_link_s *v11; // eax
+    struct gsv_link_s **p_next; // esi
+    struct gsv_link_s *v13; // ebx
+    int v14; // edx
+    int v15; // eax
+    int v16; // ecx
+    float *v17; // eax
+    int v18; // esi
+    int v19; // ebx
+    int v20; // edx
+    char *pe; // edi
+    int v22; // edx
+    int axis; // eax
+    float dist; // xmm1_4
+    char *v25; // [esp-10h] [ebp-30h]
+    gsv_link_t *p_solid_edicts; // [esp+Ch] [ebp-14h]
+    gsv_link_t *next; // [esp+10h] [ebp-10h]
+    char *ve; // [esp+14h] [ebp-Ch]
+    int e; // [esp+18h] [ebp-8h]
+    float v30; // [esp+1Ch] [ebp-4h]
+
+    for ( i = node; ; node = i )
+    {
+      v4 = i->solid_edicts.next;
+      p_solid_edicts = &i->solid_edicts;
+      if ( v4 != &i->solid_edicts )
+        break;
+  LABEL_51:
+      axis = i->axis;
+      if ( i->axis == -1 )
+        return;
+      dist = i->dist;
+      if ( pmove_maxs[axis] > dist )
+      {
+        SV_AddLinksToPM_(i->children[0], pmove_mins, pmove_maxs);
+        axis = i->axis;
+        dist = i->dist;
+      }
+      if ( dist <= pmove_mins[axis] )
+        return;
+      i = i->children[1];
+    }
+    while ( 1 )
+    {
+      v5 = v4->next;
+      check = v4 - 1;
+      next = v5;
+      prev = check[88].prev;
+      if ( !prev )
+        break;
+      if ( g_groupop )
+      {
+        if ( g_groupop != 1 || ((unsigned int)prev & ent2->groupinfo) == 0 )
+          break;
+      }
+      else if ( ((unsigned int)prev & ent2->groupinfo) != 0 )
+      {
+        break;
+      }
+  LABEL_49:
+      v4 = next;
+      if ( next == p_solid_edicts )
+      {
+        i = node;
+        goto LABEL_51;
+      }
+    }
+    if ( (edict_t *)check[67].prev == ent2 )
+      goto LABEL_49;
+    v8 = check[49].next;
+    if ( v8 != (struct gsv_link_s *)4 && v8 != (struct gsv_link_s *)2 && v8 != (struct gsv_link_s *)3 && v8 )
+      goto LABEL_49;
+    e = NUM_FOR_EDICT(check);
+    v9 = *((_DWORD *)pmove + 37333);
+    v25 = &pmove[224 * v9 + 149336];
+    ve = v25;
+    *((_DWORD *)pmove + 37333) = v9 + 1;
+    SV_CopyEdictToPhysent(v25, e, (edict_t *)check);
+    v10 = check[49].next;
+    if ( !v10 && (!check[50].prev || !check[38].next) )
+      goto LABEL_49;
+    v11 = check[68].next;
+    if ( ((unsigned int)v11 & 0x800000) != 0 && v10 == (struct gsv_link_s *)4 )
+      goto LABEL_49;
+    if ( check == (struct gsv_link_s *)ent2 || ((unsigned __int8)v11 & 8) != 0 && *(float *)&check[60].prev <= 0.0 )
+      goto LABEL_49;
+    if ( *(float *)&check[44].next == 0.0 && *(float *)&check[46].prev == 1.0 )
+      goto LABEL_49;
+    v30 = sub_101D99C0(&check[46].next);
+    if ( v30 == 0.0 )
+      goto LABEL_49;
+    p_next = &check[40].next;
+    v13 = check + 42;
+    if ( ((int)check[68].next & 8) != 0 )
+    {
+      v14 = e - 1;
+      if ( *(_DWORD *)(dword_11249E90 + 26212) )
+      {
+        if ( *(_DWORD *)(dword_11249E90 + 26216) )
+        {
+          if ( *(float *)&dword_1031D394 != 0.0 && *(int *)nPlayers > 1 )
+          {
+            if ( *(_DWORD *)dword_11249E90 )
+            {
+              if ( v14 >= 0 && v14 < *(int *)nPlayers )
+              {
+                v15 = 88 * v14;
+                if ( dword_10537EA8[22 * v14] )
+                {
+                  if ( dword_10537EAC[22 * v14] )
+                  {
+                    p_next = (struct gsv_link_s **)((char *)&unk_10537ED4 + v15);
+                    v13 = (struct gsv_link_s *)((char *)&unk_10537EE0 + v15);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    v16 = 0;
+    v17 = pmove_maxs;
+    v18 = (char *)p_next - (char *)pmove_maxs;
+    v19 = (char *)v13 - (char *)pmove_maxs;
+    do
+    {
+      if ( *(float *)((char *)v17 + v18) > *v17 )
+        goto LABEL_49;
+      if ( *(float *)((char *)v17 + (char *)pmove_mins - (char *)pmove_maxs) > *(float *)((char *)v17 + v19) )
+        break;
+      ++v16;
+      ++v17;
+    }
+    while ( v16 < 3 );
+    if ( v16 != 3 )
+      goto LABEL_49;
+    if ( !check[49].next && check[50].prev == (struct gsv_link_s *)-16 )
+    {
+      v20 = *((_DWORD *)pmove + 33748);
+      if ( v20 >= 64 )
+      {
+        Con_DPrintf("SV_AddLinksToPM:  pmove->nummoveent >= MAX_MOVEENTS\n");
+        goto LABEL_49;
+      }
+      pe = &pmove[224 * v20 + 134996];
+      *((_DWORD *)pmove + 33748) = v20 + 1;
+      goto LABEL_48;
+    }
+    v22 = *((_DWORD *)pmove + 147);
+    if ( v22 < 600 )
+    {
+      pe = &pmove[224 * v22 + 592];
+      *((_DWORD *)pmove + 147) = v22 + 1;
+  LABEL_48:
+      qmemcpy(pe, ve, 0xE0u);
+      goto LABEL_49;
+    }
+    Con_DPrintf("SV_AddLinksToPM:  pmove->numphysent >= MAX_PHYSENTS\n");
+  }

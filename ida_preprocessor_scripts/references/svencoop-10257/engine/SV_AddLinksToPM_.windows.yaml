@@ -1,0 +1,396 @@
+func_name: "SV_AddLinksToPM_"
+func_va: "0x1db9220"
+disasm_code: |-
+  .text:01DB9220                 sub     esp, 10h
+  .text:01DB9223                 push    ebx
+  .text:01DB9224                 mov     ebx, [esp+14h+node]
+  .text:01DB9228                 push    ebp
+  .text:01DB9229                 push    esi
+  .text:01DB922A                 mov     esi, [esp+1Ch+pmove_maxs]
+  .text:01DB922E                 ; ArgList
+  .text:01DB922E                 push    edi; ArgList
+  .text:01DB922F                 nop
+  .text:01DB9230                 mov     edi, [ebx+1Ch]
+  .text:01DB9233                 lea     eax, [ebx+18h]
+  .text:01DB9236                 mov     [esp+20h+var_4], eax
+  .text:01DB923A                 cmp     edi, eax
+  .text:01DB923C                 jz      loc_1DB94DC
+  .text:01DB9242                 mov     eax, [edi+4]
+  .text:01DB9245                 add     edi, 0FFFFFFF8h
+  .text:01DB9248                 mov     [esp+20h+var_8], eax
+  .text:01DB924C                 mov     ecx, [edi+2C0h]
+  .text:01DB9252                 test    ecx, ecx
+  .text:01DB9254                 jz      short loc_1DB928C
+  .text:01DB9256                 cmp     dword_855B6BC, 0
+  .text:01DB925D                 jnz     short loc_1DB9272
+  .text:01DB925F                 mov     eax, ent
+  .text:01DB9264                 test    [eax+2C0h], ecx
+  .text:01DB926A                 jz      loc_1DB94C4
+  .text:01DB9270                 jmp     short loc_1DB928C
+  .text:01DB9272                 cmp     dword_855B6BC, 1
+  .text:01DB9279                 jnz     short loc_1DB928C
+  .text:01DB927B                 mov     eax, ent
+  .text:01DB9280                 test    [eax+2C0h], ecx
+  .text:01DB9286                 jnz     loc_1DB94C4
+  .text:01DB928C                 mov     eax, [edi+218h]
+  .text:01DB9292                 cmp     eax, ent
+  .text:01DB9298                 jz      loc_1DB94C4
+  .text:01DB929E                 mov     eax, [edi+18Ch]
+  .text:01DB92A4                 cmp     eax, 4
+  .text:01DB92A7                 jz      short loc_1DB92BB
+  .text:01DB92A9                 cmp     eax, 2
+  .text:01DB92AC                 jz      short loc_1DB92BB
+  .text:01DB92AE                 cmp     eax, 3
+  .text:01DB92B1                 jz      short loc_1DB92BB
+  .text:01DB92B3                 test    eax, eax
+  .text:01DB92B5                 jnz     loc_1DB94C4
+  .text:01DB92BB                 push    edi
+  .text:01DB92BC                 call    NUM_FOR_EDICT
+  .text:01DB92C1                 mov     esi, dword_855B54C
+  .text:01DB92C7                 push    edi
+  .text:01DB92C8                 push    eax
+  .text:01DB92C9                 mov     [esp+2Ch+var_10], eax
+  .text:01DB92CD                 mov     edx, [esi+3BA54h]
+  .text:01DB92D3                 lea     ebx, [esi+3BA58h]
+  .text:01DB92D9                 imul    ecx, edx, 0E0h
+  .text:01DB92DF                 add     ebx, ecx
+  .text:01DB92E1                 lea     ecx, [edx+1]
+  .text:01DB92E4                 push    ebx
+  .text:01DB92E5                 mov     [esp+30h+var_C], ebx
+  .text:01DB92E9                 mov     [esi+3BA54h], ecx
+  .text:01DB92EF                 call    SV_CopyEdictToPhysent
+  .text:01DB92F4                 mov     ecx, [edi+18Ch]
+  .text:01DB92FA                 add     esp, 10h
+  .text:01DB92FD                 test    ecx, ecx
+  .text:01DB92FF                 jnz     short loc_1DB9319
+  .text:01DB9301                 cmp     [edi+190h], ecx
+  .text:01DB9307                 jz      loc_1DB94C4
+  .text:01DB930D                 cmp     [edi+134h], ecx
+  .text:01DB9313                 jz      loc_1DB94C4
+  .text:01DB9319                 mov     eax, [edi+224h]
+  .text:01DB931F                 test    eax, 800000h
+  .text:01DB9324                 jz      short loc_1DB932F
+  .text:01DB9326                 cmp     ecx, 4
+  .text:01DB9329                 jz      loc_1DB94C4
+  .text:01DB932F                 cmp     edi, ent
+  .text:01DB9335                 jz      loc_1DB94C4
+  .text:01DB933B                 test    al, 8
+  .text:01DB933D                 jz      short loc_1DB9352
+  .text:01DB933F                 fldz
+  .text:01DB9341                 fcomp   dword ptr [edi+1E0h]
+  .text:01DB9347                 fnstsw  ax
+  .text:01DB9349                 test    ah, 1
+  .text:01DB934C                 jz      loc_1DB94C4
+  .text:01DB9352                 lea     eax, [edi+174h]
+  .text:01DB9358                 push    eax
+  .text:01DB9359                 call    sub_1D71F90
+  .text:01DB935E                 fldz
+  .text:01DB9360                 add     esp, 4
+  .text:01DB9363                 fucom   st(1)
+  .text:01DB9365                 fnstsw  ax
+  .text:01DB9367                 fstp    st(1)
+  .text:01DB9369                 test    ah, 44h
+  .text:01DB936C                 jnp     loc_1DB94C2
+  .text:01DB9372                 test    byte ptr [edi+224h], 8
+  .text:01DB9379                 lea     ebx, [edi+144h]
+  .text:01DB937F                 lea     ebp, [edi+150h]
+  .text:01DB9385                 jz      short loc_1DB93ED
+  .text:01DB9387                 mov     ecx, dword_8446C88
+  .text:01DB938D                 mov     edx, [esp+20h+var_10]
+  .text:01DB9391                 dec     edx
+  .text:01DB9392                 cmp     dword ptr [ecx+31F74h], 0
+  .text:01DB9399                 jz      short loc_1DB93ED
+  .text:01DB939B                 cmp     dword ptr [ecx+31F78h], 0
+  .text:01DB93A2                 jz      short loc_1DB93ED
+  .text:01DB93A4                 fld     flt_1EE3B34
+  .text:01DB93AA                 fucompp
+  .text:01DB93AC                 fnstsw  ax
+  .text:01DB93AE                 test    ah, 44h
+  .text:01DB93B1                 jnp     short loc_1DB93EF
+  .text:01DB93B3                 mov     eax, ArgList
+  .text:01DB93B8                 cmp     eax, 1
+  .text:01DB93BB                 jle     short loc_1DB93EF
+  .text:01DB93BD                 cmp     dword ptr [ecx], 0
+  .text:01DB93C0                 jz      short loc_1DB93EF
+  .text:01DB93C2                 test    edx, edx
+  .text:01DB93C4                 js      short loc_1DB93EF
+  .text:01DB93C6                 cmp     edx, eax
+  .text:01DB93C8                 jge     short loc_1DB93EF
+  .text:01DB93CA                 imul    eax, edx, 58h ; 'X'
+  .text:01DB93CD                 cmp     dword_95D13A0[eax], 0
+  .text:01DB93D4                 jz      short loc_1DB93EF
+  .text:01DB93D6                 cmp     dword_95D13A4[eax], 0
+  .text:01DB93DD                 jz      short loc_1DB93EF
+  .text:01DB93DF                 lea     ebx, unk_95D13CC[eax]
+  .text:01DB93E5                 lea     ebp, unk_95D13D8[eax]
+  .text:01DB93EB                 jmp     short loc_1DB93EF
+  .text:01DB93ED                 fstp    st
+  .text:01DB93EF                 mov     eax, [esp+20h+pmove_maxs]
+  .text:01DB93F3                 xor     edx, edx
+  .text:01DB93F5                 mov     esi, [esp+20h+pmove_mins]
+  .text:01DB93F9                 sub     ebx, eax
+  .text:01DB93FB                 sub     ebp, eax
+  .text:01DB93FD                 mov     ecx, eax
+  .text:01DB93FF                 sub     esi, eax
+  .text:01DB9401                 fld     dword ptr [ecx]
+  .text:01DB9403                 fcomp   dword ptr [ebx+ecx]
+  .text:01DB9406                 fnstsw  ax
+  .text:01DB9408                 test    ah, 5
+  .text:01DB940B                 jnp     loc_1DB94C4
+  .text:01DB9411                 fld     dword ptr [esi+ecx]
+  .text:01DB9414                 fcomp   dword ptr [ecx+ebp]
+  .text:01DB9417                 fnstsw  ax
+  .text:01DB9419                 test    ah, 41h
+  .text:01DB941C                 jz      short loc_1DB9427
+  .text:01DB941E                 inc     edx
+  .text:01DB941F                 add     ecx, 4
+  .text:01DB9422                 cmp     edx, 3
+  .text:01DB9425                 jl      short loc_1DB9401
+  .text:01DB9427                 cmp     edx, 3
+  .text:01DB942A                 jnz     loc_1DB94C4
+  .text:01DB9430                 cmp     dword ptr [edi+18Ch], 0
+  .text:01DB9437                 jnz     short loc_1DB9486
+  .text:01DB9439                 cmp     dword ptr [edi+190h], 0FFFFFFF0h
+  .text:01DB9440                 jnz     short loc_1DB9486
+  .text:01DB9442                 mov     ecx, dword_855B54C
+  .text:01DB9448                 mov     edx, [ecx+38250h]
+  .text:01DB944E                 cmp     edx, 40h ; '@'
+  .text:01DB9451                 jl      short loc_1DB9462
+  .text:01DB9453                 push    offset aSvAddlinkstopm; "SV_AddLinksToPM:  pmove->nummoveent >= "...
+  .text:01DB9458                 call    Con_DPrintf
+  .text:01DB945D                 add     esp, 4
+  .text:01DB9460                 jmp     short loc_1DB94C4
+  .text:01DB9462                 mov     esi, [esp+20h+var_C]
+  .text:01DB9466                 lea     eax, [edx+1]
+  .text:01DB9469                 imul    edi, edx, 0E0h
+  .text:01DB946F                 mov     [ecx+38250h], eax
+  .text:01DB9475                 add     edi, 38254h
+  .text:01DB947B                 add     edi, ecx
+  .text:01DB947D                 mov     ecx, 38h ; '8'
+  .text:01DB9482                 rep movsd
+  .text:01DB9484                 jmp     short loc_1DB94C4
+  .text:01DB9486                 mov     ecx, dword_855B54C
+  .text:01DB948C                 mov     edx, [ecx+24Ch]
+  .text:01DB9492                 cmp     edx, 400h
+  .text:01DB9498                 jge     loc_1DB951F
+  .text:01DB949E                 mov     esi, [esp+20h+var_C]
+  .text:01DB94A2                 lea     eax, [edx+1]
+  .text:01DB94A5                 imul    edi, edx, 0E0h
+  .text:01DB94AB                 mov     [ecx+24Ch], eax
+  .text:01DB94B1                 add     edi, 250h
+  .text:01DB94B7                 add     edi, ecx
+  .text:01DB94B9                 mov     ecx, 38h ; '8'
+  .text:01DB94BE                 rep movsd
+  .text:01DB94C0                 jmp     short loc_1DB94C4
+  .text:01DB94C2                 fstp    st
+  .text:01DB94C4                 mov     eax, [esp+20h+var_8]
+  .text:01DB94C8                 mov     edi, eax
+  .text:01DB94CA                 cmp     eax, [esp+20h+var_4]
+  .text:01DB94CE                 jnz     loc_1DB9242
+  .text:01DB94D4                 mov     esi, [esp+20h+pmove_maxs]
+  .text:01DB94D8                 mov     ebx, [esp+20h+node]
+  .text:01DB94DC                 mov     eax, [ebx]
+  .text:01DB94DE                 cmp     eax, 0FFFFFFFFh
+  .text:01DB94E1                 jz      short loc_1DB952C
+  .text:01DB94E3                 fld     dword ptr [ebx+4]
+  .text:01DB94E6                 fcomp   dword ptr [esi+eax*4]
+  .text:01DB94E9                 fnstsw  ax
+  .text:01DB94EB                 test    ah, 5
+  .text:01DB94EE                 jp      short loc_1DB9500
+  .text:01DB94F0                 push    esi
+  .text:01DB94F1                 push    [esp+24h+pmove_mins]
+  .text:01DB94F5                 push    dword ptr [ebx+8]
+  .text:01DB94F8                 call    SV_AddLinksToPM_
+  .text:01DB94FD                 add     esp, 0Ch
+  .text:01DB9500                 mov     eax, [ebx]
+  .text:01DB9502                 mov     ecx, [esp+20h+pmove_mins]
+  .text:01DB9506                 fld     dword ptr [ebx+4]
+  .text:01DB9509                 fcomp   dword ptr [ecx+eax*4]
+  .text:01DB950C                 fnstsw  ax
+  .text:01DB950E                 test    ah, 41h
+  .text:01DB9511                 jnz     short loc_1DB952C
+  .text:01DB9513                 mov     ebx, [ebx+0Ch]
+  .text:01DB9516                 mov     [esp+20h+node], ebx
+  .text:01DB951A                 jmp     loc_1DB9230
+  .text:01DB951F                 push    offset aSvAddlinkstopm_0; "SV_AddLinksToPM:  pmove->numphysent >= "...
+  .text:01DB9524                 call    Con_DPrintf
+  .text:01DB9529                 add     esp, 4
+  .text:01DB952C                 pop     edi
+  .text:01DB952D                 pop     esi
+  .text:01DB952E                 pop     ebp
+  .text:01DB952F                 pop     ebx
+  .text:01DB9530                 add     esp, 10h
+  .text:01DB9533                 retn
+procedure: |-
+  void __cdecl SV_AddLinksToPM_(areanode_t *node, float *pmove_mins, float *pmove_maxs)
+  {
+    areanode_t *v3; // ebx
+    float *v4; // esi
+    struct gsv_link_s *next; // edi
+    struct gsv_link_s *v6; // eax
+    int v7; // edi
+    int v8; // ecx
+    int v9; // eax
+    int v10; // edx
+    int v11; // ecx
+    int v12; // eax
+    char *v13; // ebx
+    char *v14; // ebp
+    int v15; // edx
+    int v16; // eax
+    int v17; // edx
+    int v18; // ebx
+    int v19; // ebp
+    float *v20; // ecx
+    int v21; // ecx
+    int v22; // edx
+    int v23; // ecx
+    int v24; // edx
+    void *v25; // [esp-10h] [ebp-30h]
+    unsigned int v26; // [esp+10h] [ebp-10h]
+    const void *v27; // [esp+14h] [ebp-Ch]
+    gsv_link_t *v28; // [esp+18h] [ebp-8h]
+    gsv_link_t *p_solid_edicts; // [esp+1Ch] [ebp-4h]
+
+    v3 = node;
+    v4 = pmove_maxs;
+    while ( 1 )
+    {
+      next = v3->solid_edicts.next;
+      p_solid_edicts = &v3->solid_edicts;
+      if ( next != &v3->solid_edicts )
+      {
+        while ( 1 )
+        {
+          v6 = next->next;
+          v7 = (int)&next[-1];
+          v28 = v6;
+          v8 = *(_DWORD *)(v7 + 704);
+          if ( !v8 )
+            break;
+          if ( dword_855B6BC )
+          {
+            if ( dword_855B6BC != 1 || (v8 & ent->groupinfo) == 0 )
+              break;
+          }
+          else if ( (v8 & ent->groupinfo) != 0 )
+          {
+            break;
+          }
+  LABEL_46:
+          next = v28;
+          if ( v28 == p_solid_edicts )
+          {
+            v4 = pmove_maxs;
+            v3 = node;
+            goto LABEL_48;
+          }
+        }
+        if ( *(edict_t **)(v7 + 536) != ent )
+        {
+          v9 = *(_DWORD *)(v7 + 396);
+          if ( v9 == 4 || v9 == 2 || v9 == 3 || !v9 )
+          {
+            v26 = NUM_FOR_EDICT(v7);
+            v10 = *(_DWORD *)(dword_855B54C + 244308);
+            v25 = (void *)(224 * v10 + dword_855B54C + 244312);
+            v27 = v25;
+            *(_DWORD *)(dword_855B54C + 244308) = v10 + 1;
+            SV_CopyEdictToPhysent(v25, v26, (edict_t *)v7);
+            v11 = *(_DWORD *)(v7 + 396);
+            if ( v11 || *(_DWORD *)(v7 + 400) && *(_DWORD *)(v7 + 308) )
+            {
+              v12 = *(_DWORD *)(v7 + 548);
+              if ( ((v12 & 0x800000) == 0 || v11 != 4)
+                && (edict_t *)v7 != ent
+                && ((v12 & 8) == 0 || *(float *)(v7 + 480) > 0.0)
+                && 0.0 != sub_1D71F90(v7 + 372) )
+              {
+                v13 = (char *)(v7 + 324);
+                v14 = (char *)(v7 + 336);
+                if ( (*(_BYTE *)(v7 + 548) & 8) != 0 )
+                {
+                  v15 = v26 - 1;
+                  if ( *(_DWORD *)(dword_8446C88 + 204660) )
+                  {
+                    if ( *(_DWORD *)(dword_8446C88 + 204664) )
+                    {
+                      if ( flt_1EE3B34 != 0.0 && *(int *)ArgList > 1 )
+                      {
+                        if ( *(_DWORD *)dword_8446C88 )
+                        {
+                          if ( v15 >= 0 && v15 < *(int *)ArgList )
+                          {
+                            v16 = 88 * v15;
+                            if ( dword_95D13A0[22 * v15] )
+                            {
+                              if ( dword_95D13A4[22 * v15] )
+                              {
+                                v13 = (char *)&unk_95D13CC + v16;
+                                v14 = (char *)&unk_95D13D8 + v16;
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                v17 = 0;
+                v18 = v13 - (char *)pmove_maxs;
+                v19 = v14 - (char *)pmove_maxs;
+                v20 = pmove_maxs;
+                while ( *v20 >= (double)*(float *)((char *)v20 + v18) )
+                {
+                  if ( *(float *)((char *)v20 + (char *)pmove_mins - (char *)pmove_maxs) <= (double)*(float *)((char *)v20 + v19) )
+                  {
+                    ++v17;
+                    ++v20;
+                    if ( v17 < 3 )
+                      continue;
+                  }
+                  if ( v17 != 3 )
+                    goto LABEL_46;
+                  if ( !*(_DWORD *)(v7 + 396) && *(_DWORD *)(v7 + 400) == -16 )
+                  {
+                    v21 = dword_855B54C;
+                    v22 = *(_DWORD *)(dword_855B54C + 229968);
+                    if ( v22 < 64 )
+                    {
+                      *(_DWORD *)(dword_855B54C + 229968) = v22 + 1;
+                      qmemcpy((void *)(v21 + 224 * v22 + 229972), v27, 0xE0u);
+                    }
+                    else
+                    {
+                      Con_DPrintf("SV_AddLinksToPM:  pmove->nummoveent >= MAX_MOVEENTS\n");
+                    }
+                    goto LABEL_46;
+                  }
+                  v23 = dword_855B54C;
+                  v24 = *(_DWORD *)(dword_855B54C + 588);
+                  if ( v24 < 1024 )
+                  {
+                    *(_DWORD *)(dword_855B54C + 588) = v24 + 1;
+                    qmemcpy((void *)(v23 + 224 * v24 + 592), v27, 0xE0u);
+                    goto LABEL_46;
+                  }
+                  Con_DPrintf("SV_AddLinksToPM:  pmove->numphysent >= MAX_PHYSENTS\n");
+                  return;
+                }
+              }
+            }
+          }
+        }
+        goto LABEL_46;
+      }
+  LABEL_48:
+      if ( v3->axis == -1 )
+        break;
+      if ( v3->dist < (double)v4[v3->axis] )
+        SV_AddLinksToPM_(v3->children[0], pmove_mins, v4);
+      if ( v3->dist <= (double)pmove_mins[v3->axis] )
+        break;
+      v3 = v3->children[1];
+      node = v3;
+    }
+  }

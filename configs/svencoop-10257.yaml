@@ -5,6 +5,51 @@ modules:
     depot_windows: hw.dll
     depot_linux: hw.so
     skills:
+      - name: find-SV_AddLinksToPM_-decompiles
+        platform: windows
+        expected_input:
+          - SV_AddLinksToPM_.{platform}.yaml
+        expected_output:
+          - SV_CopyEdictToPhysent.{platform}.yaml
+      - name: find-SV_AddLinksToPM_-state-decompiles
+        platform: linux
+        expected_input:
+          - SV_AddLinksToPM_.{platform}.yaml
+        expected_output:
+          - pmove.{platform}.yaml
+          - pr_strings.{platform}.yaml
+          - svs_maxclients.{platform}.yaml
+          - sv_unlag_value.{platform}.yaml
+          - truepositions.{platform}.yaml
+      - name: find-server-physent-layout
+        platform: linux
+        expected_input:
+          - SV_AddLinksToPM_.{platform}.yaml
+          - pmove.{platform}.yaml
+          - host_client.{platform}.yaml
+          - truepositions.{platform}.yaml
+        expected_output:
+          - playermove_t_numphysent_offset.{platform}.yaml
+          - playermove_t_physents_offset.{platform}.yaml
+          - playermove_t_physents_count.{platform}.yaml
+          - playermove_t_nummoveent_offset.{platform}.yaml
+          - playermove_t_moveents_offset.{platform}.yaml
+          - playermove_t_moveents_count.{platform}.yaml
+          - playermove_t_numvisent_offset.{platform}.yaml
+          - playermove_t_visents_offset.{platform}.yaml
+          - client_t_active_offset.{platform}.yaml
+          - client_t_lw_offset.{platform}.yaml
+          - client_t_lc_offset.{platform}.yaml
+          - truepositions_element_size.{platform}.yaml
+          - truepositions_active_offset.{platform}.yaml
+          - truepositions_needrelink_offset.{platform}.yaml
+          - truepositions_oldorg_offset.{platform}.yaml
+          - truepositions_oldabsmin_offset.{platform}.yaml
+          - truepositions_oldabsmax_offset.{platform}.yaml
+      - name: find-server-physent-owners
+        expected_output:
+          - SV_AddLinksToPM_.{platform}.yaml
+          - NUM_FOR_EDICT.{platform}.yaml
       - name: find-CCDAudio-MP3
         expected_output:
           - CCDAudio__MP3_InitStream.{platform}.yaml
@@ -1811,6 +1856,80 @@ modules:
         expected_output:
           - CL_IsDevOverviewMode.{platform}.yaml
     symbols:
+      - name: SV_AddLinksToPM_
+        category: func
+        artifact: SV_AddLinksToPM_.{platform}.yaml
+      - name: playermove_t_numphysent_offset
+        category: scalar
+        platform: linux
+      - name: playermove_t_physents_offset
+        category: scalar
+        platform: linux
+      - name: playermove_t_physents_count
+        category: scalar
+        platform: linux
+      - name: playermove_t_nummoveent_offset
+        category: scalar
+        platform: linux
+      - name: playermove_t_moveents_offset
+        category: scalar
+        platform: linux
+      - name: playermove_t_moveents_count
+        category: scalar
+        platform: linux
+      - name: playermove_t_numvisent_offset
+        category: scalar
+        platform: linux
+      - name: playermove_t_visents_offset
+        category: scalar
+        platform: linux
+      - name: client_t_active_offset
+        category: scalar
+        platform: linux
+      - name: client_t_lw_offset
+        category: scalar
+        platform: linux
+      - name: client_t_lc_offset
+        category: scalar
+        platform: linux
+      - name: truepositions_element_size
+        category: scalar
+        platform: linux
+      - name: truepositions_active_offset
+        category: scalar
+        platform: linux
+      - name: truepositions_needrelink_offset
+        category: scalar
+        platform: linux
+      - name: truepositions_oldorg_offset
+        category: scalar
+        platform: linux
+      - name: truepositions_oldabsmin_offset
+        category: scalar
+        platform: linux
+      - name: truepositions_oldabsmax_offset
+        category: scalar
+        platform: linux
+      - name: pmove
+        category: gv
+        platform: linux
+      - name: pr_strings
+        category: gv
+        platform: linux
+      - name: svs_maxclients
+        category: gv
+        platform: linux
+      - name: sv_unlag_value
+        category: gv
+        platform: linux
+      - name: truepositions
+        category: gv
+        platform: linux
+      - name: SV_CopyEdictToPhysent
+        category: func
+        platform: windows
+      - name: NUM_FOR_EDICT
+        category: func
       - name: CCDAudio__MP3_InitStream
         category: func
         alias:
