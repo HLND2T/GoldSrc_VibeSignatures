@@ -94,3 +94,7 @@ Linux R_386_32 typeinfo relocation 指向 __si_class_type_info，offset-to-top=0
 - All 10 full schema-8 snapshots and companion metadata built and guarded; catalog dataset guards passed. All 47 new records independently matched the Task 1 address/slot/AP evidence; CZDS contained no Career vtable record.
 - Unit: 1546 tests, OK with 12 skips (10 POSIX-only checks on Windows and 2 opt-in release-notes CLI checks). Repository-contract: 15 tests, OK. Format check passed.
 - Requested release: v20261023a, tracked mode. Publication is a separate subsequent operation; these local checks do not assert that a release or downstream runtime fix is live.
+
+### 后续 #409：MatchEnd 正式导出
+
+本笔记中“MatchEnd 仅检查、不导出”的范围描述属于 #397 的历史交付。#409 在 czero-10210 / czero-8684 增加经独立资源 constructor 验证的 MatchEnd 主表及自身 OnCommand；Frame 键处理身份与既有输出保持一致。当前证据见 [[Client Career MatchEnd vtable and OnCommand locator]]。

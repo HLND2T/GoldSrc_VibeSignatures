@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Recover Frame KeyCode slots and the Career RoundEnd primary vtable.
+"""Recover Frame KeyCode slots and the requested Career end-menu primary tables.
 
 RTTI plus the RoundEnd resource-owning constructor identifies its primary vptr.
 Cancel message construction/posting under ESC and SupportsFeature identifies
@@ -7,7 +7,7 @@ Pressed; modifier/F4 and Enter/default-button messages identify Typed, including
 early CS where Typed has no ESC branch. Current table membership supplies slots.
 When Typed has ESC, validate the app-modal equality and current CloseModal body.
 No previous artifact, fixed slot, RVA, SDK order or byte pattern locates a target.
-MatchEnd is checked for shared implementation but is not exported or hooked.
+MatchEnd export additionally requires its own resource constructor and vptr store.
 """
 
 from pathlib import Path
@@ -23,6 +23,7 @@ import ida_preprocessor_scripts._frame_key_identity as key_identity
 KEY_SOURCE = Path(key_identity.__file__).read_text(encoding="utf-8")
 FRAME = "vgui2::Frame"
 ROUND = "CCSCareerRoundEndMenu"
+MATCH = "CCSCareerMatchEndMenu"
 WALK = r"""
 def method(ea,excluded_edges=()):
     if ea in cache:return cache[ea]
@@ -167,8 +168,18 @@ if 'CCSCareerRoundEndMenu' in tables:
     constructor=key_sole(set(resource['owners']) & set(label['owners']),'RoundEnd resource constructor')
     ctor_store(method(constructor),tables['CCSCareerRoundEndMenu'])
     identity(constructor,['_ZN21CCSCareerRoundEndMenuC1EPN5vgui25PanelE','_ZN21CCSCareerRoundEndMenuC2EPN5vgui25PanelE'])
+match_constructor=None
+if values['export_match']:
+    if int(tables['CCSCareerMatchEndMenu']['vtable_va'],0)==int(tables['CCSCareerRoundEndMenu']['vtable_va'],0):
+        raise ValueError('MatchEnd and RoundEnd primary tables alias')
+    resource=literal_evidence('Resource/UI/CSCareerMatchEnd.res')
+    label=literal_evidence('CSCareerMatchEnd')
+    match_constructor=key_sole(set(resource['owners']) & set(label['owners']),'MatchEnd resource constructor')
+    ctor_store(method(match_constructor),tables['CCSCareerMatchEndMenu'])
+    identity(match_constructor,['_ZN21CCSCareerMatchEndMenuC1EPN5vgui25PanelE','_ZN21CCSCareerMatchEndMenuC2EPN5vgui25PanelE'])
 result=dict(pressed=pressed,typed=typed,pressed_index=pressed_index,typed_index=typed_index,
-            pressed_proof=pressed_proof,typed_proof=typed_proof,modal=modal_proof,constructor=constructor)
+            pressed_proof=pressed_proof,typed_proof=typed_proof,modal=modal_proof,constructor=constructor,
+            match_constructor=match_constructor)
 """
 
 
@@ -178,14 +189,15 @@ async def preprocess_skill(
     _ = old_yaml_map, new_binary_dir
     try:
         round_output = _output_for_symbol(expected_outputs, ROUND + "_vtable")
+        match_output = _output_for_symbol(expected_outputs, MATCH + "_vtable")
         classes = [FRAME]
-        if round_output:
-            classes += ["CCSCareerBaseMenu", ROUND, "CCSCareerMatchEndMenu"]
+        if round_output or match_output:
+            classes += ["CCSCareerBaseMenu", ROUND, MATCH]
         tables = await collect(session, platform, classes)
         found = await walk(
             session,
             IDENTITY_SOURCE + COMMON + COLLECT_COMMON + KEY_SOURCE + WALK,
-            {"platform": platform, "tables": tables},
+            {"platform": platform, "tables": tables, "export_match": bool(match_output)},
         )
         if debug:
             print(f"  {skill_name} evidence: {found}")
@@ -207,9 +219,10 @@ async def preprocess_skill(
             payloads.append((output, payload))
         for output, payload in payloads:
             write_func_yaml(output, payload)
-        if round_output:
-            table = dict(tables[ROUND], vtable_rva=hex(int(tables[ROUND]["vtable_va"], 0) - image_base))
-            write_vtable_yaml(round_output, table)
+        for cls, output in ((ROUND, round_output), (MATCH, match_output)):
+            if output:
+                table = dict(tables[cls], vtable_rva=hex(int(tables[cls]["vtable_va"], 0) - image_base))
+                write_vtable_yaml(output, table)
         return True
     except (ValueError, KeyError, TypeError) as exc:
         if debug:
