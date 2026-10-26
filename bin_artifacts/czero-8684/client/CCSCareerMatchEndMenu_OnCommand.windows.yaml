@@ -1,0 +1,8 @@
+func_name: CCSCareerMatchEndMenu::OnCommand(char const*)
+func_va: '0x1925050'
+func_rva: '0x25050'
+func_size: '0xa7'
+func_sig: 56 8B 74 24 ?? 57 68 ?? ?? ?? ?? 56 8B F9 E8 ?? ?? ?? ?? 83 C4 08 85 C0 75 ?? 6A 01 E8 ?? ?? ?? ?? 8B 07 83 C4 04
+vtable_name: CCSCareerMatchEndMenu
+vfunc_offset: '0x15c'
+vfunc_index: 87
