@@ -1,0 +1,19 @@
+modules:
+  - name: client
+    module_windows: client.dll
+    alias_windows:
+      - client_orig.dll
+      - client_original.dll
+      - client_org.dll
+    module_linux: client.so
+    depot_windows: dod/cl_dlls/client.dll
+    depot_linux: dod/cl_dlls/client.so
+    skills: []
+    symbols: []
+  - name: server
+    module_windows: dod.dll
+    module_linux: dod.so
+    depot_windows: dod/dlls/dod.dll
+    depot_linux: dod/dlls/dod.so
+    skills: []
+    symbols: []

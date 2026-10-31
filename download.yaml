@@ -76,6 +76,12 @@ downloads:
     appid: 100
     manifests:
       "101": "8145292884440584734" # DepotDownloader -app 100 -depot 101 -manifest 8145292884440584734 -all-platforms -dir depots/Condition-Zero-Deleted-Scenes-10210 [-username XXX] [-password XXX] [-remember-password]
+  - tag: "dod-8684"
+    name: Day of Defeat (Half-Life engine buildnum 8684, Steam Build ID 5424802)
+    basepath: Day-of-Defeat-8684
+    appid: 30
+    manifests:
+      "31": "3826716661969602728"
   - tag: "svencoop-8948"
     name: Sven Co-op buildnum 8948  # Sven Co-op 5.25
     basepath: Sven-Coop-8948
