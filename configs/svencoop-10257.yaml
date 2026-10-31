@@ -3298,6 +3298,11 @@ modules:
           - ClientPortalManager_CreateInvisiblePortalTextures.{platform}.yaml
         expected_output:
           - ClientPortalManager_ResetAll.{platform}.yaml
+      - name: find-ClientPortalManager_m_bStudioRenderPlayerPending
+        expected_input:
+          - ClientPortalManager_ResetAll.{platform}.yaml
+        expected_output:
+          - ClientPortalManager_m_bStudioRenderPlayerPending.{platform}.yaml
       - name: find-ClientPortalManager_DrawPortalSurface
         expected_output:
           - ClientPortalManager_DrawPortalSurface.{platform}.yaml
@@ -3449,6 +3454,10 @@ modules:
         category: structmember
         struct: ClientPortalManager
         member: m_bShadersAvailable
+      - name: ClientPortalManager_m_bStudioRenderPlayerPending
+        category: structmember
+        struct: ClientPortalManager
+        member: m_bStudioRenderPlayerPending
       - name: ClientPortalManager_CreateInvisiblePortalTextures
         category: func
       - name: ClientPortalManager_ResetAll

@@ -809,7 +809,7 @@ class TextureIdentityTests(unittest.TestCase):
 
 
 class PatchSignatureRelocationTests(unittest.TestCase):
-    def candidates(self, raw, kind, offset, width):
+    def candidates(self, raw, kind, offset, width, *, fixed_target=False):
         from ida_preprocessor_scripts._patch_signature_common import CANDIDATE_PY
 
         api = NS(o_void=0, o_reg=REG, o_mem=MEM, o_displ=DISPL, o_imm=IMM, o_near=NEAR, o_far=6)
@@ -821,7 +821,7 @@ class PatchSignatureRelocationTests(unittest.TestCase):
             "ida_bytes": NS(get_bytes=lambda ea, size: raw),
             "idautils": NS(DecodeInstruction=lambda ea: insn if ea == 0x1000 else None),
         }
-        ns = {"idaapi": api, "ida_ua": ua, "json": json}
+        ns = {"idaapi": api, "ida_ua": ua, "json": json, "fix_target_instruction": fixed_target}
         with patch.dict(sys.modules, modules):
             exec(CANDIDATE_PY.replace("TARGET_EA_PLACEHOLDER", "4096"), ns)
             return ns["candidates"](0x1000)
@@ -836,6 +836,12 @@ class PatchSignatureRelocationTests(unittest.TestCase):
 
     def test_byte_load_absolute_address_masks_all_four_address_bytes(self):
         self.assertEqual(["A0 ?? ?? ?? ??"], self.candidates(bytes.fromhex("A0 12 34 56 78"), MEM, 1, 1))
+
+    def test_struct_member_signature_fixes_entire_target_instruction(self):
+        self.assertEqual(
+            ["C6 87 E8 01 00 00 00"],
+            self.candidates(bytes.fromhex("C6 87 E8 01 00 00 00"), DISPL, 2, 1, fixed_target=True),
+        )
 
 
 class EnginePatchDataflowTests(unittest.TestCase):

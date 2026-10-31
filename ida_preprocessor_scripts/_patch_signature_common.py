@@ -1,10 +1,12 @@
-"""Shared unique-instruction signatures for the engine patch finders.
+"""Shared unique-instruction signatures for patch and struct-member finders.
 
 Both engine patch finders locate one exact instruction and need a unique
 ``patch_sig`` for it. ``CANDIDATE_PY`` returns progressively longer forward byte
 tokens for the instruction (operand displacements wildcarded); ``run_signature``
 validates each candidate with the MCP byte search and returns the first that
 matches exactly one location, so callers fail closed on any MCP failure.
+Struct-member callers opt into a fully fixed target instruction; following
+instructions still mask relocations.
 """
 
 import json
@@ -17,6 +19,7 @@ import ida_bytes, idaapi, idautils, json
 TARGET_EA = TARGET_EA_PLACEHOLDER
 MAX_SIG_BYTES = 96
 MAX_INSTRUCTIONS = 64
+FIX_TARGET_INSTRUCTION = globals().get('fix_target_instruction', False)
 
 
 def wildcard_instruction(insn, raw_bytes):
@@ -60,9 +63,14 @@ def candidates(target):
         raw = ida_bytes.get_bytes(cursor, insn.size)
         if not raw:
             break
-        for token in wildcard_instruction(insn, raw):
-            if len(tokens) < MAX_SIG_BYTES:
-                tokens.append(token)
+        instruction = (
+            ['%02X' % byte for byte in raw]
+            if FIX_TARGET_INSTRUCTION and cursor == int(target)
+            else wildcard_instruction(insn, raw)
+        )
+        if len(tokens) + len(instruction) > MAX_SIG_BYTES:
+            break
+        tokens.extend(instruction)
         boundaries.append(len(tokens))
         cursor += insn.size
         count += 1
@@ -73,9 +81,11 @@ json.dumps(candidates(TARGET_EA))
 """
 
 
-async def run_signature(session, ea):
-    """Return {'patch_sig', 'patch_sig_disp'} for one instruction, else None."""
-    code = CANDIDATE_PY.replace("TARGET_EA_PLACEHOLDER", str(int(ea)))
+async def run_signature(session, ea, *, fixed_target=False):
+    """Return a unique signature; struct members keep the first instruction fixed."""
+    code = f"fix_target_instruction = {bool(fixed_target)!r}\n" + CANDIDATE_PY.replace(
+        "TARGET_EA_PLACEHOLDER", str(int(ea))
+    )
     try:
         payload = parse_mcp_result(await session.call_tool("py_eval", {"code": code}))
     except Exception:  # noqa: BLE001 - MCP failures must fail closed.
