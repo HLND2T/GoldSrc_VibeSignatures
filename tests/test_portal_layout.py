@@ -1,8 +1,15 @@
 import copy
+import importlib
+from pathlib import Path
+import tempfile
 import unittest
+from unittest.mock import AsyncMock, patch
+
+import yaml
 
 from ida_preprocessor_scripts._portal_layout import constructor_offsets, linux_texture_offsets, source_mode_offset
 from ida_preprocessor_scripts._portal_render_state import recover_shader_member, clip_setup, clip_call_arguments
+from ida_preprocessor_scripts._portal_studio_state import recover_studio_member
 
 
 def reg(name, size=4):
@@ -354,3 +361,164 @@ class PortalLayoutTests(unittest.TestCase):
                     wrong.insert(3, write)
                 with self.subTest(mutation=mutation), self.assertRaises(ValueError):
                     source_mode_offset(wrong, "linux", 1234)
+
+
+class PortalStudioStateTests(unittest.TestCase):
+    def fixture(self, platform="windows", offset=72, indirect=False):
+        reset, getter, initializer = 1000, 2000, 3000
+        prefix = (
+            [ins("mov", reg("esi"), reg("ecx"))]
+            if platform == "windows"
+            else [
+                ins("push", reg("ebx")),
+                ins("sub", reg("esp"), imm(12)),
+                {**ins("call", {"kind": "func", "size": 4, "value": 9000}), "call_writes": ["ebx"]},
+                ins("mov", reg("esi"), mem("esp", 20)),
+            ]
+        )
+        prefix += [
+            ins("mov", mem("esi", offset, 1), imm(0)),
+            api("native_cleanup"),
+            ins("mov", mem("esi", offset + 8, 1), imm(0)),  # Shader flag, not the studio byte.
+            ins("ret"),
+        ]
+        accessor = [
+            ins("call", {"kind": "func", "size": 4, "value": initializer if indirect else reset}),
+            ins("mov", reg("ecx"), {"kind": "global", "size": 4, "value": 8000}),
+            ins("mov", reg("al", 1), mem("ecx", offset, 1)),
+            ins("mov", mem("ecx", offset, 1), imm(0)),
+            ins("ret"),
+        ]
+        callers = {getter: accessor}
+        if indirect:
+            callers[initializer] = [ins("call", {"kind": "func", "size": 4, "value": reset}), ins("ret")]
+        for code in [prefix, *callers.values()]:
+            for i, item in enumerate(code):
+                item["ea"] = i * 8
+        return reset, prefix, callers
+
+    def test_recovers_changed_layouts_and_linux_singleton_helper(self):
+        for platform in ("windows", "linux"):
+            for offset in (36, 92, 500):
+                for indirect in (False, True):
+                    reset, prefix, callers = self.fixture(platform, offset, indirect)
+                    if platform == "linux":
+                        callers[2000][2] = {**callers[2000][2], "mnemonic": "movzx"}
+                        callers[2000][2]["operands"][0] = reg("eax")
+                    result = recover_studio_member(reset, prefix, callers, platform)
+                    self.assertEqual((offset, 1, 2000), (result["offset"], result["size"], result["accessor"]))
+
+    def test_rejects_missing_ambiguous_or_unrelated_evidence(self):
+        for mutation in (
+            "reset_width",
+            "reset_value",
+            "reset_object",
+            "read_width",
+            "return_register",
+            "clear_offset",
+            "clear_value",
+            "missing_reset_call",
+            "clobbered_return",
+            "stack_local",
+            "clear_successor",
+            "two_getters",
+            "prefix_loop",
+        ):
+            reset, prefix, callers = self.fixture()
+            getter = callers[2000]
+            if mutation == "reset_width":
+                prefix[1]["operands"][0]["size"] = 4
+            elif mutation == "reset_value":
+                prefix[1]["operands"][1] = imm(1)
+            elif mutation == "reset_object":
+                prefix[0]["operands"][1] = reg("edx")
+            elif mutation == "read_width":
+                getter[2]["operands"][1]["size"] = 4
+            elif mutation == "return_register":
+                getter[2]["operands"][0] = reg("cl", 1)
+            elif mutation == "clear_offset":
+                getter[3]["operands"][0]["disp"] += 1
+            elif mutation == "clear_value":
+                getter[3]["operands"][1] = imm(1)
+            elif mutation == "missing_reset_call":
+                getter[0]["operands"][0]["value"] = 9000
+            elif mutation == "clobbered_return":
+                getter.insert(4, ins("mov", reg("eax"), imm(0), writes=("eax",)))
+            elif mutation == "stack_local":
+                getter[2]["operands"][1]["base"] = getter[3]["operands"][0]["base"] = "esp"
+            elif mutation == "clear_successor":
+                getter[3]["successors"] = [0]
+            elif mutation == "two_getters":
+                callers[4000] = copy.deepcopy(getter)
+            else:
+                prefix[1]["successors"] = [0]
+            with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                recover_studio_member(reset, prefix, callers, "windows")
+
+    def test_rejects_unsupported_platform(self):
+        reset, prefix, callers = self.fixture()
+        with self.assertRaises(ValueError):
+            recover_studio_member(reset, prefix, callers, "arm64")
+
+    def test_sse_stack_local_zero_does_not_clobber_manager_root(self):
+        reset, prefix, callers = self.fixture()
+        prefix.insert(1, ins("xorps", reg("xmm0", 16), reg("xmm0", 16), writes=("xmm0",)))
+        self.assertEqual(72, recover_studio_member(reset, prefix, callers, "windows")["offset"])
+
+
+class PortalStudioFinderTests(unittest.IsolatedAsyncioTestCase):
+    async def test_writes_verified_member_and_requests_fixed_target_signature(self):
+        finder = importlib.import_module(
+            "ida_preprocessor_scripts.find-ClientPortalManager_m_bStudioRenderPlayerPending"
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "ClientPortalManager_ResetAll.windows.yaml").write_text(
+                "func_name: ClientPortalManager_ResetAll\nfunc_va: '0x1000'\n", encoding="utf-8"
+            )
+            output = root / f"{finder.TARGET}.windows.yaml"
+            located = {"offset": 72, "size": 1, "instruction": 0x1010, "accessor": 0x2000, "read": 0x2010}
+            with (
+                patch.object(finder, "run_layout_walk", AsyncMock(return_value=located)),
+                patch.object(
+                    finder, "run_signature", AsyncMock(return_value={"patch_sig": "C6 46 48 00", "patch_sig_disp": 0})
+                ) as signature,
+            ):
+                self.assertTrue(
+                    await finder.preprocess_skill(object(), "test", [str(output)], {}, root, "windows", 0x1000)
+                )
+            signature.assert_awaited_once_with(unittest.mock.ANY, 0x1010, fixed_target=True)
+            payload = yaml.safe_load(output.read_text(encoding="utf-8"))
+            self.assertEqual("ClientPortalManager", payload["struct_name"])
+            self.assertEqual("m_bStudioRenderPlayerPending", payload["member_name"])
+            self.assertEqual(("0x48", 1, "C6 46 48 00"), (payload["offset"], payload["size"], payload["offset_sig"]))
+
+    async def test_missing_predecessor_or_nonunique_signature_writes_nothing(self):
+        finder = importlib.import_module(
+            "ida_preprocessor_scripts.find-ClientPortalManager_m_bStudioRenderPlayerPending"
+        )
+        for mode in ("missing", "wrong_identity", "invalid_address", "trace_failure", "nonunique"):
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                if mode != "missing":
+                    (root / "ClientPortalManager_ResetAll.windows.yaml").write_text(
+                        f"func_name: {'other' if mode == 'wrong_identity' else 'ClientPortalManager_ResetAll'}\n"
+                        f"func_va: {'invalid' if mode == 'invalid_address' else '0x1000'}\n",
+                        encoding="utf-8",
+                    )
+                output = root / f"{finder.TARGET}.windows.yaml"
+                with (
+                    patch.object(
+                        finder,
+                        "run_layout_walk",
+                        AsyncMock(
+                            return_value={"offset": 72, "size": 1, "instruction": 0x1010},
+                            side_effect=ValueError("ambiguous") if mode == "trace_failure" else None,
+                        ),
+                    ),
+                    patch.object(finder, "run_signature", AsyncMock(return_value=None)),
+                ):
+                    self.assertFalse(
+                        await finder.preprocess_skill(object(), "test", [str(output)], {}, root, "windows", 0)
+                    )
+                self.assertFalse(output.exists())
