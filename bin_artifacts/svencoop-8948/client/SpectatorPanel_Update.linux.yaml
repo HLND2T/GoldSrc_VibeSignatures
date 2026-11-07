@@ -1,0 +1,6 @@
+func_name: SpectatorPanel_Update
+func_va: '0x17eecc'
+func_rva: '0x17eecc'
+func_size: '0x35e'
+func_sig: 55 57 56 53 81 EC FC 00 00 00 E8 ?? ?? ?? ?? 81 C3 ?? ?? ?? ?? 8B B4 24 10 01 00 00 8B AB BC FC FF FF 8B 45 00 8B
+  90 80 01 00 00
