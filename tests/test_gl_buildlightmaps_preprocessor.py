@@ -231,9 +231,14 @@ class VerifiedBodyTests(unittest.IsolatedAsyncioTestCase):
         output = self.write_artifact(func_va="0x1A2380")
         seen = []
         session = guard_session(idb, body_ea=0x2000, thunk_ea=0x2000, seen=seen)
-        self.assertTrue(await FINDER._verified_body(session, output))
-        thunk_code, guard_code = seen
-        self.assertIn("current_ea = 1713024", thunk_code)  # the stub the artifact names
+        with patch.object(
+            FINDER,
+            "_resolve_jmp_thunk_target_via_mcp",
+            AsyncMock(wraps=FINDER._resolve_jmp_thunk_target_via_mcp),
+        ) as resolve:
+            self.assertTrue(await FINDER._verified_body(session, output))
+        self.assertEqual(0x1A2380, resolve.await_args.args[1])
+        _, guard_code = seen
         self.assertIn("FUNC_EA = 8192", guard_code)  # the body that was guarded
 
     async def test_transport_failure_fails_closed(self):

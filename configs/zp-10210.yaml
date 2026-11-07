@@ -18,6 +18,29 @@ modules:
       - name: find-client-private-predecessors
         expected_output:
           - CL_IsThirdPerson.{platform}.yaml
+          - HUD_GetStudioModelInterface.{platform}.yaml
+      - name: find-client-studio-interface
+        expected_input:
+          - HUD_GetStudioModelInterface.{platform}.yaml
+        expected_output:
+          - GameStudioRenderer_vtable.{platform}.yaml
+          - GameStudioRenderer_StudioDrawModel.{platform}.yaml
+      - name: find-GameStudioRenderer_StudioDrawModel-decompiles
+        expected_input:
+          - GameStudioRenderer_StudioDrawModel.{platform}.yaml
+          - GameStudioRenderer_vtable.{platform}.yaml
+        expected_output:
+          - GameStudioRenderer_StudioDrawPlayer.{platform}.yaml
+          - GameStudioRenderer_StudioSetupBones.{platform}.yaml
+          - GameStudioRenderer_StudioSaveBones.{platform}.yaml
+          - GameStudioRenderer_StudioMergeBones.{platform}.yaml
+          - GameStudioRenderer_StudioRenderModel.{platform}.yaml
+      - name: find-GameStudioRenderer_StudioRenderModel-decompiles
+        expected_input:
+          - GameStudioRenderer_StudioRenderModel.{platform}.yaml
+          - GameStudioRenderer_vtable.{platform}.yaml
+        expected_output:
+          - GameStudioRenderer_StudioRenderFinal.{platform}.yaml
     symbols:
       - name: g_iUser1
         category: gv
@@ -25,3 +48,21 @@ modules:
         category: gv
       - name: CL_IsThirdPerson
         category: func
+      - name: HUD_GetStudioModelInterface
+        category: func
+      - name: GameStudioRenderer_vtable
+        category: vtable
+      - name: GameStudioRenderer_StudioDrawModel
+        category: vfunc
+      - name: GameStudioRenderer_StudioDrawPlayer
+        category: vfunc
+      - name: GameStudioRenderer_StudioSetupBones
+        category: vfunc
+      - name: GameStudioRenderer_StudioSaveBones
+        category: vfunc
+      - name: GameStudioRenderer_StudioMergeBones
+        category: vfunc
+      - name: GameStudioRenderer_StudioRenderModel
+        category: vfunc
+      - name: GameStudioRenderer_StudioRenderFinal
+        category: vfunc

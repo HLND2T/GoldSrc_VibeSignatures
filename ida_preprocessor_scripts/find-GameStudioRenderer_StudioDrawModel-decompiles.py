@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Recover renderer virtuals from the verified GameStudioRenderer_StudioDrawModel body."""
 
-from ida_analyze_util import preprocess_common_skill
+from ida_analyze_util import _output_for_symbol, preprocess_common_skill
+from llm_spec import select_llm_specs
 
 TARGET_FUNCTION_NAMES = [
     "GameStudioRenderer_StudioDrawPlayer",
@@ -99,6 +100,9 @@ async def preprocess_skill(
     debug=False,
 ):
     _ = skill_name, old_yaml_map
+    targets = [name for name in TARGET_FUNCTION_NAMES if _output_for_symbol(expected_outputs, name)]
+    if not targets:
+        return False
     return await preprocess_common_skill(
         session=session,
         expected_outputs=expected_outputs,
@@ -106,11 +110,11 @@ async def preprocess_skill(
         new_binary_dir=new_binary_dir,
         platform=platform,
         image_base=image_base,
-        func_names=TARGET_FUNCTION_NAMES,
-        func_xrefs=FUNC_XREFS,
-        func_vtable_relations=[(name, "GameStudioRenderer") for name in TARGET_FUNCTION_NAMES],
-        llm_decompile_specs=LLM_DECOMPILE,
+        func_names=targets,
+        func_xrefs=[spec for spec in FUNC_XREFS if spec["func_name"] in targets],
+        func_vtable_relations=[(name, "GameStudioRenderer") for name in targets],
+        llm_decompile_specs=select_llm_specs(LLM_DECOMPILE, symbols=targets),
         llm_config=llm_config,
-        generate_yaml_desired_fields=GENERATE_YAML_DESIRED_FIELDS,
+        generate_yaml_desired_fields=[spec for spec in GENERATE_YAML_DESIRED_FIELDS if spec[0] in targets],
         debug=debug,
     )

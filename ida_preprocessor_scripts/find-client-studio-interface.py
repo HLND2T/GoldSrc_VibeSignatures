@@ -7,12 +7,13 @@ virtual calls were devirtualized. No compiler-specific vtable index is assumed.
 """
 
 from pathlib import Path
-from ida_elf import ELF_RESOLVER_PY
+from ida_jmp_thunk import JMP_THUNK_RESOLVER_PY
 
 from ida_analyze_util import (
     _inspect_function_via_mcp,
     _load_yaml_mapping,
     _output_for_symbol,
+    _inspect_vtable_function_via_mcp,
     gv_resolution_fields_via_mcp,
     parse_mcp_result,
     write_func_yaml,
@@ -21,7 +22,7 @@ from ida_analyze_util import (
 )
 
 LOCATE = (
-    ELF_RESOLVER_PY
+    JMP_THUNK_RESOLVER_PY
     + r'''
 import ida_bytes, ida_funcs, ida_gdl, ida_segment, ida_ua, idaapi, idautils, idc, json
 export_ea = EXPORT_EA
@@ -68,8 +69,25 @@ def expand(values):
             found.add(int(indirect))
     return found
 
+def implementation(ea):
+    visited = set()
+    for _ in range(8):
+        if ea in visited:
+            return None
+        visited.add(ea)
+        if not function(ea):
+            return None
+        target = resolve_jmp_thunk(ea, allow_undefined_target=True, strict=True)
+        if target is None:
+            return None
+        if target == ea:
+            return ea
+        ea = target
+    return None
+
 def body(ea):
-    return list(idautils.FuncItems(int(ea)))
+    target = implementation(ea)
+    return [] if target is None else list(idautils.FuncItems(target))
 
 def table_entries(ea):
     entries = []
@@ -112,7 +130,9 @@ def dispatch(ea):
             continue
         op = insn.ops[0]
         if op.type == ida_ua.o_near and function(resolve_elf_plt(op.addr)) and resolve_elf_plt(op.addr) != ea:
-            target = resolve_elf_plt(op.addr)
+            target = implementation(resolve_elf_plt(op.addr))
+            if target is None:
+                continue
             items = body(target)
             # GCC's PC thunk only materializes the return address, not dispatch.
             if len(items) == 2 and idc.print_insn_mnem(items[0]) == 'mov' and idc.print_operand(items[0], 1) == '[esp]' and idc.print_insn_mnem(items[1]) == 'retn':
@@ -291,7 +311,9 @@ def main():
     if len(candidates) != 1:
         raise ValueError('returned studio interface table is not unique: ' + repr(candidates))
     studio = candidates.pop()
-    thunks = [ida_bytes.get_dword(studio + 4), ida_bytes.get_dword(studio + 8)]
+    thunks = [implementation(ida_bytes.get_dword(studio + 4)), implementation(ida_bytes.get_dword(studio + 8))]
+    if None in thunks:
+        raise ValueError('studio interface contains an invalid jump chain')
     dispatches = [dispatch(ea) for ea in thunks]
     shared_objects = set(x[0] for x in dispatches[0][2]) & set(x[0] for x in dispatches[1][2])
     shared_objects = {obj for obj in shared_objects if ida_segment.get_segm_name(ida_segment.getseg(obj)) not in ('.got', '.got.plt')}
@@ -328,7 +350,7 @@ def main():
             entries = table_entries(table)
             evidence.append((hex(obj), hex(table), len(entries), sorted(dispatches[0][0]), sorted(dispatches[1][0]), sorted(dispatches[1][1])))
             model_direct, model_slots, _ = dispatches[0]
-            matching = {i for i, target in enumerate(entries) if target in model_direct} | {i for i in model_slots if i < len(entries)}
+            matching = {i for i, target in enumerate(entries) if implementation(target) in model_direct} | {i for i in model_slots if i < len(entries)}
             if len(matching) != 1:
                 continue
             model_index = matching.pop()
@@ -387,10 +409,10 @@ async def preprocess_skill(
     names = ["GameStudioRenderer_StudioDrawModel"]
     payloads = {}
     for name, index in zip(names, located["indices"]):
-        function = await _inspect_function_via_mcp(session, located["entries"][index], image_base, name)
+        function = await _inspect_vtable_function_via_mcp(session, located["entries"][index], image_base, name)
         model_allow_across = not function or not function.get("func_sig")
         if model_allow_across:
-            function = await _inspect_function_via_mcp(
+            function = await _inspect_vtable_function_via_mcp(
                 session,
                 located["entries"][index],
                 image_base,
@@ -408,6 +430,35 @@ async def preprocess_skill(
         )
         if model_allow_across:
             payloads[name]["vfunc_sig_allow_across_function_boundary"] = True
+    outputs = {
+        name: _output_for_symbol(expected_outputs, name)
+        for name in [*names, "g_pGameStudioRenderer", "GameStudioRenderer_vtable"]
+    }
+    if not outputs[names[0]] or not outputs["GameStudioRenderer_vtable"]:
+        return False
+    gv = None
+    if outputs["g_pGameStudioRenderer"]:
+        gv = await renderer_global_payload(session, located, image_base, platform)
+        if gv is None:
+            return False
+    table = {
+        "vtable_class": "GameStudioRenderer",
+        "vtable_symbol": "GameStudioRenderer",
+        "vtable_va": hex(located["table"]),
+        "vtable_rva": hex(located["table"] - image_base),
+        "vtable_size": hex(len(located["entries"]) * 4),
+        "vtable_numvfunc": len(located["entries"]),
+        "vtable_entries": {i: hex(ea) for i, ea in enumerate(located["entries"])},
+    }
+    for name, payload in payloads.items():
+        write_func_yaml(outputs[name], payload)
+    if gv is not None:
+        write_gv_yaml(outputs["g_pGameStudioRenderer"], gv)
+    write_vtable_yaml(outputs["GameStudioRenderer_vtable"], table)
+    return True
+
+
+async def renderer_global_payload(session, located, image_base, platform):
     thunk = await _inspect_function_via_mcp(session, located["thunks"][1], image_base, "ClientStudioDrawPlayer")
     allow_across = not thunk or not thunk.get("func_sig")
     if allow_across:
@@ -415,7 +466,7 @@ async def preprocess_skill(
             session, located["thunks"][1], image_base, "ClientStudioDrawPlayer", allow_across_function_boundary=True
         )
     if not thunk or not thunk.get("func_sig"):
-        return False
+        return None
     gv = {
         "gv_name": "g_pGameStudioRenderer",
         "gv_va": hex(located["object"]),
@@ -432,25 +483,6 @@ async def preprocess_skill(
         session, located["object_insn"], located["object_disp"], located["object"], image_base, platform
     )
     if metadata is None:
-        return False
+        return None
     gv.update(metadata)
-    table = {
-        "vtable_class": "GameStudioRenderer",
-        "vtable_symbol": "GameStudioRenderer",
-        "vtable_va": hex(located["table"]),
-        "vtable_rva": hex(located["table"] - image_base),
-        "vtable_size": hex(len(located["entries"]) * 4),
-        "vtable_numvfunc": len(located["entries"]),
-        "vtable_entries": {i: hex(ea) for i, ea in enumerate(located["entries"])},
-    }
-    outputs = {
-        name: _output_for_symbol(expected_outputs, name)
-        for name in [*names, "g_pGameStudioRenderer", "GameStudioRenderer_vtable"]
-    }
-    if not all(outputs.values()):
-        return False
-    for name, payload in payloads.items():
-        write_func_yaml(outputs[name], payload)
-    write_gv_yaml(outputs["g_pGameStudioRenderer"], gv)
-    write_vtable_yaml(outputs["GameStudioRenderer_vtable"], table)
-    return True
+    return gv

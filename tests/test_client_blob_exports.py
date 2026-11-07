@@ -81,6 +81,80 @@ class ClientPrivatePredecessorTests(unittest.IsolatedAsyncioTestCase):
                     resolve.assert_not_awaited()
 
 
+class RendererOutputSelectionTests(unittest.IsolatedAsyncioTestCase):
+    async def test_decompile_group_selects_only_requested_outputs_and_specs(self):
+        script = runpy.run_path(
+            str(
+                Path(__file__).resolve().parents[1]
+                / "ida_preprocessor_scripts/find-GameStudioRenderer_StudioDrawModel-decompiles.py"
+            )
+        )
+        finder = script["preprocess_skill"]
+        all_targets = script["TARGET_FUNCTION_NAMES"]
+        for targets in (all_targets[:1], all_targets[::2], all_targets):
+            with self.subTest(targets=targets):
+                common = AsyncMock(return_value=True)
+                with patch.dict(finder.__globals__, {"preprocess_common_skill": common}):
+                    self.assertTrue(
+                        await finder(
+                            None, "test", [f"{name}.windows.yaml" for name in targets], None, ".", "windows", 0
+                        )
+                    )
+                kwargs = common.await_args.kwargs
+                self.assertEqual(targets, kwargs["func_names"])
+                self.assertEqual(set(targets), {spec["symbol_name"] for spec in kwargs["llm_decompile_specs"]})
+                self.assertEqual(set(targets), {name for name, fields in kwargs["generate_yaml_desired_fields"]})
+                self.assertTrue(all(spec["func_name"] in targets for spec in kwargs["func_xrefs"]))
+
+    async def test_interface_supports_optional_global_output_and_preserves_raw_slots(self):
+        finder = runpy.run_path(
+            str(Path(__file__).resolve().parents[1] / "ida_preprocessor_scripts/find-client-studio-interface.py")
+        )["preprocess_skill"]
+        located = dict(
+            pointer_size=4,
+            indices=[1],
+            entries=[0x1000, 0x2000],
+            table=0x5000,
+            object=0x6000,
+            thunks=[0x3000, 0x4000],
+            object_insn=0x4010,
+            object_insn_size=6,
+            object_disp=2,
+        )
+        function = dict(
+            func_name="GameStudioRenderer_StudioDrawModel",
+            func_va="0x2100",
+            func_rva="0x2100",
+            func_size="0x40",
+            func_sig="55 8B EC",
+        )
+        for with_global in (False, True):
+            with self.subTest(with_global=with_global):
+                session = SimpleNamespace(call_tool=AsyncMock(return_value=located))
+                writes = {name: Mock() for name in ("write_func_yaml", "write_gv_yaml", "write_vtable_yaml")}
+                metadata = AsyncMock(return_value={})
+                outputs = ["GameStudioRenderer_StudioDrawModel.windows.yaml", "GameStudioRenderer_vtable.windows.yaml"]
+                if with_global:
+                    outputs.append("g_pGameStudioRenderer.windows.yaml")
+                with patch.dict(
+                    finder.__globals__,
+                    {
+                        "_load_yaml_mapping": Mock(return_value={"func_va": "0x7000"}),
+                        "_inspect_vtable_function_via_mcp": AsyncMock(return_value=function),
+                        "_inspect_function_via_mcp": AsyncMock(return_value={**function, "func_va": "0x4000"}),
+                        "gv_resolution_fields_via_mcp": metadata,
+                        **writes,
+                    },
+                ):
+                    self.assertTrue(await finder(session, "test", outputs, None, ".", "windows", 0))
+                self.assertEqual(
+                    {0: "0x1000", 1: "0x2000"}, writes["write_vtable_yaml"].call_args.args[1]["vtable_entries"]
+                )
+                self.assertEqual("0x2100", writes["write_func_yaml"].call_args.args[1]["func_va"])
+                self.assertEqual(int(with_global), metadata.await_count)
+                self.assertEqual(int(with_global), writes["write_gv_yaml"].call_count)
+
+
 def reg(name):
     return {"kind": "reg", "reg": name, "size": 4}
 

@@ -15,6 +15,7 @@ import yaml
 
 from analysis_config import FAMILY_REFERENCE_GAMEVERS, validated_tag
 from ida_elf import ELF_RESOLVER_PY
+from ida_jmp_thunk import JMP_THUNK_RESOLVER_PY
 from ida_mcp_keepalive import keepalive_worker_during
 from ida_llm_decompile import (
     _build_llm_decompile_request_cache_key,
@@ -1843,11 +1844,15 @@ async def preprocess_func_xrefs_via_mcp(
         vtable = _load_yaml_mapping(vtable_path)
         if not vtable:
             return None
+        normalized_vtable = await _resolved_vtable_data_via_mcp(session, vtable)
+        if normalized_vtable is None:
+            return None
         for value in (vtable.get("vtable_entries") or {}).values():
             try:
                 spec["vtable_entries"].append(_parse_int(value, "vtable entry"))
             except SymbolArtifactError:
                 return None
+        spec["vtable_entries"].extend(normalized_vtable["vtable_entries"].values())
         if not spec["vtable_entries"]:
             return None
     positive = (
@@ -2708,6 +2713,62 @@ def _enrich_vfunc_from_vtable_data(candidate, vtable_name, vtable_data):
     return result
 
 
+async def _resolved_vtable_data_via_mcp(session, vtable_data):
+    """Normalize only proven jump chains; the on-disk table keeps its raw entries."""
+    if not isinstance(vtable_data, Mapping):
+        return None
+    try:
+        entries = {
+            int(index): _parse_int(value, "vtable entry") for index, value in vtable_data["vtable_entries"].items()
+        }
+        code = JMP_THUNK_RESOLVER_PY + "\nimport json\nglobals().update(locals())\n"
+        code += f"entries = {entries!r}\n"
+        code += "result = json.dumps({index: resolve_jmp_thunk(ea, strict=True) for index, ea in entries.items()})"
+        result = parse_mcp_result(await session.call_tool("py_eval", {"code": code}))
+        if (
+            not isinstance(result, Mapping)
+            or len(result) != len(entries)
+            or {int(index) for index in result} != set(entries)
+        ):
+            return None
+        normalized = {
+            int(index): _parse_int(value, "resolved vtable entry")
+            for index, value in result.items()
+            if value is not None
+        }
+        return {**vtable_data, "vtable_entries": normalized}
+    except Exception:  # noqa: BLE001 - malformed payloads and MCP failures must fail closed.
+        return None
+
+
+async def _inspect_vtable_function_via_mcp(session, func_va, image_base, func_name, **kwargs):
+    """Inspect the implementation of a slot, recovering exact direct-jump targets."""
+    visited = set()
+    target = _parse_int(func_va, "vtable entry")
+    for _ in range(8):
+        if target in visited:
+            return None
+        visited.add(target)
+        resolved = await _resolve_jmp_thunk_target_via_mcp(session, target, allow_undefined_target=True, strict=True)
+        if resolved is None:
+            return None
+        function = await _inspect_function_via_mcp(session, resolved, image_base, func_name, **kwargs)
+        if function is None:
+            return None
+        verified = await _resolve_jmp_thunk_target_via_mcp(session, resolved, strict=True)
+        if verified == resolved:
+            return function
+        if verified is None:
+            return None
+        target = verified
+    return None
+
+
+async def _enrich_vfunc_via_mcp(session, candidate, vtable_name, vtable_data):
+    normalized = await _resolved_vtable_data_via_mcp(session, vtable_data)
+    return _enrich_vfunc_from_vtable_data(candidate, vtable_name, normalized)
+
+
 def _resolve_artifact_stem_path(new_binary_dir, stem, platform):
     base = Path(new_binary_dir).resolve()
     game_root = base.parent
@@ -3524,71 +3585,27 @@ async def _inspect_llm_instruction(session, ea):
 
 
 _RESOLVE_JMP_THUNK_PY_EVAL_TEMPLATE = (
-    ELF_RESOLVER_PY
+    JMP_THUNK_RESOLVER_PY
     + r"""
-import ida_funcs, ida_ua, ida_bytes, ida_ida, ida_idaapi, idc, json
-current_ea = EA_PLACEHOLDER
-resolved_ea = current_ea
-visited = set()
-for _ in range(8):
-    if current_ea in visited:
-        break
-    visited.add(current_ea)
-    func = ida_funcs.get_func(current_ea)
-    if func is None or int(func.start_ea) != current_ea:
-        break
-    insn = ida_ua.insn_t()
-    if ida_ua.decode_insn(insn, current_ea) <= 0:
-        break
-    if (idc.print_insn_mnem(current_ea) or '').strip().lower() != 'jmp':
-        break
-    if insn.ops[0].type == ida_ua.o_near:
-        target_ea = int(insn.ops[0].addr)
-    elif insn.ops[0].type in (ida_ua.o_mem, ida_ua.o_displ) and not ida_ida.inf_is_64bit():
-        # IDA's loader resolves locally defined ELF PLT/GOT relocations. Use
-        # that evidence rather than guessing a PIC register base or a name.
-        target_ea, pointer_ea = ida_funcs.calc_thunk_func_target(func)
-        if target_ea == ida_idaapi.BADADDR or pointer_ea == ida_idaapi.BADADDR:
-            target_ea, pointer_ea = resolve_elf_got_thunk(current_ea)
-            if target_ea == ida_idaapi.BADADDR or pointer_ea == ida_idaapi.BADADDR:
-                break
-        pointer_loaded = True
-        for offset in range(4):
-            if not ida_bytes.is_loaded(pointer_ea + offset):
-                pointer_loaded = False
-                break
-        if not pointer_loaded:
-            break
-        if int(ida_bytes.get_dword(pointer_ea)) != int(target_ea):
-            break
-        target_ea = int(target_ea)
-    else:
-        break
-    target_func = ida_funcs.get_func(target_ea)
-    if (target_func is None and ALLOW_UNDEFINED_TARGET_PLACEHOLDER
-            and insn.ops[0].type == ida_ua.o_near):
-        import ida_segment
-        target_segment = ida_segment.getseg(target_ea)
-        if (target_segment is not None and target_segment.perm & ida_segment.SEGPERM_EXEC
-                and ida_bytes.is_loaded(target_ea)):
-            # The caller must recover and verify this exact function entry.
-            resolved_ea = target_ea
-        break
-    if target_func is None or int(target_func.start_ea) != target_ea:
-        break
-    resolved_ea = target_ea
-    current_ea = target_ea
-result = json.dumps({'func_va': hex(resolved_ea)})
+import json
+globals().update(locals())
+resolved_ea = resolve_jmp_thunk(EA_PLACEHOLDER, ALLOW_UNDEFINED_TARGET_PLACEHOLDER, STRICT_PLACEHOLDER)
+result = json.dumps({'func_va': None if resolved_ea is None else hex(resolved_ea)})
 """
 )
 
+_RESOLVE_JMP_THUNK_STRICT_PY_EVAL_TEMPLATE = _RESOLVE_JMP_THUNK_PY_EVAL_TEMPLATE.replace("STRICT_PLACEHOLDER", "True")
+_RESOLVE_JMP_THUNK_PY_EVAL_TEMPLATE = _RESOLVE_JMP_THUNK_PY_EVAL_TEMPLATE.replace("STRICT_PLACEHOLDER", "False")
 _RESOLVE_JMP_THUNK_PY_EVAL = _RESOLVE_JMP_THUNK_PY_EVAL_TEMPLATE.replace("ALLOW_UNDEFINED_TARGET_PLACEHOLDER", "False")
 
 
-async def _resolve_jmp_thunk_target_via_mcp(session, func_va, debug=False, *, allow_undefined_target=False):
+async def _resolve_jmp_thunk_target_via_mcp(
+    session, func_va, debug=False, *, allow_undefined_target=False, strict=False
+):
     try:
         func_va_int = _parse_int(func_va, "func_va")
-        code = _RESOLVE_JMP_THUNK_PY_EVAL_TEMPLATE.replace("EA_PLACEHOLDER", str(func_va_int)).replace(
+        template = _RESOLVE_JMP_THUNK_STRICT_PY_EVAL_TEMPLATE if strict else _RESOLVE_JMP_THUNK_PY_EVAL_TEMPLATE
+        code = template.replace("EA_PLACEHOLDER", str(func_va_int)).replace(
             "ALLOW_UNDEFINED_TARGET_PLACEHOLDER", repr(bool(allow_undefined_target))
         )
         payload = parse_mcp_result(await session.call_tool("py_eval", {"code": code}))
@@ -3919,11 +3936,11 @@ async def _preprocess_llm_target(
                     raw_target = entries.get(offset // 4, entries.get(str(offset // 4)))
                     if raw_target is None:
                         continue
-                    function = await _inspect_function_via_mcp(
+                    function = await _inspect_vtable_function_via_mcp(
                         session, _parse_int(raw_target, "vtable entry"), image_base, symbol_name
                     )
                     if function is None and "vfunc_sig_allow_across_function_boundary" in desired_fields:
-                        function = await _inspect_function_via_mcp(
+                        function = await _inspect_vtable_function_via_mcp(
                             session,
                             _parse_int(raw_target, "vtable entry"),
                             image_base,
@@ -3933,6 +3950,9 @@ async def _preprocess_llm_target(
                         if function is not None:
                             function["vfunc_sig_allow_across_function_boundary"] = True
                     if not function:
+                        continue
+                    enriched = await _enrich_vfunc_via_mcp(session, function, vtable_name, vtable)
+                    if not enriched or enriched["vfunc_index"] != offset // 4:
                         continue
                     function.update(
                         {
@@ -3948,11 +3968,12 @@ async def _preprocess_llm_target(
                 targets = detail.get("operand_targets")
                 if not isinstance(targets, list) or len(set(targets)) != 1:
                     continue
-                function = await _inspect_function_via_mcp(
+                function = await _inspect_vtable_function_via_mcp(
                     session, _parse_int(targets[0], "function target"), image_base, symbol_name
                 )
                 if function:
-                    enriched = _enrich_vfunc_from_vtable(function, vtable_name, new_binary_dir, platform)
+                    vtable = _load_yaml_mapping(_vtable_yaml_path(new_binary_dir, vtable_name, platform))
+                    enriched = await _enrich_vfunc_via_mcp(session, function, vtable_name, vtable)
                     if enriched:
                         enriched["vfunc_sig"] = enriched.get("func_sig")
                         return enriched
@@ -4316,16 +4337,34 @@ async def preprocess_common_skill(
                 if candidate is not None and generation_options.get("func_sig_allow_across_function_boundary"):
                     candidate["func_sig_allow_across_function_boundary"] = True
         if candidate is not None and func_name in vtable_by_name:
+            candidate_va = _parse_int(candidate["func_va"], "func_va")
+            resolved_va = await _resolve_jmp_thunk_target_via_mcp(
+                session, candidate_va, allow_undefined_target=True, strict=True
+            )
+            if resolved_va is None:
+                return None
+            if resolved_va != candidate_va:
+                candidate = await _inspect_vtable_function_via_mcp(
+                    session,
+                    candidate_va,
+                    image_base,
+                    func_name,
+                    allow_across_function_boundary=generation_options.get(
+                        "vfunc_sig_allow_across_function_boundary", False
+                    ),
+                )
+                if candidate is None:
+                    return None
             candidate = dict(candidate)
             vtable_name = vtable_by_name[func_name]
             if "vfunc_offset" not in candidate or "vfunc_index" not in candidate:
                 unenriched_candidate = candidate
                 try:
-                    candidate = _enrich_vfunc_from_vtable(
+                    candidate = await _enrich_vfunc_via_mcp(
+                        session,
                         unenriched_candidate,
                         vtable_name,
-                        new_binary_dir,
-                        platform,
+                        _load_yaml_mapping(_vtable_yaml_path(new_binary_dir, vtable_name, platform)),
                     )
                 except (KeyError, TypeError, ValueError, SymbolArtifactError):
                     candidate = None
@@ -4341,7 +4380,8 @@ async def preprocess_common_skill(
                         else None,
                     )
                     try:
-                        candidate = _enrich_vfunc_from_vtable_data(
+                        candidate = await _enrich_vfunc_via_mcp(
+                            session,
                             unenriched_candidate,
                             vtable_name,
                             live_vtable,
