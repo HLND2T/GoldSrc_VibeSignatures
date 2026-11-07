@@ -3523,7 +3523,7 @@ async def _inspect_llm_instruction(session, ea):
     return dict(payload)
 
 
-_RESOLVE_JMP_THUNK_PY_EVAL = (
+_RESOLVE_JMP_THUNK_PY_EVAL_TEMPLATE = (
     ELF_RESOLVER_PY
     + r"""
 import ida_funcs, ida_ua, ida_bytes, ida_ida, ida_idaapi, idc, json
@@ -3565,6 +3565,15 @@ for _ in range(8):
     else:
         break
     target_func = ida_funcs.get_func(target_ea)
+    if (target_func is None and ALLOW_UNDEFINED_TARGET_PLACEHOLDER
+            and insn.ops[0].type == ida_ua.o_near):
+        import ida_segment
+        target_segment = ida_segment.getseg(target_ea)
+        if (target_segment is not None and target_segment.perm & ida_segment.SEGPERM_EXEC
+                and ida_bytes.is_loaded(target_ea)):
+            # The caller must recover and verify this exact function entry.
+            resolved_ea = target_ea
+        break
     if target_func is None or int(target_func.start_ea) != target_ea:
         break
     resolved_ea = target_ea
@@ -3573,11 +3582,15 @@ result = json.dumps({'func_va': hex(resolved_ea)})
 """
 )
 
+_RESOLVE_JMP_THUNK_PY_EVAL = _RESOLVE_JMP_THUNK_PY_EVAL_TEMPLATE.replace("ALLOW_UNDEFINED_TARGET_PLACEHOLDER", "False")
 
-async def _resolve_jmp_thunk_target_via_mcp(session, func_va, debug=False):
+
+async def _resolve_jmp_thunk_target_via_mcp(session, func_va, debug=False, *, allow_undefined_target=False):
     try:
         func_va_int = _parse_int(func_va, "func_va")
-        code = _RESOLVE_JMP_THUNK_PY_EVAL.replace("EA_PLACEHOLDER", str(func_va_int))
+        code = _RESOLVE_JMP_THUNK_PY_EVAL_TEMPLATE.replace("EA_PLACEHOLDER", str(func_va_int)).replace(
+            "ALLOW_UNDEFINED_TARGET_PLACEHOLDER", repr(bool(allow_undefined_target))
+        )
         payload = parse_mcp_result(await session.call_tool("py_eval", {"code": code}))
         resolved_va = _parse_int(payload.get("func_va"), "func_va") if isinstance(payload, Mapping) else None
     except Exception:  # noqa: BLE001 - MCP tool failures and payload parsing must fail closed.

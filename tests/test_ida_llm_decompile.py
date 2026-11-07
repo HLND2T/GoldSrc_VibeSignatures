@@ -28,8 +28,18 @@ found_struct_offset: []
 
 
 class JumpThunkResolutionTests(unittest.TestCase):
-    def resolve(self, *, indirect=False, target=0x2000, pointer=0x3000, stored=0x2000, entry=True):
-        from ida_analyze_util import _RESOLVE_JMP_THUNK_PY_EVAL
+    def resolve(
+        self,
+        *,
+        indirect=False,
+        target=0x2000,
+        pointer=0x3000,
+        stored=0x2000,
+        entry=True,
+        allow_undefined=False,
+        executable=True,
+    ):
+        from ida_analyze_util import _RESOLVE_JMP_THUNK_PY_EVAL_TEMPLATE
 
         functions = {0x1000: SimpleNamespace(start_ea=0x1000)}
         if entry:
@@ -48,15 +58,22 @@ class JumpThunkResolutionTests(unittest.TestCase):
                 o_mem=3,
             ),
             "idc": SimpleNamespace(print_insn_mnem=lambda ea: "jmp" if ea == 0x1000 else "push"),
-            "ida_bytes": SimpleNamespace(is_loaded=lambda ea: 0x3000 <= ea < 0x3004, get_dword=lambda ea: stored),
+            "ida_bytes": SimpleNamespace(
+                is_loaded=lambda ea: 0x3000 <= ea < 0x3004 or ea == target, get_dword=lambda ea: stored
+            ),
             "ida_ida": SimpleNamespace(inf_is_64bit=lambda: False),
             "ida_idaapi": SimpleNamespace(BADADDR=0xFFFFFFFFFFFFFFFF),
             "idaapi": SimpleNamespace(BADADDR=0xFFFFFFFFFFFFFFFF),
-            "ida_segment": SimpleNamespace(getseg=lambda ea: None),
+            "ida_segment": SimpleNamespace(
+                getseg=lambda ea: SimpleNamespace(perm=4 if executable else 0) if ea == target else None, SEGPERM_EXEC=4
+            ),
         }
         namespace = {}
         with patch.dict("sys.modules", modules):
-            exec(_RESOLVE_JMP_THUNK_PY_EVAL.replace("EA_PLACEHOLDER", "4096"), {}, namespace)
+            code = _RESOLVE_JMP_THUNK_PY_EVAL_TEMPLATE.replace("EA_PLACEHOLDER", "4096").replace(
+                "ALLOW_UNDEFINED_TARGET_PLACEHOLDER", str(allow_undefined)
+            )
+            exec(code, {}, namespace)
         return int(json.loads(namespace["result"])["func_va"], 16)
 
     def test_direct_jump_still_resolves(self):
@@ -64,6 +81,12 @@ class JumpThunkResolutionTests(unittest.TestCase):
 
     def test_got_indirect_jump_resolves_to_defined_function(self):
         self.assertEqual(0x2000, self.resolve(indirect=True))
+
+    def test_undefined_direct_target_requires_explicit_opt_in_and_executable_memory(self):
+        self.assertEqual(0x1000, self.resolve(entry=False))
+        self.assertEqual(0x2000, self.resolve(entry=False, allow_undefined=True))
+        self.assertEqual(0x1000, self.resolve(entry=False, allow_undefined=True, executable=False))
+        self.assertEqual(0x1000, self.resolve(entry=False, allow_undefined=True, indirect=True))
 
     def test_indirect_jump_without_verified_pointer_stays_unresolved(self):
         for changes in ({"stored": 0x1006}, {"pointer": 0x4000}, {"entry": False}, {"target": 0xFFFFFFFFFFFFFFFF}):

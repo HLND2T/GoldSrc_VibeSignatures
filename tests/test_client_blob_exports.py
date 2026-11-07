@@ -1,10 +1,84 @@
+import runpy
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 from ida_preprocessor_scripts._client_blob_exports import locate_blob_client_entries, recover_client_export_table
+
+
+class ClientPrivatePredecessorTests(unittest.IsolatedAsyncioTestCase):
+    def load_finder(self):
+        return runpy.run_path(
+            str(Path(__file__).resolve().parents[1] / "ida_preprocessor_scripts/find-client-private-predecessors.py")
+        )["preprocess_skill"]
+
+    async def test_export_jump_thunk_is_inspected_at_its_implementation(self):
+        for target in (0x1000, 0x2000):
+            with self.subTest(target=target):
+                finder = self.load_finder()
+                session = SimpleNamespace(
+                    call_tool=AsyncMock(
+                        return_value={
+                            "pointer_size": 4,
+                            "entries": {"CL_IsThirdPerson": [0x1000]},
+                        }
+                    )
+                )
+                function = dict(
+                    func_name="CL_IsThirdPerson",
+                    func_va=hex(target),
+                    func_rva=hex(target),
+                    func_size="0x20",
+                    func_sig="AA BB",
+                )
+                resolve = AsyncMock(return_value=target)
+                inspect = AsyncMock(return_value=function)
+                write = Mock()
+                with patch.dict(
+                    finder.__globals__,
+                    {
+                        "_resolve_jmp_thunk_target_via_mcp": resolve,
+                        "_inspect_function_via_mcp": inspect,
+                        "write_func_yaml": write,
+                    },
+                ):
+                    result = await finder(session, "test", ["CL_IsThirdPerson.windows.yaml"], None, ".", "windows", 0)
+                self.assertTrue(result)
+                resolve.assert_awaited_once_with(session, 0x1000, debug=False, allow_undefined_target=True)
+                inspect.assert_awaited_once_with(session, target, 0, "CL_IsThirdPerson")
+                self.assertEqual(hex(target), write.call_args.args[1]["func_va"])
+
+    async def test_unresolved_or_ambiguous_export_does_not_write_artifacts(self):
+        for entries in ([0x1000], [0x1000, 0x2000]):
+            with self.subTest(entries=entries):
+                finder = self.load_finder()
+                session = SimpleNamespace(
+                    call_tool=AsyncMock(
+                        return_value={
+                            "pointer_size": 4,
+                            "entries": {"CL_IsThirdPerson": entries},
+                        }
+                    )
+                )
+                resolve = AsyncMock(return_value=None)
+                inspect = AsyncMock(return_value=None)
+                write = Mock()
+                with patch.dict(
+                    finder.__globals__,
+                    {
+                        "_resolve_jmp_thunk_target_via_mcp": resolve,
+                        "_inspect_function_via_mcp": inspect,
+                        "write_func_yaml": write,
+                    },
+                ):
+                    result = await finder(session, "test", ["CL_IsThirdPerson.windows.yaml"], None, ".", "windows", 0)
+                self.assertFalse(result)
+                inspect.assert_not_awaited()
+                write.assert_not_called()
+                if len(entries) > 1:
+                    resolve.assert_not_awaited()
 
 
 def reg(name):

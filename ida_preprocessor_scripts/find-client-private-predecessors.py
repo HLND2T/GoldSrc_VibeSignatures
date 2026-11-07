@@ -8,6 +8,7 @@ entries or a verified blob's public ABI initializer; validate signatures in this
 from ida_analyze_util import (
     _inspect_function_via_mcp,
     _output_for_symbol,
+    _resolve_jmp_thunk_target_via_mcp,
     parse_mcp_result,
     write_func_yaml,
 )
@@ -57,10 +58,15 @@ async def preprocess_skill(
             if debug:
                 print(f"  {name}: expected one exported function start, got {candidates}")
             return False
-        function = await _inspect_function_via_mcp(session, candidates[0], image_base, name)
+        target = await _resolve_jmp_thunk_target_via_mcp(
+            session, candidates[0], debug=debug, allow_undefined_target=True
+        )
+        if target is None:
+            return False
+        function = await _inspect_function_via_mcp(session, target, image_base, name)
         if not function or not function.get("func_sig"):
             if debug:
-                print(f"  {name}: cannot generate a unique function signature at {candidates[0]:#x}")
+                print(f"  {name}: cannot generate a unique function signature at {target:#x}")
             return False
         outputs[output] = {key: function[key] for key in ("func_name", "func_va", "func_rva", "func_size", "func_sig")}
     for output, payload in outputs.items():

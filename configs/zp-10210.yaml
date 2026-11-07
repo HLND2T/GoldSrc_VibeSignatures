@@ -8,5 +8,20 @@ modules:
     module_linux: client.so
     depot_windows: zp/cl_dlls/client.dll
     depot_linux: zp/cl_dlls/client.so
-    skills: []
-    symbols: []
+    skills:
+      - name: find-CL_IsThirdPerson-decompiles
+        expected_input:
+          - CL_IsThirdPerson.{platform}.yaml
+        expected_output:
+          - g_iUser1.{platform}.yaml
+          - g_iUser2.{platform}.yaml
+      - name: find-client-private-predecessors
+        expected_output:
+          - CL_IsThirdPerson.{platform}.yaml
+    symbols:
+      - name: g_iUser1
+        category: gv
+      - name: g_iUser2
+        category: gv
+      - name: CL_IsThirdPerson
+        category: func
