@@ -1,0 +1,12 @@
+modules:
+  - name: client
+    module_windows: client.dll
+    alias_windows:
+      - client_orig.dll
+      - client_original.dll
+      - client_org.dll
+    module_linux: client.so
+    depot_windows: zp/cl_dlls/client.dll
+    depot_linux: zp/cl_dlls/client.so
+    skills: []
+    symbols: []

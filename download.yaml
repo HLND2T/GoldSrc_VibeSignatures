@@ -102,3 +102,10 @@ downloads:
     appid: 223710
     manifests:
       "223711": "3465817078078599269" # DepotDownloader -app 223710 -depot 223711 -manifest 3465817078078599269 -all-platforms -dir depots/Cry-of-Fear-5936 [-username XXX] [-password XXX] [-remember-password]
+  - tag: "zp-10210"
+    name: ZP buildnum 10210
+    basepath: ZP-10210
+    appid: 3825360
+    manifests:
+      "3825362": "8110397981141499939" # Windows
+      "3825363": "6293995872411808219" # Linux
