@@ -3410,6 +3410,9 @@ modules:
           - CClient_SoundEngine_LoadSoundList.{platform}.yaml
         expected_output:
           - CClient_SoundEngine_m_iSentenceCount.{platform}.yaml
+      - name: find-SpectatorPanel_Update
+        expected_output:
+          - SpectatorPanel_Update.{platform}.yaml
     symbols:
       - name: ClientPortal_mode_offset
         category: scalar
@@ -3590,6 +3593,8 @@ modules:
         category: structmember
         struct: CClient_SoundEngine
         member: m_iSentenceCount
+      - name: SpectatorPanel_Update
+        category: func
   - name: vgui2
     module_windows: vgui2.dll
     module_linux: vgui2.so
