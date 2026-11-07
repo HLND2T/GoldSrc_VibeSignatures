@@ -1,0 +1,614 @@
+func_name: "GameStudioRenderer_StudioRenderModel"
+func_va: "0x25e900"
+disasm_code: |-
+  .text:0025E900                 ; ZP 10210 adds texture glow and weapon/team highlighting to the HLND2T source baseline. GCC speculatively devirtualizes StudioRenderFinal. The owning slot is at byte offset 0x60; preserve fallback calls and inlined hardware/software dispatch.
+  .text:0025E900                 push    ebp; ZP 10210 adds texture glow and weapon/team highlighting to the HLND2T source baseline. GCC speculatively devirtualizes StudioRenderFinal. The owning slot is at byte offset 0x60; preserve fallback calls and inlined hardware/software dispatch.
+  .text:0025E901                 push    edi
+  .text:0025E902                 xor     edi, edi
+  .text:0025E904                 push    esi
+  .text:0025E905                 push    ebx
+  .text:0025E906                 call    __x86_get_pc_thunk_bx
+  .text:0025E90B                 add     ebx, (offset _GLOBAL_OFFSET_TABLE_ - $)
+  .text:0025E911                 sub     esp, 2Ch
+  .text:0025E914                 call    ds:(IEngineStudio.SetChromeOrigin - 688000h)[ebx]
+  .text:0025E91A                 sub     esp, 0Ch
+  .text:0025E91D                 ; flags
+  .text:0025E91D                 push    0; flags
+  .text:0025E91F                 call    ds:(IEngineStudio.SetForceFaceFlags - 688000h)[ebx]
+  .text:0025E925                 mov     eax, [esp+4Ch+this]
+  .text:0025E929                 lea     ecx, (aEyeBmp - 688000h)[ebx]; "eye.bmp"
+  .text:0025E92F                 mov     ebp, [eax+40h]
+  .text:0025E932                 mov     eax, [ebp+0B4h]
+  .text:0025E938                 mov     [esp+4Ch+var_3C], eax
+  .text:0025E93C                 add     esp, 10h
+  .text:0025E93F                 mov     [esp+3Ch+s2], ecx
+  .text:0025E943                 lea     ecx, (aEyeGlowBmp - 688000h)[ebx]; "eye_glow.bmp"
+  .text:0025E949                 mov     [esp+3Ch+var_34], ecx
+  .text:0025E94D                 lea     ecx, (aEyeGlowBmp+4 - 688000h)[ebx]; "glow.bmp"
+  .text:0025E953                 mov     [esp+3Ch+var_30], ecx
+  .text:0025E957                 test    eax, eax
+  .text:0025E959                 jle     short loc_25E9BE
+  .text:0025E95B                 lea     esi, [esi+0]
+  .text:0025E95F                 nop
+  .text:0025E960                 lea     esi, [edi+edi*4]
+  .text:0025E963                 sub     esp, 8
+  .text:0025E966                 shl     esi, 4
+  .text:0025E969                 add     esi, [ebp+0B8h]
+  .text:0025E96F                 ; s2
+  .text:0025E96F                 push    [esp+44h+s2]; s2
+  .text:0025E973                 add     esi, ebp
+  .text:0025E975                 ; s1
+  .text:0025E975                 push    esi; s1
+  .text:0025E976                 call    _strcasecmp
+  .text:0025E97B                 add     esp, 10h
+  .text:0025E97E                 test    eax, eax
+  .text:0025E980                 jz      loc_25EB38
+  .text:0025E986                 sub     esp, 8
+  .text:0025E989                 ; s2
+  .text:0025E989                 push    [esp+44h+var_34]; s2
+  .text:0025E98D                 ; s1
+  .text:0025E98D                 push    esi; s1
+  .text:0025E98E                 call    _strcasecmp
+  .text:0025E993                 add     esp, 10h
+  .text:0025E996                 test    eax, eax
+  .text:0025E998                 jz      loc_25EB38
+  .text:0025E99E                 sub     esp, 8
+  .text:0025E9A1                 ; s2
+  .text:0025E9A1                 push    [esp+44h+var_30]; s2
+  .text:0025E9A5                 ; s1
+  .text:0025E9A5                 push    esi; s1
+  .text:0025E9A6                 call    _strcasecmp
+  .text:0025E9AB                 add     esp, 10h
+  .text:0025E9AE                 test    eax, eax
+  .text:0025E9B0                 jz      loc_25EB38
+  .text:0025E9B6                 add     edi, 1
+  .text:0025E9B9                 cmp     [esp+3Ch+var_3C], edi
+  .text:0025E9BC                 jnz     short loc_25E960
+  .text:0025E9BE                 lea     esi, (gEngfuncs - 688000h)[ebx]
+  .text:0025E9C4                 call    dword ptr [esi+0CCh]
+  .text:0025E9CA                 test    eax, eax
+  .text:0025E9CC                 jz      short loc_25E9DB
+  .text:0025E9CE                 cmp     dword ptr [eax+354h], 3
+  .text:0025E9D5                 jz      loc_25EBA4
+  .text:0025E9DB                 sub     esp, 0Ch
+  .text:0025E9DE                 mov     eax, [esp+48h+this]
+  .text:0025E9E2                 mov     eax, [eax]
+  .text:0025E9E4                 push    [esp+48h+this]
+  .text:0025E9E8                 call    dword ptr [eax+5Ch]
+  .text:0025E9EB                 mov     ebp, eax
+  .text:0025E9ED                 add     esp, 10h
+  .text:0025E9F0                 test    al, al
+  .text:0025E9F2                 jz      loc_25EB44
+  .text:0025E9F8                 mov     eax, [esp+3Ch+this]
+  .text:0025E9FC                 mov     edx, [esp+3Ch+this]
+  .text:0025EA00                 xor     edi, edi
+  .text:0025EA02                 mov     eax, [eax+2Ch]
+  .text:0025EA05                 mov     edx, [edx]
+  .text:0025EA07                 mov     dword ptr [eax+304h], 13h
+  .text:0025EA11                 mov     edx, [edx+60h] ; GameStudioRenderer_StudioRenderFinal, vfunc_offset=0x60
+  .text:0025EA14                 mov     dword ptr [eax+304h], 0
+  .text:0025EA1E                 lea     eax, (_ZN20CStudioModelRenderer17StudioRenderFinalEv - 688000h)[ebx]; CStudioModelRenderer::StudioRenderFinal(void)
+  .text:0025EA24                 mov     [esp+3Ch+var_3C], eax
+  .text:0025EA27                 cmp     edx, eax
+  .text:0025EA29                 jnz     loc_25ECAE
+  .text:0025EA2F                 call    ds:(IEngineStudio.IsHardware - 688000h)[ebx]
+  .text:0025EA35                 test    eax, eax
+  .text:0025EA37                 jz      loc_25EC7B
+  .text:0025EA3D                 sub     esp, 0Ch
+  .text:0025EA40                 mov     eax, [esp+48h+this]
+  .text:0025EA44                 mov     eax, [eax]
+  .text:0025EA46                 push    [esp+48h+this]
+  .text:0025EA4A                 call    dword ptr [eax+68h]
+  .text:0025EA4D                 add     esp, 10h
+  .text:0025EA50                 call    ds:(IEngineStudio.IsHardware - 688000h)[ebx]
+  .text:0025EA56                 test    eax, eax
+  .text:0025EA58                 jnz     short loc_25EA6B
+  .text:0025EA5A                 sub     esp, 0Ch
+  .text:0025EA5D                 mov     eax, [esi+148h]
+  .text:0025EA63                 push    5
+  .text:0025EA65                 call    dword ptr [eax+4]
+  .text:0025EA68                 add     esp, 10h
+  .text:0025EA6B                 sub     esp, 0Ch
+  .text:0025EA6E                 ; flags
+  .text:0025EA6E                 push    2; flags
+  .text:0025EA70                 call    ds:(IEngineStudio.SetForceFaceFlags - 688000h)[ebx]
+  .text:0025EA76                 mov     eax, edi
+  .text:0025EA78                 add     esp, 10h
+  .text:0025EA7B                 test    al, al
+  .text:0025EA7D                 jnz     loc_25ED24
+  .text:0025EA83                 mov     eax, ebp
+  .text:0025EA85                 test    al, al
+  .text:0025EA87                 jz      loc_25EBE8
+  .text:0025EA8D                 mov     eax, [esp+3Ch+this]
+  .text:0025EA91                 lea     edx, (_ZN20CStudioModelRenderer14LateChromeLoadEv - 688000h)[ebx]; CStudioModelRenderer::LateChromeLoad(void)
+  .text:0025EA97                 mov     eax, [eax]
+  .text:0025EA99                 mov     eax, [eax+0Ch]
+  .text:0025EA9C                 cmp     eax, edx
+  .text:0025EA9E                 jnz     loc_25ED89
+  .text:0025EAA4                 mov     eax, [esp+3Ch+this]
+  .text:0025EAA8                 lea     edi, [esp+3Ch+var_20]
+  .text:0025EAAC                 mov     eax, [eax+58h]
+  .text:0025EAAF                 test    eax, eax
+  .text:0025EAB1                 jz      loc_25ECBF
+  .text:0025EAB7                 mov     eax, [esp+3Ch+this]
+  .text:0025EABB                 mov     [esp+3Ch+var_20], 0
+  .text:0025EAC3                 mov     eax, [eax+2Ch]
+  .text:0025EAC6                 cmp     dword ptr [eax+358h], 1
+  .text:0025EACD                 jz      loc_25ED0A
+  .text:0025EAD3                 mov     eax, ds:(dword_6AB9C8 - 688000h)[ebx]
+  .text:0025EAD9                 sub     esp, 8
+  .text:0025EADC                 ; int
+  .text:0025EADC                 push    edi; int
+  .text:0025EADD                 ; nptr
+  .text:0025EADD                 push    dword ptr [eax+4]; nptr
+  .text:0025EAE0                 call    _Z10ParseColorPKcR5Color; ParseColor(char const*,Color &)
+  .text:0025EAE5                 add     esp, 10h
+  .text:0025EAE8                 mov     eax, [esp+3Ch+this]
+  .text:0025EAEC                 movzx   edx, byte ptr [esp+3Ch+var_20+2]
+  .text:0025EAF1                 movzx   ecx, word ptr [esp+3Ch+var_20]
+  .text:0025EAF6                 mov     eax, [eax+2Ch]
+  .text:0025EAF9                 mov     [eax+302h], dl
+  .text:0025EAFF                 mov     edx, ds:(dword_6B0F48 - 688000h)[ebx]
+  .text:0025EB05                 mov     [eax+300h], cx
+  .text:0025EB0C                 mov     eax, [esp+3Ch+this]
+  .text:0025EB10                 cvttss2si edx, dword ptr [edx+0Ch]
+  .text:0025EB15                 mov     eax, [eax+2Ch]
+  .text:0025EB18                 mov     [eax+2FCh], edx
+  .text:0025EB1E                 mov     eax, [esi+148h]
+  .text:0025EB24                 mov     edx, [eax+2Ch]
+  .text:0025EB27                 mov     eax, [esp+3Ch+this]
+  .text:0025EB2B                 mov     eax, [eax+58h]
+  .text:0025EB2E                 jmp     loc_25EBF8
+  .text:0025EB38                 mov     dword ptr [esi+40h], 4
+  .text:0025EB3F                 jmp     loc_25E9B6
+  .text:0025EB44                 xor     edi, edi
+  .text:0025EB46                 mov     eax, [esp+3Ch+this]
+  .text:0025EB4A                 mov     ecx, [esp+3Ch+this]
+  .text:0025EB4E                 mov     eax, [eax+2Ch]
+  .text:0025EB51                 mov     edx, [ecx]
+  .text:0025EB53                 cmp     dword ptr [eax+304h], 13h
+  .text:0025EB5A                 mov     edx, [edx+60h] ; GameStudioRenderer_StudioRenderFinal, vfunc_offset=0x60
+  .text:0025EB5D                 jz      loc_25EA14
+  .text:0025EB63                 mov     ecx, edi
+  .text:0025EB65                 test    cl, cl
+  .text:0025EB67                 jnz     loc_25EA14
+  .text:0025EB6D                 lea     eax, (_ZN20CStudioModelRenderer17StudioRenderFinalEv - 688000h)[ebx]; CStudioModelRenderer::StudioRenderFinal(void)
+  .text:0025EB73                 cmp     edx, eax
+  .text:0025EB75                 jnz     loc_25ED78
+  .text:0025EB7B                 call    ds:(IEngineStudio.IsHardware - 688000h)[ebx]
+  .text:0025EB81                 test    eax, eax
+  .text:0025EB83                 jz      loc_25EC93
+  .text:0025EB89                 sub     esp, 0Ch
+  .text:0025EB8C                 mov     eax, [esp+48h+this]
+  .text:0025EB90                 mov     eax, [eax]
+  .text:0025EB92                 push    [esp+48h+this]
+  .text:0025EB96                 call    dword ptr [eax+68h]
+  .text:0025EB99                 add     esp, 10h
+  .text:0025EB9C                 add     esp, 2Ch
+  .text:0025EB9F                 pop     ebx
+  .text:0025EBA0                 pop     esi
+  .text:0025EBA1                 pop     edi
+  .text:0025EBA2                 pop     ebp
+  .text:0025EBA3                 retn
+  .text:0025EBA4                 lea     eax, (gHUD - 688000h)[ebx]
+  .text:0025EBAA                 movzx   edi, byte ptr [eax+2A0h]
+  .text:0025EBB1                 mov     eax, edi
+  .text:0025EBB3                 test    al, al
+  .text:0025EBB5                 jz      short loc_25EBC7
+  .text:0025EBB7                 mov     eax, [esp+3Ch+this]
+  .text:0025EBBB                 mov     eax, [eax+2Ch]
+  .text:0025EBBE                 cmp     dword ptr [eax+4], 1
+  .text:0025EBC2                 setz    al
+  .text:0025EBC5                 mov     edi, eax
+  .text:0025EBC7                 sub     esp, 0Ch
+  .text:0025EBCA                 mov     eax, [esp+48h+this]
+  .text:0025EBCE                 mov     eax, [eax]
+  .text:0025EBD0                 push    [esp+48h+this]
+  .text:0025EBD4                 call    dword ptr [eax+5Ch]
+  .text:0025EBD7                 mov     ebp, eax
+  .text:0025EBD9                 add     esp, 10h
+  .text:0025EBDC                 jmp     loc_25EB46
+  .text:0025EBE8                 mov     eax, [esi+148h]
+  .text:0025EBEE                 mov     edx, [eax+2Ch]
+  .text:0025EBF1                 mov     eax, [esp+3Ch+this]
+  .text:0025EBF5                 mov     eax, [eax+54h]
+  .text:0025EBF8                 sub     esp, 8
+  .text:0025EBFB                 push    0
+  .text:0025EBFD                 push    eax
+  .text:0025EBFE                 call    edx
+  .text:0025EC00                 mov     eax, [esp+4Ch+this]
+  .text:0025EC04                 mov     eax, [eax+2Ch]
+  .text:0025EC07                 mov     dword ptr [eax+304h], 13h
+  .text:0025EC11                 mov     eax, [esp+4Ch+this]
+  .text:0025EC15                 add     esp, 10h
+  .text:0025EC18                 mov     eax, [eax]
+  .text:0025EC1A                 mov     eax, [eax+60h] ; GameStudioRenderer_StudioRenderFinal, vfunc_offset=0x60
+  .text:0025EC1D                 cmp     eax, [esp+3Ch+var_3C]
+  .text:0025EC20                 jnz     loc_25ED67
+  .text:0025EC26                 call    ds:(IEngineStudio.IsHardware - 688000h)[ebx]
+  .text:0025EC2C                 test    eax, eax
+  .text:0025EC2E                 jz      short loc_25EC66
+  .text:0025EC30                 sub     esp, 0Ch
+  .text:0025EC33                 mov     eax, [esp+48h+this]
+  .text:0025EC37                 mov     eax, [eax]
+  .text:0025EC39                 push    [esp+48h+this]
+  .text:0025EC3D                 call    dword ptr [eax+68h]
+  .text:0025EC40                 add     esp, 10h
+  .text:0025EC43                 call    ds:(IEngineStudio.IsHardware - 688000h)[ebx]
+  .text:0025EC49                 test    eax, eax
+  .text:0025EC4B                 jnz     short loc_25EC5E
+  .text:0025EC4D                 sub     esp, 0Ch
+  .text:0025EC50                 mov     eax, [esi+148h]
+  .text:0025EC56                 push    0
+  .text:0025EC58                 call    dword ptr [eax+4]
+  .text:0025EC5B                 add     esp, 10h
+  .text:0025EC5E                 add     esp, 2Ch
+  .text:0025EC61                 pop     ebx
+  .text:0025EC62                 pop     esi
+  .text:0025EC63                 pop     edi
+  .text:0025EC64                 pop     ebp
+  .text:0025EC65                 retn
+  .text:0025EC66                 sub     esp, 0Ch
+  .text:0025EC69                 mov     eax, [esp+48h+this]
+  .text:0025EC6D                 mov     eax, [eax]
+  .text:0025EC6F                 push    [esp+48h+this]
+  .text:0025EC73                 call    dword ptr [eax+64h]
+  .text:0025EC76                 add     esp, 10h
+  .text:0025EC79                 jmp     short loc_25EC43
+  .text:0025EC7B                 sub     esp, 0Ch
+  .text:0025EC7E                 mov     eax, [esp+48h+this]
+  .text:0025EC82                 mov     eax, [eax]
+  .text:0025EC84                 push    [esp+48h+this]
+  .text:0025EC88                 call    dword ptr [eax+64h]
+  .text:0025EC8B                 add     esp, 10h
+  .text:0025EC8E                 jmp     loc_25EA50
+  .text:0025EC93                 sub     esp, 0Ch
+  .text:0025EC96                 mov     eax, [esp+48h+this]
+  .text:0025EC9A                 mov     eax, [eax]
+  .text:0025EC9C                 push    [esp+48h+this]
+  .text:0025ECA0                 call    dword ptr [eax+64h]
+  .text:0025ECA3                 add     esp, 10h
+  .text:0025ECA6                 add     esp, 2Ch
+  .text:0025ECA9                 pop     ebx
+  .text:0025ECAA                 pop     esi
+  .text:0025ECAB                 pop     edi
+  .text:0025ECAC                 pop     ebp
+  .text:0025ECAD                 retn
+  .text:0025ECAE                 sub     esp, 0Ch
+  .text:0025ECB1                 push    [esp+48h+this]
+  .text:0025ECB5                 call    edx
+  .text:0025ECB7                 add     esp, 10h
+  .text:0025ECBA                 jmp     loc_25EA50
+  .text:0025ECBF                 sub     esp, 8
+  .text:0025ECC2                 lea     eax, (aSpritesWeaponH - 688000h)[ebx]; "sprites/weapon_highlight.spr"
+  .text:0025ECC8                 push    edi
+  .text:0025ECC9                 push    eax
+  .text:0025ECCA                 call    dword ptr [esi+0F0h]
+  .text:0025ECD0                 mov     edx, [esp+4Ch+this]
+  .text:0025ECD4                 add     esp, 10h
+  .text:0025ECD7                 mov     [edx+58h], eax
+  .text:0025ECDA                 cmp     [esp+3Ch+var_20], 0FFFFFFFFh
+  .text:0025ECDF                 jnz     loc_25EAB7
+  .text:0025ECE5                 sub     esp, 0Ch
+  .text:0025ECE8                 lea     eax, (aFailedToLoadTh_0 - 688000h)[ebx]; "Failed to load the [sprites/weapon_high"...
+  .text:0025ECEE                 push    eax
+  .text:0025ECEF                 call    _Msg
+  .text:0025ECF4                 mov     eax, [esp+4Ch+this]
+  .text:0025ECF8                 mov     edx, [esp+4Ch+this]
+  .text:0025ECFC                 add     esp, 10h
+  .text:0025ECFF                 mov     eax, [eax+54h]
+  .text:0025ED02                 mov     [edx+58h], eax
+  .text:0025ED05                 jmp     loc_25EAB7
+  .text:0025ED0A                 mov     eax, ds:(dword_6AB9AC - 688000h)[ebx]
+  .text:0025ED10                 sub     esp, 8
+  .text:0025ED13                 ; int
+  .text:0025ED13                 push    edi; int
+  .text:0025ED14                 ; nptr
+  .text:0025ED14                 push    dword ptr [eax+4]; nptr
+  .text:0025ED17                 call    _Z10ParseColorPKcR5Color; ParseColor(char const*,Color &)
+  .text:0025ED1C                 add     esp, 10h
+  .text:0025ED1F                 jmp     loc_25EAE8
+  .text:0025ED24                 mov     edx, ds:(dword_6ABA1C - 688000h)[ebx]
+  .text:0025ED2A                 mov     eax, [esp+3Ch+this]
+  .text:0025ED2E                 cvttss2si edx, dword ptr [edx+0Ch]
+  .text:0025ED33                 mov     eax, [eax+2Ch]
+  .text:0025ED36                 cmp     edx, 1
+  .text:0025ED39                 jz      loc_25EE0F
+  .text:0025ED3F                 cmp     edx, 2
+  .text:0025ED42                 jz      short loc_25EDBF
+  .text:0025ED44                 test    edx, edx
+  .text:0025ED46                 jz      short loc_25ED9E
+  .text:0025ED48                 xor     edx, edx
+  .text:0025ED4A                 xor     edi, edi
+  .text:0025ED4C                 xor     ecx, ecx
+  .text:0025ED4E                 mov     [eax+300h], cl
+  .text:0025ED54                 mov     ecx, edi
+  .text:0025ED56                 mov     [eax+301h], cl
+  .text:0025ED5C                 mov     [eax+302h], dl
+  .text:0025ED62                 jmp     loc_25EA83
+  .text:0025ED67                 sub     esp, 0Ch
+  .text:0025ED6A                 push    [esp+48h+this]
+  .text:0025ED6E                 call    eax
+  .text:0025ED70                 add     esp, 10h
+  .text:0025ED73                 jmp     loc_25EC43
+  .text:0025ED78                 sub     esp, 0Ch
+  .text:0025ED7B                 push    [esp+48h+this]
+  .text:0025ED7F                 call    edx
+  .text:0025ED81                 add     esp, 10h
+  .text:0025ED84                 jmp     loc_25EC5E
+  .text:0025ED89                 sub     esp, 0Ch
+  .text:0025ED8C                 push    [esp+48h+this]
+  .text:0025ED90                 call    eax
+  .text:0025ED92                 add     esp, 10h
+  .text:0025ED95                 lea     edi, [esp+3Ch+var_20]
+  .text:0025ED99                 jmp     loc_25EAB7
+  .text:0025ED9E                 mov     edx, [eax+354h]
+  .text:0025EDA4                 cmp     edx, 2
+  .text:0025EDA7                 jz      loc_25EE2F
+  .text:0025EDAD                 cmp     edx, 3
+  .text:0025EDB0                 mov     ecx, 0FFFFFFFFh
+  .text:0025EDB5                 setz    dl
+  .text:0025EDB8                 sub     edx, 1
+  .text:0025EDBB                 mov     edi, edx
+  .text:0025EDBD                 jmp     short loc_25ED4E
+  .text:0025EDBF                 mov     [esp+3Ch+var_20], 0
+  .text:0025EDC7                 mov     edx, [eax+354h]
+  .text:0025EDCD                 lea     edi, [esp+3Ch+var_20]
+  .text:0025EDD1                 cmp     edx, 2
+  .text:0025EDD4                 jz      short loc_25EE3D
+  .text:0025EDD6                 cmp     edx, 3
+  .text:0025EDD9                 jnz     loc_25ED48
+  .text:0025EDDF                 sub     esp, 8
+  .text:0025EDE2                 mov     eax, ds:(dword_6AB9E4 - 688000h)[ebx]
+  .text:0025EDE8                 ; int
+  .text:0025EDE8                 push    edi; int
+  .text:0025EDE9                 ; nptr
+  .text:0025EDE9                 push    dword ptr [eax+4]; nptr
+  .text:0025EDEC                 call    _Z10ParseColorPKcR5Color; ParseColor(char const*,Color &)
+  .text:0025EDF1                 mov     eax, [esp+4Ch+this]
+  .text:0025EDF5                 movzx   ecx, byte ptr [esp+4Ch+var_20]
+  .text:0025EDFA                 movzx   edi, byte ptr [esp+4Ch+var_20+1]
+  .text:0025EDFF                 movzx   edx, byte ptr [esp+4Ch+var_20+2]
+  .text:0025EE04                 add     esp, 10h
+  .text:0025EE07                 mov     eax, [eax+2Ch]
+  .text:0025EE0A                 jmp     loc_25ED4E
+  .text:0025EE0F                 mov     edx, [eax+354h]
+  .text:0025EE15                 cmp     edx, 2
+  .text:0025EE18                 jz      short loc_25EE49
+  .text:0025EE1A                 cmp     edx, 3
+  .text:0025EE1D                 mov     edi, 0FFFFFFFFh
+  .text:0025EE22                 setz    dl
+  .text:0025EE25                 sub     edx, 1
+  .text:0025EE28                 mov     ecx, edx
+  .text:0025EE2A                 jmp     loc_25ED4E
+  .text:0025EE2F                 xor     edx, edx
+  .text:0025EE31                 mov     edi, 0FFFFFFFFh
+  .text:0025EE36                 xor     ecx, ecx
+  .text:0025EE38                 jmp     loc_25ED4E
+  .text:0025EE3D                 sub     esp, 8
+  .text:0025EE40                 mov     eax, ds:(dword_6ABA00 - 688000h)[ebx]
+  .text:0025EE46                 push    edi
+  .text:0025EE47                 jmp     short loc_25EDE9
+  .text:0025EE49                 xor     edx, edx
+  .text:0025EE4B                 xor     edi, edi
+  .text:0025EE4D                 mov     ecx, 0FFFFFFFFh
+  .text:0025EE52                 jmp     loc_25ED4E
+procedure: |-
+  void __cdecl CStudioModelRenderer::StudioRenderModel(ZPRenderer *self)
+  {
+    int v1; // edi
+    _DWORD *m_pStudioHeader; // ebp
+    char *v3; // esi
+    struct cl_entity_s *LocalPlayer; // eax
+    char v5; // bp
+    char v6; // di
+    struct cl_entity_s *m_pCurrentEntity; // eax
+    ZPRendererVtable *vtable; // edx
+    void (__cdecl *StudioRenderFinal)(ZPRenderer *); // edx
+    _DWORD (__cdecl *slot_3)(CStudioModelRenderer *__hidden); // eax
+    __int16 v11; // cx
+    struct cl_entity_s *v12; // eax
+    int v13; // edx
+    void (__cdecl *v14)(ZPRenderer *); // eax
+    int v15; // edx
+    struct cl_entity_s *v16; // eax
+    char v17; // dl
+    char v18; // di
+    char v19; // cl
+    int v20; // edx
+    int v21; // edx
+    int v22; // edx
+    int v23; // [esp+0h] [ebp-3Ch]
+    int v24[8]; // [esp+1Ch] [ebp-20h] BYREF
+
+    v1 = 0;
+    IEngineStudio.SetChromeOrigin();
+    IEngineStudio.SetForceFaceFlags(0);
+    m_pStudioHeader = self->m_pStudioHeader;
+    v23 = m_pStudioHeader[45];
+    if ( v23 > 0 )
+    {
+      do
+      {
+        v3 = (char *)&m_pStudioHeader[20 * v1] + m_pStudioHeader[46];
+        if ( !strcasecmp(v3, "eye.bmp") || !strcasecmp(v3, "eye_glow.bmp") || !strcasecmp(v3, "glow.bmp") )
+          *((_DWORD *)v3 + 16) = 4;
+        ++v1;
+      }
+      while ( v23 != v1 );
+    }
+    LocalPlayer = ZP_GetLocalPlayer();
+    if ( LocalPlayer && *((_DWORD *)LocalPlayer + 213) == 3 )
+    {
+      v6 = unk_69AF40;
+      if ( unk_69AF40 )
+        v6 = *((_DWORD *)self->m_pCurrentEntity + 1) == 1;
+      v5 = ((int (__cdecl *)(ZPRenderer *))self->vtable->slot_23)(self);
+    }
+    else
+    {
+      v5 = ((int (__cdecl *)(ZPRenderer *))self->vtable->slot_23)(self);
+      if ( v5 )
+      {
+        v6 = 0;
+        m_pCurrentEntity = self->m_pCurrentEntity;
+        vtable = self->vtable;
+        *((_DWORD *)m_pCurrentEntity + 193) = 19;
+        StudioRenderFinal = vtable->StudioRenderFinal; // GameStudioRenderer_StudioRenderFinal, vfunc_offset=0x60
+        goto LABEL_10;
+      }
+      v6 = 0;
+    }
+    m_pCurrentEntity = self->m_pCurrentEntity;
+    StudioRenderFinal = self->vtable->StudioRenderFinal; // GameStudioRenderer_StudioRenderFinal, vfunc_offset=0x60
+    if ( *((_DWORD *)m_pCurrentEntity + 193) != 19 && !v6 )
+    {
+      if ( (char *)StudioRenderFinal == (char *)CStudioModelRenderer::StudioRenderFinal )
+      {
+        if ( IEngineStudio.IsHardware() )
+          ((void (__cdecl *)(ZPRenderer *))self->vtable->slot_26)(self);
+        else
+          ((void (__cdecl *)(ZPRenderer *))self->vtable->slot_25)(self);
+      }
+      else
+      {
+        StudioRenderFinal(self);
+      }
+      return;
+    }
+  LABEL_10:
+    *((_DWORD *)m_pCurrentEntity + 193) = 0;
+    if ( (char *)StudioRenderFinal == (char *)CStudioModelRenderer::StudioRenderFinal )
+    {
+      if ( IEngineStudio.IsHardware() )
+        ((void (__cdecl *)(ZPRenderer *))self->vtable->slot_26)(self);
+      else
+        ((void (__cdecl *)(ZPRenderer *))self->vtable->slot_25)(self);
+    }
+    else
+    {
+      StudioRenderFinal(self);
+    }
+    if ( !IEngineStudio.IsHardware() )
+      (*(void (__cdecl **)(int))(unk_69C548 + 4))(5);
+    IEngineStudio.SetForceFaceFlags(2);
+    if ( !v6 )
+      goto LABEL_16;
+    v15 = (int)*(float *)(dword_6ABA1C + 12);
+    v16 = self->m_pCurrentEntity;
+    if ( v15 == 1 )
+    {
+      v22 = *((_DWORD *)v16 + 213);
+      if ( v22 == 2 )
+      {
+        v17 = 0;
+        v18 = 0;
+        v19 = -1;
+      }
+      else
+      {
+        v18 = -1;
+        v17 = (v22 == 3) - 1;
+        v19 = v17;
+      }
+      goto LABEL_50;
+    }
+    if ( v15 != 2 )
+    {
+      if ( !v15 )
+      {
+        v20 = *((_DWORD *)v16 + 213);
+        if ( v20 == 2 )
+        {
+          v17 = 0;
+          v18 = -1;
+          v19 = 0;
+        }
+        else
+        {
+          v19 = -1;
+          v17 = (v20 == 3) - 1;
+          v18 = v17;
+        }
+        goto LABEL_50;
+      }
+      goto LABEL_49;
+    }
+    v24[0] = 0;
+    v21 = *((_DWORD *)v16 + 213);
+    if ( v21 == 2 )
+    {
+      ParseColor(*(char **)(dword_6ABA00 + 4), (int)v24);
+      goto LABEL_59;
+    }
+    if ( v21 == 3 )
+    {
+      ParseColor(*(char **)(dword_6AB9E4 + 4), (int)v24);
+  LABEL_59:
+      v19 = v24[0];
+      v18 = BYTE1(v24[0]);
+      v17 = BYTE2(v24[0]);
+      v16 = self->m_pCurrentEntity;
+      goto LABEL_50;
+    }
+  LABEL_49:
+    v17 = 0;
+    v18 = 0;
+    v19 = 0;
+  LABEL_50:
+    *((_BYTE *)v16 + 768) = v19;
+    *((_BYTE *)v16 + 769) = v18;
+    *((_BYTE *)v16 + 770) = v17;
+  LABEL_16:
+    if ( v5 )
+    {
+      slot_3 = (_DWORD (__cdecl *)(CStudioModelRenderer *__hidden))self->vtable->slot_3;
+      if ( slot_3 == CStudioModelRenderer::LateChromeLoad )
+      {
+        if ( !self->m_pWeaponHighlightSprite )
+        {
+          self->m_pWeaponHighlightSprite = (void *)unk_69C4F0("sprites/weapon_highlight.spr", v24);
+          if ( v24[0] == -1 )
+          {
+            Msg("Failed to load the [sprites/weapon_highlight.spr] sprite.\n");
+            self->m_pWeaponHighlightSprite = self->m_pChromeSprite;
+          }
+        }
+      }
+      else
+      {
+        slot_3((CStudioModelRenderer *)self);
+      }
+      v24[0] = 0;
+      if ( *((_DWORD *)self->m_pCurrentEntity + 214) == 1 )
+        ParseColor(*(char **)(dword_6AB9AC + 4), (int)v24);
+      else
+        ParseColor(*(char **)(dword_6AB9C8 + 4), (int)v24);
+      v11 = v24[0];
+      v12 = self->m_pCurrentEntity;
+      *((_BYTE *)v12 + 770) = BYTE2(v24[0]);
+      v13 = dword_6B0F48;
+      *((_WORD *)v12 + 384) = v11;
+      *((_DWORD *)self->m_pCurrentEntity + 191) = (int)*(float *)(v13 + 12);
+      (*(void (__cdecl **)(void *, _DWORD))(unk_69C548 + 44))(self->m_pWeaponHighlightSprite, 0);
+    }
+    else
+    {
+      (*(void (__cdecl **)(void *, _DWORD))(unk_69C548 + 44))(self->m_pChromeSprite, 0);
+    }
+    *((_DWORD *)self->m_pCurrentEntity + 193) = 19;
+    v14 = self->vtable->StudioRenderFinal; // GameStudioRenderer_StudioRenderFinal, vfunc_offset=0x60
+    if ( (char *)v14 == (char *)CStudioModelRenderer::StudioRenderFinal )
+    {
+      if ( IEngineStudio.IsHardware() )
+        ((void (__cdecl *)(ZPRenderer *))self->vtable->slot_26)(self);
+      else
+        ((void (__cdecl *)(ZPRenderer *))self->vtable->slot_25)(self);
+    }
+    else
+    {
+      v14(self);
+    }
+    if ( !IEngineStudio.IsHardware() )
+      (*(void (__cdecl **)(_DWORD))(unk_69C548 + 4))(0);
+  }

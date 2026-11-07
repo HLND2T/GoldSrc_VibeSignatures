@@ -1,0 +1,477 @@
+func_name: "GameStudioRenderer_StudioDrawModel"
+func_va: "0x1015aa60"
+disasm_code: |-
+  .text:1015AA60                 ; ZP 10210: source baseline is HLND2T StudioModelRenderer.cpp; current binary adds a bool argument to StudioDrawPlayer. Layout and virtual slots are derived from this PE32, not copied from the ELF peer.
+  .text:1015AA60                 push    ebp; ZP 10210: source baseline is HLND2T StudioModelRenderer.cpp; current binary adds a bool argument to StudioDrawPlayer. Layout and virtual slots are derived from this PE32, not copied from the ELF peer.
+  .text:1015AA61                 mov     ebp, esp
+  .text:1015AA63                 sub     esp, 1C8h
+  .text:1015AA69                 mov     eax, ___security_cookie
+  .text:1015AA6E                 xor     eax, ebp
+  .text:1015AA70                 mov     [ebp+var_4], eax
+  .text:1015AA73                 push    esi
+  .text:1015AA74                 mov     [ebp+var_15C], ecx
+  .text:1015AA7A                 ; self
+  .text:1015AA7A                 lea     ecx, [ebp+self]; self
+  .text:1015AA80                 call    ZP_AlightDefaultCtor
+  .text:1015AA85                 ; self
+  .text:1015AA85                 lea     ecx, [ebp+var_1C8]; self
+  .text:1015AA8B                 call    ZP_VectorDefaultCtor
+  .text:1015AA90                 call    IEngineStudio.GetCurrentEntity
+  .text:1015AA96                 mov     ecx, [ebp+var_15C]
+  .text:1015AA9C                 mov     [ecx+30h], eax
+  .text:1015AA9F                 mov     edx, IEngineStudio.GetTimes
+  .text:1015AAA5                 mov     [ebp+var_160], edx
+  .text:1015AAAB                 mov     eax, [ebp+var_15C]
+  .text:1015AAB1                 add     eax, 10h
+  .text:1015AAB4                 push    eax
+  .text:1015AAB5                 mov     ecx, [ebp+var_15C]
+  .text:1015AABB                 add     ecx, 8
+  .text:1015AABE                 push    ecx
+  .text:1015AABF                 mov     edx, [ebp+var_15C]
+  .text:1015AAC5                 add     edx, 20h ; ' '
+  .text:1015AAC8                 push    edx
+  .text:1015AAC9                 call    [ebp+var_160]
+  .text:1015AACF                 add     esp, 0Ch
+  .text:1015AAD2                 mov     eax, IEngineStudio.GetViewInfo
+  .text:1015AAD7                 mov     [ebp+var_164], eax
+  .text:1015AADD                 mov     ecx, [ebp+var_15C]
+  .text:1015AAE3                 add     ecx, 4084h
+  .text:1015AAE9                 push    ecx
+  .text:1015AAEA                 mov     edx, [ebp+var_15C]
+  .text:1015AAF0                 add     edx, 4078h
+  .text:1015AAF6                 push    edx
+  .text:1015AAF7                 mov     eax, [ebp+var_15C]
+  .text:1015AAFD                 add     eax, 406Ch
+  .text:1015AB02                 push    eax
+  .text:1015AB03                 mov     ecx, [ebp+var_15C]
+  .text:1015AB09                 add     ecx, 4090h
+  .text:1015AB0F                 push    ecx
+  .text:1015AB10                 call    [ebp+var_164]
+  .text:1015AB16                 add     esp, 10h
+  .text:1015AB19                 mov     edx, IEngineStudio.GetAliasScale
+  .text:1015AB1F                 mov     [ebp+var_168], edx
+  .text:1015AB25                 mov     eax, [ebp+var_15C]
+  .text:1015AB2B                 add     eax, 4068h
+  .text:1015AB30                 push    eax
+  .text:1015AB31                 mov     ecx, [ebp+var_15C]
+  .text:1015AB37                 add     ecx, 4064h
+  .text:1015AB3D                 push    ecx
+  .text:1015AB3E                 call    [ebp+var_168]
+  .text:1015AB44                 add     esp, 8
+  .text:1015AB47                 mov     edx, [ebp+var_15C]
+  .text:1015AB4D                 mov     eax, [edx+30h]
+  .text:1015AB50                 cmp     dword ptr [eax+304h], 11h
+  .text:1015AB57                 jnz     loc_1015ACB8
+  .text:1015AB5D                 ; self
+  .text:1015AB5D                 lea     ecx, [ebp+var_158]; self
+  .text:1015AB63                 call    ZP_EntityStateDefaultCtor
+  .text:1015AB68                 mov     ecx, [ebp+var_15C]
+  .text:1015AB6E                 mov     edx, [ecx+30h]
+  .text:1015AB71                 cmp     dword ptr [edx+2FCh], 0
+  .text:1015AB78                 jle     short loc_1015AB91
+  .text:1015AB7A                 mov     eax, [ebp+var_15C]
+  .text:1015AB80                 mov     esi, [eax+30h]
+  .text:1015AB83                 call    ZP_GetMaxClients
+  .text:1015AB89                 cmp     [esi+2FCh], eax
+  .text:1015AB8F                 jle     short loc_1015AB98
+  .text:1015AB91                 xor     eax, eax
+  .text:1015AB93                 jmp     loc_1015AFC3
+  .text:1015AB98                 mov     ecx, IEngineStudio.GetPlayerState
+  .text:1015AB9E                 mov     [ebp+var_16C], ecx
+  .text:1015ABA4                 mov     edx, [ebp+var_15C]
+  .text:1015ABAA                 mov     eax, [edx+30h]
+  .text:1015ABAD                 mov     ecx, [eax+2FCh]
+  .text:1015ABB3                 sub     ecx, 1
+  .text:1015ABB6                 push    ecx
+  .text:1015ABB7                 call    [ebp+var_16C]
+  .text:1015ABBD                 add     esp, 4
+  .text:1015ABC0                 ; source
+  .text:1015ABC0                 push    eax; source
+  .text:1015ABC1                 ; self
+  .text:1015ABC1                 lea     ecx, [ebp+var_158]; self
+  .text:1015ABC7                 call    ZP_EntityStateAssign
+  .text:1015ABCC                 mov     edx, [ebp+var_15C]
+  .text:1015ABD2                 mov     eax, [edx+30h]
+  .text:1015ABD5                 mov     ecx, [eax+2FCh]
+  .text:1015ABDB                 mov     [ebp+var_154], ecx
+  .text:1015ABE1                 mov     edx, [ebp+var_15C]
+  .text:1015ABE7                 mov     eax, [edx+30h]
+  .text:1015ABEA                 mov     ecx, [eax+2D8h]
+  .text:1015ABF0                 mov     [ebp+var_130], ecx
+  .text:1015ABF6                 mov     [ebp+var_A4], 0
+  .text:1015AC00                 mov     [ebp+var_A0], 0
+  .text:1015AC0A                 mov     [ebp+var_100], 0
+  .text:1015AC14                 lea     edx, [ebp+destination]
+  .text:1015AC1A                 ; destination
+  .text:1015AC1A                 push    edx; destination
+  .text:1015AC1B                 mov     eax, [ebp+var_15C]
+  .text:1015AC21                 mov     ecx, [eax+30h]
+  .text:1015AC24                 add     ecx, 2CCh
+  .text:1015AC2A                 ; source
+  .text:1015AC2A                 push    ecx; source
+  .text:1015AC2B                 call    VectorCopy
+  .text:1015AC30                 add     esp, 8
+  .text:1015AC33                 lea     edx, [ebp+var_148]
+  .text:1015AC39                 ; destination
+  .text:1015AC39                 push    edx; destination
+  .text:1015AC3A                 mov     eax, [ebp+var_15C]
+  .text:1015AC40                 mov     ecx, [eax+30h]
+  .text:1015AC43                 add     ecx, 2C0h
+  .text:1015AC49                 ; source
+  .text:1015AC49                 push    ecx; source
+  .text:1015AC4A                 call    VectorCopy
+  .text:1015AC4F                 add     esp, 8
+  .text:1015AC52                 mov     edx, [ebp+var_15C]
+  .text:1015AC58                 mov     eax, [edx+18h]
+  .text:1015AC5B                 mov     [ebp+var_174], eax
+  .text:1015AC61                 mov     ecx, [ebp+var_15C]
+  .text:1015AC67                 mov     dword ptr [ecx+18h], 0
+  .text:1015AC6E                 mov     edx, [ebp+var_15C]
+  .text:1015AC74                 mov     eax, [edx]
+  .text:1015AC76                 mov     ecx, [eax+10h] ; GameStudioRenderer_StudioDrawPlayer, vfunc_offset=0x10
+  .text:1015AC79                 mov     [ebp+var_170], ecx
+  .text:1015AC7F                 push    1
+  .text:1015AC81                 lea     edx, [ebp+var_158]
+  .text:1015AC87                 push    edx
+  .text:1015AC88                 mov     eax, [ebp+flags]
+  .text:1015AC8B                 push    eax
+  .text:1015AC8C                 mov     ecx, [ebp+var_15C]
+  .text:1015AC92                 call    [ebp+var_170]
+  .text:1015AC98                 mov     [ebp+var_178], eax
+  .text:1015AC9E                 mov     ecx, [ebp+var_15C]
+  .text:1015ACA4                 mov     edx, [ebp+var_174]
+  .text:1015ACAA                 mov     [ecx+18h], edx
+  .text:1015ACAD                 mov     eax, [ebp+var_178]
+  .text:1015ACB3                 jmp     loc_1015AFC3
+  .text:1015ACB8                 mov     eax, [ebp+var_15C]
+  .text:1015ACBE                 mov     ecx, [eax+30h]
+  .text:1015ACC1                 mov     edx, [ebp+var_15C]
+  .text:1015ACC7                 mov     eax, [ecx+0B94h]
+  .text:1015ACCD                 mov     [edx+34h], eax
+  .text:1015ACD0                 mov     ecx, IEngineStudio.Mod_Extradata
+  .text:1015ACD6                 mov     [ebp+var_17C], ecx
+  .text:1015ACDC                 mov     edx, [ebp+var_15C]
+  .text:1015ACE2                 mov     eax, [edx+34h]
+  .text:1015ACE5                 push    eax
+  .text:1015ACE6                 call    [ebp+var_17C]
+  .text:1015ACEC                 add     esp, 4
+  .text:1015ACEF                 mov     ecx, [ebp+var_15C]
+  .text:1015ACF5                 mov     [ecx+44h], eax
+  .text:1015ACF8                 mov     edx, IEngineStudio.StudioSetHeader
+  .text:1015ACFE                 mov     [ebp+var_180], edx
+  .text:1015AD04                 mov     eax, [ebp+var_15C]
+  .text:1015AD0A                 mov     ecx, [eax+44h]
+  .text:1015AD0D                 push    ecx
+  .text:1015AD0E                 call    [ebp+var_180]
+  .text:1015AD14                 add     esp, 4
+  .text:1015AD17                 mov     edx, IEngineStudio.SetRenderModel
+  .text:1015AD1D                 mov     [ebp+var_184], edx
+  .text:1015AD23                 mov     eax, [ebp+var_15C]
+  .text:1015AD29                 mov     ecx, [eax+34h]
+  .text:1015AD2C                 push    ecx
+  .text:1015AD2D                 call    [ebp+var_184]
+  .text:1015AD33                 add     esp, 4
+  .text:1015AD36                 mov     edx, [ebp+var_15C]
+  .text:1015AD3C                 mov     eax, [edx]
+  .text:1015AD3E                 mov     ecx, [eax+20h]
+  .text:1015AD41                 mov     [ebp+var_188], ecx
+  .text:1015AD47                 push    0
+  .text:1015AD49                 mov     ecx, [ebp+var_15C]
+  .text:1015AD4F                 call    [ebp+var_188]
+  .text:1015AD55                 mov     edx, [ebp+flags]
+  .text:1015AD58                 and     edx, 1
+  .text:1015AD5B                 jz      short loc_1015ADC8
+  .text:1015AD5D                 call    IEngineStudio.StudioCheckBBox
+  .text:1015AD63                 test    eax, eax
+  .text:1015AD65                 jnz     short loc_1015AD6E
+  .text:1015AD67                 xor     eax, eax
+  .text:1015AD69                 jmp     loc_1015AFC3
+  .text:1015AD6E                 mov     eax, [ebp+var_15C]
+  .text:1015AD74                 mov     ecx, [eax+40A0h]
+  .text:1015AD7A                 mov     edx, [ecx]
+  .text:1015AD7C                 add     edx, 1
+  .text:1015AD7F                 mov     eax, [ebp+var_15C]
+  .text:1015AD85                 mov     ecx, [eax+40A0h]
+  .text:1015AD8B                 mov     [ecx], edx
+  .text:1015AD8D                 mov     edx, [ebp+var_15C]
+  .text:1015AD93                 mov     eax, [edx+409Ch]
+  .text:1015AD99                 mov     ecx, [eax]
+  .text:1015AD9B                 add     ecx, 1
+  .text:1015AD9E                 mov     edx, [ebp+var_15C]
+  .text:1015ADA4                 mov     eax, [edx+409Ch]
+  .text:1015ADAA                 mov     [eax], ecx
+  .text:1015ADAC                 mov     ecx, [ebp+var_15C]
+  .text:1015ADB2                 mov     edx, [ecx+44h]
+  .text:1015ADB5                 cmp     dword ptr [edx+0CCh], 0
+  .text:1015ADBC                 jnz     short loc_1015ADC8
+  .text:1015ADBE                 mov     eax, 1
+  .text:1015ADC3                 jmp     loc_1015AFC3
+  .text:1015ADC8                 mov     eax, [ebp+var_15C]
+  .text:1015ADCE                 mov     ecx, [eax+30h]
+  .text:1015ADD1                 cmp     dword ptr [ecx+308h], 0Ch
+  .text:1015ADD8                 jnz     short loc_1015AE03
+  .text:1015ADDA                 mov     edx, [ebp+var_15C]
+  .text:1015ADE0                 mov     eax, [edx]
+  .text:1015ADE2                 mov     ecx, [eax+30h] ; GameStudioRenderer_StudioMergeBones, vfunc_offset=0x30
+  .text:1015ADE5                 mov     [ebp+var_18C], ecx
+  .text:1015ADEB                 mov     edx, [ebp+var_15C]
+  .text:1015ADF1                 mov     eax, [edx+34h]
+  .text:1015ADF4                 push    eax
+  .text:1015ADF5                 mov     ecx, [ebp+var_15C]
+  .text:1015ADFB                 call    [ebp+var_18C]
+  .text:1015AE01                 jmp     short loc_1015AE16
+  .text:1015AE03                 mov     ecx, [ebp+var_15C]
+  .text:1015AE09                 mov     edx, [ecx]
+  .text:1015AE0B                 mov     ecx, [ebp+var_15C]
+  .text:1015AE11                 mov     eax, [edx+24h] ; GameStudioRenderer_StudioSetupBones, vfunc_offset=0x24
+  .text:1015AE14                 call    eax
+  .text:1015AE16                 mov     ecx, [ebp+var_15C]
+  .text:1015AE1C                 mov     edx, [ecx]
+  .text:1015AE1E                 mov     ecx, [ebp+var_15C]
+  .text:1015AE24                 mov     eax, [edx+2Ch] ; GameStudioRenderer_StudioSaveBones, vfunc_offset=0x2c
+  .text:1015AE27                 call    eax
+  .text:1015AE29                 mov     ecx, [ebp+flags]
+  .text:1015AE2C                 and     ecx, 2
+  .text:1015AE2F                 jz      short loc_1015AEA6
+  .text:1015AE31                 mov     edx, [ebp+var_15C]
+  .text:1015AE37                 mov     eax, [edx]
+  .text:1015AE39                 mov     ecx, [ebp+var_15C]
+  .text:1015AE3F                 mov     edx, [eax+28h]
+  .text:1015AE42                 call    edx
+  .text:1015AE44                 call    IEngineStudio.StudioClientEvents
+  .text:1015AE4A                 mov     eax, [ebp+var_15C]
+  .text:1015AE50                 mov     ecx, [eax+30h]
+  .text:1015AE53                 cmp     dword ptr [ecx], 0
+  .text:1015AE56                 jle     short loc_1015AEA6
+  .text:1015AE58                 mov     edx, ZP_GetEntityByIndex
+  .text:1015AE5E                 mov     [ebp+var_190], edx
+  .text:1015AE64                 mov     eax, [ebp+var_15C]
+  .text:1015AE6A                 mov     ecx, [eax+30h]
+  .text:1015AE6D                 mov     edx, [ecx]
+  .text:1015AE6F                 push    edx
+  .text:1015AE70                 call    [ebp+var_190]
+  .text:1015AE76                 add     esp, 4
+  .text:1015AE79                 mov     [ebp+var_194], eax
+  .text:1015AE7F                 ; Size
+  .text:1015AE7F                 push    30h ; '0'; Size
+  .text:1015AE81                 mov     eax, [ebp+var_15C]
+  .text:1015AE87                 mov     ecx, [eax+30h]
+  .text:1015AE8A                 add     ecx, 0B60h
+  .text:1015AE90                 ; Src
+  .text:1015AE90                 push    ecx; Src
+  .text:1015AE91                 mov     edx, [ebp+var_194]
+  .text:1015AE97                 add     edx, 0B60h
+  .text:1015AE9D                 ; void *
+  .text:1015AE9D                 push    edx; void *
+  .text:1015AE9E                 call    j__memmove
+  .text:1015AEA3                 add     esp, 0Ch
+  .text:1015AEA6                 mov     eax, [ebp+flags]
+  .text:1015AEA9                 and     eax, 1
+  .text:1015AEAC                 jz      loc_1015AFBE
+  .text:1015AEB2                 ; self
+  .text:1015AEB2                 lea     ecx, [ebp+var_1C8]; self
+  .text:1015AEB8                 call    ZP_VectorBase
+  .text:1015AEBD                 mov     [ebp+var_1A8], eax
+  .text:1015AEC3                 mov     ecx, IEngineStudio.StudioDynamicLight
+  .text:1015AEC9                 mov     [ebp+var_198], ecx
+  .text:1015AECF                 lea     edx, [ebp+self]
+  .text:1015AED5                 push    edx
+  .text:1015AED6                 mov     eax, [ebp+var_15C]
+  .text:1015AEDC                 mov     ecx, [eax+30h]
+  .text:1015AEDF                 push    ecx
+  .text:1015AEE0                 call    [ebp+var_198]
+  .text:1015AEE6                 add     esp, 8
+  .text:1015AEE9                 mov     edx, IEngineStudio.StudioEntityLight
+  .text:1015AEEF                 mov     [ebp+var_19C], edx
+  .text:1015AEF5                 lea     eax, [ebp+self]
+  .text:1015AEFB                 push    eax
+  .text:1015AEFC                 call    [ebp+var_19C]
+  .text:1015AF02                 add     esp, 4
+  .text:1015AF05                 cmp     [ebp+var_1B8], 3Ch ; '<'
+  .text:1015AF0C                 jge     short loc_1015AF29
+  .text:1015AF0E                 call    ZP_GetViewModel
+  .text:1015AF14                 mov     ecx, [ebp+var_15C]
+  .text:1015AF1A                 cmp     [ecx+30h], eax
+  .text:1015AF1D                 jnz     short loc_1015AF29
+  .text:1015AF1F                 mov     [ebp+var_1B8], 3Ch ; '<'
+  .text:1015AF29                 mov     edx, IEngineStudio.StudioSetupLighting
+  .text:1015AF2F                 mov     [ebp+var_1A0], edx
+  .text:1015AF35                 lea     eax, [ebp+self]
+  .text:1015AF3B                 push    eax
+  .text:1015AF3C                 call    [ebp+var_1A0]
+  .text:1015AF42                 add     esp, 4
+  .text:1015AF45                 mov     ecx, [ebp+var_15C]
+  .text:1015AF4B                 mov     edx, [ecx+30h]
+  .text:1015AF4E                 mov     eax, [edx+2E4h]
+  .text:1015AF54                 and     eax, 0FFh
+  .text:1015AF59                 mov     ecx, [ebp+var_15C]
+  .text:1015AF5F                 mov     [ecx+50h], eax
+  .text:1015AF62                 mov     edx, [ebp+var_15C]
+  .text:1015AF68                 mov     eax, [edx+30h]
+  .text:1015AF6B                 mov     ecx, [eax+2E4h]
+  .text:1015AF71                 and     ecx, 0FF00h
+  .text:1015AF77                 sar     ecx, 8
+  .text:1015AF7A                 mov     edx, [ebp+var_15C]
+  .text:1015AF80                 mov     [edx+54h], ecx
+  .text:1015AF83                 mov     eax, IEngineStudio.StudioSetRemapColors
+  .text:1015AF88                 mov     [ebp+var_1A4], eax
+  .text:1015AF8E                 mov     ecx, [ebp+var_15C]
+  .text:1015AF94                 mov     edx, [ecx+54h]
+  .text:1015AF97                 push    edx
+  .text:1015AF98                 mov     eax, [ebp+var_15C]
+  .text:1015AF9E                 mov     ecx, [eax+50h]
+  .text:1015AFA1                 push    ecx
+  .text:1015AFA2                 call    [ebp+var_1A4]
+  .text:1015AFA8                 add     esp, 8
+  .text:1015AFAB                 mov     edx, [ebp+var_15C]
+  .text:1015AFB1                 mov     eax, [edx]
+  .text:1015AFB3                 mov     ecx, [ebp+var_15C]
+  .text:1015AFB9                 mov     edx, [eax+54h] ; GameStudioRenderer_StudioRenderModel, vfunc_offset=0x54
+  .text:1015AFBC                 call    edx
+  .text:1015AFBE                 mov     eax, 1
+  .text:1015AFC3                 pop     esi
+  .text:1015AFC4                 mov     ecx, [ebp+var_4]
+  .text:1015AFC7                 ; StackCookie
+  .text:1015AFC7                 xor     ecx, ebp; StackCookie
+  .text:1015AFC9                 call    j_@__security_check_cookie@4; __security_check_cookie(x)
+  .text:1015AFCE                 mov     esp, ebp
+  .text:1015AFD0                 pop     ebp
+  .text:1015AFD1                 retn    4
+procedure: |-
+  int __thiscall CStudioModelRenderer_StudioDrawModel(ZPRenderer *self, int flags)
+  {
+    struct cl_entity_s *m_pCurrentEntity; // esi
+    struct entity_state_s *v4; // eax
+    void *v5; // eax
+    _BYTE v6[12]; // [esp+4h] [ebp-1C8h] BYREF
+    _BYTE selfa[4]; // [esp+10h] [ebp-1BCh] BYREF
+    int v8; // [esp+14h] [ebp-1B8h]
+    float *v9; // [esp+24h] [ebp-1A8h]
+    void (*StudioSetRemapColors)(int, int); // [esp+28h] [ebp-1A4h]
+    void (*StudioSetupLighting)(struct alight_s *); // [esp+2Ch] [ebp-1A0h]
+    void (*StudioEntityLight)(struct alight_s *); // [esp+30h] [ebp-19Ch]
+    void (*StudioDynamicLight)(struct cl_entity_s *, struct alight_s *); // [esp+34h] [ebp-198h]
+    struct cl_entity_s *EntityByIndex; // [esp+38h] [ebp-194h]
+    struct cl_entity_s *(__cdecl *v15)(int); // [esp+3Ch] [ebp-190h]
+    void (__thiscall *StudioMergeBones)(ZPRenderer *, void *); // [esp+40h] [ebp-18Ch]
+    void (__thiscall *StudioSetUpTransform)(ZPRenderer *, int); // [esp+44h] [ebp-188h]
+    void (*SetRenderModel)(struct model_s *); // [esp+48h] [ebp-184h]
+    void (*StudioSetHeader)(void *); // [esp+4Ch] [ebp-180h]
+    void *(*Mod_Extradata)(struct model_s *); // [esp+50h] [ebp-17Ch]
+    int v21; // [esp+54h] [ebp-178h]
+    int m_fDoInterp; // [esp+58h] [ebp-174h]
+    int (__thiscall *StudioDrawPlayer)(ZPRenderer *, int, void *, bool); // [esp+5Ch] [ebp-170h]
+    struct entity_state_s *(*GetPlayerState)(int); // [esp+60h] [ebp-16Ch]
+    void (*GetAliasScale)(float *, float *); // [esp+64h] [ebp-168h]
+    void (*GetViewInfo)(float *, float *, float *, float *); // [esp+68h] [ebp-164h]
+    void (*GetTimes)(int *, double *, double *); // [esp+6Ch] [ebp-160h]
+    ZPRenderer *v28; // [esp+70h] [ebp-15Ch]
+    _DWORD v29[4]; // [esp+74h] [ebp-158h] BYREF
+    float v30[3]; // [esp+84h] [ebp-148h] BYREF
+    float destination[78]; // [esp+90h] [ebp-13Ch] BYREF
+
+    v28 = self;
+    ZP_AlightDefaultCtor(selfa);
+    ZP_VectorDefaultCtor(v6);
+    v28->m_pCurrentEntity = IEngineStudio.GetCurrentEntity();
+    GetTimes = IEngineStudio.GetTimes;
+    IEngineStudio.GetTimes(&v28->m_nFrameCount, &v28->m_clTime, &v28->m_clOldTime);
+    GetViewInfo = IEngineStudio.GetViewInfo;
+    IEngineStudio.GetViewInfo(v28->m_vRenderOrigin, v28->m_vUp, v28->m_vRight, v28->m_vNormal);
+    GetAliasScale = IEngineStudio.GetAliasScale;
+    IEngineStudio.GetAliasScale(&v28->m_fSoftwareXScale, &v28->m_fSoftwareYScale);
+    if ( *((_DWORD *)v28->m_pCurrentEntity + 193) == 17 )
+    {
+      ZP_EntityStateDefaultCtor(v29);
+      if ( *((int *)v28->m_pCurrentEntity + 191) > 0
+        && (m_pCurrentEntity = v28->m_pCurrentEntity, *((_DWORD *)m_pCurrentEntity + 191) <= ZP_GetMaxClients()) )
+      {
+        GetPlayerState = IEngineStudio.GetPlayerState;
+        v4 = IEngineStudio.GetPlayerState(*((_DWORD *)v28->m_pCurrentEntity + 191) - 1);
+        ZP_EntityStateAssign(v29, v4);
+        v29[1] = *((_DWORD *)v28->m_pCurrentEntity + 191);
+        destination[3] = *((float *)v28->m_pCurrentEntity + 182);
+        destination[38] = 0.0;
+        destination[39] = 0.0;
+        destination[15] = 0.0;
+        VectorCopy((const float *)v28->m_pCurrentEntity + 179, destination);
+        VectorCopy((const float *)v28->m_pCurrentEntity + 176, v30);
+        m_fDoInterp = v28->m_fDoInterp;
+        v28->m_fDoInterp = 0;
+        StudioDrawPlayer = v28->vtable->StudioDrawPlayer;
+        v21 = StudioDrawPlayer(v28, flags, v29, 1); // GameStudioRenderer_StudioDrawPlayer, vfunc_offset=0x10
+        v28->m_fDoInterp = m_fDoInterp;
+        return v21;
+      }
+      else
+      {
+        return 0;
+      }
+    }
+    else
+    {
+      v28->m_pRenderModel = *((struct model_s **)v28->m_pCurrentEntity + 741);
+      Mod_Extradata = IEngineStudio.Mod_Extradata;
+      v5 = IEngineStudio.Mod_Extradata(v28->m_pRenderModel);
+      v28->m_pStudioHeader = v5;
+      StudioSetHeader = IEngineStudio.StudioSetHeader;
+      IEngineStudio.StudioSetHeader(v28->m_pStudioHeader);
+      SetRenderModel = IEngineStudio.SetRenderModel;
+      IEngineStudio.SetRenderModel(v28->m_pRenderModel);
+      StudioSetUpTransform = v28->vtable->StudioSetUpTransform;
+      StudioSetUpTransform(v28, 0);
+      if ( (flags & 1) == 0 )
+        goto LABEL_11;
+      if ( !IEngineStudio.StudioCheckBBox() )
+        return 0;
+      ++*v28->m_pModelsDrawn;
+      ++*v28->m_pStudioModelCount;
+      if ( *((_DWORD *)v28->m_pStudioHeader + 51) )
+      {
+  LABEL_11:
+        if ( *((_DWORD *)v28->m_pCurrentEntity + 194) == 12 )
+        {
+          StudioMergeBones = v28->vtable->StudioMergeBones;
+          StudioMergeBones(v28, v28->m_pRenderModel); // GameStudioRenderer_StudioMergeBones, vfunc_offset=0x30
+        }
+        else
+        {
+          v28->vtable->StudioSetupBones(v28); // GameStudioRenderer_StudioSetupBones, vfunc_offset=0x24
+        }
+        v28->vtable->StudioSaveBones(v28); // GameStudioRenderer_StudioSaveBones, vfunc_offset=0x2c
+        if ( (flags & 2) != 0 )
+        {
+          v28->vtable->StudioCalcAttachments(v28);
+          IEngineStudio.StudioClientEvents();
+          if ( *(int *)v28->m_pCurrentEntity > 0 )
+          {
+            v15 = ZP_GetEntityByIndex;
+            EntityByIndex = ZP_GetEntityByIndex(*(_DWORD *)v28->m_pCurrentEntity);
+            j__memmove((char *)EntityByIndex + 2912, (char *)v28->m_pCurrentEntity + 2912, 48);
+          }
+        }
+        if ( (flags & 1) != 0 )
+        {
+          v9 = ZP_VectorBase(v6);
+          StudioDynamicLight = IEngineStudio.StudioDynamicLight;
+          IEngineStudio.StudioDynamicLight(v28->m_pCurrentEntity, (struct alight_s *)selfa);
+          StudioEntityLight = IEngineStudio.StudioEntityLight;
+          IEngineStudio.StudioEntityLight((struct alight_s *)selfa);
+          if ( v8 < 60 && v28->m_pCurrentEntity == ZP_GetViewModel() )
+            v8 = 60;
+          StudioSetupLighting = IEngineStudio.StudioSetupLighting;
+          IEngineStudio.StudioSetupLighting((struct alight_s *)selfa);
+          v28->m_nTopColor = (unsigned __int8)*((_DWORD *)v28->m_pCurrentEntity + 185);
+          v28->m_nBottomColor = (*((_DWORD *)v28->m_pCurrentEntity + 185) & 0xFF00) >> 8;
+          StudioSetRemapColors = IEngineStudio.StudioSetRemapColors;
+          IEngineStudio.StudioSetRemapColors(v28->m_nTopColor, v28->m_nBottomColor);
+          v28->vtable->StudioRenderModel(v28); // GameStudioRenderer_StudioRenderModel, vfunc_offset=0x54
+        }
+        return 1;
+      }
+      else
+      {
+        return 1;
+      }
+    }
+  }

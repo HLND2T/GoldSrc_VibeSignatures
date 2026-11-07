@@ -1,0 +1,343 @@
+func_name: "GameStudioRenderer_StudioRenderModel"
+func_va: "0x1015ea70"
+disasm_code: |-
+  .text:1015EA70                 ; ZP 10210 extends the source baseline with texture glow, weapon highlights and team colors. Preserve these branches; StudioRenderFinal is the current vtable call at byte offset 0x5c.
+  .text:1015EA70                 push    ebp; ZP 10210 extends the source baseline with texture glow, weapon highlights and team colors. Preserve these branches; StudioRenderFinal is the current vtable call at byte offset 0x5c.
+  .text:1015EA71                 mov     ebp, esp
+  .text:1015EA73                 sub     esp, 50h
+  .text:1015EA76                 mov     [ebp+var_10], ecx
+  .text:1015EA79                 call    IEngineStudio.SetChromeOrigin
+  .text:1015EA7F                 mov     eax, IEngineStudio.SetForceFaceFlags
+  .text:1015EA84                 mov     [ebp+var_38], eax
+  .text:1015EA87                 push    0
+  .text:1015EA89                 call    [ebp+var_38]
+  .text:1015EA8C                 add     esp, 4
+  .text:1015EA8F                 mov     ecx, [ebp+var_10]
+  .text:1015EA92                 mov     edx, [ecx+44h]
+  .text:1015EA95                 mov     eax, [edx+0B4h]
+  .text:1015EA9B                 mov     [ebp+var_3C], eax
+  .text:1015EA9E                 mov     [ebp+var_1C], 0
+  .text:1015EAA5                 jmp     short loc_1015EAB0
+  .text:1015EAA7                 mov     ecx, [ebp+var_1C]
+  .text:1015EAAA                 add     ecx, 1
+  .text:1015EAAD                 mov     [ebp+var_1C], ecx
+  .text:1015EAB0                 mov     edx, [ebp+var_1C]
+  .text:1015EAB3                 cmp     edx, [ebp+var_3C]
+  .text:1015EAB6                 jge     short loc_1015EB16
+  .text:1015EAB8                 mov     eax, [ebp+var_10]
+  .text:1015EABB                 mov     ecx, [eax+44h]
+  .text:1015EABE                 mov     edx, [ebp+var_10]
+  .text:1015EAC1                 mov     eax, [edx+44h]
+  .text:1015EAC4                 add     eax, [ecx+0B8h]
+  .text:1015EACA                 imul    ecx, [ebp+var_1C], 50h ; 'P'
+  .text:1015EACE                 add     eax, ecx
+  .text:1015EAD0                 mov     [ebp+var_24], eax
+  .text:1015EAD3                 mov     [ebp+var_20], 0
+  .text:1015EADA                 jmp     short loc_1015EAE5
+  .text:1015EADC                 mov     edx, [ebp+var_20]
+  .text:1015EADF                 add     edx, 1
+  .text:1015EAE2                 mov     [ebp+var_20], edx
+  .text:1015EAE5                 cmp     [ebp+var_20], 3
+  .text:1015EAE9                 jnb     short loc_1015EB14
+  .text:1015EAEB                 mov     eax, [ebp+var_20]
+  .text:1015EAEE                 mov     ecx, off_104C65C4[eax*4]; "eye.bmp"
+  .text:1015EAF5                 push    ecx
+  .text:1015EAF6                 mov     edx, [ebp+var_24]
+  .text:1015EAF9                 push    edx
+  .text:1015EAFA                 call    sub_10017EEA
+  .text:1015EAFF                 add     esp, 8
+  .text:1015EB02                 test    eax, eax
+  .text:1015EB04                 jnz     short loc_1015EB12
+  .text:1015EB06                 mov     eax, [ebp+var_24]
+  .text:1015EB09                 mov     dword ptr [eax+40h], 4
+  .text:1015EB10                 jmp     short loc_1015EB14
+  .text:1015EB12                 jmp     short loc_1015EADC
+  .text:1015EB14                 jmp     short loc_1015EAA7
+  .text:1015EB16                 call    ZP_GetLocalPlayer
+  .text:1015EB1C                 mov     [ebp+var_28], eax
+  .text:1015EB1F                 mov     [ebp+var_14], 0
+  .text:1015EB26                 cmp     [ebp+var_28], 0
+  .text:1015EB2A                 jz      short loc_1015EB6E
+  .text:1015EB2C                 mov     ecx, [ebp+var_28]
+  .text:1015EB2F                 cmp     dword ptr [ecx+354h], 3
+  .text:1015EB36                 jnz     short loc_1015EB6E
+  .text:1015EB38                 movzx   edx, byte_104DFFC8
+  .text:1015EB3F                 test    edx, edx
+  .text:1015EB41                 jz      short loc_1015EB67
+  .text:1015EB43                 mov     eax, [ebp+var_10]
+  .text:1015EB46                 mov     ecx, [eax+30h]
+  .text:1015EB49                 cmp     dword ptr [ecx+4], 1
+  .text:1015EB4D                 jnz     short loc_1015EB58
+  .text:1015EB4F                 mov     [ebp+var_2C], 2
+  .text:1015EB56                 jmp     short loc_1015EB5F
+  .text:1015EB58                 mov     [ebp+var_2C], 1
+  .text:1015EB5F                 mov     edx, [ebp+var_2C]
+  .text:1015EB62                 mov     [ebp+var_14], edx
+  .text:1015EB65                 jmp     short loc_1015EB6E
+  .text:1015EB67                 mov     [ebp+var_14], 1
+  .text:1015EB6E                 mov     eax, [ebp+var_10]
+  .text:1015EB71                 mov     edx, [eax]
+  .text:1015EB73                 mov     ecx, [ebp+var_10]
+  .text:1015EB76                 mov     eax, [edx+58h]
+  .text:1015EB79                 call    eax
+  .text:1015EB7B                 mov     [ebp+var_1], al
+  .text:1015EB7E                 movzx   ecx, [ebp+var_1]
+  .text:1015EB82                 test    ecx, ecx
+  .text:1015EB84                 jz      short loc_1015EB9C
+  .text:1015EB86                 cmp     [ebp+var_14], 0
+  .text:1015EB8A                 jnz     short loc_1015EB9C
+  .text:1015EB8C                 mov     edx, [ebp+var_10]
+  .text:1015EB8F                 mov     eax, [edx+30h]
+  .text:1015EB92                 mov     dword ptr [eax+304h], 13h
+  .text:1015EB9C                 mov     ecx, [ebp+var_10]
+  .text:1015EB9F                 mov     edx, [ecx+30h]
+  .text:1015EBA2                 cmp     dword ptr [edx+304h], 13h
+  .text:1015EBA9                 jz      short loc_1015EBB5
+  .text:1015EBAB                 cmp     [ebp+var_14], 2
+  .text:1015EBAF                 jnz     loc_1015ED6B
+  .text:1015EBB5                 mov     eax, [ebp+var_10]
+  .text:1015EBB8                 mov     ecx, [eax+30h]
+  .text:1015EBBB                 mov     dword ptr [ecx+304h], 0
+  .text:1015EBC5                 mov     edx, [ebp+var_10]
+  .text:1015EBC8                 mov     eax, [edx]
+  .text:1015EBCA                 mov     ecx, [ebp+var_10]
+  .text:1015EBCD                 mov     edx, [eax+5Ch] ; GameStudioRenderer_StudioRenderFinal, vfunc_offset=0x5c
+  .text:1015EBD0                 call    edx
+  .text:1015EBD2                 call    IEngineStudio.IsHardware
+  .text:1015EBD8                 test    eax, eax
+  .text:1015EBDA                 jnz     short loc_1015EBEF
+  .text:1015EBDC                 mov     eax, dword_104E1AB8
+  .text:1015EBE1                 mov     ecx, [eax+4]
+  .text:1015EBE4                 mov     [ebp+var_40], ecx
+  .text:1015EBE7                 push    5
+  .text:1015EBE9                 call    [ebp+var_40]
+  .text:1015EBEC                 add     esp, 4
+  .text:1015EBEF                 mov     edx, IEngineStudio.SetForceFaceFlags
+  .text:1015EBF5                 mov     [ebp+var_44], edx
+  .text:1015EBF8                 push    2
+  .text:1015EBFA                 call    [ebp+var_44]
+  .text:1015EBFD                 add     esp, 4
+  .text:1015EC00                 cmp     [ebp+var_14], 2
+  .text:1015EC04                 jnz     short loc_1015EC38
+  .text:1015EC06                 lea     eax, [ebp+var_C]
+  .text:1015EC09                 push    eax
+  .text:1015EC0A                 mov     ecx, [ebp+var_10]
+  .text:1015EC0D                 mov     edx, [ecx+30h]
+  .text:1015EC10                 add     edx, 354h
+  .text:1015EC16                 push    edx
+  .text:1015EC17                 call    sub_10160280
+  .text:1015EC1C                 add     esp, 8
+  .text:1015EC1F                 mov     eax, [ebp+var_10]
+  .text:1015EC22                 mov     ecx, [eax+30h]
+  .text:1015EC25                 add     ecx, 300h
+  .text:1015EC2B                 mov     dx, [ebp+var_C]
+  .text:1015EC2F                 mov     [ecx], dx
+  .text:1015EC32                 mov     al, [ebp+var_A]
+  .text:1015EC35                 mov     [ecx+2], al
+  .text:1015EC38                 movzx   ecx, [ebp+var_1]
+  .text:1015EC3C                 test    ecx, ecx
+  .text:1015EC3E                 jz      loc_1015ECFB
+  .text:1015EC44                 mov     edx, [ebp+var_10]
+  .text:1015EC47                 mov     eax, [edx]
+  .text:1015EC49                 mov     ecx, [ebp+var_10]
+  .text:1015EC4C                 mov     edx, [eax+8]
+  .text:1015EC4F                 call    edx
+  .text:1015EC51                 lea     ecx, [ebp+var_18]
+  .text:1015EC54                 call    sub_10014CF4
+  .text:1015EC59                 mov     eax, [ebp+var_10]
+  .text:1015EC5C                 mov     ecx, [eax+30h]
+  .text:1015EC5F                 mov     edx, [ecx+358h]
+  .text:1015EC65                 mov     [ebp+var_30], edx
+  .text:1015EC68                 cmp     [ebp+var_30], 0
+  .text:1015EC6C                 jz      short loc_1015EC8F
+  .text:1015EC6E                 cmp     [ebp+var_30], 1
+  .text:1015EC72                 jz      short loc_1015EC76
+  .text:1015EC74                 jmp     short loc_1015EC8F
+  .text:1015EC76                 lea     eax, [ebp+var_18]
+  .text:1015EC79                 push    eax
+  .text:1015EC7A                 mov     ecx, offset unk_104EF7F4
+  .text:1015EC7F                 call    sub_1001AB31
+  .text:1015EC84                 push    eax
+  .text:1015EC85                 call    sub_100110FE
+  .text:1015EC8A                 add     esp, 8
+  .text:1015EC8D                 jmp     short loc_1015ECA6
+  .text:1015EC8F                 lea     ecx, [ebp+var_18]
+  .text:1015EC92                 push    ecx
+  .text:1015EC93                 mov     ecx, offset unk_104EF7D8
+  .text:1015EC98                 call    sub_1001AB31
+  .text:1015EC9D                 push    eax
+  .text:1015EC9E                 call    sub_100110FE
+  .text:1015ECA3                 add     esp, 8
+  .text:1015ECA6                 lea     ecx, [ebp+var_18]
+  .text:1015ECA9                 call    sub_100124D1
+  .text:1015ECAE                 mov     byte ptr [ebp+var_8], al
+  .text:1015ECB1                 lea     ecx, [ebp+var_18]
+  .text:1015ECB4                 call    sub_100059A2
+  .text:1015ECB9                 mov     byte ptr [ebp+var_8+1], al
+  .text:1015ECBC                 lea     ecx, [ebp+var_18]
+  .text:1015ECBF                 call    sub_1000795A
+  .text:1015ECC4                 mov     [ebp+var_6], al
+  .text:1015ECC7                 mov     edx, [ebp+var_10]
+  .text:1015ECCA                 mov     eax, [edx+30h]
+  .text:1015ECCD                 add     eax, 300h
+  .text:1015ECD2                 mov     cx, [ebp+var_8]
+  .text:1015ECD6                 mov     [eax], cx
+  .text:1015ECD9                 mov     dl, [ebp+var_6]
+  .text:1015ECDC                 mov     [eax+2], dl
+  .text:1015ECDF                 mov     ecx, offset unk_104EF864
+  .text:1015ECE4                 call    sub_100196D7
+  .text:1015ECE9                 mov     [ebp+var_48], eax
+  .text:1015ECEC                 mov     eax, [ebp+var_10]
+  .text:1015ECEF                 mov     ecx, [eax+30h]
+  .text:1015ECF2                 mov     edx, [ebp+var_48]
+  .text:1015ECF5                 mov     [ecx+2FCh], edx
+  .text:1015ECFB                 mov     eax, dword_104E1AB8
+  .text:1015ED00                 mov     ecx, [eax+2Ch]
+  .text:1015ED03                 mov     [ebp+var_4C], ecx
+  .text:1015ED06                 movzx   edx, [ebp+var_1]
+  .text:1015ED0A                 test    edx, edx
+  .text:1015ED0C                 jz      short loc_1015ED19
+  .text:1015ED0E                 mov     eax, [ebp+var_10]
+  .text:1015ED11                 mov     ecx, [eax+5Ch] ; GameStudioRenderer_StudioRenderFinal, vfunc_offset=0x5c
+  .text:1015ED14                 mov     [ebp+var_34], ecx
+  .text:1015ED17                 jmp     short loc_1015ED22
+  .text:1015ED19                 mov     edx, [ebp+var_10]
+  .text:1015ED1C                 mov     eax, [edx+58h]
+  .text:1015ED1F                 mov     [ebp+var_34], eax
+  .text:1015ED22                 push    0
+  .text:1015ED24                 mov     ecx, [ebp+var_34]
+  .text:1015ED27                 push    ecx
+  .text:1015ED28                 call    [ebp+var_4C]
+  .text:1015ED2B                 add     esp, 8
+  .text:1015ED2E                 mov     edx, [ebp+var_10]
+  .text:1015ED31                 mov     eax, [edx+30h]
+  .text:1015ED34                 mov     dword ptr [eax+304h], 13h
+  .text:1015ED3E                 mov     ecx, [ebp+var_10]
+  .text:1015ED41                 mov     edx, [ecx]
+  .text:1015ED43                 mov     ecx, [ebp+var_10]
+  .text:1015ED46                 mov     eax, [edx+5Ch] ; GameStudioRenderer_StudioRenderFinal, vfunc_offset=0x5c
+  .text:1015ED49                 call    eax
+  .text:1015ED4B                 call    IEngineStudio.IsHardware
+  .text:1015ED51                 test    eax, eax
+  .text:1015ED53                 jnz     short loc_1015ED69
+  .text:1015ED55                 mov     ecx, dword_104E1AB8
+  .text:1015ED5B                 mov     edx, [ecx+4]
+  .text:1015ED5E                 mov     [ebp+var_50], edx
+  .text:1015ED61                 push    0
+  .text:1015ED63                 call    [ebp+var_50]
+  .text:1015ED66                 add     esp, 4
+  .text:1015ED69                 jmp     short loc_1015ED78
+  .text:1015ED6B                 mov     eax, [ebp+var_10]
+  .text:1015ED6E                 mov     edx, [eax]
+  .text:1015ED70                 mov     ecx, [ebp+var_10]
+  .text:1015ED73                 mov     eax, [edx+5Ch] ; GameStudioRenderer_StudioRenderFinal, vfunc_offset=0x5c
+  .text:1015ED76                 call    eax
+  .text:1015ED78                 mov     esp, ebp
+  .text:1015ED7A                 pop     ebp
+  .text:1015ED7B                 retn
+procedure: |-
+  void __thiscall CStudioModelRenderer_StudioRenderModel(ZPRenderer *self)
+  {
+    int v1; // ecx
+    int v2; // eax
+    int v3; // eax
+    int v4; // [esp+8h] [ebp-48h]
+    int v5; // [esp+14h] [ebp-3Ch]
+    void *m_pWeaponHighlightSprite; // [esp+1Ch] [ebp-34h]
+    int v7; // [esp+24h] [ebp-2Ch]
+    struct cl_entity_s *LocalPlayer; // [esp+28h] [ebp-28h]
+    int v9; // [esp+2Ch] [ebp-24h]
+    unsigned int j; // [esp+30h] [ebp-20h]
+    int i; // [esp+34h] [ebp-1Ch]
+    int v12; // [esp+38h] [ebp-18h] BYREF
+    int v13; // [esp+3Ch] [ebp-14h]
+    ZPRenderer *v14; // [esp+40h] [ebp-10h]
+    __int16 v15; // [esp+44h] [ebp-Ch] BYREF
+    char v16; // [esp+46h] [ebp-Ah]
+    __int16 v17; // [esp+48h] [ebp-8h]
+    char v18; // [esp+4Ah] [ebp-6h]
+    char v19; // [esp+4Fh] [ebp-1h]
+
+    v14 = self;
+    IEngineStudio.SetChromeOrigin();
+    IEngineStudio.SetForceFaceFlags(0);
+    v5 = *((_DWORD *)v14->m_pStudioHeader + 45);
+    for ( i = 0; i < v5; ++i )
+    {
+      v9 = (int)v14->m_pStudioHeader + 80 * i + *((_DWORD *)v14->m_pStudioHeader + 46);
+      for ( j = 0; j < 3; ++j )
+      {
+        if ( !sub_10017EEA(v9, off_104C65C4[j]) )
+        {
+          *(_DWORD *)(v9 + 64) = 4;
+          break;
+        }
+      }
+    }
+    LocalPlayer = ZP_GetLocalPlayer();
+    v13 = 0;
+    if ( LocalPlayer && *((_DWORD *)LocalPlayer + 213) == 3 )
+    {
+      if ( byte_104DFFC8 )
+      {
+        if ( *((_DWORD *)v14->m_pCurrentEntity + 1) == 1 )
+          v7 = 2;
+        else
+          v7 = 1;
+        v13 = v7;
+      }
+      else
+      {
+        v13 = 1;
+      }
+    }
+    v19 = ((int (__thiscall *)(ZPRenderer *))v14->vtable->slot_22)(v14);
+    if ( v19 && !v13 )
+      *((_DWORD *)v14->m_pCurrentEntity + 193) = 19;
+    if ( *((_DWORD *)v14->m_pCurrentEntity + 193) == 19 || v13 == 2 )
+    {
+      *((_DWORD *)v14->m_pCurrentEntity + 193) = 0;
+      v14->vtable->StudioRenderFinal(v14); // GameStudioRenderer_StudioRenderFinal, vfunc_offset=0x5c
+      if ( !IEngineStudio.IsHardware() )
+        (*(void (__cdecl **)(int))(dword_104E1AB8 + 4))(5);
+      IEngineStudio.SetForceFaceFlags(2);
+      if ( v13 == 2 )
+      {
+        sub_10160280((char *)v14->m_pCurrentEntity + 852, &v15);
+        v1 = (int)v14->m_pCurrentEntity + 768;
+        *(_WORD *)v1 = v15;
+        *(_BYTE *)(v1 + 2) = v16;
+      }
+      if ( v19 )
+      {
+        ((void (__thiscall *)(ZPRenderer *))v14->vtable->slot_2)(v14);
+        sub_10014CF4(&v12);
+        if ( *((_DWORD *)v14->m_pCurrentEntity + 214) == 1 )
+          v2 = sub_1001AB31(&unk_104EF7F4);
+        else
+          v2 = sub_1001AB31(&unk_104EF7D8);
+        sub_100110FE(v2, &v12);
+        LOBYTE(v17) = sub_100124D1(&v12);
+        HIBYTE(v17) = sub_100059A2(&v12);
+        v18 = sub_1000795A(&v12);
+        v3 = (int)v14->m_pCurrentEntity + 768;
+        *(_WORD *)v3 = v17;
+        *(_BYTE *)(v3 + 2) = v18;
+        v4 = sub_100196D7(&unk_104EF864);
+        *((_DWORD *)v14->m_pCurrentEntity + 191) = v4;
+      }
+      if ( v19 )
+        m_pWeaponHighlightSprite = v14->m_pWeaponHighlightSprite;
+      else
+        m_pWeaponHighlightSprite = v14->m_pChromeSprite;
+      (*(void (__cdecl **)(void *, _DWORD))(dword_104E1AB8 + 44))(m_pWeaponHighlightSprite, 0);
+      *((_DWORD *)v14->m_pCurrentEntity + 193) = 19;
+      v14->vtable->StudioRenderFinal(v14); // GameStudioRenderer_StudioRenderFinal, vfunc_offset=0x5c
+      if ( !IEngineStudio.IsHardware() )
+        (*(void (__cdecl **)(_DWORD))(dword_104E1AB8 + 4))(0);
+    }
+    else
+    {
+      v14->vtable->StudioRenderFinal(v14); // GameStudioRenderer_StudioRenderFinal, vfunc_offset=0x5c
+    }
+  }

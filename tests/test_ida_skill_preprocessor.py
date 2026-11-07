@@ -1276,6 +1276,22 @@ class PreprocessorDispatchTests(unittest.IsolatedAsyncioTestCase):
 
 
 class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        # These orchestration fixtures use direct slots. Jump chains have their
+        # own synthetic IDA tests, independent of the orchestration mocks.
+        resolver = patch(
+            "ida_analyze_util._resolve_jmp_thunk_target_via_mcp",
+            new=AsyncMock(side_effect=lambda session, ea, **kwargs: int(ea)),
+        )
+        tables = patch(
+            "ida_analyze_util._resolved_vtable_data_via_mcp",
+            new=AsyncMock(side_effect=lambda session, table: table),
+        )
+        resolver.start()
+        tables.start()
+        self.addCleanup(resolver.stop)
+        self.addCleanup(tables.stop)
+
     async def test_engine_callback_resolves_indirect_efx_table_slot(self):
         from ida_preprocessor_scripts import _engine_public_callback_common as callback
 

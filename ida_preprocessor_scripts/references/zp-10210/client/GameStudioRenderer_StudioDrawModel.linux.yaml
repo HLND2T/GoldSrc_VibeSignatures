@@ -1,0 +1,778 @@
+func_name: "GameStudioRenderer_StudioDrawModel"
+func_va: "0x25ee60"
+disasm_code: |-
+  .text:0025EE60                 ; ZP 10210 ELF32: no DWARF; retained symbols and current call-site evidence corroborate the source baseline. StudioDrawPlayer has an extra dead-player bool; GCC speculatively devirtualizes StudioSaveBones. Preserve the fallback virtual dispatch.
+  .text:0025EE60                 push    ebp; ZP 10210 ELF32: no DWARF; retained symbols and current call-site evidence corroborate the source baseline. StudioDrawPlayer has an extra dead-player bool; GCC speculatively devirtualizes StudioSaveBones. Preserve the fallback virtual dispatch.
+  .text:0025EE61                 push    edi
+  .text:0025EE62                 push    esi
+  .text:0025EE63                 push    ebx
+  .text:0025EE64                 call    __x86_get_pc_thunk_bx
+  .text:0025EE69                 add     ebx, (offset _GLOBAL_OFFSET_TABLE_ - $)
+  .text:0025EE6F                 sub     esp, 18Ch
+  .text:0025EE75                 mov     esi, [esp+19Ch+this]
+  .text:0025EE7C                 call    ds:(IEngineStudio.GetCurrentEntity - 688000h)[ebx]
+  .text:0025EE82                 sub     esp, 4
+  .text:0025EE85                 mov     [esi+2Ch], eax
+  .text:0025EE88                 lea     eax, [esi+0Ch]
+  .text:0025EE8B                 ; old
+  .text:0025EE8B                 push    eax; old
+  .text:0025EE8C                 lea     eax, [esi+4]
+  .text:0025EE8F                 ; current
+  .text:0025EE8F                 push    eax; current
+  .text:0025EE90                 lea     eax, [esi+1Ch]
+  .text:0025EE93                 ; framecount
+  .text:0025EE93                 push    eax; framecount
+  .text:0025EE94                 call    ds:(IEngineStudio.GetTimes - 688000h)[ebx]
+  .text:0025EE9A                 lea     eax, [esi+4080h]
+  .text:0025EEA0                 add     esp, 10h
+  .text:0025EEA3                 ; vpnv
+  .text:0025EEA3                 push    eax; vpnv
+  .text:0025EEA4                 lea     eax, [esi+4074h]
+  .text:0025EEAA                 ; rightv
+  .text:0025EEAA                 push    eax; rightv
+  .text:0025EEAB                 lea     eax, [esi+4068h]
+  .text:0025EEB1                 ; upv
+  .text:0025EEB1                 push    eax; upv
+  .text:0025EEB2                 lea     eax, [esi+408Ch]
+  .text:0025EEB8                 ; origin
+  .text:0025EEB8                 push    eax; origin
+  .text:0025EEB9                 call    ds:(IEngineStudio.GetViewInfo - 688000h)[ebx]
+  .text:0025EEBF                 lea     eax, [esi+4064h]
+  .text:0025EEC5                 pop     ecx
+  .text:0025EEC6                 pop     edi
+  .text:0025EEC7                 ; y
+  .text:0025EEC7                 push    eax; y
+  .text:0025EEC8                 lea     eax, [esi+4060h]
+  .text:0025EECE                 ; x
+  .text:0025EECE                 push    eax; x
+  .text:0025EECF                 call    ds:(IEngineStudio.GetAliasScale - 688000h)[ebx]
+  .text:0025EED5                 mov     eax, [esi+2Ch]
+  .text:0025EED8                 add     esp, 10h
+  .text:0025EEDB                 cmp     dword ptr [eax+304h], 11h
+  .text:0025EEE2                 jz      loc_25F160
+  .text:0025EEE8                 mov     eax, [eax+0B94h]
+  .text:0025EEEE                 sub     esp, 0Ch
+  .text:0025EEF1                 mov     [esi+30h], eax
+  .text:0025EEF4                 ; mod
+  .text:0025EEF4                 push    eax; mod
+  .text:0025EEF5                 call    ds:(IEngineStudio.Mod_Extradata - 688000h)[ebx]
+  .text:0025EEFB                 mov     [esi+40h], eax
+  .text:0025EEFE                 ; header
+  .text:0025EEFE                 mov     [esp+1ACh+header], eax; header
+  .text:0025EF01                 call    ds:(IEngineStudio.StudioSetHeader - 688000h)[ebx]
+  .text:0025EF07                 pop     ebp
+  .text:0025EF08                 ; model
+  .text:0025EF08                 push    dword ptr [esi+30h]; model
+  .text:0025EF0B                 call    ds:(IEngineStudio.SetRenderModel - 688000h)[ebx]
+  .text:0025EF11                 pop     eax
+  .text:0025EF12                 mov     eax, [esi]
+  .text:0025EF14                 pop     edx
+  .text:0025EF15                 push    0
+  .text:0025EF17                 push    esi
+  .text:0025EF18                 call    dword ptr [eax+24h]
+  .text:0025EF1B                 mov     eax, [esp+1ACh+flags]
+  .text:0025EF22                 add     esp, 10h
+  .text:0025EF25                 and     eax, 1
+  .text:0025EF28                 mov     [esp+19Ch+var_19C], eax
+  .text:0025EF2B                 jnz     loc_25F118
+  .text:0025EF31                 mov     edx, [esi+2Ch]
+  .text:0025EF34                 mov     eax, [esi]
+  .text:0025EF36                 cmp     dword ptr [edx+308h], 0Ch
+  .text:0025EF3D                 jz      loc_25F500
+  .text:0025EF43                 sub     esp, 0Ch
+  .text:0025EF46                 push    esi
+  .text:0025EF47                 call    dword ptr [eax+28h] ; GameStudioRenderer_StudioSetupBones, vfunc_offset=0x28
+  .text:0025EF4A                 add     esp, 10h
+  .text:0025EF4D                 mov     eax, [esi]
+  .text:0025EF4F                 lea     edx, (_ZN20CStudioModelRenderer15StudioSaveBonesEv - 688000h)[ebx]; CStudioModelRenderer::StudioSaveBones(void)
+  .text:0025EF55                 mov     eax, [eax+30h] ; GameStudioRenderer_StudioSaveBones, vfunc_offset=0x30
+  .text:0025EF58                 cmp     eax, edx
+  .text:0025EF5A                 jnz     loc_25F518
+  .text:0025EF60                 mov     eax, [esi+40h]
+  .text:0025EF63                 mov     ecx, [eax+8Ch]
+  .text:0025EF69                 mov     edx, [eax+90h]
+  .text:0025EF6F                 mov     [esi+5Ch], ecx
+  .text:0025EF72                 mov     ecx, [eax+8Ch]
+  .text:0025EF78                 test    ecx, ecx
+  .text:0025EF7A                 jle     short loc_25EFFB
+  .text:0025EF7C                 add     eax, edx
+  .text:0025EF7E                 lea     ecx, [esi+60h]
+  .text:0025EF81                 lea     edi, [esi+1060h]
+  .text:0025EF87                 mov     [esp+19Ch+src], eax
+  .text:0025EF8B                 xor     eax, eax
+  .text:0025EF8D                 lea     esi, [esi+0]
+  .text:0025EF90                 mov     [esp+19Ch+var_194], eax
+  .text:0025EF94                 sub     esp, 4
+  .text:0025EF97                 ; n
+  .text:0025EF97                 push    20h ; ' '; n
+  .text:0025EF99                 ; src
+  .text:0025EF99                 push    [esp+1A4h+src]; src
+  .text:0025EF9D                 ; dest
+  .text:0025EF9D                 push    ecx; dest
+  .text:0025EF9E                 mov     [esp+1ACh+var_190], ecx
+  .text:0025EFA2                 call    _Z9V_strncpyPcPKci; V_strncpy(char *,char const*,int)
+  .text:0025EFA7                 mov     eax, [esp+1ACh+var_194]
+  .text:0025EFAB                 lea     ebp, [eax+eax*2]
+  .text:0025EFAE                 pop     eax
+  .text:0025EFAF                 pop     edx
+  .text:0025EFB0                 ; float (*)[4]
+  .text:0025EFB0                 push    edi; float (*)[4]
+  .text:0025EFB1                 mov     eax, [esi+40A8h]
+  .text:0025EFB7                 shl     ebp, 4
+  .text:0025EFBA                 add     eax, ebp
+  .text:0025EFBC                 ; float (*)[4]
+  .text:0025EFBC                 push    eax; float (*)[4]
+  .text:0025EFBD                 call    _Z10MatrixCopyPA4_fS0_; MatrixCopy(float (*)[4],float (*)[4])
+  .text:0025EFC2                 lea     edx, [edi+1800h]
+  .text:0025EFC8                 pop     ecx
+  .text:0025EFC9                 pop     eax
+  .text:0025EFCA                 ; float (*)[4]
+  .text:0025EFCA                 push    edx; float (*)[4]
+  .text:0025EFCB                 add     ebp, [esi+40ACh]
+  .text:0025EFD1                 add     edi, 30h ; '0'
+  .text:0025EFD4                 ; float (*)[4]
+  .text:0025EFD4                 push    ebp; float (*)[4]
+  .text:0025EFD5                 call    _Z10MatrixCopyPA4_fS0_; MatrixCopy(float (*)[4],float (*)[4])
+  .text:0025EFDA                 mov     eax, [esp+1ACh+var_194]
+  .text:0025EFDE                 mov     ecx, [esp+1ACh+var_190]
+  .text:0025EFE2                 mov     edx, [esi+40h]
+  .text:0025EFE5                 add     [esp+1ACh+src], 70h ; 'p'
+  .text:0025EFEA                 add     esp, 10h
+  .text:0025EFED                 add     eax, 1
+  .text:0025EFF0                 add     ecx, 20h ; ' '
+  .text:0025EFF3                 cmp     [edx+8Ch], eax
+  .text:0025EFF9                 jg      short loc_25EF90
+  .text:0025EFFB                 test    byte ptr [esp+19Ch+flags], 2
+  .text:0025F003                 jz      loc_25F094
+  .text:0025F009                 sub     esp, 0Ch
+  .text:0025F00C                 mov     eax, [esi]
+  .text:0025F00E                 push    esi
+  .text:0025F00F                 call    dword ptr [eax+2Ch]
+  .text:0025F012                 add     esp, 10h
+  .text:0025F015                 call    ds:(IEngineStudio.StudioClientEvents - 688000h)[ebx]
+  .text:0025F01B                 mov     eax, [esi+2Ch]
+  .text:0025F01E                 mov     eax, [eax]
+  .text:0025F020                 test    eax, eax
+  .text:0025F022                 jle     short loc_25F094
+  .text:0025F024                 sub     esp, 0Ch
+  .text:0025F027                 push    eax
+  .text:0025F028                 lea     eax, (gEngfuncs - 688000h)[ebx]
+  .text:0025F02E                 call    dword ptr [eax+0D4h]
+  .text:0025F034                 mov     edi, [esi+2Ch]
+  .text:0025F037                 lea     edx, [eax+0B60h]
+  .text:0025F03D                 add     esp, 10h
+  .text:0025F040                 lea     ecx, [edi+0B60h]
+  .text:0025F046                 mov     edi, [edi+0B60h]
+  .text:0025F04C                 mov     [eax+0B60h], edi
+  .text:0025F052                 mov     eax, [ecx+4]
+  .text:0025F055                 mov     [edx+4], eax
+  .text:0025F058                 mov     eax, [ecx+8]
+  .text:0025F05B                 mov     [edx+8], eax
+  .text:0025F05E                 mov     eax, [ecx+0Ch]
+  .text:0025F061                 mov     [edx+0Ch], eax
+  .text:0025F064                 mov     eax, [ecx+10h]
+  .text:0025F067                 mov     [edx+10h], eax
+  .text:0025F06A                 mov     eax, [ecx+14h]
+  .text:0025F06D                 mov     [edx+14h], eax
+  .text:0025F070                 mov     eax, [ecx+18h]
+  .text:0025F073                 mov     [edx+18h], eax
+  .text:0025F076                 mov     eax, [ecx+1Ch]
+  .text:0025F079                 mov     [edx+1Ch], eax
+  .text:0025F07C                 mov     eax, [ecx+20h]
+  .text:0025F07F                 mov     [edx+20h], eax
+  .text:0025F082                 mov     eax, [ecx+24h]
+  .text:0025F085                 mov     [edx+24h], eax
+  .text:0025F088                 mov     eax, [ecx+28h]
+  .text:0025F08B                 mov     [edx+28h], eax
+  .text:0025F08E                 mov     eax, [ecx+2Ch]
+  .text:0025F091                 mov     [edx+2Ch], eax
+  .text:0025F094                 mov     ebp, [esp+19Ch+var_19C]
+  .text:0025F097                 test    ebp, ebp
+  .text:0025F099                 jz      loc_25F145
+  .text:0025F09F                 lea     eax, [esp+19Ch+var_188]
+  .text:0025F0A3                 sub     esp, 8
+  .text:0025F0A6                 mov     [esp+1A4h+var_168], eax
+  .text:0025F0AA                 lea     edi, [esp+1A4h+var_17C]
+  .text:0025F0AE                 ; plight
+  .text:0025F0AE                 push    edi; plight
+  .text:0025F0AF                 ; ent
+  .text:0025F0AF                 push    dword ptr [esi+2Ch]; ent
+  .text:0025F0B2                 call    ds:(IEngineStudio.StudioDynamicLight - 688000h)[ebx]
+  .text:0025F0B8                 ; plight
+  .text:0025F0B8                 mov     [esp+1ACh+header], edi; plight
+  .text:0025F0BB                 call    ds:(IEngineStudio.StudioEntityLight - 688000h)[ebx]
+  .text:0025F0C1                 add     esp, 10h
+  .text:0025F0C4                 cmp     [esp+19Ch+var_178], 3Bh ; ';'
+  .text:0025F0C9                 jle     loc_25F4D8
+  .text:0025F0CF                 sub     esp, 0Ch
+  .text:0025F0D2                 ; plighting
+  .text:0025F0D2                 push    edi; plighting
+  .text:0025F0D3                 call    ds:(IEngineStudio.StudioSetupLighting - 688000h)[ebx]
+  .text:0025F0D9                 mov     edx, [esi+2Ch]
+  .text:0025F0DC                 movzx   eax, byte ptr [edx+2E4h]
+  .text:0025F0E3                 mov     [esi+4Ch], eax
+  .text:0025F0E6                 movzx   edx, byte ptr [edx+2E5h]
+  .text:0025F0ED                 mov     [esi+50h], edx
+  .text:0025F0F0                 pop     ecx
+  .text:0025F0F1                 pop     edi
+  .text:0025F0F2                 ; bottom
+  .text:0025F0F2                 push    edx; bottom
+  .text:0025F0F3                 ; top
+  .text:0025F0F3                 push    eax; top
+  .text:0025F0F4                 call    ds:(IEngineStudio.StudioSetRemapColors - 688000h)[ebx]
+  .text:0025F0FA                 mov     eax, [esi]
+  .text:0025F0FC                 mov     [esp+1ACh+header], esi
+  .text:0025F0FF                 call    dword ptr [eax+58h] ; GameStudioRenderer_StudioRenderModel, vfunc_offset=0x58
+  .text:0025F102                 add     esp, 10h
+  .text:0025F105                 mov     eax, [esp+19Ch+var_19C]
+  .text:0025F108                 add     esp, 18Ch
+  .text:0025F10E                 pop     ebx
+  .text:0025F10F                 pop     esi
+  .text:0025F110                 pop     edi
+  .text:0025F111                 pop     ebp
+  .text:0025F112                 retn
+  .text:0025F118                 call    ds:(IEngineStudio.StudioCheckBBox - 688000h)[ebx]
+  .text:0025F11E                 test    eax, eax
+  .text:0025F120                 jz      short loc_25F17A
+  .text:0025F122                 mov     eax, [esi+409Ch]
+  .text:0025F128                 add     dword ptr [eax], 1
+  .text:0025F12B                 mov     eax, [esi+4098h]
+  .text:0025F131                 add     dword ptr [eax], 1
+  .text:0025F134                 mov     eax, [esi+40h]
+  .text:0025F137                 mov     edi, [eax+0CCh]
+  .text:0025F13D                 test    edi, edi
+  .text:0025F13F                 jnz     loc_25EF31
+  .text:0025F145                 mov     [esp+19Ch+var_19C], 1
+  .text:0025F14C                 mov     eax, [esp+19Ch+var_19C]
+  .text:0025F14F                 add     esp, 18Ch
+  .text:0025F155                 pop     ebx
+  .text:0025F156                 pop     esi
+  .text:0025F157                 pop     edi
+  .text:0025F158                 pop     ebp
+  .text:0025F159                 retn
+  .text:0025F160                 mov     edi, [eax+2FCh]
+  .text:0025F166                 test    edi, edi
+  .text:0025F168                 jle     short loc_25F17A
+  .text:0025F16A                 lea     eax, (gEngfuncs - 688000h)[ebx]
+  .text:0025F170                 call    dword ptr [eax+90h]
+  .text:0025F176                 cmp     edi, eax
+  .text:0025F178                 jle     short loc_25F190
+  .text:0025F17A                 mov     [esp+19Ch+var_19C], 0
+  .text:0025F181                 mov     eax, [esp+19Ch+var_19C]
+  .text:0025F184                 add     esp, 18Ch
+  .text:0025F18A                 pop     ebx
+  .text:0025F18B                 pop     esi
+  .text:0025F18C                 pop     edi
+  .text:0025F18D                 pop     ebp
+  .text:0025F18E                 retn
+  .text:0025F190                 mov     eax, [esi+2Ch]
+  .text:0025F193                 sub     esp, 0Ch
+  .text:0025F196                 mov     eax, [eax+2FCh]
+  .text:0025F19C                 sub     eax, 1
+  .text:0025F19F                 ; index
+  .text:0025F19F                 push    eax; index
+  .text:0025F1A0                 call    ds:(IEngineStudio.GetPlayerState - 688000h)[ebx]
+  .text:0025F1A6                 mov     edx, [eax]
+  .text:0025F1A8                 movss   xmm0, dword ptr [eax+8]
+  .text:0025F1AD                 mov     [esp+1ACh+var_17C], edx
+  .text:0025F1B1                 mov     edx, [eax+4]
+  .text:0025F1B4                 movss   [esp+1ACh+var_174], xmm0
+  .text:0025F1BA                 movups  xmm3, xmmword ptr [eax+10h]
+  .text:0025F1BE                 mov     [esp+1ACh+var_178], edx
+  .text:0025F1C2                 mov     edx, [eax+0Ch]
+  .text:0025F1C5                 movaps  xmmword ptr [esp+40h], xmm3
+  .text:0025F1CA                 movss   xmm0, dword ptr [eax+20h]
+  .text:0025F1CF                 mov     [esp+1ACh+var_170], edx
+  .text:0025F1D3                 mov     edx, [eax+28h]
+  .text:0025F1D6                 movss   [esp+1ACh+var_15C], xmm0
+  .text:0025F1DC                 movss   xmm0, dword ptr [eax+24h]
+  .text:0025F1E1                 mov     [esp+1ACh+var_154], edx
+  .text:0025F1E5                 mov     edx, [eax+2Ch]
+  .text:0025F1E8                 movss   [esp+1ACh+var_158], xmm0
+  .text:0025F1EE                 movss   xmm0, dword ptr [eax+30h]
+  .text:0025F1F3                 mov     [esp+1ACh+var_150], edx
+  .text:0025F1F7                 mov     edx, [eax+34h]
+  .text:0025F1FA                 movss   [esp+1ACh+var_14C], xmm0
+  .text:0025F200                 movss   xmm0, dword ptr [eax+40h]
+  .text:0025F205                 mov     [esp+1ACh+var_148], edx
+  .text:0025F209                 movzx   edx, word ptr [eax+38h]
+  .text:0025F20D                 mov     [esp+1ACh+var_144], dx
+  .text:0025F212                 movzx   edx, word ptr [eax+3Ah]
+  .text:0025F216                 mov     [esp+1ACh+var_142], dx
+  .text:0025F21B                 mov     edx, [eax+3Ch]
+  .text:0025F21E                 movss   [esp+1ACh+var_13C], xmm0
+  .text:0025F224                 mov     [esp+1ACh+var_140], edx
+  .text:0025F228                 movzx   edx, byte ptr [eax+44h]
+  .text:0025F22C                 mov     [esp+1ACh+var_138], dl
+  .text:0025F230                 mov     edx, [eax+48h]
+  .text:0025F233                 movss   xmm0, dword ptr [eax+5Ch]
+  .text:0025F238                 mov     [esp+1ACh+var_134], edx
+  .text:0025F23C                 mov     edx, [eax+4Ch]
+  .text:0025F23F                 mov     [esp+1ACh+var_130], edx
+  .text:0025F243                 movzx   edx, word ptr [eax+50h]
+  .text:0025F247                 mov     [esp+1ACh+var_12C], dx
+  .text:0025F24F                 movzx   edx, byte ptr [eax+52h]
+  .text:0025F253                 mov     [esp+1ACh+var_12A], dl
+  .text:0025F25A                 mov     edx, [eax+54h]
+  .text:0025F25D                 mov     [esp+1ACh+var_128], edx
+  .text:0025F264                 mov     edx, [eax+58h]
+  .text:0025F267                 movss   [esp+1ACh+var_120], xmm0
+  .text:0025F270                 movss   xmm0, dword ptr [eax+60h]
+  .text:0025F275                 mov     [esp+1ACh+var_124], edx
+  .text:0025F27C                 mov     edx, [eax+64h]
+  .text:0025F27F                 movss   [esp+1ACh+var_11C], xmm0
+  .text:0025F288                 mov     [esp+1ACh+var_118], edx
+  .text:0025F28F                 movzx   edx, byte ptr [eax+68h]
+  .text:0025F293                 mov     [esp+1ACh+var_114], dl
+  .text:0025F29A                 movzx   edx, byte ptr [eax+69h]
+  .text:0025F29E                 mov     [esp+1ACh+var_113], dl
+  .text:0025F2A5                 movzx   edx, byte ptr [eax+6Ah]
+  .text:0025F2A9                 mov     [esp+1ACh+var_112], dl
+  .text:0025F2B0                 movzx   edx, byte ptr [eax+6Bh]
+  .text:0025F2B4                 mov     [esp+1ACh+var_111], dl
+  .text:0025F2BB                 movzx   edx, byte ptr [eax+6Ch]
+  .text:0025F2BF                 mov     [esp+1ACh+var_110], dl
+  .text:0025F2C6                 movzx   edx, byte ptr [eax+6Dh]
+  .text:0025F2CA                 mov     [esp+1ACh+var_10F], dl
+  .text:0025F2D1                 movzx   edx, byte ptr [eax+6Eh]
+  .text:0025F2D5                 mov     [esp+1ACh+var_10E], dl
+  .text:0025F2DC                 movzx   edx, byte ptr [eax+6Fh]
+  .text:0025F2E0                 mov     [esp+1ACh+var_10D], dl
+  .text:0025F2E7                 movups  xmm0, xmmword ptr [eax+80h]
+  .text:0025F2EE                 movups  xmm4, xmmword ptr [eax+70h]
+  .text:0025F2F2                 mov     edx, [eax+94h]
+  .text:0025F2F8                 movaps  [esp+1ACh+var_FC], xmm0
+  .text:0025F300                 movaps  [esp+1ACh+var_10C], xmm4
+  .text:0025F308                 movss   xmm0, dword ptr [eax+90h]
+  .text:0025F310                 mov     [esp+1ACh+var_E8], edx
+  .text:0025F317                 mov     edx, [eax+98h]
+  .text:0025F31D                 movss   [esp+1ACh+var_EC], xmm0
+  .text:0025F326                 movss   xmm0, dword ptr [eax+9Ch]
+  .text:0025F32E                 mov     [esp+1ACh+var_E4], edx
+  .text:0025F335                 movdqu  xmm5, xmmword ptr [eax+0A4h]
+  .text:0025F33D                 movss   [esp+1ACh+var_E0], xmm0
+  .text:0025F346                 movss   xmm0, dword ptr [eax+0A0h]
+  .text:0025F34E                 movups  [esp+1ACh+var_D8], xmm5
+  .text:0025F356                 movdqu  xmm6, xmmword ptr [eax+0C8h]
+  .text:0025F35E                 movss   [esp+1ACh+var_DC], xmm0
+  .text:0025F367                 movss   xmm0, dword ptr [eax+0BCh]
+  .text:0025F36F                 movss   [esp+1ACh+var_C0], xmm0
+  .text:0025F378                 movss   xmm0, dword ptr [eax+0C0h]
+  .text:0025F380                 movss   [esp+1ACh+var_BC], xmm0
+  .text:0025F389                 movss   xmm0, dword ptr [eax+0C4h]
+  .text:0025F391                 movups  [esp+1ACh+var_B4], xmm6
+  .text:0025F399                 mov     edx, [eax+0E0h]
+  .text:0025F39F                 movss   [esp+1ACh+var_B8], xmm0
+  .text:0025F3A8                 movss   xmm0, dword ptr [eax+0D8h]
+  .text:0025F3B0                 movss   [esp+1ACh+var_A4], xmm0
+  .text:0025F3B9                 movss   xmm0, dword ptr [eax+0DCh]
+  .text:0025F3C1                 mov     [esp+1ACh+var_9C], edx
+  .text:0025F3C8                 movss   [esp+1ACh+var_A0], xmm0
+  .text:0025F3D1                 movups  xmm0, xmmword ptr [eax+0F4h]
+  .text:0025F3D8                 movups  xmm7, xmmword ptr [eax+0E4h]
+  .text:0025F3DF                 movdqu  xmm1, xmmword ptr [eax+104h]
+  .text:0025F3E7                 mov     ebx, [esi+14h]
+  .text:0025F3EA                 movups  [esp+1ACh+var_98], xmm7
+  .text:0025F3F2                 movups  [esp+1ACh+var_88], xmm0
+  .text:0025F3FA                 movups  xmm2, xmmword ptr [eax+114h]
+  .text:0025F401                 movups  xmm0, xmmword ptr [eax+134h]
+  .text:0025F408                 movups  xmm3, xmmword ptr [eax+144h]
+  .text:0025F40F                 movups  [esp+1ACh+var_78], xmm1
+  .text:0025F417                 movups  xmm1, xmmword ptr [eax+124h]
+  .text:0025F41E                 mov     eax, [esi+2Ch]
+  .text:0025F421                 movups  [esp+1ACh+var_68], xmm2
+  .text:0025F429                 movups  [esp+1ACh+var_38], xmm3
+  .text:0025F431                 mov     edx, [eax+2FCh]
+  .text:0025F437                 movups  [esp+1ACh+var_58], xmm1
+  .text:0025F43F                 movups  [esp+1ACh+var_48], xmm0
+  .text:0025F447                 movss   xmm0, dword ptr [eax+2D0h]
+  .text:0025F44F                 mov     [esp+1ACh+var_178], edx
+  .text:0025F453                 mov     edx, [eax+2D8h]
+  .text:0025F459                 movss   [esp+1ACh+var_15C], xmm0
+  .text:0025F45F                 movss   xmm0, dword ptr [eax+2D4h]
+  .text:0025F467                 mov     [esp+1ACh+var_154], edx
+  .text:0025F46B                 movss   [esp+1ACh+var_158], xmm0
+  .text:0025F471                 movups  xmm2, xmmword ptr [eax+2C0h]
+  .text:0025F478                 mov     eax, [esi]
+  .text:0025F47A                 mov     [esp+1ACh+var_C8], 0
+  .text:0025F485                 movaps  xmmword ptr [esp+40h], xmm2
+  .text:0025F48A                 mov     [esp+1ACh+var_C4], 0
+  .text:0025F495                 mov     [esp+1ACh+var_124], 0
+  .text:0025F4A0                 add     esp, 10h
+  .text:0025F4A3                 mov     dword ptr [esi+14h], 0
+  .text:0025F4AA                 push    1
+  .text:0025F4AC                 lea     edx, [esp+1A0h+var_17C]
+  .text:0025F4B0                 push    edx
+  .text:0025F4B1                 push    [esp+1A4h+flags]
+  .text:0025F4B8                 push    esi
+  .text:0025F4B9                 call    dword ptr [eax+14h] ; GameStudioRenderer_StudioDrawPlayer, vfunc_offset=0x14
+  .text:0025F4BC                 mov     [esi+14h], ebx
+  .text:0025F4BF                 mov     [esp+1ACh+var_19C], eax
+  .text:0025F4C3                 add     esp, 10h
+  .text:0025F4C6                 mov     eax, [esp+19Ch+var_19C]
+  .text:0025F4C9                 add     esp, 18Ch
+  .text:0025F4CF                 pop     ebx
+  .text:0025F4D0                 pop     esi
+  .text:0025F4D1                 pop     edi
+  .text:0025F4D2                 pop     ebp
+  .text:0025F4D3                 retn
+  .text:0025F4D8                 lea     eax, (gEngfuncs - 688000h)[ebx]
+  .text:0025F4DE                 mov     ebp, [esi+2Ch]
+  .text:0025F4E1                 call    dword ptr [eax+0D0h]
+  .text:0025F4E7                 cmp     ebp, eax
+  .text:0025F4E9                 jnz     loc_25F0CF
+  .text:0025F4EF                 mov     [esp+19Ch+var_178], 3Ch ; '<'
+  .text:0025F4F7                 jmp     loc_25F0CF
+  .text:0025F500                 sub     esp, 8
+  .text:0025F503                 push    dword ptr [esi+30h]
+  .text:0025F506                 push    esi
+  .text:0025F507                 call    dword ptr [eax+34h] ; GameStudioRenderer_StudioMergeBones, vfunc_offset=0x34
+  .text:0025F50A                 add     esp, 10h
+  .text:0025F50D                 jmp     loc_25EF4D
+  .text:0025F518                 sub     esp, 0Ch
+  .text:0025F51B                 push    esi
+  .text:0025F51C                 call    eax
+  .text:0025F51E                 add     esp, 10h
+  .text:0025F521                 jmp     loc_25EFFB
+procedure: |-
+  int __cdecl CStudioModelRenderer::StudioDrawModel(ZPRenderer *self, int flags)
+  {
+    struct cl_entity_s *m_pCurrentEntity; // eax
+    struct model_s *v4; // eax
+    void *v5; // eax
+    ZPRendererVtable *v6; // eax
+    void (__cdecl *StudioSaveBones)(ZPRenderer *); // eax
+    _DWORD *m_pStudioHeader; // eax
+    int v9; // edx
+    unsigned __int8 *cached_bones; // ecx
+    float *v11; // edi
+    int v12; // eax
+    struct cl_entity_s *EntityByIndex; // eax
+    _DWORD *v14; // ecx
+    struct cl_entity_s *v15; // edx
+    int v16; // eax
+    int v17; // edx
+    int result; // eax
+    int v19; // edi
+    struct entity_state_s *v20; // eax
+    int v21; // xmm0_4
+    int v22; // edx
+    __int128 v23; // xmm3
+    int v24; // edx
+    int v25; // xmm0_4
+    int v26; // edx
+    int v27; // xmm0_4
+    int v28; // edx
+    int v29; // xmm0_4
+    int v30; // edx
+    int v31; // xmm0_4
+    int v32; // edx
+    int v33; // xmm0_4
+    int v34; // edx
+    int v35; // xmm0_4
+    int v36; // edx
+    __int128 v37; // xmm4
+    int v38; // edx
+    int v39; // xmm0_4
+    int v40; // edx
+    int v41; // xmm0_4
+    __m128i v42; // xmm5
+    int v43; // xmm0_4
+    __m128i v44; // xmm6
+    int v45; // xmm0_4
+    int v46; // edx
+    int v47; // xmm0_4
+    __int128 v48; // xmm0
+    __m128i v49; // xmm1
+    int m_fDoInterp; // ebx
+    __int128 v51; // xmm2
+    __int128 v52; // xmm0
+    __int128 v53; // xmm3
+    __int128 v54; // xmm1
+    struct cl_entity_s *v55; // eax
+    int v56; // edx
+    int v57; // edx
+    __int128 v58; // xmm2
+    ZPRendererVtable *vtable; // eax
+    struct cl_entity_s *v60; // ebp
+    float *v61; // [esp+4h] [ebp-1A8h]
+    char *src; // [esp+14h] [ebp-198h]
+    int v63; // [esp+18h] [ebp-194h]
+    unsigned __int8 *v64; // [esp+1Ch] [ebp-190h]
+    char v65; // [esp+24h] [ebp-188h] BYREF
+    int v66; // [esp+30h] [ebp-17Ch] BYREF
+    int v67; // [esp+34h] [ebp-178h]
+    int v68; // [esp+38h] [ebp-174h]
+    int v69; // [esp+3Ch] [ebp-170h]
+    __int128 v70; // [esp+40h] [ebp-16Ch]
+    int v71; // [esp+50h] [ebp-15Ch]
+    int v72; // [esp+54h] [ebp-158h]
+    int v73; // [esp+58h] [ebp-154h]
+    int v74; // [esp+5Ch] [ebp-150h]
+    int v75; // [esp+60h] [ebp-14Ch]
+    int v76; // [esp+64h] [ebp-148h]
+    __int16 v77; // [esp+68h] [ebp-144h]
+    __int16 v78; // [esp+6Ah] [ebp-142h]
+    int v79; // [esp+6Ch] [ebp-140h]
+    int v80; // [esp+70h] [ebp-13Ch]
+    char v81; // [esp+74h] [ebp-138h]
+    int v82; // [esp+78h] [ebp-134h]
+    int v83; // [esp+7Ch] [ebp-130h]
+    __int16 v84; // [esp+80h] [ebp-12Ch]
+    char v85; // [esp+82h] [ebp-12Ah]
+    int v86; // [esp+84h] [ebp-128h]
+    int v87; // [esp+88h] [ebp-124h]
+    int v88; // [esp+8Ch] [ebp-120h]
+    int v89; // [esp+90h] [ebp-11Ch]
+    int v90; // [esp+94h] [ebp-118h]
+    char v91; // [esp+98h] [ebp-114h]
+    char v92; // [esp+99h] [ebp-113h]
+    char v93; // [esp+9Ah] [ebp-112h]
+    char v94; // [esp+9Bh] [ebp-111h]
+    char v95; // [esp+9Ch] [ebp-110h]
+    char v96; // [esp+9Dh] [ebp-10Fh]
+    char v97; // [esp+9Eh] [ebp-10Eh]
+    char v98; // [esp+9Fh] [ebp-10Dh]
+    __int128 v99; // [esp+A0h] [ebp-10Ch]
+    __int128 v100; // [esp+B0h] [ebp-FCh]
+    int v101; // [esp+C0h] [ebp-ECh]
+    int v102; // [esp+C4h] [ebp-E8h]
+    int v103; // [esp+C8h] [ebp-E4h]
+    int v104; // [esp+CCh] [ebp-E0h]
+    int v105; // [esp+D0h] [ebp-DCh]
+    __m128i v106; // [esp+D4h] [ebp-D8h]
+    int v107; // [esp+E4h] [ebp-C8h]
+    int v108; // [esp+E8h] [ebp-C4h]
+    int v109; // [esp+ECh] [ebp-C0h]
+    int v110; // [esp+F0h] [ebp-BCh]
+    int v111; // [esp+F4h] [ebp-B8h]
+    __m128i v112; // [esp+F8h] [ebp-B4h]
+    int v113; // [esp+108h] [ebp-A4h]
+    int v114; // [esp+10Ch] [ebp-A0h]
+    int v115; // [esp+110h] [ebp-9Ch]
+    __int128 v116; // [esp+114h] [ebp-98h]
+    __int128 v117; // [esp+124h] [ebp-88h]
+    __m128i v118; // [esp+134h] [ebp-78h]
+    __int128 v119; // [esp+144h] [ebp-68h]
+    __int128 v120; // [esp+154h] [ebp-58h]
+    __int128 v121; // [esp+164h] [ebp-48h]
+    __int128 v122; // [esp+174h] [ebp-38h]
+
+    self->m_pCurrentEntity = IEngineStudio.GetCurrentEntity();
+    IEngineStudio.GetTimes(&self->m_nFrameCount, &self->m_clTime, &self->m_clOldTime);
+    IEngineStudio.GetViewInfo(self->m_vRenderOrigin, self->m_vUp, self->m_vRight, self->m_vNormal);
+    IEngineStudio.GetAliasScale(&self->m_fSoftwareXScale, &self->m_fSoftwareYScale);
+    m_pCurrentEntity = self->m_pCurrentEntity;
+    if ( *((_DWORD *)m_pCurrentEntity + 193) == 17 )
+    {
+      v19 = *((_DWORD *)m_pCurrentEntity + 191);
+      if ( v19 > 0 && v19 <= ZP_GetMaxClients() )
+      {
+        v20 = IEngineStudio.GetPlayerState(*((_DWORD *)self->m_pCurrentEntity + 191) - 1);
+        v21 = *((_DWORD *)v20 + 2);
+        v66 = *(_DWORD *)v20;
+        v22 = *((_DWORD *)v20 + 1);
+        v68 = v21;
+        v23 = *((_OWORD *)v20 + 1);
+        v67 = v22;
+        v24 = *((_DWORD *)v20 + 3);
+        v70 = v23;
+        v25 = *((_DWORD *)v20 + 8);
+        v69 = v24;
+        v26 = *((_DWORD *)v20 + 10);
+        v71 = v25;
+        v27 = *((_DWORD *)v20 + 9);
+        v73 = v26;
+        v28 = *((_DWORD *)v20 + 11);
+        v72 = v27;
+        v29 = *((_DWORD *)v20 + 12);
+        v74 = v28;
+        v30 = *((_DWORD *)v20 + 13);
+        v75 = v29;
+        v31 = *((_DWORD *)v20 + 16);
+        v76 = v30;
+        v77 = *((_WORD *)v20 + 28);
+        v78 = *((_WORD *)v20 + 29);
+        v32 = *((_DWORD *)v20 + 15);
+        v80 = v31;
+        v79 = v32;
+        v81 = *((_BYTE *)v20 + 68);
+        v33 = *((_DWORD *)v20 + 23);
+        v82 = *((_DWORD *)v20 + 18);
+        v83 = *((_DWORD *)v20 + 19);
+        v84 = *((_WORD *)v20 + 40);
+        v85 = *((_BYTE *)v20 + 82);
+        v86 = *((_DWORD *)v20 + 21);
+        v34 = *((_DWORD *)v20 + 22);
+        v88 = v33;
+        v35 = *((_DWORD *)v20 + 24);
+        v87 = v34;
+        v36 = *((_DWORD *)v20 + 25);
+        v89 = v35;
+        v90 = v36;
+        v91 = *((_BYTE *)v20 + 104);
+        v92 = *((_BYTE *)v20 + 105);
+        v93 = *((_BYTE *)v20 + 106);
+        v94 = *((_BYTE *)v20 + 107);
+        v95 = *((_BYTE *)v20 + 108);
+        v96 = *((_BYTE *)v20 + 109);
+        v97 = *((_BYTE *)v20 + 110);
+        v98 = *((_BYTE *)v20 + 111);
+        v37 = *((_OWORD *)v20 + 7);
+        v38 = *((_DWORD *)v20 + 37);
+        v100 = *((_OWORD *)v20 + 8);
+        v99 = v37;
+        v39 = *((_DWORD *)v20 + 36);
+        v102 = v38;
+        v40 = *((_DWORD *)v20 + 38);
+        v101 = v39;
+        v41 = *((_DWORD *)v20 + 39);
+        v103 = v40;
+        v42 = _mm_loadu_si128((const __m128i *)((char *)v20 + 164));
+        v104 = v41;
+        v43 = *((_DWORD *)v20 + 40);
+        v106 = v42;
+        v44 = _mm_loadu_si128((const __m128i *)((char *)v20 + 200));
+        v105 = v43;
+        v109 = *((_DWORD *)v20 + 47);
+        v110 = *((_DWORD *)v20 + 48);
+        v45 = *((_DWORD *)v20 + 49);
+        v112 = v44;
+        v46 = *((_DWORD *)v20 + 56);
+        v111 = v45;
+        v113 = *((_DWORD *)v20 + 54);
+        v47 = *((_DWORD *)v20 + 55);
+        v115 = v46;
+        v114 = v47;
+        v48 = *(_OWORD *)((char *)v20 + 244);
+        v49 = _mm_loadu_si128((const __m128i *)((char *)v20 + 260));
+        m_fDoInterp = self->m_fDoInterp;
+        v116 = *(_OWORD *)((char *)v20 + 228);
+        v117 = v48;
+        v51 = *(_OWORD *)((char *)v20 + 276);
+        v52 = *(_OWORD *)((char *)v20 + 308);
+        v53 = *(_OWORD *)((char *)v20 + 324);
+        v118 = v49;
+        v54 = *(_OWORD *)((char *)v20 + 292);
+        v55 = self->m_pCurrentEntity;
+        v119 = v51;
+        v122 = v53;
+        v56 = *((_DWORD *)v55 + 191);
+        v120 = v54;
+        v121 = v52;
+        LODWORD(v52) = *((_DWORD *)v55 + 180);
+        v67 = v56;
+        v57 = *((_DWORD *)v55 + 182);
+        v71 = v52;
+        LODWORD(v52) = *((_DWORD *)v55 + 181);
+        v73 = v57;
+        v72 = v52;
+        v58 = *((_OWORD *)v55 + 44);
+        vtable = self->vtable;
+        v107 = 0;
+        v70 = v58;
+        v108 = 0;
+        v87 = 0;
+        self->m_fDoInterp = 0;
+        result = vtable->StudioDrawPlayer(self, flags, &v66, 1); // GameStudioRenderer_StudioDrawPlayer, vfunc_offset=0x14
+        self->m_fDoInterp = m_fDoInterp;
+        return result;
+      }
+      return 0;
+    }
+    v4 = *((struct model_s **)m_pCurrentEntity + 741);
+    self->m_pRenderModel = v4;
+    v5 = IEngineStudio.Mod_Extradata(v4);
+    self->m_pStudioHeader = v5;
+    IEngineStudio.StudioSetHeader(v5);
+    IEngineStudio.SetRenderModel(self->m_pRenderModel);
+    self->vtable->StudioSetUpTransform(self, 0);
+    if ( (flags & 1) == 0 )
+      goto LABEL_3;
+    if ( !IEngineStudio.StudioCheckBBox() )
+      return 0;
+    ++*self->m_pModelsDrawn;
+    ++*self->m_pStudioModelCount;
+    if ( !*((_DWORD *)self->m_pStudioHeader + 51) )
+      return 1;
+  LABEL_3:
+    v6 = self->vtable;
+    if ( *((_DWORD *)self->m_pCurrentEntity + 194) == 12 )
+      v6->StudioMergeBones(self, self->m_pRenderModel); // GameStudioRenderer_StudioMergeBones, vfunc_offset=0x34
+    else
+      v6->StudioSetupBones(self); // GameStudioRenderer_StudioSetupBones, vfunc_offset=0x28
+    StudioSaveBones = self->vtable->StudioSaveBones; // GameStudioRenderer_StudioSaveBones, vfunc_offset=0x30
+    if ( (char *)StudioSaveBones == (char *)CStudioModelRenderer::StudioSaveBones )
+    {
+      m_pStudioHeader = self->m_pStudioHeader;
+      v9 = m_pStudioHeader[36];
+      self->m_nCachedBones = m_pStudioHeader[35];
+      if ( (int)m_pStudioHeader[35] > 0 )
+      {
+        cached_bones = self->_cached_bones;
+        v11 = (float *)&self->_cached_bones[4096];
+        src = (char *)m_pStudioHeader + v9;
+        v12 = 0;
+        do
+        {
+          v63 = v12;
+          v64 = cached_bones;
+          V_strncpy((char *)cached_bones, src, 0x20u);
+          MatrixCopy((float (*)[4])((float *)self->m_pbonetransform + 3 * v63), (float (*)[4])v11);
+          v61 = v11 + 1536;
+          v11 += 12;
+          MatrixCopy((float (*)[4])((float *)self->m_plighttransform + 3 * v63), (float (*)[4])v61);
+          src += 112;
+          v12 = v63 + 1;
+          cached_bones = v64 + 32;
+        }
+        while ( *((_DWORD *)self->m_pStudioHeader + 35) > v63 + 1 );
+      }
+    }
+    else
+    {
+      StudioSaveBones(self);
+    }
+    if ( (flags & 2) != 0 )
+    {
+      self->vtable->StudioCalcAttachments(self);
+      IEngineStudio.StudioClientEvents();
+      if ( *(int *)self->m_pCurrentEntity > 0 )
+      {
+        EntityByIndex = ZP_GetEntityByIndex(*(_DWORD *)self->m_pCurrentEntity);
+        v14 = (_DWORD *)((char *)self->m_pCurrentEntity + 2912);
+        *((_DWORD *)EntityByIndex + 728) = *v14;
+        *((_DWORD *)EntityByIndex + 729) = v14[1];
+        *((_DWORD *)EntityByIndex + 730) = v14[2];
+        *((_DWORD *)EntityByIndex + 731) = v14[3];
+        *((_DWORD *)EntityByIndex + 732) = v14[4];
+        *((_DWORD *)EntityByIndex + 733) = v14[5];
+        *((_DWORD *)EntityByIndex + 734) = v14[6];
+        *((_DWORD *)EntityByIndex + 735) = v14[7];
+        *((_DWORD *)EntityByIndex + 736) = v14[8];
+        *((_DWORD *)EntityByIndex + 737) = v14[9];
+        *((_DWORD *)EntityByIndex + 738) = v14[10];
+        *((_DWORD *)EntityByIndex + 739) = v14[11];
+      }
+    }
+    if ( (flags & 1) == 0 )
+      return 1;
+    DWORD1(v70) = &v65;
+    IEngineStudio.StudioDynamicLight(self->m_pCurrentEntity, (struct alight_s *)&v66);
+    IEngineStudio.StudioEntityLight((struct alight_s *)&v66);
+    if ( v67 <= 59 )
+    {
+      v60 = self->m_pCurrentEntity;
+      if ( v60 == ZP_GetViewModel() )
+        v67 = 60;
+    }
+    IEngineStudio.StudioSetupLighting((struct alight_s *)&v66);
+    v15 = self->m_pCurrentEntity;
+    v16 = *((unsigned __int8 *)v15 + 740);
+    self->m_nTopColor = v16;
+    v17 = *((unsigned __int8 *)v15 + 741);
+    self->m_nBottomColor = v17;
+    IEngineStudio.StudioSetRemapColors(v16, v17);
+    self->vtable->StudioRenderModel(self); // GameStudioRenderer_StudioRenderModel, vfunc_offset=0x58
+    return flags & 1;
+  }

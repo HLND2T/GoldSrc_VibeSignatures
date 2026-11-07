@@ -1,0 +1,10 @@
+func_name: GameStudioRenderer_StudioMergeBones
+func_va: '0x1015d260'
+func_rva: '0x15d260'
+func_size: '0x38a'
+vtable_name: GameStudioRenderer
+vfunc_offset: '0x30'
+vfunc_index: 12
+vfunc_sig: 55 8B EC 83 EC 68 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 56 89 4D ?? C7 45 ?? ?? ?? ?? ?? 8B 45 ?? 8B 48 ?? 8B 55 ?? 8B
+  42 ??
+vfunc_sig_allow_across_function_boundary: true

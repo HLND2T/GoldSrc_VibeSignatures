@@ -6,6 +6,7 @@ import re
 import runpy
 import unittest
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
 
@@ -38,6 +39,8 @@ class JumpThunkResolutionTests(unittest.TestCase):
         entry=True,
         allow_undefined=False,
         executable=True,
+        strict=False,
+        cycle=False,
     ):
         from ida_analyze_util import _RESOLVE_JMP_THUNK_PY_EVAL_TEMPLATE
 
@@ -57,7 +60,7 @@ class JumpThunkResolutionTests(unittest.TestCase):
                 o_displ=2,
                 o_mem=3,
             ),
-            "idc": SimpleNamespace(print_insn_mnem=lambda ea: "jmp" if ea == 0x1000 else "push"),
+            "idc": SimpleNamespace(print_insn_mnem=lambda ea: "jmp" if cycle or ea == 0x1000 else "push"),
             "ida_bytes": SimpleNamespace(
                 is_loaded=lambda ea: 0x3000 <= ea < 0x3004 or ea == target, get_dword=lambda ea: stored
             ),
@@ -74,7 +77,11 @@ class JumpThunkResolutionTests(unittest.TestCase):
                 "ALLOW_UNDEFINED_TARGET_PLACEHOLDER", str(allow_undefined)
             )
             exec(code, {}, namespace)
-        return int(json.loads(namespace["result"])["func_va"], 16)
+            if strict:
+                resolved = namespace["resolve_jmp_thunk"](0x1000, allow_undefined, strict=True)
+                return resolved
+        value = json.loads(namespace["result"])["func_va"]
+        return None if value is None else int(value, 16)
 
     def test_direct_jump_still_resolves(self):
         self.assertEqual(0x2000, self.resolve())
@@ -92,6 +99,110 @@ class JumpThunkResolutionTests(unittest.TestCase):
         for changes in ({"stored": 0x1006}, {"pointer": 0x4000}, {"entry": False}, {"target": 0xFFFFFFFFFFFFFFFF}):
             with self.subTest(changes=changes):
                 self.assertEqual(0x1000, self.resolve(indirect=True, **changes))
+
+    def test_strict_resolution_rejects_cycles_and_invalid_targets(self):
+        self.assertEqual(0x2000, self.resolve(strict=True))
+        self.assertEqual(0x2000, self.resolve(strict=True, entry=False, allow_undefined=True))
+        for changes in ({"cycle": True}, {"entry": False}, {"executable": False}, {"target": 0x9999}):
+            with self.subTest(changes=changes):
+                self.assertIsNone(self.resolve(strict=True, **changes))
+
+
+class VtableImplementationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_undefined_jump_target_is_recovered_before_accepting_implementation(self):
+        import ida_analyze_util as util
+
+        resolve = AsyncMock(side_effect=[0x2000, 0x2000])
+        function = {"func_va": "0x2000", "func_sig": "55 8B EC"}
+        inspect = AsyncMock(return_value=function)
+        with (
+            patch.object(util, "_resolve_jmp_thunk_target_via_mcp", resolve),
+            patch.object(util, "_inspect_function_via_mcp", inspect),
+        ):
+            self.assertEqual(function, await util._inspect_vtable_function_via_mcp(None, 0x1000, 0, "Target"))
+        inspect.assert_awaited_once_with(None, 0x2000, 0, "Target")
+        self.assertTrue(resolve.await_args_list[0].kwargs["allow_undefined_target"])
+        self.assertTrue(resolve.await_args_list[0].kwargs["strict"])
+
+    async def test_invalid_chain_or_failed_exact_entry_recovery_is_rejected(self):
+        import ida_analyze_util as util
+
+        for target, function in ((None, {"func_va": "0x2000"}), (0x2000, None)):
+            with (
+                self.subTest(target=target),
+                patch.object(util, "_resolve_jmp_thunk_target_via_mcp", AsyncMock(return_value=target)),
+                patch.object(util, "_inspect_function_via_mcp", AsyncMock(return_value=function)),
+            ):
+                self.assertIsNone(await util._inspect_vtable_function_via_mcp(None, 0x1000, 0, "Target"))
+
+    async def test_slot_matching_normalizes_thunks_without_rewriting_raw_table(self):
+        import ida_analyze_util as util
+
+        table = {"vtable_entries": {0: "0x1000", 1: "0x3000"}}
+        session = SimpleNamespace(call_tool=AsyncMock(return_value={"0": 0x2000, "1": 0x3000}))
+        candidate = {"func_va": "0x2000"}
+        enriched = await util._enrich_vfunc_via_mcp(session, candidate, "Renderer", table)
+        self.assertEqual(0, enriched["vfunc_index"])
+        self.assertEqual("0x0", enriched["vfunc_offset"])
+        self.assertEqual("0x1000", table["vtable_entries"][0])
+        session.call_tool.return_value = {"0": 0x2000, "1": 0x2000}
+        self.assertIsNone(await util._enrich_vfunc_via_mcp(session, candidate, "Renderer", table))
+
+    async def test_malformed_slot_normalization_is_rejected(self):
+        import ida_analyze_util as util
+
+        for result in ({}, {"0": 0x2000, "2": 0x3000}, []):
+            session = SimpleNamespace(call_tool=AsyncMock(return_value=result))
+            self.assertIsNone(await util._resolved_vtable_data_via_mcp(session, {"vtable_entries": {0: "0x1000"}}))
+
+    async def test_vcall_result_requires_one_matching_implementation_slot(self):
+        import ida_analyze_util as util
+
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "Renderer_vtable.windows.yaml").write_text("vtable_entries:\n  0: '0x1000'\n  1: '0x3000'\n")
+            for second, accepted in ((0x3000, True), (0x2000, False)):
+                session = SimpleNamespace(call_tool=AsyncMock(return_value={"0": 0x2000, "1": second}))
+                with (
+                    patch.object(
+                        util,
+                        "_inspect_llm_instruction",
+                        AsyncMock(
+                            return_value={
+                                "func_start": "0x4000",
+                                "displacements": ["0x0"],
+                                "line": "call dword ptr [eax]",
+                            }
+                        ),
+                    ),
+                    patch.object(
+                        util,
+                        "_inspect_vtable_function_via_mcp",
+                        AsyncMock(
+                            return_value={
+                                "func_va": "0x2000",
+                                "func_sig": "55 8B EC",
+                            }
+                        ),
+                    ),
+                ):
+                    candidate = await util._preprocess_llm_target(
+                        session=session,
+                        symbol_name="Target",
+                        category="vfunc",
+                        spec={},
+                        llm_config={},
+                        new_binary_dir=root,
+                        platform="windows",
+                        image_base=0,
+                        desired_fields=["vfunc_sig"],
+                        vtable_name="Renderer",
+                        target_ranges=[(0x4000, 0x4100)],
+                        llm_result={
+                            "found_vcall": [{"func_name": "Target", "insn_va": "0x4000", "vfunc_offset": "0x0"}]
+                        },
+                    )
+                self.assertEqual(accepted, candidate is not None)
 
 
 class StudioPicArgumentTests(unittest.TestCase):
