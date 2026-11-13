@@ -4,6 +4,8 @@ Discovery stays inside a decoded function. Explicit entry patterns may opt in
 to the shared inspector's recovery of missing function metadata. Only the output signature
 may cross its boundary when operand wildcarding makes a short body ambiguous.
 All grouped results are validated before any output is written.
+An optional async validate_owners(session, owners) callback can reject a
+group whose individually unique entries do not satisfy a semantic relation.
 """
 
 from ida_analyze_util import (
@@ -37,9 +39,9 @@ result = json.dumps({'owner': locate(VALUES)})
 
 
 async def preprocess_body_patterns(
-    session, expected_outputs, signatures_by_name, image_base, debug=False, *, entry_names=()
+    session, expected_outputs, signatures_by_name, image_base, debug=False, *, entry_names=(), validate_owners=None
 ):
-    outputs = {}
+    owners = {}
     for name, signatures in signatures_by_name.items():
         for signature in signatures:
             matches = await _find_byte_matches(session, signature, limit=2)
@@ -61,11 +63,18 @@ async def preprocess_body_patterns(
             if debug:
                 print(f"  {name}: pattern has no validated owner: {located}")
             return False
-        candidate = await _inspect_function_via_mcp(session, located["owner"], image_base, name)
+        owners[name] = located["owner"]
+    if validate_owners is not None and not await validate_owners(session, dict(owners)):
+        if debug:
+            print("  Body-pattern owner group failed semantic validation")
+        return False
+    outputs = {}
+    for name, owner in owners.items():
+        candidate = await _inspect_function_via_mcp(session, owner, image_base, name)
         across = candidate is None
         if across:
             candidate = await _inspect_function_via_mcp(
-                session, located["owner"], image_base, name, allow_across_function_boundary=True
+                session, owner, image_base, name, allow_across_function_boundary=True
             )
         if candidate is None:
             if debug:
