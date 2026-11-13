@@ -13,7 +13,7 @@ tags:
 
 ## Overview
 
-`tests/run_test_suite.py` 用 `GROUP_FILES` 显式白名单把每个测试文件登记到分组（`unit` / `redis-integration` / `repository-contract` / `ida-integration`）。入口 `validate_membership()` 对比 `tests/` 下所有 `test_*.py`（排除 `test_support.py`），任何新文件未登记都会在**跑任何测试之前**抛 `RuntimeError` 并退出，导致所有调用 `run_test_suite.py` 的 CI job 全部失败（包括与该文件无关的 `redis-integration`）。
+`tests/run_test_suite.py` 用 `GROUP_FILES` 显式白名单把每个测试文件登记到分组（`unit` / `repository-contract` / `ida-integration`）。入口 `validate_membership()` 对比 `tests/` 下所有 `test_*.py`（排除 `test_support.py`），任何新文件未登记都会在**跑任何测试之前**抛 `RuntimeError` 并退出，导致所有调用 `run_test_suite.py` 的 CI job 全部失败。
 
 ## Trigger
 
@@ -37,7 +37,7 @@ tags:
 
 - 无新增/删除测试文件时运行 `validate_membership` 应通过。
 - 新增测试文件并登记后，`uv run python tests/run_test_suite.py unit -b` 全部通过且包含新文件用例。
-- CI `test (ubuntu-latest)` / `redis-integration` 等所有调用 `run_test_suite.py` 的 job 均应绿。
+- CI `test (ubuntu-latest)` / `test (windows-latest)` 等所有调用 `run_test_suite.py` 的 job 均应绿。
 
 ## 适用范围
 

@@ -12,7 +12,6 @@ import threading
 import tempfile
 import urllib.parse
 import uuid
-from collections.abc import Callable
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -225,13 +224,12 @@ def _diagnostic_payload(stdout: str | bytes | None, stderr: str | bytes | None) 
     return payload
 
 
-def _notify_progress(progress_callback: Callable[..., None] | None, event: str, **payload) -> None:
-    if progress_callback is None:
-        return
-    try:
-        progress_callback(event=event, **payload)
-    except Exception as error:  # noqa: BLE001 - reporter failures must not alter Agent execution.
-        print(f"    Warning: Skill progress callback failed: {error}")
+def _record_failure(failure_detail: dict | None, **payload) -> None:
+    if failure_detail is not None:
+        failure_detail.clear()
+        failure_detail.update(payload)
+    reason = payload.get("reason", "unknown")
+    print(f"    Skill failed: {reason}")
 
 
 def _close_text_stream(stream) -> None:
@@ -603,7 +601,7 @@ def _run_skill_attempts(
     agent_model: str,
     timeout: int,
     debug: bool,
-    progress_callback: Callable[..., None] | None,
+    failure_detail: dict | None,
     mcp_url: str | None = None,
     artifact_context: dict | None = None,
 ) -> bool:
@@ -612,7 +610,6 @@ def _run_skill_attempts(
     last_failure: dict[str, object] | None = None
     for attempt_index in range(max_retries):
         attempt = attempt_index + 1
-        _notify_progress(progress_callback, "attempt_started", attempt=attempt, max_attempts=max_retries)
         command = _build_agent_command(
             agent=agent,
             agent_kind=agent_kind,
@@ -640,9 +637,8 @@ def _run_skill_attempts(
                 **_diagnostic_payload(error.output, error.stderr),
             }
         except FileNotFoundError:
-            _notify_progress(
-                progress_callback,
-                "failed",
+            _record_failure(
+                failure_detail,
                 attempt=attempt,
                 max_attempts=max_retries,
                 reason="agent_not_found",
@@ -656,33 +652,21 @@ def _run_skill_attempts(
                 opencode_session_id = _extract_opencode_session_id(completed.stdout)
             failure = _result_failure(completed, expected_yaml_paths)
             if failure is None:
-                _notify_progress(progress_callback, "succeeded", attempt=attempt, max_attempts=max_retries)
                 return True
             reason, payload = failure
             last_failure = {"reason": reason, **payload}
             _report_attempt_failure(reason, payload, debug)
             if reason == "cybersecurity_block":
-                _notify_progress(
-                    progress_callback,
-                    "failed",
+                _record_failure(
+                    failure_detail,
                     attempt=attempt,
                     max_attempts=max_retries,
                     **last_failure,
                 )
                 return False
 
-        _notify_progress(
-            progress_callback,
-            "attempt_failed",
-            attempt=attempt,
-            max_attempts=max_retries,
-            will_retry=attempt_index < max_retries - 1,
-            **last_failure,
-        )
-
-    _notify_progress(
-        progress_callback,
-        "failed",
+    _record_failure(
+        failure_detail,
         attempt=max_retries,
         max_attempts=max_retries,
         reason="retries_exhausted",
@@ -699,41 +683,43 @@ def run_skill(
     max_retries: int = 3,
     model: str = DEFAULT_AGENT_MODEL,
     timeout: int = SKILL_TIMEOUT,
-    progress_callback: Callable[..., None] | None = None,
+    failure_detail: dict | None = None,
     mcp_preflight: bool = True,
     debug: bool = False,
     agent_model: str | None = None,
     mcp_url: str | None = None,
     artifact_context: dict | None = None,
 ) -> bool:
-    """Execute a skill with bounded retries and structured progress events."""
+    """Execute a skill with bounded retries and optional final failure details."""
+    if failure_detail is not None:
+        failure_detail.clear()
     agent_kind = detect_agent_kind(agent)
     if agent_kind is None:
-        _notify_progress(progress_callback, "failed", reason="unknown_agent", agent=agent)
+        _record_failure(failure_detail, reason="unknown_agent", agent=agent)
         return False
     if not SAFE_SKILL_RE.fullmatch(skill_name):
-        _notify_progress(progress_callback, "failed", reason="unsafe_skill_name", skill=skill_name)
+        _record_failure(failure_detail, reason="unsafe_skill_name", skill=skill_name)
         return False
     if not 1 <= max_retries <= 20:
-        _notify_progress(progress_callback, "failed", reason="invalid_max_retries", max_retries=max_retries)
+        _record_failure(failure_detail, reason="invalid_max_retries", max_retries=max_retries)
         return False
     if timeout <= 0:
-        _notify_progress(progress_callback, "failed", reason="invalid_timeout", timeout_seconds=timeout)
+        _record_failure(failure_detail, reason="invalid_timeout", timeout_seconds=timeout)
         return False
 
     effective_model = model if agent_model is None else agent_model
     if agent_model is not None and str(model or "").strip() and str(model).strip() != str(agent_model).strip():
-        _notify_progress(progress_callback, "failed", reason="invalid_agent_model", error="Conflicting model arguments")
+        _record_failure(failure_detail, reason="invalid_agent_model", error="Conflicting model arguments")
         return False
     try:
         _agent_model_args(agent_kind, effective_model)
     except ValueError as error:
-        _notify_progress(progress_callback, "failed", reason="invalid_agent_model", error=str(error))
+        _record_failure(failure_detail, reason="invalid_agent_model", error=str(error))
         return False
     try:
         mcp_url = _normalize_mcp_url(mcp_url)
     except ValueError as error:
-        _notify_progress(progress_callback, "failed", reason="invalid_mcp_url", error=str(error))
+        _record_failure(failure_detail, reason="invalid_mcp_url", error=str(error))
         return False
     if artifact_context is not None:
         try:
@@ -741,22 +727,22 @@ def run_skill(
                 raise TypeError("artifact context must be an object")
             _artifact_context_prompt(artifact_context)
         except (TypeError, ValueError) as error:
-            _notify_progress(progress_callback, "failed", reason="invalid_artifact_context", error=str(error))
+            _record_failure(failure_detail, reason="invalid_artifact_context", error=str(error))
             return False
 
     skill_path = Path(".claude") / "skills" / skill_name / "SKILL.md"
     if not skill_path.is_file():
-        _notify_progress(progress_callback, "failed", reason="skill_file_missing", path=str(skill_path))
+        _record_failure(failure_detail, reason="skill_file_missing", path=str(skill_path))
         return False
     if mcp_preflight:
         preflight = _perform_mcp_preflight(agent, debug=debug, server_name="ida-pro-mcp", mcp_url=mcp_url)
         if not preflight.ok:
-            _notify_progress(progress_callback, "failed", reason=preflight.reason, **preflight.detail)
+            _record_failure(failure_detail, reason=preflight.reason, **preflight.detail)
             return False
 
     developer_instructions = _load_codex_developer_instructions() if agent_kind == "codex" else None
     if agent_kind == "codex" and developer_instructions is None:
-        _notify_progress(progress_callback, "failed", reason="developer_instructions_unavailable")
+        _record_failure(failure_detail, reason="developer_instructions_unavailable")
         return False
     return _run_skill_attempts(
         skill_name=skill_name,
@@ -769,7 +755,7 @@ def run_skill(
         agent_model=effective_model,
         timeout=timeout,
         debug=debug,
-        progress_callback=progress_callback,
+        failure_detail=failure_detail,
         mcp_url=mcp_url,
         artifact_context=artifact_context,
     )

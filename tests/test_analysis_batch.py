@@ -1045,8 +1045,6 @@ class InternalWorkerEntryTests(unittest.TestCase):
         self.addCleanup(self._temp.cleanup)
 
     def _write_request(self, item: WorkItem, result_path: Path) -> Path:
-        import ida_analyze_bin as iab
-
         options = {
             "configyaml": "configs/tag-1.yaml",
             "bindir": "bin",
@@ -1064,9 +1062,6 @@ class InternalWorkerEntryTests(unittest.TestCase):
             "skip_pp": False,
             "debug": False,
             "ida_args": "",
-            "process_reporter": "none",
-            "redis_url": None,
-            "redis_prefix": "gsvibe",
         }
         request = {
             "run_id": work_item_run_id("run-1", item.work_item_id),
@@ -1092,35 +1087,16 @@ class InternalWorkerEntryTests(unittest.TestCase):
         request_path = self._write_request(item, result_path)
         calls = {}
 
-        from process_reporter import ProcessEvent, ProcessEventType, ProcessPhase, TaskStatus
-
         def fake_analyze(**kwargs):
             calls.update(kwargs)
             summary = kwargs["summary"]
             selected = list(kwargs["selected_node_ids"])
             summary.successful += len(selected)
-            reporter = kwargs["reporter"]
-            plan = {
-                "nodes": [
-                    {"id": f"task-{index}", "data": {"planner_node_id": node_id}}
-                    for index, node_id in enumerate(selected)
-                ]
-            }
-            reporter.initialize_run(plan, run_id=kwargs["run_id"])
-            for index, _node_id in enumerate(selected):
-                reporter.emit(
-                    ProcessEvent(
-                        run_id=kwargs["run_id"],
-                        event_type=ProcessEventType.TASK_STATUS_CHANGED,
-                        task_id=f"task-{index}",
-                        status=TaskStatus.SUCCEEDED,
-                        phase=ProcessPhase.FINISHED,
-                    )
-                )
+            for node_id in selected:
+                kwargs["node_results"][node_id] = {"status": "succeeded", "reason": None}
 
         with (
             unittest.mock.patch.object(iab, "analyze", side_effect=fake_analyze),
-            unittest.mock.patch.object(iab, "create_process_reporter", return_value=iab.NullProcessReporter()),
         ):
             exit_code = iab._batch_worker_main(str(request_path))
         self.assertEqual(exit_code, 0)
@@ -1146,7 +1122,6 @@ class InternalWorkerEntryTests(unittest.TestCase):
 
         with (
             unittest.mock.patch.object(iab, "analyze", side_effect=fake_analyze),
-            unittest.mock.patch.object(iab, "create_process_reporter", return_value=iab.NullProcessReporter()),
         ):
             exit_code = iab._batch_worker_main(str(request_path))
         self.assertEqual(exit_code, 1)
@@ -1157,10 +1132,72 @@ class InternalWorkerEntryTests(unittest.TestCase):
         self.assertEqual(result.summary["failed"], 2)
         self.assertEqual({entry.reason for entry in result.node_results}, {"not_executed"})
 
+    def test_worker_keeps_completed_results_when_later_node_raises(self):
+        import ida_analyze_bin as iab
+
+        item = make_item()
+        result_path = self.root / "partial-result.json"
+        request_path = self._write_request(item, result_path)
+
+        def fake_analyze(**kwargs):
+            kwargs["node_results"][item.node_ids[0]] = {"status": "succeeded", "reason": None}
+            raise iab.AnalysisRunError("later node failed")
+
+        with unittest.mock.patch.object(iab, "analyze", side_effect=fake_analyze):
+            self.assertEqual(1, iab._batch_worker_main(str(request_path)))
+        result = validate_worker_result(
+            json.loads(result_path.read_text(encoding="utf-8")), item, run_id=f"run-1-{item.work_item_id}"
+        )
+        self.assertEqual(["succeeded", "aborted"], [entry.status for entry in result.node_results])
+        self.assertEqual({"successful": 1, "failed": 1, "skipped": 0}, result.summary)
+
+    def test_worker_preserves_skipped_failed_and_aborted_results(self):
+        import ida_analyze_bin as iab
+
+        for status, reason in (("skipped", None), ("failed", "node_failed"), ("aborted", "lifecycle_abort")):
+            with self.subTest(status=status):
+                item = make_item()
+                result_path = self.root / f"{status}.json"
+                request_path = self._write_request(item, result_path)
+
+                def fake_analyze(**kwargs):
+                    for node_id in item.node_ids:
+                        kwargs["node_results"][node_id] = {"status": status, "reason": reason}
+
+                with unittest.mock.patch.object(iab, "analyze", side_effect=fake_analyze):
+                    exit_code = iab._batch_worker_main(str(request_path))
+                self.assertEqual(0 if status == "skipped" else 1, exit_code)
+                result = validate_worker_result(
+                    json.loads(result_path.read_text(encoding="utf-8")), item, run_id=f"run-1-{item.work_item_id}"
+                )
+                self.assertEqual([status] * len(item.node_ids), [entry.status for entry in result.node_results])
+                self.assertEqual([reason] * len(item.node_ids), [entry.reason for entry in result.node_results])
+
     def test_worker_flag_requires_exactly_one_request_path(self):
         import ida_analyze_bin as iab
 
         self.assertEqual(iab.main([iab._BATCH_WORKER_FLAG]), 2)
+
+    def test_worker_cleanup_failure_keeps_successful_nodes_but_fails_the_run(self):
+        import ida_analyze_bin as iab
+
+        item = make_item()
+        result_path = self.root / "cleanup-failure.json"
+        request_path = self._write_request(item, result_path)
+
+        def fake_analyze(**kwargs):
+            for node_id in item.node_ids:
+                kwargs["node_results"][node_id] = {"status": "succeeded", "reason": None}
+            kwargs["summary"].failed += 1
+
+        with unittest.mock.patch.object(iab, "analyze", side_effect=fake_analyze):
+            self.assertEqual(1, iab._batch_worker_main(str(request_path)))
+        result = validate_worker_result(
+            json.loads(result_path.read_text(encoding="utf-8")), item, run_id=f"run-1-{item.work_item_id}"
+        )
+        self.assertEqual("failed", result.status)
+        self.assertEqual(["succeeded"] * len(item.node_ids), [entry.status for entry in result.node_results])
+        self.assertIsNotNone(result.failure_reason)
 
     def test_batch_worker_options_contains_no_secrets(self):
         import argparse
@@ -1186,9 +1223,6 @@ class InternalWorkerEntryTests(unittest.TestCase):
             skip_pp=False,
             debug=False,
             ida_args="",
-            process_reporter="none",
-            redis_url=None,
-            redis_prefix="gsvibe",
         )
         with unittest.mock.patch.object(iab, "resolve_analysis_config", return_value=Path("configs/tag-1.yaml")):
             options = iab._batch_worker_options(args)
@@ -1259,7 +1293,6 @@ class DirectAnalysisRoutingTests(unittest.TestCase):
                 unittest.mock.patch.object(analyzer, "resolve_analysis_config", return_value="config.yaml"),
                 unittest.mock.patch.object(analyzer, "_print_main_configuration"),
                 unittest.mock.patch.object(analyzer, "_llm_config_from_args"),
-                unittest.mock.patch.object(analyzer, "create_process_reporter"),
                 unittest.mock.patch.object(
                     analyzer, "analysis_memory_authority_from_environment", return_value=authority
                 ),

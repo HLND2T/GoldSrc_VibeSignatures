@@ -29,9 +29,6 @@ probed. Key operational variables:
 
 - `GSVIBE_AGENT` / `GSVIBE_AGENT_MODEL` — Agent CLI and model.
 - `GSVIBE_LLM_*` (`MODEL`, `APIKEY`, `BASEURL`, `TEMPERATURE`, `FAKE_AS`, `EFFORT`) — LLM-backed workflows.
-- `GSVIBE_PROCESS_REPORTER` (`none|console|redis`), `GSVIBE_REDIS_URL`, `GSVIBE_REDIS_PREFIX`, `GSVIBE_RUN_ID` —
-  process reporting (see [[process-reporting-and-scheduler]]).
-- `GSVIBE_API_HOST/PORT/CORS_ORIGINS/ALLOW_PRIVATE_NETWORK`, `GSVIBE_SSE_BLOCK_MS/BATCH_SIZE` — read-only Process API.
 - `GSVIBE_REFERENCE_GAMEVER` (default `hl-10210`) — canonical reference game version for `LLM_DECOMPILE` (see
   [[reference_yaml_generation]]).
 - `GSVIBE_ANALYSIS_MAX_CONCURRENCY` (decimal `1..32`, default `1`, fail-closed), `GSVIBE_ANALYSIS_MAX_MEMORY_MIB`,

@@ -12,13 +12,11 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import agent_runner
 import ida_analyze_bin
 from agent_runner import build_agent_command
 from analysis_planner import (
     AnalysisPlanError,
     build_execution_plan,
-    build_process_execution_plan,
     expected_symbol_artifacts,
     parse_config_document,
 )
@@ -68,7 +66,6 @@ from ida_skill_preprocessor import (
     PREPROCESS_STATUS_NO_SCRIPT,
     PREPROCESS_STATUS_SUCCESS,
 )
-from process_reporter import RunStatus, TaskStatus
 from tests.test_decrypt_blob import make_blob
 from tests.test_support import write_pe32
 
@@ -106,47 +103,6 @@ def module(skills):
             "symbols": [],
         }
     ]
-
-
-class RecordingAnalysisReporting:
-    def __init__(self) -> None:
-        self.events = []
-
-    def emit_task_status(self, task_id, status, phase, **details) -> None:
-        self.events.append(
-            {"event_type": "task.status_changed", "task_id": task_id, "status": status, "phase": phase, **details}
-        )
-
-    def emit_progress(self, task_id, phase, **payload) -> None:
-        self.events.append({"event_type": "skill.progress", "task_id": task_id, "phase": phase, "payload": payload})
-
-
-class RecordingProcessReporter:
-    def __init__(self) -> None:
-        self.plan = None
-        self.events = []
-        self.finalized = None
-        self.flushed = False
-        self.closed = False
-
-    def initialize_run(self, plan, run_id=None):
-        self.plan = plan
-        return run_id or "recorded-run"
-
-    def emit(self, event) -> None:
-        self.events.append(event)
-
-    def heartbeat(self, run_id) -> None:
-        self.heartbeat_run_id = run_id
-
-    def finalize_run(self, run_id, status, summary) -> None:
-        self.finalized = (run_id, status, summary)
-
-    def flush(self) -> None:
-        self.flushed = True
-
-    def close(self) -> None:
-        self.closed = True
 
 
 @asynccontextmanager
@@ -392,10 +348,6 @@ class CliContractTests(unittest.TestCase):
         self.assertEqual("medium", args.llm_effort)
         self.assertEqual(3, args.maxretry)
         self.assertEqual("", args.ida_args)
-        self.assertEqual("none", args.process_reporter)
-        self.assertEqual("redis://127.0.0.1:6379/0", args.redis_url)
-        self.assertEqual("gsvibe:analysis:v1", args.redis_prefix)
-        self.assertIsNone(args.run_id)
 
     def test_blank_agent_environment_values_use_defaults(self):
         args = self.parse_args(
@@ -475,14 +427,6 @@ class CliContractTests(unittest.TestCase):
                 "4",
                 "-ida_args",
                 "quiet",
-                "-process_reporter",
-                "console",
-                "-redis_url",
-                "redis://cli.invalid:6379/2",
-                "-redis_prefix",
-                "cli:prefix",
-                "-run_id",
-                "cli-run",
             ],
             env={
                 "GSVIBE_AGENT": "claude",
@@ -513,10 +457,6 @@ class CliContractTests(unittest.TestCase):
         self.assertEqual("high", args.llm_effort)
         self.assertEqual(4, args.maxretry)
         self.assertEqual("quiet", args.ida_args)
-        self.assertEqual("console", args.process_reporter)
-        self.assertEqual("redis://cli.invalid:6379/2", args.redis_url)
-        self.assertEqual("cli:prefix", args.redis_prefix)
-        self.assertEqual("cli-run", args.run_id)
 
     def test_removed_and_deferred_options_are_rejected(self):
         for option in (
@@ -525,6 +465,10 @@ class CliContractTests(unittest.TestCase):
             "-vcall_finder",
             "-rename",
             "-cache_mode",
+            "-process_reporter",
+            "-redis_url",
+            "-redis_prefix",
+            "-run_id",
         ):
             with self.subTest(option=option):
                 self.assert_parse_error(["-gamever", "cstrike-10210", option, "value"])
@@ -617,14 +561,13 @@ class CliContractTests(unittest.TestCase):
         self.assertIsNone(args.gamever)
         self.assertIsNone(args.oldgamever)
 
-    def test_allgamever_rejects_env_run_id(self):
+    def test_allgamever_ignores_removed_reporting_environment(self):
         with (
             patch.dict(os.environ, {"GSVIBE_RUN_ID": "env-run"}, clear=True),
             redirect_stderr(io.StringIO()),
-            self.assertRaises(SystemExit) as raised,
         ):
-            parse_args(["-allgamever", "-bindir", "bin"])
-        self.assertEqual(2, raised.exception.code)
+            args = parse_args(["-allgamever", "-bindir", "bin"])
+        self.assertTrue(args.allgamever)
 
     def test_run_all_batches_each_tag_and_aggregates(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -848,64 +791,6 @@ class DagTests(unittest.TestCase):
         self.assertEqual(("engine/shared.yaml",), plan.nodes[1].required_inputs)
         self.assertEqual("engine/shared.yaml", plan.edges[0].artifact)
 
-    def test_projects_validated_dag_to_stable_process_plan(self):
-        modules = [
-            {
-                "stage_index": 3,
-                "name": "engine",
-                "description": "Engine stage",
-                "path_windows": "Game/hw.dll",
-                "module_windows": "hw.dll",
-                "path_linux": None,
-                "skills": [skill("produce", output=["shared.yaml"])],
-                "symbols": [],
-            },
-            {
-                "stage_index": 7,
-                "name": "client",
-                "path_windows": "Game/client.dll",
-                "module_windows": "client.dll",
-                "path_linux": None,
-                "skills": [skill("consume", output=["client.yaml"], required_input=["../engine/shared.yaml"])],
-                "symbols": [],
-            },
-        ]
-        plan = build_execution_plan(modules, platforms=["windows"], bin_dir="bin", tag="game-1")
-
-        process_plan = build_process_execution_plan(plan, modules, platforms=["windows"], bin_dir="bin")
-
-        self.assertEqual([3, 7], [stage.stage_index for stage in process_plan.stages])
-        self.assertEqual(
-            ["stage-0003-engine-windows/produce", "stage-0007-client-windows/consume"],
-            [node.id for node in process_plan.nodes],
-        )
-        dependency = next(edge for edge in process_plan.edges if edge.artifact == "engine/shared.yaml")
-        self.assertEqual("cross_stage_artifact", dependency.edge_type.value)
-        self.assertEqual(plan.nodes[0].id, process_plan.nodes[0].data["planner_node_id"])
-
-    def test_selected_node_projection_keeps_full_dag_layer_but_only_selected_tasks(self):
-        modules = module(
-            [
-                skill("produce", output=["a.yaml"]),
-                skill("consume", output=["b.yaml"], required_input=["a.yaml"]),
-            ]
-        )
-        plan = build_execution_plan(modules, platforms=["windows"], bin_dir="bin", tag="game-1")
-        selected = _select_requested_nodes(plan, ["engine:windows:consume"])
-        self.assertEqual(("engine:windows:consume",), tuple(node.id for node in selected))
-        projected = build_process_execution_plan(
-            plan,
-            modules,
-            platforms=["windows"],
-            bin_dir="bin",
-            selected_node_ids=["engine:windows:consume"],
-        )
-        self.assertEqual(1, len(projected.nodes))
-        self.assertEqual(1, projected.nodes[0].layer)
-        self.assertFalse(
-            any(edge.source.startswith("task:") and edge.target.startswith("task:") for edge in projected.edges)
-        )
-
     def test_selected_nodes_follow_topology_and_require_unselected_inputs_to_be_materialized(self):
         modules = module(
             [
@@ -1019,7 +904,6 @@ class DagTests(unittest.TestCase):
                 tag="game-2",
             ).nodes[0]
             calls = []
-            reporting = RecordingAnalysisReporting()
 
             def agent(_name, **kwargs):
                 calls.append(("agent", kwargs["model"], kwargs["debug"]))
@@ -1028,17 +912,7 @@ class DagTests(unittest.TestCase):
                     kwargs["artifact_context"]["required_outputs"],
                 )
                 self.assertEqual([], kwargs["artifact_context"]["optional_outputs"])
-                kwargs["progress_callback"](
-                    event="attempt_started",
-                    attempt=1,
-                    max_attempts=2,
-                )
                 Path(kwargs["expected_yaml_paths"][0]).write_text("ok: true\n", encoding="utf-8")
-                kwargs["progress_callback"](
-                    event="succeeded",
-                    attempt=1,
-                    max_attempts=2,
-                )
                 return True
 
             result = run_analysis_pipeline(
@@ -1050,17 +924,12 @@ class DagTests(unittest.TestCase):
                 agent_model="gpt-5",
                 debug=True,
                 skip_preprocessors=True,
-                reporting=reporting,
-                task_id="stage-0000-engine-windows/find",
                 preprocessor_runner=lambda **_kwargs: calls.append("preprocessor"),
                 agent_skill_runner=agent,
             )
             self.assertEqual(PipelineResult("succeeded", "agent"), result)
             self.assertEqual([("agent", "gpt-5", True)], calls)
             self.assertEqual("ok: true\n", (root / "engine" / "result.yaml").read_text(encoding="utf-8"))
-            agent_events = [event for event in reporting.events if event["event_type"] == "skill.progress"]
-            self.assertEqual(["attempt_started", "succeeded"], [event["payload"]["event"] for event in agent_events])
-            self.assertEqual(1, agent_events[0]["payload"]["attempt"])
 
     def test_pipeline_forwards_flat_llm_and_symbol_alias_arguments(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -1251,7 +1120,6 @@ class DagTests(unittest.TestCase):
                 bin_dir=Path(temporary),
                 tag="game-1",
             ).nodes[0]
-            reporting = RecordingAnalysisReporting()
             agent = MagicMock(return_value=True)
 
             def preprocessor(**_kwargs):
@@ -1269,24 +1137,12 @@ class DagTests(unittest.TestCase):
                     artifact_root=root,
                     old_artifact_root=None,
                     agent="codex",
-                    reporting=reporting,
-                    task_id="stage-0000-engine-windows/find",
                     preprocessor_runner=preprocessor,
                     agent_skill_runner=write_agent_output,
                 )
 
             self.assertEqual(PipelineResult("succeeded", "agent"), result)
             agent.assert_called_once()
-            diagnostic_events = [
-                event
-                for event in reporting.events
-                if event["event_type"] == "skill.progress"
-                and event["payload"].get("event") == "preprocessor_diagnostic"
-            ]
-            self.assertEqual(1, len(diagnostic_events))
-            self.assertEqual("runner_failed", diagnostic_events[0]["payload"]["reason"])
-            self.assertEqual("RuntimeError", diagnostic_events[0]["payload"]["exception_type"])
-            self.assertEqual("runner dispatch failed", diagnostic_events[0]["payload"]["message"])
             self.assertIn("runner dispatch failed", stderr.getvalue())
             self.assertNotIn("Traceback", stderr.getvalue())
 
@@ -1835,7 +1691,7 @@ class DagTests(unittest.TestCase):
 """,
                 encoding="utf-8",
             )
-            reporter = RecordingProcessReporter()
+            node_results = {}
             with self.assertRaisesRegex(AnalysisRunError, "Module.*missing"):
                 analyze(
                     gamever="game-1",
@@ -1844,16 +1700,10 @@ class DagTests(unittest.TestCase):
                     artifactdir=root / "bin_artifacts",
                     platforms=["windows"],
                     modules_filter=["missing"],
-                    reporter=reporter,
-                    run_id="invalid-plan-run",
+                    node_results=node_results,
                 )
-            self.assertEqual([], reporter.plan["nodes"])
-            self.assertEqual(["graph_invalid"], reporter.plan["warnings"])
-            self.assertEqual(("invalid-plan-run", RunStatus.FAILED), reporter.finalized[:2])
-            self.assertTrue(reporter.flushed)
-            self.assertTrue(reporter.closed)
 
-    def test_analyzer_reports_stable_lifecycle_for_existing_outputs(self):
+    def test_analyzer_records_existing_outputs_as_skipped(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             config = root / "config.yaml"
@@ -1872,7 +1722,7 @@ class DagTests(unittest.TestCase):
             output = root / "bin_artifacts" / "game-1" / "engine" / "result.yaml"
             output.parent.mkdir(parents=True)
             output.write_text("ok: true\n", encoding="utf-8")
-            reporter = RecordingProcessReporter()
+            node_results = {}
             summary = AnalysisSummary()
 
             analyze(
@@ -1881,22 +1731,14 @@ class DagTests(unittest.TestCase):
                 bindir=root / "bin",
                 artifactdir=root / "bin_artifacts",
                 platforms=["windows"],
-                reporter=reporter,
-                run_id="scheduled-run",
+                node_results=node_results,
                 summary=summary,
             )
 
-            task_id = "stage-0000-engine-windows/find"
-            task_events = [event for event in reporter.events if event.task_id == task_id]
-            self.assertEqual(["skipped"], [event.status.value for event in task_events])
-            self.assertEqual("existing_outputs", task_events[0].reason.value)
-            self.assertEqual(task_id, reporter.plan["nodes"][0]["id"])
-            self.assertEqual(("scheduled-run", RunStatus.SUCCEEDED), reporter.finalized[:2])
-            self.assertEqual(1, reporter.finalized[2]["skipped"])
-            self.assertTrue(reporter.flushed)
-            self.assertTrue(reporter.closed)
+            self.assertEqual({"engine:windows:find": {"status": "skipped", "reason": None}}, node_results)
+            self.assertEqual(1, summary.skipped)
 
-    def test_binary_failure_aborts_tasks_and_finalizes_failed_run(self):
+    def test_binary_failure_aborts_nodes_and_records_failure(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             config = root / "config.yaml"
@@ -1911,7 +1753,7 @@ class DagTests(unittest.TestCase):
 """,
                 encoding="utf-8",
             )
-            reporter = RecordingProcessReporter()
+            node_results = {}
             summary = AnalysisSummary()
 
             analyze(
@@ -1921,14 +1763,11 @@ class DagTests(unittest.TestCase):
                 artifactdir=root / "bin_artifacts",
                 platforms=["windows"],
                 skip_error=True,
-                reporter=reporter,
+                node_results=node_results,
                 summary=summary,
             )
 
-            task = next(event for event in reporter.events if event.task_id == "stage-0000-engine-windows/find")
-            self.assertEqual("aborted", task.status.value)
-            self.assertEqual("missing_binary", task.reason.value)
-            self.assertEqual(RunStatus.FAILED, reporter.finalized[1])
+            self.assertEqual({"engine:windows:find": {"status": "aborted", "reason": "lifecycle_abort"}}, node_results)
             self.assertEqual(1, summary.failed)
 
 
@@ -1971,6 +1810,114 @@ class TestAllocateLocalPort(unittest.TestCase):
 
 
 class McpLifecycleTests(unittest.TestCase):
+    def test_fail_fast_preserves_completed_and_failed_node_results(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config = root / "config.yaml"
+            config.write_text(
+                "modules:\n  - name: engine\n    module_windows: hw.dll\n    skills:\n"
+                "      - name: first\n      - name: second\n      - name: third\n",
+                encoding="utf-8",
+            )
+            write_pe32(root / "bin" / "game-1" / "engine" / "hw.dll")
+            lifecycle = MagicMock()
+            lifecycle.__enter__.return_value = lifecycle
+            node_results = {}
+            summary = AnalysisSummary()
+            with (
+                patch("ida_analyze_bin.IdaMcpLifecycle", return_value=lifecycle),
+                patch(
+                    "ida_analyze_bin.run_analysis_pipeline",
+                    side_effect=[PipelineResult("succeeded", "agent"), PipelineFailure("test_failure", "expected")],
+                ),
+                self.assertRaisesRegex(AnalysisRunError, "expected"),
+            ):
+                analyze(
+                    gamever="game-1",
+                    config_path=config,
+                    bindir=root / "bin",
+                    artifactdir=root / "bin_artifacts",
+                    platforms=["windows"],
+                    selected_node_ids=[f"engine:windows:{name}" for name in ("first", "second", "third")],
+                    node_results=node_results,
+                    summary=summary,
+                )
+            self.assertEqual(
+                {
+                    "engine:windows:first": {"status": "succeeded", "reason": None},
+                    "engine:windows:second": {"status": "failed", "reason": "node_failed"},
+                    "engine:windows:third": {"status": "aborted", "reason": "not_executed"},
+                },
+                node_results,
+            )
+            self.assertEqual((1, 1, 0), (summary.successful, summary.failed, summary.skipped))
+
+    def test_invalid_binary_records_aborted_results_before_fail_fast(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config = root / "config.yaml"
+            config.write_text(
+                "modules:\n  - name: engine\n    module_windows: hw.dll\n"
+                "    skills:\n      - name: first\n      - name: second\n",
+                encoding="utf-8",
+            )
+            binary = root / "bin" / "game-1" / "engine" / "hw.dll"
+            binary.parent.mkdir(parents=True)
+            binary.write_bytes(b"invalid binary")
+            node_results = {}
+            summary = AnalysisSummary()
+            with self.assertRaisesRegex(AnalysisRunError, "Binary validation failed"):
+                analyze(
+                    gamever="game-1",
+                    config_path=config,
+                    bindir=root / "bin",
+                    artifactdir=root / "bin_artifacts",
+                    platforms=["windows"],
+                    node_results=node_results,
+                    summary=summary,
+                )
+            self.assertEqual(
+                {
+                    f"engine:windows:{name}": {"status": "aborted", "reason": "lifecycle_abort"}
+                    for name in ("first", "second")
+                },
+                node_results,
+            )
+            self.assertEqual(2, summary.failed)
+
+    def test_cleanup_failure_fails_analysis_even_when_every_node_succeeded(self):
+        for selected in (False, True):
+            with self.subTest(selected=selected), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                config = root / "config.yaml"
+                config.write_text(
+                    "modules:\n  - name: engine\n    module_windows: hw.dll\n    skills:\n      - name: find\n",
+                    encoding="utf-8",
+                )
+                write_pe32(root / "bin" / "game-1" / "engine" / "hw.dll")
+                lifecycle = MagicMock()
+                lifecycle.__enter__.return_value = lifecycle
+                lifecycle.__exit__.side_effect = McpLifecycleError("cleanup failed")
+                node_results = {}
+                summary = AnalysisSummary()
+                with (
+                    patch("ida_analyze_bin.IdaMcpLifecycle", return_value=lifecycle),
+                    patch("ida_analyze_bin.run_analysis_pipeline", return_value=PipelineResult("succeeded", "agent")),
+                ):
+                    analyze(
+                        gamever="game-1",
+                        config_path=config,
+                        bindir=root / "bin",
+                        artifactdir=root / "bin_artifacts",
+                        platforms=["windows"],
+                        skip_error=True,
+                        selected_node_ids=["engine:windows:find"] if selected else None,
+                        node_results=node_results,
+                        summary=summary,
+                    )
+                self.assertEqual({"engine:windows:find": {"status": "succeeded", "reason": None}}, node_results)
+                self.assertEqual(1, summary.failed)
+
     def test_runtime_binding_is_forwarded_to_preprocessor(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary) / "game-1"
@@ -2210,7 +2157,7 @@ class McpLifecycleTests(unittest.TestCase):
                 McpDatabaseBinding(False, None, str(binary), "worker", True, True),
             )
             lifecycle.ensure_ready.return_value = lifecycle.runtime
-            reporter = RecordingProcessReporter()
+            node_results = {}
             summary = AnalysisSummary()
 
             with (
@@ -2226,13 +2173,12 @@ class McpLifecycleTests(unittest.TestCase):
                     artifactdir=root / "bin_artifacts",
                     platforms=["windows"],
                     selected_node_ids=["engine:windows:selected"],
-                    reporter=reporter,
+                    node_results=node_results,
                     summary=summary,
                 )
 
             lifecycle_type.assert_called_once()
             self.assertTrue(pipeline.call_args.kwargs["force_execution"])
-            self.assertEqual(["selected"], [node["name"] for node in reporter.plan["nodes"]])
             self.assertEqual((1, 0, 0), (summary.successful, summary.failed, summary.skipped))
 
     def test_selected_node_jobs_track_failures_per_binary(self):
@@ -2272,7 +2218,7 @@ class McpLifecycleTests(unittest.TestCase):
                 )
                 lifecycle.ensure_ready.return_value = lifecycle.runtime
                 lifecycles.append(lifecycle)
-            reporter = RecordingProcessReporter()
+            node_results = {}
             summary = AnalysisSummary()
 
             with (
@@ -2290,18 +2236,12 @@ class McpLifecycleTests(unittest.TestCase):
                     platforms=["windows"],
                     selected_node_ids=["engine:windows:fails", "client:windows:succeeds"],
                     skip_error=True,
-                    reporter=reporter,
+                    node_results=node_results,
                     summary=summary,
                 )
 
-            job_ids = {job["module_name"]: job["id"] for job in reporter.plan["jobs"]}
-            terminal_statuses = {
-                event.task_id: event.status
-                for event in reporter.events
-                if event.task_id in job_ids.values() and event.status in {TaskStatus.SUCCEEDED, TaskStatus.FAILED}
-            }
-            self.assertEqual(TaskStatus.FAILED, terminal_statuses[job_ids["engine"]])
-            self.assertEqual(TaskStatus.SUCCEEDED, terminal_statuses[job_ids["client"]])
+            self.assertEqual("failed", node_results["engine:windows:fails"]["status"])
+            self.assertEqual("succeeded", node_results["client:windows:succeeds"]["status"])
             self.assertEqual((1, 1, 0), (summary.successful, summary.failed, summary.skipped))
 
     def test_selected_node_lifecycle_failure_only_aborts_remaining_nodes(self):
@@ -2332,7 +2272,7 @@ class McpLifecycleTests(unittest.TestCase):
                 McpDatabaseBinding(False, None, str(binary), "worker", True, True),
             )
             lifecycle.ensure_ready.side_effect = McpLifecycleError("worker stopped")
-            reporter = RecordingProcessReporter()
+            node_results = {}
             summary = AnalysisSummary()
 
             with (
@@ -2347,19 +2287,12 @@ class McpLifecycleTests(unittest.TestCase):
                     platforms=["windows"],
                     selected_node_ids=["engine:windows:first", "engine:windows:second"],
                     skip_error=True,
-                    reporter=reporter,
+                    node_results=node_results,
                     summary=summary,
                 )
 
-            task_ids = {node["name"]: node["id"] for node in reporter.plan["nodes"]}
-            terminal_statuses = {
-                event.task_id: event.status
-                for event in reporter.events
-                if event.task_id in task_ids.values()
-                and event.status in {TaskStatus.SUCCEEDED, TaskStatus.FAILED, TaskStatus.ABORTED}
-            }
-            self.assertEqual(TaskStatus.SUCCEEDED, terminal_statuses[task_ids["first"]])
-            self.assertEqual(TaskStatus.ABORTED, terminal_statuses[task_ids["second"]])
+            self.assertEqual("succeeded", node_results["engine:windows:first"]["status"])
+            self.assertEqual({"status": "aborted", "reason": "lifecycle_abort"}, node_results["engine:windows:second"])
             self.assertEqual((1, 1, 0), (summary.successful, summary.failed, summary.skipped))
 
     def test_analyze_decrypts_blob_binary_before_analysis(self):
@@ -3125,7 +3058,7 @@ class McpStartupLockTests(unittest.TestCase):
     def test_lock_is_exclusive_and_released(self):
         import threading
 
-        from mcp_startup import mcp_startup_lock, mcp_startup_lock_path
+        from mcp_startup import mcp_startup_lock
 
         with tempfile.TemporaryDirectory() as temporary:
             lock_file = Path(temporary) / "startup.lock"

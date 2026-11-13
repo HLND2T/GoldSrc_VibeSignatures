@@ -10,7 +10,6 @@ import hashlib
 import ipaddress
 import json
 import os
-import re
 import signal
 import socket
 import subprocess
@@ -59,7 +58,6 @@ from analysis_memory import (
 from analysis_planner import (
     AnalysisPlanError,
     ExecutionPlan,
-    build_process_execution_plan,
     load_config,
     parse_config_document,
     symbol_artifact_filename,
@@ -106,23 +104,6 @@ from ida_skill_preprocessor import (
 )
 from mcp_startup import mcp_startup_lock
 from mcp_worker_client import WorkerMcpClient, invalidate_mcp_client, run_mcp_operation
-from process_reporter import (
-    BestEffortProcessReporter,
-    NullProcessReporter,
-    ProcessEvent,
-    ProcessEventType,
-    ProcessPhase,
-    ProcessReason,
-    ProcessReporter,
-    ProcessReporterConfigurationError,
-    RunStatus,
-    TaskStatus,
-    is_valid_task_transition,
-)
-from process_reporter import (
-    ExecutionPlan as ProcessExecutionPlan,
-)
-from process_reporter_factory import DEFAULT_REDIS_PREFIX, DEFAULT_REDIS_URL, create_process_reporter
 from trusted_yaml import load_yaml_file
 from warmup_memory import WindowsWorkerJob
 
@@ -148,7 +129,6 @@ OPENED_BINARY_VERIFY_TIMEOUT = 60.0
 OPENED_BINARY_VERIFY_RETRY_INTERVAL = 2.0
 QEXIT_CONNECTION_RESET_MARKER = "[WinError 10054]"
 LLM_EFFORTS = frozenset({"none", "minimal", "low", "medium", "high", "xhigh"})
-RUN_ID_RE = re.compile(r"^[A-Za-z0-9_.:-]{1,160}$", re.ASCII)
 REMOVED_CLI_OPTIONS = frozenset({"-config", "-plan-only", "-vcall_finder", "-rename", "-console-events", "-cache_mode"})
 UNAVAILABLE_HASH_VALUES = frozenset({"", "unavailable", "unknown", "none", "null"})
 DATABASE_POLICY_REBUILD = "rebuild"
@@ -219,108 +199,6 @@ class McpRecoveryBudget:
             return False
         self.remaining_restarts -= 1
         return True
-
-
-class AnalysisReporting:
-    """Track local lifecycle state while forwarding typed process events."""
-
-    def __init__(self, reporter: ProcessReporter, run_id: str, plan) -> None:
-        self.reporter = (
-            reporter if isinstance(reporter, BestEffortProcessReporter) else BestEffortProcessReporter(reporter)
-        )
-        self.run_id = run_id
-        self._node_ids = {node.id for node in plan.nodes}
-        self._nodes_by_job = {job.id: [] for job in plan.jobs}
-        self._planner_to_task = {}
-        self._planner_to_job = {}
-        for node in plan.nodes:
-            self._nodes_by_job[node.job_id].append(node.id)
-            planner_node_id = node.data.get("planner_node_id")
-            if planner_node_id:
-                self._planner_to_task[planner_node_id] = node.id
-                self._planner_to_job[planner_node_id] = node.job_id
-        self._states = {task_id: TaskStatus.PENDING for task_id in self._node_ids}
-        self._states.update({job.id: TaskStatus.PENDING for job in plan.jobs})
-
-    def task_id_for(self, planner_node_id: str) -> str:
-        return self._planner_to_task[planner_node_id]
-
-    def job_id_for(self, planner_node_id: str) -> str:
-        return self._planner_to_job[planner_node_id]
-
-    def emit_run_status(self, status: RunStatus, *, message: str | None = None) -> None:
-        self.reporter.emit(
-            ProcessEvent(
-                run_id=self.run_id,
-                event_type=ProcessEventType.RUN_STATUS_CHANGED,
-                status=status,
-                message=message,
-            )
-        )
-
-    def emit_task_status(
-        self,
-        task_id: str,
-        status: TaskStatus,
-        phase: ProcessPhase,
-        *,
-        reason: ProcessReason | None = None,
-        message: str | None = None,
-        error: str | None = None,
-        payload: dict | None = None,
-    ) -> None:
-        current = self._states.get(task_id, TaskStatus.PENDING)
-        if current in {TaskStatus.SUCCEEDED, TaskStatus.FAILED, TaskStatus.SKIPPED, TaskStatus.ABORTED}:
-            return
-        if not is_valid_task_transition(current, status):
-            return
-        self.reporter.emit(
-            ProcessEvent(
-                run_id=self.run_id,
-                event_type=ProcessEventType.TASK_STATUS_CHANGED,
-                task_id=task_id,
-                status=status,
-                phase=phase,
-                reason=reason,
-                message=message,
-                error=error,
-                payload=payload or {},
-            )
-        )
-        self._states[task_id] = status
-
-    def emit_progress(self, task_id: str, phase: ProcessPhase, **progress) -> None:
-        self.reporter.emit(
-            ProcessEvent(
-                run_id=self.run_id,
-                event_type=ProcessEventType.SKILL_PROGRESS,
-                task_id=task_id,
-                status=TaskStatus.RUNNING,
-                phase=phase,
-                payload=progress,
-            )
-        )
-
-    def finish_job_tasks(
-        self,
-        job_id: str,
-        status: TaskStatus,
-        reason: ProcessReason,
-        message: str,
-    ) -> None:
-        for task_id in self._nodes_by_job.get(job_id, []):
-            self.emit_task_status(task_id, status, ProcessPhase.FINISHED, reason=reason, message=message)
-
-    def abort_pending(self, reason: ProcessReason, message: str) -> None:
-        for task_id in list(self._states):
-            self.emit_task_status(task_id, TaskStatus.ABORTED, ProcessPhase.FINISHED, reason=reason, message=message)
-
-    def summary(self) -> dict[str, int]:
-        counts = {status.value: 0 for status in TaskStatus}
-        for task_id in self._node_ids:
-            counts[self._states[task_id].value] += 1
-        counts["total"] = len(self._node_ids)
-        return counts
 
 
 def parse_config(config_path, config_document=None):
@@ -416,25 +294,12 @@ def _handle_binary_validation_failure(
     binary_nodes,
     exc,
     skip_error,
-    reporting,
-    job_id,
+    node_results,
     run_summary,
 ):
     run_summary.failed += len(binary_nodes)
-    reason = ProcessReason.MISSING_BINARY if not binary.is_file() else ProcessReason.BINARY_VERIFICATION_FAILED
-    reporting.emit_task_status(
-        job_id,
-        TaskStatus.FAILED,
-        ProcessPhase.FINISHED,
-        reason=reason,
-        error=str(exc),
-    )
-    reporting.finish_job_tasks(
-        job_id,
-        TaskStatus.ABORTED,
-        reason,
-        f"Binary validation failed for {module_name}:{platform}",
-    )
+    for node in binary_nodes:
+        node_results[node.id] = {"status": "aborted", "reason": "lifecycle_abort"}
     message = f"Binary validation failed for {module_name}:{platform}: {exc}"
     if not skip_error:
         raise AnalysisRunError(message) from exc
@@ -1464,13 +1329,13 @@ def _outputs(node, root: Path) -> tuple[list[Path], list[Path]]:
     )
 
 
-def _node_existing_output_reason(node, game_root: Path) -> ProcessReason | None:
+def _node_existing_output_reason(node, game_root: Path) -> str | None:
     required, optional = _outputs(node, game_root)
     if should_skip_skill_for_existing_outputs(required, optional):
-        return ProcessReason.EXISTING_OUTPUTS
+        return "existing_outputs"
     skip_paths = [game_root / Path(*PurePosixPath(name).parts) for name in node.skip_if_exists]
     if skip_paths and all(path.is_file() for path in skip_paths):
-        return ProcessReason.SKIP_IF_EXISTS
+        return "skip_if_exists"
     return None
 
 
@@ -1756,8 +1621,6 @@ def run_analysis_pipeline(
     artifact_root: Path,
     old_artifact_root: Path | None,
     agent: str,
-    reporting: AnalysisReporting | None = None,
-    task_id: str | None = None,
     agent_model: str = DEFAULT_AGENT_MODEL,
     llm_config: dict | None = None,
     mcp_runtime: McpRuntime | None = None,
@@ -1778,10 +1641,7 @@ def run_analysis_pipeline(
     optional = [path.resolve() for path in optional]
     existing_reason = _node_existing_output_reason(node, artifact_root)
     if not force_execution and existing_reason is not None:
-        return PipelineResult("skipped", "existing", existing_reason.value)
-
-    if reporting is not None and task_id is not None:
-        reporting.emit_task_status(task_id, TaskStatus.RUNNING, ProcessPhase.VALIDATING_INPUTS)
+        return PipelineResult("skipped", "existing", existing_reason)
 
     required_inputs = [(artifact_root / Path(*PurePosixPath(name).parts)).resolve() for name in node.required_inputs]
     optional_inputs = [(artifact_root / Path(*PurePosixPath(name).parts)).resolve() for name in node.optional_inputs]
@@ -1802,14 +1662,6 @@ def run_analysis_pipeline(
             {"missing_inputs": missing_inputs},
         )
     existing_optional_inputs = [path for path in optional_inputs if path.is_file()]
-    missing_optional_inputs = [str(path) for path in optional_inputs if not path.is_file()]
-    if missing_optional_inputs and reporting is not None and task_id is not None:
-        reporting.emit_progress(
-            task_id,
-            ProcessPhase.VALIDATING_INPUTS,
-            event="optional_input_missing",
-            missing_optional_inputs=missing_optional_inputs,
-        )
 
     runtime = mcp_runtime
     artifact_types = artifact_types or {}
@@ -1840,19 +1692,6 @@ def run_analysis_pipeline(
 
     preprocess_status = PREPROCESS_STATUS_NO_SCRIPT
     if not skip_preprocessors:
-        if reporting is not None and task_id is not None:
-            reporting.emit_task_status(task_id, TaskStatus.RUNNING, ProcessPhase.PREPROCESSING)
-
-        def report_preprocessor_diagnostic(payload):
-            detail = {key: value for key, value in payload.items() if key != "skill"}
-            if reporting is not None and task_id is not None:
-                reporting.emit_progress(
-                    task_id,
-                    ProcessPhase.PREPROCESSING,
-                    event="preprocessor_diagnostic",
-                    **detail,
-                )
-
         effective_llm_config = dict(llm_config or {})
         try:
             raw_preprocess_status = preprocessor_runner(
@@ -1876,27 +1715,18 @@ def run_analysis_pipeline(
                 llm_max_retries=node.max_retries,
                 symbol_aliases=symbol_aliases,
                 debug=debug,
-                diagnostic_callback=report_preprocessor_diagnostic,
             )
         except Exception as exc:  # noqa: BLE001 - runner failures use the normal Agent fallback path.
             _emit_diagnostic(
                 "runner_failed",
                 node.skill,
                 exc,
-                diagnostic_callback=report_preprocessor_diagnostic,
                 debug=debug,
                 exception=exc,
                 secrets=(effective_llm_config.get("api_key"),),
             )
             raw_preprocess_status = PREPROCESS_STATUS_FAILED
         preprocess_status = _normalize_preprocess_status(raw_preprocess_status)
-        if reporting is not None and task_id is not None:
-            reporting.emit_progress(
-                task_id,
-                ProcessPhase.PREPROCESSING,
-                event="preprocessor_completed",
-                status=str(preprocess_status),
-            )
 
         if preprocess_status is PREPROCESS_STATUS_SUCCESS:
             missing_outputs = [str(path) for path in required if not path.is_file()]
@@ -1911,8 +1741,6 @@ def run_analysis_pipeline(
                 return PipelineResult("skipped", "preprocessor", "optional_output_absent")
             output_paths = [*required, *present_optional]
             if output_paths:
-                if reporting is not None and task_id is not None:
-                    reporting.emit_task_status(task_id, TaskStatus.RUNNING, ProcessPhase.VALIDATING_OUTPUTS)
                 output_issues, runtime = _finalize_produced_outputs(
                     output_paths,
                     module_dir=module_dir,
@@ -1934,21 +1762,10 @@ def run_analysis_pipeline(
 
     if ensure_mcp_ready is not None:
         try:
-            if reporting is not None and task_id is not None:
-                reporting.emit_task_status(task_id, TaskStatus.RUNNING, ProcessPhase.WAITING_FOR_MCP)
             runtime = ensure_mcp_ready()
         except Exception as exc:
             raise PipelineFailure("mcp_unavailable", str(exc)) from exc
-    if reporting is not None and task_id is not None:
-        reporting.emit_task_status(task_id, TaskStatus.RUNNING, ProcessPhase.AGENT_FALLBACK)
     last_agent_failure = {}
-
-    def report_agent_progress(*, event, **payload):
-        if payload.get("reason"):
-            last_agent_failure.clear()
-            last_agent_failure.update(payload)
-        if reporting is not None and task_id is not None:
-            reporting.emit_progress(task_id, ProcessPhase.AGENT_FALLBACK, event=event, **payload)
 
     mcp_url = agent_runner.mcp_endpoint_url(runtime.host, runtime.port) if runtime is not None else None
     succeeded = agent_skill_runner(
@@ -1964,7 +1781,7 @@ def run_analysis_pipeline(
         max_retries=node.max_retries,
         model=agent_model,
         debug=debug,
-        progress_callback=report_agent_progress,
+        failure_detail=last_agent_failure,
         mcp_url=mcp_url,
     )
     if not succeeded:
@@ -1985,8 +1802,6 @@ def run_analysis_pipeline(
         return PipelineResult("skipped", "agent", "optional_output_absent")
     output_paths = [*required, *present_optional]
     if output_paths:
-        if reporting is not None and task_id is not None:
-            reporting.emit_task_status(task_id, TaskStatus.RUNNING, ProcessPhase.VALIDATING_OUTPUTS)
         output_issues, runtime = _finalize_produced_outputs(
             output_paths,
             module_dir=module_dir,
@@ -2026,23 +1841,6 @@ def _select_execution_modules(modules, modules_filter=None, skill_filter=None):
     return filtered
 
 
-def _process_reason(value: str | None, default: ProcessReason = ProcessReason.UNKNOWN_ERROR) -> ProcessReason:
-    if value is None:
-        return default
-    aliases = {
-        "preprocess_contract_violation": ProcessReason.PREPROCESS_FAILED,
-        "agent_output_invalid": ProcessReason.AGENT_FAILED,
-        "invalid_pipeline_result": ProcessReason.UNKNOWN_ERROR,
-        "runtime_error": ProcessReason.UNKNOWN_ERROR,
-    }
-    if value in aliases:
-        return aliases[value]
-    try:
-        return ProcessReason(value)
-    except ValueError:
-        return default
-
-
 def _execute_analysis_node(
     node,
     *,
@@ -2054,7 +1852,7 @@ def _execute_analysis_node(
     llm_config,
     skip_preprocessors,
     debug,
-    reporting: AnalysisReporting,
+    node_results,
     run_summary,
     skip_error,
     mcp_runtime=None,
@@ -2063,20 +1861,11 @@ def _execute_analysis_node(
     artifact_types=None,
     force_execution: bool = False,
 ):
-    task_id = reporting.task_id_for(node.id)
     existing_reason = _node_existing_output_reason(node, root)
     if not force_execution and existing_reason is not None:
         run_summary.skipped += 1
-        reporting.emit_task_status(
-            task_id,
-            TaskStatus.SKIPPED,
-            ProcessPhase.FINISHED,
-            reason=existing_reason,
-            message=f"Skill {node.id} already has outputs that satisfy its skip contract",
-        )
+        node_results[node.id] = {"status": "skipped", "reason": None}
         return True
-
-    reporting.emit_task_status(task_id, TaskStatus.RUNNING, ProcessPhase.PREFLIGHT)
     try:
         result = run_analysis_pipeline(
             node,
@@ -2092,36 +1881,21 @@ def _execute_analysis_node(
             debug=debug,
             symbol_aliases=symbol_aliases,
             artifact_types=artifact_types,
-            reporting=reporting,
-            task_id=task_id,
             force_execution=force_execution,
         )
         if result.status == "succeeded":
             run_summary.successful += 1
-            reporting.emit_task_status(task_id, TaskStatus.SUCCEEDED, ProcessPhase.FINISHED)
         elif result.status == "skipped":
             run_summary.skipped += 1
-            reporting.emit_task_status(
-                task_id,
-                TaskStatus.SKIPPED,
-                ProcessPhase.FINISHED,
-                reason=_process_reason(result.reason),
-            )
         else:
             raise PipelineFailure(
                 "invalid_pipeline_result",
                 f"Skill {node.id} returned unsupported pipeline status {result.status!r}",
             )
+        node_results[node.id] = {"status": result.status, "reason": None}
     except PipelineFailure as exc:
         run_summary.failed += 1
-        reporting.emit_task_status(
-            task_id,
-            TaskStatus.FAILED,
-            ProcessPhase.FINISHED,
-            reason=_process_reason(exc.reason),
-            error=str(exc),
-            payload={"raw_reason": exc.reason, **exc.payload},
-        )
+        node_results[node.id] = {"status": "failed", "reason": "node_failed"}
         message = f"Skill {node.id} failed [{exc.reason}]: {exc}"
         if not skip_error:
             raise AnalysisRunError(message) from exc
@@ -2129,13 +1903,7 @@ def _execute_analysis_node(
         return False
     except Exception as exc:
         run_summary.failed += 1
-        reporting.emit_task_status(
-            task_id,
-            TaskStatus.FAILED,
-            ProcessPhase.FINISHED,
-            reason=ProcessReason.UNKNOWN_ERROR,
-            error=str(exc),
-        )
+        node_results[node.id] = {"status": "failed", "reason": "node_failed"}
         message = f"Skill {node.id} failed: {exc}"
         if not skip_error:
             raise AnalysisRunError(message) from exc
@@ -2144,16 +1912,11 @@ def _execute_analysis_node(
     return True
 
 
-def _record_lifecycle_failures(nodes, *, error, reporting, run_summary):
+def _record_lifecycle_failures(nodes, *, node_results, run_summary):
     for node in nodes:
-        run_summary.failed += 1
-        reporting.emit_task_status(
-            reporting.task_id_for(node.id),
-            TaskStatus.ABORTED,
-            ProcessPhase.FINISHED,
-            reason=ProcessReason.MCP_UNAVAILABLE,
-            error=str(error),
-        )
+        if node.id not in node_results:
+            run_summary.failed += 1
+            node_results[node.id] = {"status": "aborted", "reason": "lifecycle_abort"}
 
 
 def _select_requested_nodes(plan, requested_node_ids):
@@ -2220,7 +1983,7 @@ def _execute_selected_nodes(
     llm_config,
     skip_preprocessors,
     debug,
-    reporting,
+    node_results,
     run_summary,
     skip_error,
     symbol_aliases,
@@ -2228,8 +1991,8 @@ def _execute_selected_nodes(
     host,
     port,
     ida_args,
+    force_execution=True,
 ):
-    failed_binaries = set()
     index = 0
     while index < len(selected_nodes):
         binary_key = (selected_nodes[index].module, selected_nodes[index].platform)
@@ -2241,11 +2004,7 @@ def _execute_selected_nodes(
         if binary_key not in validated_binaries:
             continue
         binary = validated_binaries[binary_key]
-        job_id = reporting.job_id_for(segment[0].id)
-        reporting.emit_task_status(job_id, TaskStatus.RUNNING, ProcessPhase.WAITING_FOR_MCP)
-        failures_before_segment = run_summary.failed
         remaining = segment
-        lifecycle_failed = False
         try:
             with _create_ida_mcp_lifecycle(
                 binary,
@@ -2263,11 +2022,9 @@ def _execute_selected_nodes(
                             remaining = segment[node_index:]
                             _record_lifecycle_failures(
                                 remaining,
-                                error=exc,
-                                reporting=reporting,
+                                node_results=node_results,
                                 run_summary=run_summary,
                             )
-                            lifecycle_failed = True
                             message = (
                                 f"MCP lifecycle failed for {node.module}:{node.platform}; "
                                 f"aborting {len(remaining)} remaining skill(s): {exc}"
@@ -2286,27 +2043,26 @@ def _execute_selected_nodes(
                         llm_config=llm_config,
                         skip_preprocessors=skip_preprocessors,
                         debug=debug,
-                        reporting=reporting,
+                        node_results=node_results,
                         run_summary=run_summary,
                         skip_error=skip_error,
                         mcp_runtime=lifecycle.runtime,
                         ensure_mcp_ready=lifecycle.ensure_ready,
                         symbol_aliases=symbol_aliases,
                         artifact_types=artifact_types,
-                        force_execution=True,
+                        force_execution=force_execution,
                     )
                     remaining = segment[node_index + 1 :]
         except McpLifecycleError as exc:
             if remaining:
-                _record_lifecycle_failures(remaining, error=exc, reporting=reporting, run_summary=run_summary)
-            lifecycle_failed = True
+                _record_lifecycle_failures(remaining, node_results=node_results, run_summary=run_summary)
+            else:
+                # Cleanup can fail after every node completed; fail the run without rewriting node results.
+                run_summary.failed += 1
             message = f"MCP lifecycle failed for {binary_key[0]}:{binary_key[1]}: {exc}"
             if not skip_error:
                 raise AnalysisRunError(message) from exc
             print(f"Error: {message}; continuing (-skip_error)")
-        if lifecycle_failed or run_summary.failed > failures_before_segment:
-            failed_binaries.add(binary_key)
-    return frozenset(failed_binaries)
 
 
 def analyze(
@@ -2329,75 +2085,49 @@ def analyze(
     host: str = DEFAULT_HOST,
     port: int | None = None,
     ida_args: str = "",
-    reporter: ProcessReporter | None = None,
-    run_id: str | None = None,
+    node_results: dict[str, dict] | None = None,
     summary: AnalysisSummary | None = None,
     selected_node_ids: tuple[str, ...] | list[str] | None = None,
     force_all: bool = False,
 ) -> ExecutionPlan:
-    process_reporter = BestEffortProcessReporter(reporter or NullProcessReporter())
     run_summary = summary if summary is not None else AnalysisSummary()
+    node_results = node_results if node_results is not None else {}
+    tag = validated_tag(gamever)
+    if oldgamever is not None:
+        validated_tag(oldgamever)
+        if _split_gamever(oldgamever)[0] != _split_gamever(tag)[0]:
+            raise AnalysisRunError(f"Old game version must use the same game family as {tag}: {oldgamever}")
+    document, all_modules = load_config(config_path)
+    symbol_aliases = _symbol_alias_map_from_document(document)
+    modules = (
+        list(all_modules)
+        if selected_node_ids is not None or force_all
+        else _select_execution_modules(all_modules, modules_filter, skill_filter)
+    )
+    plan = _build_execution_plan(
+        modules,
+        platforms=platforms,
+        bin_dir=artifactdir,
+        tag=tag,
+        default_max_retries=max_retries,
+        declared_modules=[module["name"] for module in all_modules],
+        validate_external_inputs=not (force_all and selected_node_ids is not None),
+    )
+    selected_nodes = _select_requested_nodes(plan, selected_node_ids)
+    root = Path(artifactdir) / tag
+    old_root = Path(artifactdir) / oldgamever if oldgamever else None
+    artifact_types = _artifact_type_map(all_modules, root)
+    validated_binaries: dict[tuple[str, str], Path] = {}
+    module_map = {module["name"]: module for module in modules}
+    nodes_by_binary: dict[tuple[str, str], list] = {}
+    for node in selected_nodes:
+        nodes_by_binary.setdefault((node.module, node.platform), []).append(node)
     try:
-        tag = validated_tag(gamever)
-        if oldgamever is not None:
-            validated_tag(oldgamever)
-            if _split_gamever(oldgamever)[0] != _split_gamever(tag)[0]:
-                raise AnalysisRunError(f"Old game version must use the same game family as {tag}: {oldgamever}")
-        document, all_modules = load_config(config_path)
-        symbol_aliases = _symbol_alias_map_from_document(document)
-        modules = (
-            list(all_modules)
-            if selected_node_ids is not None or force_all
-            else _select_execution_modules(all_modules, modules_filter, skill_filter)
-        )
-        plan = _build_execution_plan(
-            modules,
-            platforms=platforms,
-            bin_dir=artifactdir,
-            tag=tag,
-            default_max_retries=max_retries,
-            declared_modules=[module["name"] for module in all_modules],
-            validate_external_inputs=not (force_all and selected_node_ids is not None),
-        )
-        selected_nodes = _select_requested_nodes(plan, selected_node_ids)
-        process_plan = build_process_execution_plan(
-            plan,
-            modules,
-            platforms=platforms,
-            bin_dir=bindir,
-            selected_node_ids=None if selected_node_ids is None else [node.id for node in selected_nodes],
-        )
-        root = Path(artifactdir) / tag
-        old_root = Path(artifactdir) / oldgamever if oldgamever else None
-        artifact_types = _artifact_type_map(all_modules, root)
-        validated_binaries: dict[tuple[str, str], Path] = {}
-        module_map = {module["name"]: module for module in modules}
-        nodes_by_binary: dict[tuple[str, str], list] = {}
-        for node in selected_nodes:
-            nodes_by_binary.setdefault((node.module, node.platform), []).append(node)
-        initialized_run_id = process_reporter.initialize_run(process_plan.to_dict(), run_id=run_id)
-        reporting = AnalysisReporting(process_reporter, initialized_run_id, process_plan)
-    except BaseException:
-        try:
-            failed_plan = ProcessExecutionPlan(warnings=[ProcessReason.GRAPH_INVALID])
-            failed_run_id = process_reporter.initialize_run(failed_plan.to_dict(), run_id=run_id)
-            failed_reporting = AnalysisReporting(process_reporter, failed_run_id, failed_plan)
-            failed_reporting.emit_run_status(RunStatus.FAILED)
-            process_reporter.finalize_run(failed_run_id, RunStatus.FAILED, failed_reporting.summary())
-        finally:
-            process_reporter.flush()
-            process_reporter.close()
-        raise
-    try:
-        reporting.emit_run_status(RunStatus.RUNNING)
-        process_reporter.heartbeat(initialized_run_id)
         if selected_node_ids is not None:
             _validate_selected_inputs(plan, selected_nodes, root)
         for (module_name, platform), binary_nodes in nodes_by_binary.items():
             binary_name = module_map[module_name].get(f"module_{platform}")
             binary = Path(get_binary_path(bindir, tag, module_name, binary_name))
-            job_id = reporting.job_id_for(binary_nodes[0].id)
-            reporting.emit_task_status(job_id, TaskStatus.RUNNING, ProcessPhase.VALIDATING_BINARY)
             try:
                 prepared_binary = prepare_analysis_binary(binary, platform, debug=debug)
                 if prepared_binary != binary:
@@ -2412,14 +2142,12 @@ def analyze(
                     binary_nodes,
                     exc,
                     skip_error,
-                    reporting,
-                    job_id,
+                    node_results,
                     run_summary,
                 )
 
-        selected_failed_binaries = frozenset()
         if selected_node_ids is not None:
-            selected_failed_binaries = _execute_selected_nodes(
+            _execute_selected_nodes(
                 selected_nodes,
                 validated_binaries=validated_binaries,
                 root=root,
@@ -2429,7 +2157,7 @@ def analyze(
                 llm_config=llm_config,
                 skip_preprocessors=skip_preprocessors,
                 debug=debug,
-                reporting=reporting,
+                node_results=node_results,
                 run_summary=run_summary,
                 skip_error=skip_error,
                 symbol_aliases=symbol_aliases,
@@ -2438,124 +2166,59 @@ def analyze(
                 port=port,
                 ida_args=ida_args,
             )
+        else:
             for binary_key, binary_nodes in nodes_by_binary.items():
                 if binary_key not in validated_binaries:
                     continue
-                reporting.emit_task_status(
-                    reporting.job_id_for(binary_nodes[0].id),
-                    TaskStatus.FAILED if binary_key in selected_failed_binaries else TaskStatus.SUCCEEDED,
-                    ProcessPhase.FINISHED,
+                binary = validated_binaries[binary_key]
+                existing_nodes = (
+                    []
+                    if force_all
+                    else [node for node in binary_nodes if _node_existing_output_reason(node, root) is not None]
                 )
-
-        for binary_key, binary_nodes in () if selected_node_ids is not None else nodes_by_binary.items():
-            if binary_key not in validated_binaries:
-                continue
-            binary = validated_binaries[binary_key]
-            job_id = reporting.job_id_for(binary_nodes[0].id)
-            failures_before_job = run_summary.failed
-            existing_nodes = (
-                []
-                if force_all
-                else [node for node in binary_nodes if _node_existing_output_reason(node, root) is not None]
-            )
-            pending_nodes = [node for node in binary_nodes if node not in existing_nodes]
-            for node in existing_nodes:
-                _execute_analysis_node(
-                    node,
-                    binary=binary,
-                    root=root,
-                    old_root=old_root,
-                    agent=agent,
-                    agent_model=agent_model,
-                    llm_config=llm_config,
-                    skip_preprocessors=skip_preprocessors,
-                    debug=debug,
-                    reporting=reporting,
-                    run_summary=run_summary,
-                    skip_error=skip_error,
-                    symbol_aliases=symbol_aliases,
-                    artifact_types=artifact_types,
-                )
-            if pending_nodes:
-                reporting.emit_task_status(job_id, TaskStatus.RUNNING, ProcessPhase.WAITING_FOR_MCP)
-                try:
-                    with _create_ida_mcp_lifecycle(
-                        binary,
-                        binary_key[1],
-                        host,
-                        port,
-                        ida_args,
-                        debug,
-                    ) as lifecycle:
-                        for index, node in enumerate(pending_nodes):
-                            if index:
-                                try:
-                                    lifecycle.ensure_ready()
-                                except McpLifecycleError as exc:
-                                    remaining = pending_nodes[index:]
-                                    _record_lifecycle_failures(
-                                        remaining,
-                                        error=exc,
-                                        reporting=reporting,
-                                        run_summary=run_summary,
-                                    )
-                                    message = (
-                                        f"MCP lifecycle failed for {node.module}:{node.platform}; "
-                                        f"aborting {len(remaining)} remaining skill(s): {exc}"
-                                    )
-                                    if not skip_error:
-                                        raise AnalysisRunError(message) from exc
-                                    print(f"Error: {message}; continuing (-skip_error)")
-                                    break
-                            _execute_analysis_node(
-                                node,
-                                binary=binary,
-                                root=root,
-                                old_root=old_root,
-                                agent=agent,
-                                agent_model=agent_model,
-                                llm_config=llm_config,
-                                skip_preprocessors=skip_preprocessors,
-                                debug=debug,
-                                reporting=reporting,
-                                run_summary=run_summary,
-                                skip_error=skip_error,
-                                mcp_runtime=lifecycle.runtime,
-                                ensure_mcp_ready=lifecycle.ensure_ready,
-                                symbol_aliases=symbol_aliases,
-                                artifact_types=artifact_types,
-                                force_execution=force_all,
-                            )
-                except McpLifecycleError as exc:
-                    _record_lifecycle_failures(
-                        pending_nodes,
-                        error=exc,
-                        reporting=reporting,
+                pending_nodes = [node for node in binary_nodes if node not in existing_nodes]
+                for node in existing_nodes:
+                    _execute_analysis_node(
+                        node,
+                        binary=binary,
+                        root=root,
+                        old_root=old_root,
+                        agent=agent,
+                        agent_model=agent_model,
+                        llm_config=llm_config,
+                        skip_preprocessors=skip_preprocessors,
+                        debug=debug,
+                        node_results=node_results,
                         run_summary=run_summary,
+                        skip_error=skip_error,
+                        symbol_aliases=symbol_aliases,
+                        artifact_types=artifact_types,
                     )
-                    message = f"MCP lifecycle failed for {binary_key[0]}:{binary_key[1]}: {exc}"
-                    if not skip_error:
-                        raise AnalysisRunError(message) from exc
-                    print(f"Error: {message}; continuing (-skip_error)")
-            reporting.emit_task_status(
-                job_id,
-                TaskStatus.FAILED if run_summary.failed > failures_before_job else TaskStatus.SUCCEEDED,
-                ProcessPhase.FINISHED,
-            )
-
-        reporting.abort_pending(ProcessReason.UPSTREAM_ABORTED, "Task was not executed before run end")
-        final_status = RunStatus.FAILED if run_summary.failed or selected_failed_binaries else RunStatus.SUCCEEDED
-        reporting.emit_run_status(final_status)
-        process_reporter.finalize_run(initialized_run_id, final_status, reporting.summary())
+                if pending_nodes:
+                    _execute_selected_nodes(
+                        pending_nodes,
+                        validated_binaries=validated_binaries,
+                        root=root,
+                        old_root=old_root,
+                        agent=agent,
+                        agent_model=agent_model,
+                        llm_config=llm_config,
+                        skip_preprocessors=skip_preprocessors,
+                        debug=debug,
+                        node_results=node_results,
+                        run_summary=run_summary,
+                        skip_error=skip_error,
+                        symbol_aliases=symbol_aliases,
+                        artifact_types=artifact_types,
+                        host=host,
+                        port=port,
+                        ida_args=ida_args,
+                        force_execution=force_all,
+                    )
         return plan
-    except BaseException:
-        reporting.abort_pending(ProcessReason.UNKNOWN_ERROR, "Run terminated by an unexpected exception")
-        reporting.emit_run_status(RunStatus.FAILED)
-        process_reporter.finalize_run(initialized_run_id, RunStatus.FAILED, reporting.summary())
-        raise
     finally:
-        process_reporter.flush()
-        process_reporter.close()
+        for node in selected_nodes:
+            node_results.setdefault(node.id, {"status": "aborted", "reason": "not_executed"})
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -2649,27 +2312,6 @@ def _parser() -> argparse.ArgumentParser:
         default=None,
         help="Old version for analysis context; auto-selects the latest older same-family version, or 'none'",
     )
-    parser.add_argument(
-        "-process_reporter",
-        choices=("none", "console", "redis"),
-        default=os.environ.get("GSVIBE_PROCESS_REPORTER", "none"),
-        help="Process reporter backend (default: none, or set GSVIBE_PROCESS_REPORTER)",
-    )
-    parser.add_argument(
-        "-redis_url",
-        default=os.environ.get("GSVIBE_REDIS_URL", DEFAULT_REDIS_URL),
-        help="Redis URL for process reporting (or set GSVIBE_REDIS_URL)",
-    )
-    parser.add_argument(
-        "-redis_prefix",
-        default=os.environ.get("GSVIBE_REDIS_PREFIX", DEFAULT_REDIS_PREFIX),
-        help="Redis key prefix for process reporting (or set GSVIBE_REDIS_PREFIX)",
-    )
-    parser.add_argument(
-        "-run_id",
-        default=os.environ.get("GSVIBE_RUN_ID"),
-        help="Existing scheduler-created run ID (or set GSVIBE_RUN_ID)",
-    )
     return parser
 
 
@@ -2719,13 +2361,10 @@ def parse_args(argv=None):
                 "-configyaml",
                 "-oldgamever",
                 "-skip_error",
-                "-run_id",
             }
         )
         if conflicts:
             parser.error(f"-batch_selection cannot be combined with {', '.join(conflicts)}")
-        if _optional_text(args.run_id) is not None:
-            parser.error("GSVIBE_RUN_ID cannot be used with -batch_selection")
     if args.validate_selection_only and args.batch_selection is None:
         parser.error("-validate_selection_only requires -batch_selection")
     if args.batch_diagnostics and not (args.batch_selection or (args.allgamever and args.force_all)):
@@ -2747,8 +2386,6 @@ def parse_args(argv=None):
             parser.error("-configyaml cannot be used with -allgamever")
         if args.oldgamever is not None:
             parser.error("-oldgamever cannot be used with -allgamever")
-        if _optional_text(args.run_id) is not None:
-            parser.error("-run_id (or GSVIBE_RUN_ID) cannot be used with -allgamever")
         args.oldgamever = None
     elif args.batch_selection is None:
         gamever = _optional_text(args.gamever)
@@ -2801,12 +2438,6 @@ def parse_args(argv=None):
     if not 1 <= args.maxretry <= 20:
         parser.error("-maxretry must be an integer from 1 to 20")
     args.ida_args = str(args.ida_args or "").strip()
-    args.run_id = _optional_text(args.run_id)
-    if args.run_id is not None and not RUN_ID_RE.fullmatch(args.run_id):
-        parser.error("-run_id must contain 1-160 letters, digits, '.', '_', ':', or '-'")
-    args.redis_prefix = str(args.redis_prefix).strip().strip(":")
-    if not args.redis_prefix:
-        parser.error("-redis_prefix cannot be empty")
 
     if not args.allgamever and args.batch_selection is None:
         gamever = args.gamever
@@ -2860,10 +2491,7 @@ def _print_main_configuration(args) -> None:
     if args.force_all:
         print("Force all nodes: enabled")
     print(f"Agent: {args.agent}")
-    print(f"Process reporter: {args.process_reporter}")
     print("IDB cache mode: warm (strict restored, no save)")
-    if args.run_id:
-        print(f"Run ID: {args.run_id}")
     if args.ida_args:
         print(f"IDA arguments: {args.ida_args}")
     if args.debug:
@@ -2899,7 +2527,6 @@ def _run_single_tag(gamever: str, args, summary: AnalysisSummary | None = None) 
         authority = analysis_memory_authority_from_environment()
         if authority is not None:
             authority.enforce_direct_limits()
-        reporter = create_process_reporter(args)
         analyze(
             gamever=gamever,
             oldgamever=args.oldgamever,
@@ -2917,8 +2544,6 @@ def _run_single_tag(gamever: str, args, summary: AnalysisSummary | None = None) 
             skip_preprocessors=args.skip_pp,
             debug=args.debug,
             ida_args=args.ida_args,
-            reporter=reporter,
-            run_id=args.run_id,
             summary=summary,
             selected_node_ids=args.node,
             force_all=args.force_all,
@@ -2929,7 +2554,6 @@ def _run_single_tag(gamever: str, args, summary: AnalysisSummary | None = None) 
         AnalysisPlanError,
         AnalysisRunError,
         BinaryFormatError,
-        ProcessReporterConfigurationError,
         OSError,
         yaml.YAMLError,
     ) as exc:
@@ -2973,7 +2597,6 @@ def run_all(args) -> int:
 _BATCH_WORKER_FLAG = "--internal-batch-worker"
 _BATCH_JOB_START_FILE_ENV = "GSVIBE_ANALYSIS_JOB_START_FILE"
 _BATCH_JOB_START_TIMEOUT_SECONDS = 30.0
-_BATCH_TERMINAL_STATUSES = frozenset({"succeeded", "failed", "skipped", "aborted"})
 _BATCH_WORKER_ENV_OPTIONS = (
     ("GSVIBE_AGENT", "agent"),
     ("GSVIBE_AGENT_MODEL", "agent_model"),
@@ -2983,49 +2606,7 @@ _BATCH_WORKER_ENV_OPTIONS = (
     ("GSVIBE_LLM_FAKE_AS", "llm_fake_as"),
     ("GSVIBE_LLM_MODEL", "llm_model"),
     ("GSVIBE_LLM_TEMPERATURE", "llm_temperature"),
-    ("GSVIBE_PROCESS_REPORTER", "process_reporter"),
-    ("GSVIBE_REDIS_PREFIX", "redis_prefix"),
-    ("GSVIBE_REDIS_URL", "redis_url"),
 )
-
-
-class _RecordingProcessReporter:
-    """Forward reporter events while recording terminal task statuses per planner node."""
-
-    def __init__(self, inner) -> None:
-        self._inner = inner
-        self._planner_by_task: dict[str, str] = {}
-        self._terminal: dict[str, str] = {}
-
-    def terminal_status(self, planner_node_id: str) -> str | None:
-        return self._terminal.get(planner_node_id)
-
-    def initialize_run(self, plan, run_id=None):
-        for node in (plan or {}).get("nodes", []):
-            planner_node_id = (node.get("data") or {}).get("planner_node_id")
-            if planner_node_id and node.get("id"):
-                self._planner_by_task[node["id"]] = planner_node_id
-        return self._inner.initialize_run(plan, run_id=run_id)
-
-    def emit(self, event) -> None:
-        if event.event_type is ProcessEventType.TASK_STATUS_CHANGED and event.task_id in self._planner_by_task:
-            status = event.status
-            status_value = status.value if hasattr(status, "value") else str(status)
-            if status_value in _BATCH_TERMINAL_STATUSES:
-                self._terminal[self._planner_by_task[event.task_id]] = status_value
-        self._inner.emit(event)
-
-    def heartbeat(self, run_id: str) -> None:
-        self._inner.heartbeat(run_id)
-
-    def finalize_run(self, run_id: str, status, summary) -> None:
-        self._inner.finalize_run(run_id, status, summary)
-
-    def flush(self) -> None:
-        self._inner.flush()
-
-    def close(self) -> None:
-        self._inner.close()
 
 
 def _atomic_write_json(path: Path, payload: dict) -> None:
@@ -3056,9 +2637,6 @@ def _batch_worker_options(args) -> dict:
         "skip_pp": bool(args.skip_pp),
         "debug": bool(args.debug),
         "ida_args": args.ida_args,
-        "process_reporter": args.process_reporter,
-        "redis_url": args.redis_url,
-        "redis_prefix": args.redis_prefix,
     }
 
 
@@ -3070,15 +2648,7 @@ def _batch_worker_main(request_path: str) -> int:
     node_ids = tuple(request["node_ids"])
     tag = request["tag"]
     run_id = request["run_id"]
-    reporter_args = argparse.Namespace(
-        process_reporter=options.get("process_reporter", "none"),
-        redis_url=options.get("redis_url"),
-        redis_prefix=options.get("redis_prefix"),
-        gamever=tag,
-        agent=options.get("agent"),
-        configyaml=options.get("configyaml"),
-    )
-    recorder = _RecordingProcessReporter(create_process_reporter(reporter_args))
+    results_by_node: dict[str, dict] = {}
     summary = AnalysisSummary()
     failure_reason = None
     try:
@@ -3105,8 +2675,7 @@ def _batch_worker_main(request_path: str) -> int:
             skip_preprocessors=bool(options.get("skip_pp")),
             debug=bool(options.get("debug")),
             ida_args=options.get("ida_args", ""),
-            reporter=recorder,
-            run_id=run_id,
+            node_results=results_by_node,
             summary=summary,
             selected_node_ids=list(node_ids),
             force_all=True,
@@ -3118,7 +2687,6 @@ def _batch_worker_main(request_path: str) -> int:
         AnalysisPlanError,
         AnalysisRunError,
         BinaryFormatError,
-        ProcessReporterConfigurationError,
         OSError,
         yaml.YAMLError,
     ) as exc:
@@ -3127,17 +2695,8 @@ def _batch_worker_main(request_path: str) -> int:
 
     node_results = []
     for node_id in node_ids:
-        terminal = recorder.terminal_status(node_id)
-        if terminal == "succeeded":
-            node_results.append({"node_id": node_id, "status": "succeeded", "reason": None})
-        elif terminal == "skipped":
-            node_results.append({"node_id": node_id, "status": "skipped", "reason": None})
-        elif terminal == "aborted":
-            node_results.append({"node_id": node_id, "status": "aborted", "reason": "lifecycle_abort"})
-        elif terminal == "failed":
-            node_results.append({"node_id": node_id, "status": "failed", "reason": failure_reason or "node_failed"})
-        else:
-            node_results.append({"node_id": node_id, "status": "aborted", "reason": "not_executed"})
+        result = results_by_node.get(node_id, {"status": "aborted", "reason": "not_executed"})
+        node_results.append({"node_id": node_id, **result})
     counts = {"successful": 0, "failed": 0, "skipped": 0}
     for entry in node_results:
         if entry["status"] == "succeeded":
@@ -3215,7 +2774,6 @@ def _run_full_batch(args) -> int:
         sensitive_values=[
             args.llm_apikey,
             args.llm_baseurl,
-            args.redis_url,
             *[
                 value
                 for key, value in os.environ.items()
@@ -3356,9 +2914,6 @@ def _run_analysis_batch(args, diagnostics: BatchDiagnostics) -> int:
                     skip_pp=args.skip_pp,
                     debug=args.debug,
                     ida_args=args.ida_args,
-                    process_reporter=args.process_reporter,
-                    redis_url=args.redis_url,
-                    redis_prefix=args.redis_prefix,
                 )
             ),
         }

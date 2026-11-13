@@ -23,7 +23,7 @@ uv run ida_analyze_bin.py -allgamever -debug
 - [依赖与环境配置](docs/zh-CN/requirements.md)
 - [开发检查：格式化与测试](docs/zh-CN/development.md)
 - [二进制获取与符号分析](docs/zh-CN/analysis.md)
-- [进度上报、调度与看板](docs/zh-CN/process-monitoring.md)
+- [静态符号浏览器与 Pages](docs/zh-CN/symbol-browser.md)
 - [`LLM_DECOMPILE` reference YAML](docs/zh-CN/reference-yaml.md)
 - [创建符号分析 skill](docs/zh-CN/creating-skills.md)
 

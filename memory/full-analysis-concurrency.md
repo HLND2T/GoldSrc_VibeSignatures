@@ -28,9 +28,9 @@ cgroup is delegated — per-worker limits with reservation-based admission.
   analyzers serialize their whole IDA startup. `start_dynamic_idalib_mcp` retries with a fresh port when a port is
   stolen or never bound.
 - Worker results are a control-plane contract (exact key set, identity, precise ordered `node_ids`, summary
-  consistency, zero exit cannot mask failed nodes). Terminal node statuses are captured in-process by
-  `_RecordingProcessReporter` mapping process-plan task IDs back to planner node IDs; the coordinator never parses
-  worker logs.
+  consistency, zero exit cannot mask failed nodes). The analyzer records final node results directly by planner node ID
+  in the worker's `node_results` dictionary; completed results survive later failures, and unfinished nodes are aborted.
+  The coordinator validates the existing result JSON and never parses worker logs. See [[static-symbol-explorer-and-pages]].
 - Secrets (LLM API key) travel only through the child environment; the request JSON and result JSON carry none.
 
 ## Review-fix lessons (PR #67)
@@ -38,12 +38,13 @@ cgroup is delegated — per-worker limits with reservation-based admission.
 - Cross-process identity contracts need **one composition rule shared by both sides**: the coordinator stamped
   `<batch_run_id>-<work_item_id>` into worker requests but validated results against the bare batch run id, so
   every conforming result was rejected. `work_item_run_id()` is now the single source for both paths.
-- Any identifier that reaches a **filesystem name or a reporter run id must be unique across the whole batch**,
+- Any identifier that reaches a **filesystem name or a worker run id must be unique across the whole batch**,
   not per tag: per-tag `parallel-0000` numbering made concurrent tags overwrite each other's request/result files.
   `build_batch_schedule` renumbers both phases globally.
 - Batch success must include **worker-level failure**, not just node counts: a worker can report status=failed
   (cleanup/lifecycle failure) while every node exited successfully; `outcome.succeeded` therefore also requires
-  `failure_reason is None`.
+  `failure_reason is None`. Analyzer MCP cleanup failure after all nodes finish also increments the run's failure
+  summary without rewriting successful node results, so the worker exits nonzero even with zero failed nodes.
 - A scheduler that owns child processes needs an **exception-path teardown**: wrap scheduling in
   `except BaseException`, sweep active workers with `taskkill /F /T` (or a POSIX /proc walk + SIGKILL, snapshot
   descendants before touching the root and kill deepest-first), confirm exit before releasing the memory-gate

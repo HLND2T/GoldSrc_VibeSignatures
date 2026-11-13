@@ -28,11 +28,10 @@ Use the fast isolated suite during local edit-test loops:
 uv run python tests/run_test_suite.py unit -b --durations 30
 ```
 
-The remaining source-owned suites keep repository structure and Redis coverage explicit:
+Run the repository structure and contract checks separately:
 
 ```bash
 uv run python tests/run_test_suite.py repository-contract -b --durations 30
-uv run python tests/run_test_suite.py redis-integration -b --durations 30
 ```
 
 Run every source-compatible assigned test before completion:
@@ -41,7 +40,7 @@ Run every source-compatible assigned test before completion:
 uv run python tests/run_test_suite.py all -b --durations 30
 ```
 
-`all` is the declared disjoint union of unit, Redis integration, repository contract, and IDA integration groups. Release
+`all` is the declared disjoint union of unit, repository contract, and IDA integration groups. Release
 bundle and publisher contracts are ordinary unit tests; live GitHub publication and commercial IDA evidence remain
 separate operational gates.
 

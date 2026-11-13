@@ -100,7 +100,6 @@ uv run python ida_analyze_bin.py -gamever <GAMEVER> -modules <MODULE> -skill <EX
 - `-ida_args` appends IDA startup arguments. `-rename` and Source2-only finder semantics remain excluded.
 - IDB cache mode is not a CLI option. Every analysis invocation requires exact IDB generations to have been restored first and always uses strict no-rebuild/no-save semantics.
 - `-skip_pp` bypasses the single Preprocessor and runs the Agent directly. `-skip_error` continues after runtime failures but the final exit status remains nonzero.
-- `-process_reporter=console` emits typed `ProcessEvent` JSONL; `redis` is best-effort and writes the `gsvibe:analysis:v1` Redis protocol. `-redis_url` and `-redis_prefix` configure the Redis backend; `-run_id` sets the run identity.
 - `-debug` enables debug output.
 
 ### Batch analysis with `-allgamever`
