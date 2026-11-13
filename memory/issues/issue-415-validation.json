@@ -1,0 +1,200 @@
+{
+  "issue": 415,
+  "validation_scope": "Actual binary signatures, canonical candidate/gamedata/JSON guards, and offline CRC64 + symbolName query/RVA resolution following MetaHook GameData.cpp; no in-game invocation or release dispatch.",
+  "consumer_source": "https://github.com/MetaHookSv/MetaHook/blob/101636a37098aceb7fc96df4c88d6a5b79e50cb8/src/GameData.cpp",
+  "versions": {
+    "svencoop-8948": {
+      "dataset_sha256": "95a46d203d1db52974f313fef217a96144f13fd4f7e4fe7dc5e1f097ccca047d",
+      "candidate_guards": [
+        "gamedata",
+        "json",
+        "symbols"
+      ],
+      "platforms": {
+        "windows": {
+          "binary_sha256": "5e3bd90c24e829c43344f0fe18368a71cad3c9b3405695e2489b469cf694624c",
+          "module_crc64": "f4d0ae7dac38c443",
+          "symbols": [
+            {
+              "symbolName": "CClient_SoundEngine_MapStarted",
+              "kind": "function",
+              "rva": "0x5a3f0",
+              "resolved_va": "0x1005a3f0",
+              "signature_match_count": 1,
+              "signature_allow_across_function_boundary": true
+            },
+            {
+              "symbolName": "CClient_SoundEngine_ClearSoundArrays",
+              "kind": "function",
+              "rva": "0x5a2c0",
+              "resolved_va": "0x1005a2c0",
+              "signature_match_count": 1,
+              "signature_allow_across_function_boundary": false
+            },
+            {
+              "symbolName": "CClient_SoundEngine_FlushCache",
+              "kind": "function",
+              "rva": "0x59f60",
+              "resolved_va": "0x10059f60",
+              "signature_match_count": 1,
+              "signature_allow_across_function_boundary": false
+            }
+          ]
+        },
+        "linux": {
+          "binary_sha256": "8b5fbb8f3533b38ab3fd53dfc6078012bc2f9259ba4e347b5bf301f3d0ebacc4",
+          "module_crc64": "fc9458111b8d5205",
+          "symbols": [
+            {
+              "symbolName": "CClient_SoundEngine_MapStarted",
+              "kind": "function",
+              "rva": "0x11a754",
+              "resolved_va": "0x11a754",
+              "signature_match_count": 1,
+              "signature_allow_across_function_boundary": false
+            },
+            {
+              "symbolName": "CClient_SoundEngine_ClearSoundArrays",
+              "kind": "function",
+              "rva": "0x11a436",
+              "resolved_va": "0x11a436",
+              "signature_match_count": 1,
+              "signature_allow_across_function_boundary": false
+            },
+            {
+              "symbolName": "CClient_SoundEngine_FlushCache",
+              "kind": "function",
+              "rva": "0x11df68",
+              "resolved_va": "0x11df68",
+              "signature_match_count": 1,
+              "signature_allow_across_function_boundary": false
+            }
+          ]
+        }
+      }
+    },
+    "svencoop-10257": {
+      "dataset_sha256": "4837f735cf06556862aaea6519c3414f97f135463344552028f3004f78e7e2fe",
+      "candidate_guards": [
+        "gamedata",
+        "json",
+        "symbols"
+      ],
+      "platforms": {
+        "windows": {
+          "binary_sha256": "f40e74b7a703d193188d628066660ff0ac4be2b09613ae4b7f8d2c671991e7d6",
+          "module_crc64": "6ad36cd4373ebb45",
+          "symbols": [
+            {
+              "symbolName": "CClient_SoundEngine_MapStarted",
+              "kind": "function",
+              "rva": "0xcf10",
+              "resolved_va": "0x1000cf10",
+              "signature_match_count": 1,
+              "signature_allow_across_function_boundary": true
+            },
+            {
+              "symbolName": "CClient_SoundEngine_ClearSoundArrays",
+              "kind": "function",
+              "rva": "0xcde0",
+              "resolved_va": "0x1000cde0",
+              "signature_match_count": 1,
+              "signature_allow_across_function_boundary": false
+            },
+            {
+              "symbolName": "CClient_SoundEngine_FlushCache",
+              "kind": "function",
+              "rva": "0xca80",
+              "resolved_va": "0x1000ca80",
+              "signature_match_count": 1,
+              "signature_allow_across_function_boundary": false
+            }
+          ]
+        },
+        "linux": {
+          "binary_sha256": "50580344e1c59b3c77e8e4e52ed9f185fcec7da2da936873ec122f12c735a022",
+          "module_crc64": "74337f40d9853c50",
+          "symbols": [
+            {
+              "symbolName": "CClient_SoundEngine_MapStarted",
+              "kind": "function",
+              "rva": "0xaae7e",
+              "resolved_va": "0xaae7e",
+              "signature_match_count": 1,
+              "signature_allow_across_function_boundary": false
+            },
+            {
+              "symbolName": "CClient_SoundEngine_ClearSoundArrays",
+              "kind": "function",
+              "rva": "0xaabce",
+              "resolved_va": "0xaabce",
+              "signature_match_count": 1,
+              "signature_allow_across_function_boundary": false
+            },
+            {
+              "symbolName": "CClient_SoundEngine_FlushCache",
+              "kind": "function",
+              "rva": "0xaeac4",
+              "resolved_va": "0xaeac4",
+              "signature_match_count": 1,
+              "signature_allow_across_function_boundary": false
+            }
+          ]
+        }
+      }
+    }
+  },
+  "checks": {
+    "production_nodes": {
+      "succeeded": 8,
+      "failed": 0,
+      "skipped": 0,
+      "oldgamever": "none",
+      "agent_fallback": false
+    },
+    "unit": {
+      "run": 1589,
+      "skipped": 9,
+      "result": "OK"
+    },
+    "repository_contract": {
+      "run": 15,
+      "result": "OK"
+    },
+    "format": "passed",
+    "signature_unique_and_query_resolution": {
+      "passed": 12,
+      "failed": 0
+    }
+  },
+  "abi": {
+    "windows": {
+      "convention": "thiscall",
+      "this": "ECX",
+      "MapStarted": "void(void *this)",
+      "ClearSoundArrays": "void(void *this)",
+      "FlushCache": "void(void *this, bool all)",
+      "bool_value_width": 1,
+      "bool_stack_slot_bytes": 4,
+      "FlushCache_return": "ret 4"
+    },
+    "linux": {
+      "convention": "i386 SysV cdecl",
+      "this": "first stack argument",
+      "MapStarted": "void(void *this)",
+      "ClearSoundArrays": "void(void *this)",
+      "FlushCache": "void(void *this, bool all)",
+      "bool_value_width": 1,
+      "bool_stack_slot_bytes": 4,
+      "stack_cleanup": "caller"
+    }
+  },
+  "semantics": {
+    "standalone_entries": "All three functions have independent complete entries in all four binaries.",
+    "MapStarted": "Clears in-memory arrays only on a new map, then always writes map-start time. Windows inlines IsNewMap, Linux calls it.",
+    "ClearSoundArrays": "Clears the 4096 x 260-byte sound-path table, stops/deletes active sounds, releases cached sounds and sentences, resets sentence/material counts and loaded flag, writes load time. 8948 Linux expands memset to rep stosd; 10257 calls memset. No x87 input argument.",
+    "FlushCache": "false retains the current map/server disk list; true bypasses retention. The unused this parameter retains the member ABI.",
+    "recovery": "LoadSoundList retains dlfile/retry and delayed recovery. Its existing Linux artifact identifies a GCC split body, not the public method entry.",
+    "Windows_MapStarted_signature": "Only generated output signatures cross the function boundary for uniqueness; discovery remains inside the independent entry body."
+  }
+}

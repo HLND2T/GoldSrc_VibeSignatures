@@ -3402,6 +3402,13 @@ modules:
       - name: find-WeaponsResource_SelectSlot
         expected_output:
           - WeaponsResource_SelectSlot.{platform}.yaml
+      - name: find-CClient_SoundEngine_FlushCache
+        expected_output:
+          - CClient_SoundEngine_FlushCache.{platform}.yaml
+      - name: find-CClient_SoundEngine-reset
+        expected_output:
+          - CClient_SoundEngine_ClearSoundArrays.{platform}.yaml
+          - CClient_SoundEngine_MapStarted.{platform}.yaml
       - name: find-CClient_SoundEngine_LoadSoundList
         expected_output:
           - CClient_SoundEngine_LoadSoundList.{platform}.yaml
@@ -3584,6 +3591,12 @@ modules:
       - name: CClient_SoundEngine_PlayFMODSound
         category: func
       - name: WeaponsResource_SelectSlot
+        category: func
+      - name: CClient_SoundEngine_FlushCache
+        category: func
+      - name: CClient_SoundEngine_ClearSoundArrays
+        category: func
+      - name: CClient_SoundEngine_MapStarted
         category: func
       - name: CClient_SoundEngine_LoadSoundList
         category: func

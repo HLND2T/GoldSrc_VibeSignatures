@@ -99,6 +99,62 @@ class ClientStudioConstructorTests(unittest.TestCase):
 
 
 class ClientBodyPatternTests(unittest.IsolatedAsyncioTestCase):
+    async def test_semantic_rejection_prevents_inspection_and_all_writes(self):
+        session = SimpleNamespace(call_tool=AsyncMock(side_effect=[{"owner": 0x1000}, {"owner": 0x2000}]))
+        validate = AsyncMock(return_value=False)
+        with (
+            patch.object(locator, "_find_byte_matches", AsyncMock(side_effect=[[0x1001], [0x2001]])),
+            patch.object(locator, "parse_mcp_result", side_effect=lambda value: value),
+            patch.object(locator, "_inspect_function_via_mcp", AsyncMock()) as inspect,
+            patch.object(locator, "write_func_yaml") as write,
+        ):
+            result = await locator.preprocess_body_patterns(
+                session, [], {"First": ["AA"], "Second": ["BB"]}, 0, validate_owners=validate
+            )
+        self.assertFalse(result)
+        validate.assert_awaited_once_with(session, {"First": 0x1000, "Second": 0x2000})
+        inspect.assert_not_awaited()
+        write.assert_not_called()
+
+    async def test_semantic_acceptance_preserves_discovered_owners(self):
+        session = SimpleNamespace(call_tool=AsyncMock(return_value={"owner": 0x1000}))
+        candidate = dict(func_name="Example", func_sig="AA", func_va="0x1000", func_rva="0x1000", func_size="0x1")
+
+        async def validate(_session, owners):
+            owners["Example"] = 0x9000
+            return True
+
+        with (
+            patch.object(locator, "_find_byte_matches", AsyncMock(return_value=[0x1001])),
+            patch.object(locator, "parse_mcp_result", side_effect=lambda value: value),
+            patch.object(locator, "_inspect_function_via_mcp", AsyncMock(return_value=candidate)) as inspect,
+            patch.object(locator, "_output_for_symbol", return_value="Example.yaml"),
+            patch.object(locator, "write_func_yaml") as write,
+        ):
+            result = await locator.preprocess_body_patterns(
+                session, [], {"Example": ["AA"]}, 0, validate_owners=validate
+            )
+        self.assertTrue(result)
+        inspect.assert_awaited_once_with(session, 0x1000, 0, "Example")
+        write.assert_called_once_with("Example.yaml", candidate)
+
+    async def test_semantic_error_cannot_emit_partial_group(self):
+        session = SimpleNamespace(call_tool=AsyncMock(return_value={"owner": 0x1000}))
+        with (
+            patch.object(locator, "_find_byte_matches", AsyncMock(return_value=[0x1001])),
+            patch.object(locator, "parse_mcp_result", side_effect=lambda value: value),
+            patch.object(locator, "write_func_yaml") as write,
+        ):
+            with self.assertRaisesRegex(RuntimeError, "unavailable"):
+                await locator.preprocess_body_patterns(
+                    session,
+                    [],
+                    {"Example": ["AA"]},
+                    0,
+                    validate_owners=AsyncMock(side_effect=RuntimeError("unavailable")),
+                )
+        write.assert_not_called()
+
     async def test_ambiguous_first_pattern_cannot_fall_through_to_unique_later_pattern(self):
         with (
             patch.object(locator, "_find_byte_matches", AsyncMock(side_effect=[[0x1000, 0x2000], [0x3000]])) as find,
