@@ -191,7 +191,7 @@ def build_batch_schedule(
     """Combine per-tag classifications into one schedule in tag declaration order.
 
     Work item ids are renumbered across the whole batch so request/result file
-    names and reporter run ids stay unique when several tags run concurrently;
+    names and worker run ids stay unique when several tags run concurrently;
     the per-tag numbering produced by ``classify_tag_plan`` never escapes this
     function. A binary may be reopened by a serial segment after its parallel
     item finished (the phases never overlap), so validation checks node
@@ -226,11 +226,11 @@ def build_batch_schedule(
 
 
 def work_item_run_id(batch_run_id: str, work_item_id: str) -> str:
-    """Compose the per-work-item reporter identity from the batch identity.
+    """Compose the per-work-item result identity from the batch identity.
 
     The worker reports this value in its result contract and the coordinator
     validates against the same composition, so the batch identity and the
-    reporter identity stay distinguishable.
+    worker identity stay distinguishable.
     """
     return f"{batch_run_id}-{work_item_id}"
 

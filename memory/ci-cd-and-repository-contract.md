@@ -15,7 +15,7 @@ tags:
 
 ## Overview
 
-`ci.yaml` runs formatting, unit, repository-contract, complete assigned suites, Redis integration, and Pages
+`ci.yaml` runs formatting, unit, repository-contract, complete assigned suites, and Pages
 test/lint/build/asset/E2E checks. The repository contract requires the complete formal `bin_artifacts` Git inventory and
 forbids tracked `bin/**/*.yaml`, `gamesymbols/`, `gamedata/`, and `release-manifests/` outputs. `bin_artifacts` is the
 only Git YAML truth; `bin/` only provides binary/IDA state.
@@ -68,8 +68,8 @@ extracts `gamesymbols-*.7z` to obtain the already-derived content-addressed JSON
 and the Vite plugin relays those bytes into the build output without re-deriving. It preserves the append-only
 `pages-snapshots` presentation mirror and verifies current/archived/deployed CDN bytes. Local/CI builds use a generated
 minimal JSON fixture; production always sets the explicit downloaded asset directory. Only new-format Releases are
-supported — dispatch for an old tag fails fast. Pages never hosts the Process API (see
-[[process-reporting-and-scheduler]]).
+supported — dispatch for an old tag fails fast. The static application loads symbol datasets directly (see
+[[static-symbol-explorer-and-pages]]).
 
 ### Decay Pages tag compatibility (2026-10-24)
 

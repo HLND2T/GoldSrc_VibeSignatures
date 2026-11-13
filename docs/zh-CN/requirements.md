@@ -53,10 +53,6 @@ CLI 参数、环境变量、程序默认值。关键变量：
 - `GSVIBE_AGENT` 与 `GSVIBE_AGENT_MODEL` 选择 Agent CLI 与模型。
 - `GSVIBE_LLM_MODEL`、`GSVIBE_LLM_APIKEY`、`GSVIBE_LLM_BASEURL`、`GSVIBE_LLM_TEMPERATURE`、
   `GSVIBE_LLM_FAKE_AS`、`GSVIBE_LLM_EFFORT` 配置 LLM-backed 工作流。
-- `GSVIBE_PROCESS_REPORTER`（`none`、`console` 或 `redis`）、`GSVIBE_REDIS_URL`、`GSVIBE_REDIS_PREFIX`、
-  `GSVIBE_RUN_ID` 配置进程上报。
-- `GSVIBE_API_HOST`、`GSVIBE_API_PORT`、`GSVIBE_API_CORS_ORIGINS`、`GSVIBE_API_ALLOW_PRIVATE_NETWORK`、
-  `GSVIBE_SSE_BLOCK_MS`、`GSVIBE_SSE_BATCH_SIZE` 配置只读 Process API。
 - `GSVIBE_REFERENCE_GAMEVER`（默认 `hl-10210`）选择 `LLM_DECOMPILE` 的 canonical reference 游戏版本。
 - `GSVIBE_ANALYSIS_MAX_CONCURRENCY` 限制 full analysis 同时准入的 worker 进程数（十进制 `1..32`，默认 `1`，fail closed）；大于 `1` 时必须同时设置 `GSVIBE_ANALYSIS_MAX_MEMORY_MIB`。
 - `GSVIBE_ANALYSIS_MAX_MEMORY_MIB` 设置 analyzer 进程树的 aggregate 内存硬预算，含 85% soft admission gate；同样适用于直接单 tag 与 selected-node 分析。仅在宿主确有富余内存时上调；实际由哪一机制执行见运行输出的 `cap=<tier>` 行。

@@ -28,11 +28,10 @@ formatter 只处理 `git ls-files --cached -- '*.py' '*.yaml'` 返回的文件�
 uv run python tests/run_test_suite.py unit -b --durations 30
 ```
 
-其余 source 权限套件显式覆盖仓库结构与 Redis：
+仓库结构与契约检查可以单独运行：
 
 ```bash
 uv run python tests/run_test_suite.py repository-contract -b --durations 30
-uv run python tests/run_test_suite.py redis-integration -b --durations 30
 ```
 
 完成前运行全部 source-compatible 指定测试：
@@ -41,7 +40,7 @@ uv run python tests/run_test_suite.py redis-integration -b --durations 30
 uv run python tests/run_test_suite.py all -b --durations 30
 ```
 
-`all` 是 unit、Redis integration、repository contract 与 IDA integration group 的声明式不重复并集。Release bundle
+`all` 是 unit、repository contract 与 IDA integration group 的声明式不重复并集。Release bundle
 与 publisher contract 属于普通 unit test；真实 GitHub publication 与商业 IDA evidence 仍是独立运维门禁。
 
 只有在 `RUN_IDA_INTEGRATION=1` 且 `idalib` 环境已激活时才运行商业 IDA 集成测试；跳过不代表真实 IDA 分析通过。

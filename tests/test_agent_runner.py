@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+from contextlib import redirect_stdout
 import json
 import subprocess
 import unittest
@@ -369,7 +370,7 @@ class AgentRunnerExecutionTests(unittest.TestCase):
             subprocess.CompletedProcess(["codex", "mcp", "list"], 0, "ida-pro-mcp connected\n", ""),
             subprocess.CompletedProcess(["codex"], 0, "done\n", ""),
         ]
-        progress: list[dict] = []
+        failure_detail = {}
 
         with (
             patch.object(Path, "is_file", return_value=True),
@@ -379,19 +380,19 @@ class AgentRunnerExecutionTests(unittest.TestCase):
                 agent_runner.run_skill(
                     "find-symbol",
                     agent="codex",
-                    progress_callback=lambda **event: progress.append(event),
+                    failure_detail=failure_detail,
                 )
             )
+            self.assertEqual("mcp_unavailable", failure_detail["reason"])
             self.assertTrue(
                 agent_runner.run_skill(
                     "find-symbol",
                     agent="codex",
-                    progress_callback=lambda **event: progress.append(event),
+                    failure_detail=failure_detail,
                 )
             )
 
-        self.assertEqual("mcp_unavailable", progress[0]["reason"])
-        self.assertEqual(["failed", "attempt_started", "succeeded"], [event["event"] for event in progress])
+        self.assertEqual({}, failure_detail)
         self.assertEqual(3, mock_run_process.call_count)
 
     @patch("agent_runner._run_process_with_stream_capture")
@@ -429,25 +430,25 @@ class AgentRunnerExecutionTests(unittest.TestCase):
             )
 
     def test_run_skill_rejects_invalid_mcp_url_with_structured_reason(self) -> None:
-        progress: list[dict] = []
+        failure_detail = {}
         result = agent_runner.run_skill(
             "find-symbol",
             agent="codex",
             mcp_url="https://example.com/mcp",
-            progress_callback=lambda **event: progress.append(event),
+            failure_detail=failure_detail,
         )
         self.assertFalse(result)
-        self.assertEqual("invalid_mcp_url", progress[-1]["reason"])
+        self.assertEqual("invalid_mcp_url", failure_detail["reason"])
 
     def test_run_skill_rejects_nonserializable_artifact_context(self) -> None:
-        progress: list[dict] = []
+        failure_detail = {}
         result = agent_runner.run_skill(
             "find-symbol",
             artifact_context={"required_outputs": {Path("output.yaml")}},
-            progress_callback=lambda **event: progress.append(event),
+            failure_detail=failure_detail,
         )
         self.assertFalse(result)
-        self.assertEqual("invalid_artifact_context", progress[-1]["reason"])
+        self.assertEqual("invalid_artifact_context", failure_detail["reason"])
 
     @patch("agent_runner._run_process_with_stream_capture")
     def test_run_skill_injects_opencode_mcp_override_for_preflight_and_retries(self, mock_run_process) -> None:
@@ -505,14 +506,14 @@ class AgentRunnerExecutionTests(unittest.TestCase):
         )
         for options, expected_reason in cases:
             with self.subTest(expected_reason=expected_reason):
-                progress: list[dict] = []
+                failure_detail = {}
                 result = agent_runner.run_skill(
                     "missing-skill",
-                    progress_callback=lambda progress=progress, **event: progress.append(event),
+                    failure_detail=failure_detail,
                     **options,
                 )
                 self.assertFalse(result)
-                self.assertEqual(expected_reason, progress[-1]["reason"])
+                self.assertEqual(expected_reason, failure_detail["reason"])
 
     @patch("agent_runner.uuid.uuid4", return_value="fixed-session")
     @patch("agent_runner._run_process_with_stream_capture")
@@ -533,17 +534,17 @@ class AgentRunnerExecutionTests(unittest.TestCase):
 
     @patch("agent_runner._run_process_with_stream_capture", side_effect=FileNotFoundError)
     def test_missing_agent_during_preflight_has_structured_reason(self, _mock_run_process) -> None:
-        progress: list[dict] = []
+        failure_detail = {}
 
         with patch.object(Path, "is_file", return_value=True):
             result = agent_runner.run_skill(
                 "find-symbol",
                 agent="codex",
-                progress_callback=lambda **event: progress.append(event),
+                failure_detail=failure_detail,
             )
 
         self.assertFalse(result)
-        self.assertEqual("agent_not_found", progress[-1]["reason"])
+        self.assertEqual("agent_not_found", failure_detail["reason"])
 
     @patch("agent_runner._run_process_with_stream_capture")
     def test_opencode_retries_exact_session_and_reports_diagnostics(self, mock_run_process) -> None:
@@ -557,32 +558,27 @@ class AgentRunnerExecutionTests(unittest.TestCase):
             ),
             subprocess.CompletedProcess(["opencode", "run"], 0, '{"sessionID":"ses-exact"}\n', ""),
         ]
-        progress: list[dict] = []
+        failure_detail = {"reason": "stale"}
+        output = io.StringIO()
 
-        with patch.object(Path, "is_file", return_value=True):
+        with patch.object(Path, "is_file", return_value=True), redirect_stdout(output):
             result = agent_runner.run_skill(
                 "find-symbol",
                 agent="opencode",
                 max_retries=2,
-                progress_callback=lambda **event: progress.append(event),
+                failure_detail=failure_detail,
             )
 
         self.assertTrue(result)
         retry_args = mock_run_process.call_args_list[2].args[0]
         self.assertIn(["--session", "ses-exact"], _argument_pairs(retry_args))
-        failure = next(event for event in progress if event["event"] == "attempt_failed")
-        self.assertEqual("returncode", failure["reason"])
-        self.assertEqual(1, failure["returncode"])
-        self.assertIn("first stdout", failure["stdout"])
-        self.assertIn("first stderr", failure["stderr"])
-        self.assertEqual(
-            ["attempt_started", "attempt_failed", "attempt_started", "succeeded"],
-            [event["event"] for event in progress],
-        )
+        self.assertEqual({}, failure_detail)
+        self.assertEqual(3, mock_run_process.call_count)
+        self.assertIn("first stderr", output.getvalue())
 
     @patch("agent_runner._run_process_with_stream_capture")
     def test_skill_error_retries_but_cybersecurity_block_stops(self, mock_run_process) -> None:
-        progress: list[dict] = []
+        failure_detail = {}
         mock_run_process.side_effect = [
             subprocess.CompletedProcess(["codex", "mcp", "list"], 0, "ida-pro-mcp connected\n", ""),
             subprocess.CompletedProcess(["codex"], 0, "<skill_error>lookup failed</skill_error>\n", ""),
@@ -598,14 +594,14 @@ class AgentRunnerExecutionTests(unittest.TestCase):
                     "find-symbol",
                     agent="codex",
                     max_retries=2,
-                    progress_callback=lambda **event: progress.append(event),
+                    failure_detail=failure_detail,
                 )
             )
-        self.assertEqual("skill_error", progress[1]["reason"])
-        self.assertEqual("lookup failed", progress[1]["error"])
+        self.assertEqual({}, failure_detail)
+        self.assertEqual(3, mock_run_process.call_count)
 
         agent_runner._MCP_PREFLIGHT_CACHE.clear()
-        progress.clear()
+        failure_detail.clear()
         mock_run_process.reset_mock(side_effect=True)
         mock_run_process.side_effect = [
             subprocess.CompletedProcess(["codex", "mcp", "list"], 0, "ida-pro-mcp connected\n", ""),
@@ -625,15 +621,15 @@ class AgentRunnerExecutionTests(unittest.TestCase):
                     "find-symbol",
                     agent="codex",
                     max_retries=3,
-                    progress_callback=lambda **event: progress.append(event),
+                    failure_detail=failure_detail,
                 )
             )
         self.assertEqual(2, mock_run_process.call_count)
-        self.assertEqual("cybersecurity_block", progress[-1]["reason"])
+        self.assertEqual("cybersecurity_block", failure_detail["reason"])
 
     @patch("agent_runner._run_process_with_stream_capture")
     def test_missing_output_and_timeout_have_structured_reasons(self, mock_run_process) -> None:
-        progress: list[dict] = []
+        failure_detail = {}
         mock_run_process.side_effect = [
             subprocess.CompletedProcess(["claude", "mcp", "list"], 0, "ida-pro-mcp connected\n", ""),
             subprocess.CompletedProcess(["claude"], 0, "done\n", ""),
@@ -648,14 +644,16 @@ class AgentRunnerExecutionTests(unittest.TestCase):
                     agent="claude",
                     expected_yaml_paths=["missing.yaml"],
                     max_retries=1,
-                    progress_callback=lambda **event: progress.append(event),
+                    failure_detail=failure_detail,
                 )
             )
-        missing = next(event for event in progress if event.get("reason") == "missing_expected_output")
+        self.assertEqual("retries_exhausted", failure_detail["reason"])
+        missing = failure_detail["last_failure"]
+        self.assertEqual("missing_expected_output", missing["reason"])
         self.assertEqual(["missing.yaml"], missing["missing_outputs"])
 
         agent_runner._MCP_PREFLIGHT_CACHE.clear()
-        progress.clear()
+        failure_detail.clear()
         timeout = subprocess.TimeoutExpired(["claude"], 9, output="partial out", stderr="partial err")
         mock_run_process.reset_mock(side_effect=True)
         mock_run_process.side_effect = [
@@ -669,10 +667,11 @@ class AgentRunnerExecutionTests(unittest.TestCase):
                     agent="claude",
                     max_retries=1,
                     timeout=9,
-                    progress_callback=lambda **event: progress.append(event),
+                    failure_detail=failure_detail,
                 )
             )
-        timed_out = next(event for event in progress if event.get("reason") == "timeout")
+        timed_out = failure_detail["last_failure"]
+        self.assertEqual("timeout", timed_out["reason"])
         self.assertEqual(9, timed_out["timeout_seconds"])
         self.assertEqual("partial out", timed_out["stdout"])
         self.assertEqual("partial err", timed_out["stderr"])

@@ -54,8 +54,6 @@ Copy `.env.example` to `.env` for a local template. The analyzer uses the GoldSr
 
 - `GSVIBE_AGENT` and `GSVIBE_AGENT_MODEL` select the Agent CLI and model.
 - `GSVIBE_LLM_MODEL`, `GSVIBE_LLM_APIKEY`, `GSVIBE_LLM_BASEURL`, `GSVIBE_LLM_TEMPERATURE`, `GSVIBE_LLM_FAKE_AS`, and `GSVIBE_LLM_EFFORT` configure LLM-backed workflows.
-- `GSVIBE_PROCESS_REPORTER` (`none`, `console`, or `redis`), `GSVIBE_REDIS_URL`, `GSVIBE_REDIS_PREFIX`, and `GSVIBE_RUN_ID` configure process reporting.
-- `GSVIBE_API_HOST`, `GSVIBE_API_PORT`, `GSVIBE_API_CORS_ORIGINS`, `GSVIBE_API_ALLOW_PRIVATE_NETWORK`, `GSVIBE_SSE_BLOCK_MS`, and `GSVIBE_SSE_BATCH_SIZE` configure the read-only Process API.
 - `GSVIBE_REFERENCE_GAMEVER` (default `hl-10210`) selects the canonical reference game version for `LLM_DECOMPILE`.
 - `GSVIBE_ANALYSIS_MAX_CONCURRENCY` bounds concurrently admitted full-analysis worker processes (decimal `1..32`, default `1`, fail-closed). Values above `1` also require `GSVIBE_ANALYSIS_MAX_MEMORY_MIB`.
 - `GSVIBE_ANALYSIS_MAX_MEMORY_MIB` sets the analyzer process tree's aggregate memory hard budget with an 85% soft admission gate; it also applies to direct single-tag and selected-node analysis.

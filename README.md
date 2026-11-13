@@ -23,7 +23,7 @@ restored first; it never rebuilds databases or saves consumer-side changes.
 - [Requirements and environment setup](docs/en/requirements.md)
 - [Development checks: formatting and tests](docs/en/development.md)
 - [Binary acquisition and symbol analysis](docs/en/analysis.md)
-- [Process reporting, scheduling, and dashboard](docs/en/process-monitoring.md)
+- [Static Symbol Explorer and Pages](docs/en/symbol-browser.md)
 - [Reference YAML for `LLM_DECOMPILE`](docs/en/reference-yaml.md)
 - [Creating symbol-analysis skills](docs/en/creating-skills.md)
 

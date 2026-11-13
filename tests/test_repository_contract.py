@@ -241,7 +241,6 @@ class RepositoryContractTests(unittest.TestCase):
             "uv run python tests/run_test_suite.py unit -b --durations 30",
             "uv run python tests/run_test_suite.py repository-contract -b --durations 30",
             "uv run python tests/run_test_suite.py all -b --durations 30",
-            "uv run python tests/run_test_suite.py redis-integration -b --durations 30",
         )
         frontend_commands = (
             "npm ci",

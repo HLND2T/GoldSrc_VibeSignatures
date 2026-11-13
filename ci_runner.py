@@ -389,8 +389,6 @@ def pr_validate():
             "-batch_diagnostics",
             diagnostics,
             "-debug",
-            "-process_reporter",
-            "console",
         )
 
     def downstream(tag):
@@ -536,8 +534,6 @@ def release_analyze():
         "-artifactdir",
         artifacts,
         "-debug",
-        "-process_reporter",
-        "console",
         "-batch_diagnostics",
         temporary(f"analysis-diagnostics-{env('GITHUB_RUN_ID')}-{env('GITHUB_RUN_ATTEMPT')}"),
     )
