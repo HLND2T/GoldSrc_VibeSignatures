@@ -3148,6 +3148,13 @@ modules:
         category: structmember
         struct: vgui2::EditablePanel
         member: m_NavGroup
+  - name: filesystem
+    module_windows: FileSystem_Stdio.dll
+    module_linux: filesystem_stdio.so
+    depot_windows: FileSystem_Stdio.dll
+    depot_linux: filesystem_stdio.so
+    skills: []
+    symbols: []
   - name: client
     module_windows: client.dll
     alias_windows:
