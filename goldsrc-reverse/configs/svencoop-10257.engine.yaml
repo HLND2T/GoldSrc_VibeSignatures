@@ -80,6 +80,12 @@ gv_aliases:
   g_iVertexBufferEntriesUsed:
     symbol: g_iVertexBufferEntriesUsed
     prefer_owner_func: "EngineSurface::drawFlushText"
+# MetaHook reads the module and rewrites the Initialize call operand during ClientDLL_Init.
+windows_gv_aliases:
+  g_phClientModule: hClientDLL
+  cl_funcs:
+    symbol: cl_funcs
+    indirect_call_in: ClientDLL_Init
 # Struct member aliases for nested fields or template types.
 structmember_aliases:
   CVideoMode_Common_m_ImageID_m_Size:

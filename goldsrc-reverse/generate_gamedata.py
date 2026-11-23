@@ -96,6 +96,18 @@ METAHOOK_CONSUMED_TOP_LEVEL_FIELDS: tuple[str, ...] = ("schemaVersion", "source"
 METAHOOK_CONSUMED_SOURCE_FIELDS: tuple[str, ...] = ("snapshotSchemaVersion", "analysisOutputContractVersion")
 METAHOOK_CONSUMED_RECORD_FIELDS: tuple[str, ...] = ("platform", "module", "symbolName", "kind", "payload")
 
+# MetaHook rewrites the disp32 of a Win32 call [global]. References in
+# inlined cleanup code can name the same global without invoking the callback.
+WIN32_GLOBAL_CALLS_PY = r"""
+import ida_bytes, idautils, json
+encoding = b'\xff\x15' + TARGET_VA.to_bytes(4, 'little')
+matches = []
+for ea in idautils.FuncItems(OWNER_VA):
+    if ida_bytes.get_item_size(ea) == len(encoding) and ida_bytes.get_bytes(ea, len(encoding)) == encoding:
+        matches.append(int(ea))
+result = json.dumps({'matches': matches})
+"""
+
 BATCH_GV_XREFS_PY = (
     ELF_RESOLVER_PY
     + r"""
@@ -946,7 +958,21 @@ async def _emit_with_mcp(
             key = f"{gv_va}:{base_rva}:{member_off}"
             for insn_va, owner_va in gv_xref_map.get(key) or []:
                 ordered_pairs.append((gv_va, insn_va, owner_va))
-        if preferred_owner_va is not None:
+        if call_owner := meta.get("indirect_call_in"):
+            entry, _, _ = resolve_func_entry(call_owner, index, aliases)
+            if platform != "windows" or entry is None or entry.is_import or len(cand_vas) != 1:
+                record_fail("gv", name, f"cannot_resolve_indirect_call({call_owner})")
+                continue
+            owner = image_base + entry.rva
+            owner = await _resolve_jmp_thunk_target_via_mcp(session, owner, strict=False) or owner
+            code = WIN32_GLOBAL_CALLS_PY.replace("TARGET_VA", f"({cand_vas[0]})").replace("OWNER_VA", str(owner))
+            response = parse_mcp_result(await session.call_tool("py_eval", {"code": code}))
+            matches = response.get("matches", []) if isinstance(response, Mapping) else []
+            if len(matches) != 1:
+                record_fail("gv", name, f"expected_one_indirect_call({call_owner}, hits={len(matches)})")
+                continue
+            ordered_pairs = [(cand_vas[0], matches[0], owner)]
+        elif preferred_owner_va is not None:
             ordered_pairs.sort(key=lambda item: 0 if item[2] == preferred_owner_va else 1)
         elif len(cand_vas) > 1:
             record_fail("gv", name, f"ambiguous_gv_rvas({[hex(v) for v in cand_vas]})")
@@ -1795,6 +1821,8 @@ def main(argv: list[str] | None = None) -> int:
         if default_config.is_file():
             module_config_path = default_config
     aliases = load_yaml_file(module_config_path)
+    if overrides := aliases.get(f"{platform}_gv_aliases"):
+        aliases["gv_aliases"] = {**aliases.get("gv_aliases", {}), **overrides}
     symbols = load_module_symbols(args.config, args.module, platform)
     if args.symbols:
         wanted = {s.strip() for s in args.symbols.split(",") if s.strip()}
