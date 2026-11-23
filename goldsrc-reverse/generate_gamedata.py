@@ -7,6 +7,7 @@ import argparse
 import asyncio
 import collections
 import datetime
+import importlib.util
 import json
 import re
 import sys
@@ -37,6 +38,7 @@ from gamesymbols_json import (
 )
 from ida_analyze_bin import DATABASE_POLICY_REBUILD, IdaMcpLifecycle, _allocate_local_port
 from ida_analyze_util import (
+    _find_unique_bytes,
     _gv_operand_displacement,
     _gv_resolution_fields,
     _inspect_function_via_mcp,
@@ -614,6 +616,45 @@ def resolve_vfunc_info(
     return cls_guess, meth_guess, None, None, "not_found"
 
 
+def _load_preprocessor_module(script_rel_path: str) -> Any:
+    script_path = (REPO_ROOT / script_rel_path).resolve()
+    if not script_path.is_relative_to(REPO_ROOT.resolve()) or not script_path.is_file():
+        raise FileNotFoundError(f"Preprocessor script not found inside repository: {script_rel_path}")
+    module_key = "_goldsrc_reverse_preproc_" + re.sub(r"[^0-9A-Za-z_]", "_", script_rel_path)
+    spec = importlib.util.spec_from_file_location(module_key, script_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Failed to load preprocessor script: {script_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _match_patch_preprocessor(
+    name: str, aliases: Mapping[str, Any]
+) -> tuple[int, Mapping[str, Any], int | None] | None:
+    """Match a patch symbol name against external `patch_preprocessors` rules in aliases YAML.
+
+    Returns `(rule_index, rule_spec, numbered_index_or_none)` or `None`.
+    """
+    rules = aliases.get("patch_preprocessors") or ()
+    for rule_idx, rule in enumerate(rules):
+        if not isinstance(rule, Mapping):
+            continue
+        exact = rule.get("match_exact") or ()
+        if isinstance(exact, str):
+            exact = (exact,)
+        if name in exact:
+            return rule_idx, rule, None
+        prefix = rule.get("match_prefix")
+        if isinstance(prefix, str) and prefix and name.startswith(prefix):
+            tail = name[len(prefix) :]
+            if tail.isdigit():
+                return rule_idx, rule, int(tail)
+            if not rule.get("numbered_only", False):
+                return rule_idx, rule, None
+    return None
+
+
 def resolve_patch_callsite_spec(
     name: str, index: BaseDebugIndex, aliases: Mapping[str, Any]
 ) -> tuple[SymbolEntry | None, SymbolEntry | None, int, str]:
@@ -986,10 +1027,18 @@ async def _emit_with_mcp(
         write_scalar_yaml(output_dir / f"{name}.{platform}.yaml", {"scalar_name": name, "scalar_value": int(val)})
         record_ok("scalar")
 
-    # --- Phase 6: callsite patches ---
+    # --- Phase 6: patches (external preprocessor rules + callsite patches) ---
+    preproc_groups: dict[int, tuple[Mapping[str, Any], list[tuple[int | None, str]]]] = {}
     callsite_specs: list[tuple[str, int, SymbolEntry, int]] = []  # (name, caller_va, callee_entry, ordinal)
     for sym in [s for s in symbols if s["category"] == "patch"]:
         name = sym["name"]
+        matched_preproc = _match_patch_preprocessor(name, aliases)
+        if matched_preproc is not None:
+            rule_idx, rule_spec, num_idx = matched_preproc
+            if rule_idx not in preproc_groups:
+                preproc_groups[rule_idx] = (rule_spec, [])
+            preproc_groups[rule_idx][1].append((num_idx, name))
+            continue
         c1, c2, ordinal, how = resolve_patch_callsite_spec(name, index, aliases)
         if how == "skipped_special_patch":
             record_skip("patch", name, "non_callsite_special_patch_use_existing_preprocessor")
@@ -1001,6 +1050,160 @@ async def _emit_with_mcp(
             image_base + c1.rva
         )
         callsite_specs.append((name, caller_va, c2, ordinal))
+
+    for rule_spec, grouped_items in preproc_groups.values():
+        script_rel = str(rule_spec.get("script") or "").strip()
+        mode = str(rule_spec.get("mode") or "preprocess_skill").strip()
+        if not script_rel:
+            for _, name in grouped_items:
+                record_fail("patch", name, "patch_preprocessor_missing_script")
+            continue
+        try:
+            preproc_mod = _load_preprocessor_module(script_rel)
+        except (OSError, ImportError, RuntimeError, SyntaxError) as exc:
+            for _, name in grouped_items:
+                record_fail("patch", name, f"patch_preprocessor_load_failed({exc})")
+            continue
+
+        if mode == "preprocess_skill":
+            owner_name = str(rule_spec.get("owner_func") or "").strip()
+            if owner_name and not (output_dir / f"{owner_name}.{platform}.yaml").is_file():
+                owner_va = resolved_func_vas.get(owner_name)
+                if owner_va is None:
+                    owner_ent, _, _ = resolve_func_entry(owner_name, index, aliases)
+                    if owner_ent is not None and not owner_ent.is_import:
+                        raw_owner_va = image_base + owner_ent.rva
+                        owner_va = (
+                            await _resolve_jmp_thunk_target_via_mcp(session, raw_owner_va, strict=False) or raw_owner_va
+                        )
+                if owner_va is not None:
+                    inspected_owner, owner_across = await _inspect_func_with_fallback(
+                        session, owner_va, image_base, owner_name, cache=func_sig_cache
+                    )
+                    if inspected_owner is not None:
+                        owner_payload = {
+                            k: inspected_owner[k] for k in ("func_name", "func_va", "func_rva", "func_size", "func_sig")
+                        }
+                        if owner_across:
+                            owner_payload["func_sig_allow_across_function_boundary"] = True
+                        write_func_yaml(output_dir / f"{owner_name}.{platform}.yaml", owner_payload)
+            expected_outputs = [str(output_dir / f"{name}.{platform}.yaml") for _, name in grouped_items]
+            skill_name = str(rule_spec.get("skill_name") or Path(script_rel).stem)
+            ok = await preproc_mod.preprocess_skill(
+                session,
+                skill_name,
+                expected_outputs,
+                {},
+                str(output_dir),
+                platform,
+                image_base,
+                debug=False,
+            )
+            for _, name in grouped_items:
+                if ok and (output_dir / f"{name}.{platform}.yaml").is_file():
+                    record_ok("patch")
+                else:
+                    record_fail("patch", name, f"preprocessor_skill_failed({script_rel})")
+            continue
+
+        if mode != "site_locator":
+            for _, name in grouped_items:
+                record_fail("patch", name, f"unsupported_patch_preprocessor_mode({mode})")
+            continue
+
+        owner_name = str(rule_spec.get("owner_func") or getattr(preproc_mod, "OWNER_FUNC_NAME", "")).strip()
+        if not owner_name:
+            for _, name in grouped_items:
+                record_fail("patch", name, f"site_locator_missing_owner_func({script_rel})")
+            continue
+        owner_va = resolved_func_vas.get(owner_name)
+        if owner_va is None:
+            owner_ent, _, owner_how = resolve_func_entry(owner_name, index, aliases)
+            if owner_ent is not None and not owner_ent.is_import:
+                raw_owner_va = image_base + owner_ent.rva
+                owner_va = await _resolve_jmp_thunk_target_via_mcp(session, raw_owner_va, strict=False) or raw_owner_va
+            else:
+                for _, name in grouped_items:
+                    record_fail("patch", name, f"owner_func_unresolved({owner_name}: {owner_how})")
+                continue
+
+        locator_fn_name = str(rule_spec.get("locator_func") or "_locate_patches")
+        locator_fn = getattr(preproc_mod, locator_fn_name, None)
+        if locator_fn is None:
+            for _, name in grouped_items:
+                record_fail("patch", name, f"locator_func_missing({script_rel}:{locator_fn_name})")
+            continue
+
+        located = await locator_fn(session, owner_va)
+        sites = located.get("sites") if isinstance(located, Mapping) else None
+        owner_end = (
+            next(
+                (int(val, 0) for key, val in located.items() if key.endswith("_end") and val is not None),
+                None,
+            )
+            if isinstance(located, Mapping)
+            else None
+        )
+        if (
+            not isinstance(located, Mapping)
+            or located.get("error")
+            or located.get("pointer_size") != 4
+            or not isinstance(sites, list)
+            or owner_end is None
+        ):
+            err_detail = located.get("error") if isinstance(located, Mapping) else "locator_returned_none"
+            for _, name in grouped_items:
+                record_fail("patch", name, f"site_locator_failed({err_detail})")
+            continue
+
+        prefix = str(rule_spec.get("match_prefix") or getattr(preproc_mod, "PATCH_NAME_PREFIX", ""))
+        allowed_imms = getattr(preproc_mod, "HEAP_LIMIT_IMMEDIATES", None)
+        requested_by_idx = {idx: name for idx, name in grouped_items if idx is not None}
+        emitted_indices: set[int] = set()
+        for idx, site in enumerate(sites):
+            patch_name = requested_by_idx.get(idx, f"{prefix}{idx}")
+            if not isinstance(site, Mapping):
+                record_fail("patch", patch_name, "invalid_site_record")
+                continue
+            try:
+                patch_ea = int(site["ea"], 0)
+                patch_sig_disp = int(site["patch_sig_disp"])
+                insn_len = int(site["insn_len"])
+                imm_val = int(site["imm"], 0) if "imm" in site and site["imm"] is not None else None
+            except (TypeError, ValueError, KeyError) as exc:
+                record_fail("patch", patch_name, f"invalid_site_fields({exc})")
+                continue
+            patch_sig = site.get("patch_sig")
+            if (
+                not isinstance(patch_sig, str)
+                or not patch_sig.strip()
+                or (allowed_imms is not None and imm_val not in allowed_imms)
+                or patch_ea < owner_va
+                or patch_ea >= owner_end
+                or patch_sig_disp != 0
+                or insn_len <= 0
+            ):
+                record_fail("patch", patch_name, f"site_contract_failed_at_{hex(patch_ea)}")
+                continue
+            unique_ea = await _find_unique_bytes(session, patch_sig)
+            if unique_ea != patch_ea:
+                record_fail("patch", patch_name, f"site_sig_not_unique_at_{hex(patch_ea)}")
+                continue
+            write_patch_yaml(
+                output_dir / f"{patch_name}.{platform}.yaml",
+                {
+                    "patch_name": patch_name,
+                    "patch_va": hex(patch_ea),
+                    "patch_rva": hex(patch_ea - image_base),
+                    "patch_sig": patch_sig,
+                    "patch_sig_disp": patch_sig_disp,
+                },
+            )
+            emitted_indices.add(idx)
+            record_ok("patch")
+        for idx, name in sorted(grouped_items, key=lambda item: (-1 if item[0] is None else item[0], item[1])):
+            if idx is not None and idx >= len(sites) and idx not in emitted_indices:
+                record_skip("patch", name, f"site_not_present_in_this_build(found={len(sites)})")
 
     if callsite_specs:
         query_pairs = []
@@ -1125,6 +1328,24 @@ def _run_dry_probe(
                 counts[cat]["failed"] += 1
                 failures.append({"category": cat, "name": name, "reason": how})
         elif cat == "patch":
+            matched_preproc = _match_patch_preprocessor(name, aliases)
+            if matched_preproc is not None:
+                _, rule_spec, _ = matched_preproc
+                script_rel = str(rule_spec.get("script") or "").strip()
+                owner_name = str(rule_spec.get("owner_func") or "").strip()
+                if not script_rel or not (REPO_ROOT / script_rel).is_file():
+                    counts[cat]["failed"] += 1
+                    failures.append({"category": cat, "name": name, "reason": f"missing_script({script_rel})"})
+                elif owner_name:
+                    owner_ent, _, owner_how = resolve_func_entry(owner_name, index, aliases)
+                    if owner_ent is not None:
+                        counts[cat]["ok"] += 1
+                    else:
+                        counts[cat]["failed"] += 1
+                        failures.append({"category": cat, "name": name, "reason": f"{owner_name}({owner_how})"})
+                else:
+                    counts[cat]["ok"] += 1
+                continue
             c1, c2, _, how = resolve_patch_callsite_spec(name, index, aliases)
             if how == "skipped_special_patch":
                 counts[cat]["skipped"] += 1
@@ -1492,7 +1713,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--pdb", type=Path, default=None, help="Path to matching PDB (Windows; defaults to sibling .pdb)"
     )
     parser.add_argument("--dwarf", type=Path, default=None, help="Path to DWARF file (Linux; defaults to --binary)")
-    parser.add_argument("--aliases", type=Path, default=None, help="External symbol alias & layout mapping YAML")
+    parser.add_argument(
+        "--module-config",
+        "--aliases",
+        dest="module_config",
+        type=Path,
+        default=None,
+        help="External module extraction config YAML (defaults to goldsrc-reverse/configs/<gamever>.<module>.yaml if present)",
+    )
     parser.add_argument("--output-dir", required=True, type=Path, help="Output directory for generated symbol YAMLs")
     parser.add_argument(
         "--emit-gamedata-json",
@@ -1561,7 +1789,12 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(exported, indent=2, ensure_ascii=False))
         return 0
 
-    aliases = load_yaml_file(args.aliases)
+    module_config_path = args.module_config
+    if module_config_path is None:
+        default_config = SCRIPT_DIR / "configs" / f"{game_version}.{args.module}.yaml"
+        if default_config.is_file():
+            module_config_path = default_config
+    aliases = load_yaml_file(module_config_path)
     symbols = load_module_symbols(args.config, args.module, platform)
     if args.symbols:
         wanted = {s.strip() for s in args.symbols.split(",") if s.strip()}

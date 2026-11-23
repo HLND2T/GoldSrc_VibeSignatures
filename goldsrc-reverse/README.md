@@ -6,11 +6,11 @@
 
 - `generate_gamedata.py`：主入口 CLI，驱动离线符号索引与 IDA-MCP 签名/契约输出。
 - `debug_providers.py`：PDB（`llvm-pdbutil` + `llvm-readobj` + `llvm-undname`）与 ELF/DWARF（`llvm-readelf` + `c++filt` + `llvm-dwarfdump`）离线索引层。
-- `aliases/svencoop-10257.engine.yaml`：外置的符号别名、全局结构体前缀、嵌套字段路径及 callsite 映射表（不硬编码在脚本中）。
+- `configs/svencoop-10257.engine.yaml`：外置的模块级提取配置（符号别名、全局结构体前缀、嵌套字段路径、callsite 映射及外部预处理脚本规则；未传入 `--module-config` 时自动按 `configs/<gamever>.<module>.yaml` 发现加载）。
 
 ## 快速使用
 
-### 1. 纯离线探测（不启动 IDA，秒级验证别名表覆盖率）
+### 1. 纯离线探测（不启动 IDA，秒级验证映射覆盖率）
 
 ```bash
 uv run python goldsrc-reverse/generate_gamedata.py \
@@ -18,7 +18,7 @@ uv run python goldsrc-reverse/generate_gamedata.py \
   --module engine \
   --binary "D:\goldsrc-reverse\reports\re-agent\svencoop-engine-10257\win32dbg\Release\hw.dll" \
   --pdb "D:\goldsrc-reverse\reports\re-agent\svencoop-engine-10257\win32dbg\Release\hw.pdb" \
-  --aliases goldsrc-reverse/aliases/svencoop-10257.engine.yaml \
+  --module-config goldsrc-reverse/configs/svencoop-10257.engine.yaml \
   --output-dir .tmp/goldsrc-reverse-out/svencoop-10257/engine \
   --dry-run
 ```
@@ -32,7 +32,7 @@ uv run python goldsrc-reverse/generate_gamedata.py \
   --module engine \
   --binary "D:\goldsrc-reverse\reports\re-agent\svencoop-engine-10257\win32dbg\Release\hw.dll" \
   --pdb "D:\goldsrc-reverse\reports\re-agent\svencoop-engine-10257\win32dbg\Release\hw.pdb" \
-  --aliases goldsrc-reverse/aliases/svencoop-10257.engine.yaml \
+  --module-config goldsrc-reverse/configs/svencoop-10257.engine.yaml \
   --output-dir .tmp/goldsrc-reverse-out/svencoop-10257/engine \
   --reference-dir bin_artifacts/svencoop-10257/engine \
   --emit-gamedata-json .tmp/goldsrc-reverse-out/svencoop-10257/gamedata.json
@@ -70,12 +70,11 @@ uv run python goldsrc-reverse/generate_gamedata.py \
   --metahook-manifest "D:\MetaHookSv\MetaHook\scripts\manifests\metahook.json" \
   --export-only
 
-# Linux (带 DWARF 的 hw.so)
+# Linux (带 DWARF 的 hw.so；省略 --module-config 时自动加载 configs/svencoop-10257.engine.yaml)
 uv run python goldsrc-reverse/generate_gamedata.py \
   --config configs/svencoop-10257.yaml \
   --module engine \
   --binary "D:\goldsrc-reverse\reports\re-agent\svencoop-engine-10257\linuxdbg\hw.so" \
-  --aliases goldsrc-reverse/aliases/svencoop-10257.engine.yaml \
   --output-dir .tmp/goldsrc-reverse-out/svencoop-10257/engine \
   --reference-dir bin_artifacts/svencoop-10257/engine
 ```
@@ -84,5 +83,5 @@ uv run python goldsrc-reverse/generate_gamedata.py \
 
 ## 支持类别与局限
 
-- **自动生成**：`func`、`gv`、`vtable`、`vfunc`（含纯虚接口与具体实现）、`structmember`、`scalar`、`<Caller>_to_<Callee>_callsite_N` 及映射表登记的 `patch`。
-- **跳过并报告**：非 callsite 的指令级特殊补丁（如 `vgui2_Panel_SetSize_Const_callsite_*`、`Sys_InitMemory_HeapLimitPatches_*`、`VGUIClient001_CreateInterface`），在报告中标记为 `skipped`，可回退调用仓库现有的 `ida_preprocessor_scripts/find-*.py`。
+- **自动生成**：`func`、`gv`、`vtable`、`vfunc`（含纯虚接口与具体实现）、`structmember`、`scalar`、`<Caller>_to_<Callee>_callsite_N`、模块配置 `patch_callsites` 登记的 callsite，以及 `patch_preprocessors` 声明的专用预处理脚本补丁（如 `Sys_InitMemory_HeapLimitPatches_*`、`VGUIClient001_CreateInterface`）。
+- **跳过并报告**：未在 `patch_preprocessors` 中登记的其余非 callsite 特殊补丁（如 `vgui2_Panel_SetSize_Const_callsite_*`），在报告中标记为 `skipped`，可按需添加到外置模块配置 `patch_preprocessors` 中自动加载。

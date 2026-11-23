@@ -1,5 +1,5 @@
-# External symbol alias & layout mapping for Sven Co-op 10257 engine (hw.dll / hw.so).
-# Consumed by goldsrc-reverse/generate_gamedata.py via --aliases.
+# Module extraction config for Sven Co-op 10257 engine (hw.dll / hw.so).
+# Consumed by goldsrc-reverse/generate_gamedata.py via --module-config (auto-discovered from configs/<gamever>.<module>.yaml).
 # Global aggregate variables whose fields are exposed as standalone gv/scalar symbols.
 global_struct_prefixes:
   cl: client_state_t
@@ -130,3 +130,15 @@ patch_callsites:
     callee: strncpy
     allow_import_plt: true
     ordinal: 0
+# External preprocessor script rules for non-callsite special patches (paths relative to repo root).
+patch_preprocessors:
+  - match_prefix: Sys_InitMemory_HeapLimitPatches_
+    numbered_only: true
+    script: ida_preprocessor_scripts/find-Sys_InitMemory_HeapLimitPatches.py
+    owner_func: Sys_InitMemory
+    mode: site_locator
+  - match_exact:
+      - VGUIClient001_CreateInterface
+    script: ida_preprocessor_scripts/find-VGUIClient001_CreateInterface.py
+    owner_func: CBaseUI__Initialize
+    mode: preprocess_skill
