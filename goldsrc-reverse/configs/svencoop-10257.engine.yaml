@@ -1,0 +1,144 @@
+# Module extraction config for Sven Co-op 10257 engine (hw.dll / hw.so).
+# Consumed by goldsrc-reverse/generate_gamedata.py via --module-config (auto-discovered from configs/<gamever>.<module>.yaml).
+# Global aggregate variables whose fields are exposed as standalone gv/scalar symbols.
+global_struct_prefixes:
+  cl: client_state_t
+  cls: client_static_t
+  sv: server_t
+  svs: server_static_t
+  cl_funcs: client_dll_callbacks_t
+# Function symbol aliases (config symbol name -> source/debug symbol resolution spec).
+func_aliases:
+  CCDAudio__MP3_InitStream:
+    target: "CCDAudio::MP3_InitStream"
+    param_hint: "(int,"
+  vgui2_Panel_ctor:
+    target: "vgui2::Panel::Panel"
+    param_hint: "Panel*, char const*)"
+  GL_LoadTexture2: GL_LoadTextureFilterMode
+  Draw_TextureMode_f: GL_TextureMode_f
+  BuildGammaTable: V_BuildGammaTable
+  R_DrawTEntitiesOnList: R_DrawTransEntities
+  SV_SingleClipMoveToEntity_10152: SV_SingleClipMoveToEntity
+  GL_Set2D: GL_Begin2D
+  SkyboxCommand: R_LoadSkybox_f
+  R_LoadSkyBox_SvEngine: R_LoadSkybox
+  R_LoadSkyboxInt_SvEngine: R_LoadSkyboxInt
+  Draw_SpriteFrameHoles_SvEngine: Draw_SpriteFrameHoles
+  Draw_SpriteFrameAdditive_SvEngine: Draw_SpriteFrameAdditive
+  Draw_SpriteFrameGeneric_SvEngine: Draw_SpriteFrameGeneric
+  GlowBlend: R_GlowBlend
+  R_StudioDrawPlayerBody:
+    target: R_StudioDrawPlayer
+    follow_single_tail_jump: true
+  SCR_UpdateScreen_RenderBody:
+    target: SCR_UpdateScreen
+    prefer_part_with_string: "load failed.\n"
+  GL_LoadTextureFilterMode_part_14:
+    target: GL_LoadTextureFilterMode
+    prefer_part: true
+  Launcher_ConsolePrintf_Initializer_0:
+    ordered_pair: [Sys_SetupLegacyAPIs, Sys_InitLauncherInterface]
+    index: 0
+  Launcher_ConsolePrintf_Initializer_1:
+    ordered_pair: [Sys_SetupLegacyAPIs, Sys_InitLauncherInterface]
+    index: 1
+  CUtlVector_gltexture_t_InsertBefore: "CUtlVector<gltexture_t>::InsertBefore"
+  realloc:
+    symbol: realloc
+    allow_import_plt: true
+# Global variable aliases & struct-subfield address rules.
+gv_aliases:
+  allow_cheats: cheats_level
+  dwNetThreadId: netThreadId
+  g_phClientModule: g_pClientModule
+  g_pClientFactory: g_ClientFactory
+  rtable: "R_TextureAnimation::rtable"
+  sv_unlag_value:
+    global: sv_unlag
+    type: cvar_s
+    field_path: [value]
+  gmodinfo_vertical_fov:
+    global: gmodinfo
+    type: modinfo_s
+    field_path: [unknown_358c]
+  cl_players_model:
+    global: cl
+    type: client_state_t
+    field_path: [players, model]
+  gltextures.m_Size:
+    global: gltextures
+    type: "CUtlVector<gltexture_t>"
+    field_path: [m_Size]
+  gltextures.m_Memory.m_nAllocationCount:
+    global: gltextures
+    type: "CUtlVector<gltexture_t>"
+    field_path: [m_Memory, m_NumAllocated]
+  g_VertexBuffer:
+    symbol: g_VertexBuffer
+    prefer_owner_func: "EngineSurface::drawFlushText"
+  g_iVertexBufferEntriesUsed:
+    symbol: g_iVertexBufferEntriesUsed
+    prefer_owner_func: "EngineSurface::drawFlushText"
+# Struct member aliases for nested fields or template types.
+structmember_aliases:
+  CVideoMode_Common_m_ImageID_m_Size:
+    struct: CVideoMode_Common
+    member: m_ImageID.m_Size
+    field_path: [m_ImageID, m_Size]
+  CUtlVector_gltexture_t_m_Memory_m_pMemory:
+    struct: "CUtlVector<gltexture_t>"
+    global_type_hint: gltextures
+    member: m_Memory.m_pMemory
+    field_path: [m_Memory, m_pMemory]
+  CUtlVector_gltexture_t_m_Memory_m_nAllocationCount:
+    struct: "CUtlVector<gltexture_t>"
+    global_type_hint: gltextures
+    member: m_Memory.m_nAllocationCount
+    field_path: [m_Memory, m_NumAllocated]
+  CUtlVector_gltexture_t_m_Size:
+    struct: "CUtlVector<gltexture_t>"
+    global_type_hint: gltextures
+    member: m_Size
+    field_path: [m_Size]
+# Scalar layout queries (global arrays & struct fields that do not follow <struct>_t_<field>).
+scalar_aliases:
+  truepositions_element_size: {global_array: truepositions, property: element_size}
+  truepositions_active_offset: {global_array: truepositions, member: active}
+  truepositions_needrelink_offset: {global_array: truepositions, member: needrelink}
+  truepositions_oldorg_offset: {global_array: truepositions, member: oldorg}
+  truepositions_oldabsmin_offset: {global_array: truepositions, member: oldabsmin}
+  truepositions_oldabsmax_offset: {global_array: truepositions, member: oldabsmax}
+  sv_areanodes_element_size: {global_array: sv_areanodes, property: element_size}
+  sv_areanodes_count: {global_array: sv_areanodes, property: count}
+  sv_areanodes_size: {global_array: sv_areanodes, property: total_size}
+  sv_models_offset: {struct: server_t, field_path: [models], property: offset}
+  sv_models_element_size: {struct: server_t, field_path: [models], property: element_size}
+  sv_models_count: {struct: server_t, field_path: [models], property: count}
+  sv_models_size: {struct: server_t, field_path: [models], property: total_size}
+  playermove_t_physents_count: {struct: playermove_t, field_path: [physents], property: count}
+  playermove_t_moveents_count: {struct: playermove_t, field_path: [moveents], property: count}
+# Explicit callsite patch mappings where the config name does not use <Caller>_to_<Callee>_callsite_<N>.
+patch_callsites:
+  FileSystem_SetGameDirectory_V_strncpy_callsite_0:
+    caller: FileSystem_SetGameDirectory
+    callee: strncpy
+    allow_import_plt: true
+    ordinal: 0
+  FileSystem_AddFallbackGameDir_V_strncpy_callsite_0:
+    caller: FileSystem_AddFallbackGameDir
+    callee: strncpy
+    allow_import_plt: true
+    ordinal: 0
+# External preprocessor script rules for non-callsite special patches (paths relative to repo root).
+patch_preprocessors:
+  - match_prefix: Sys_InitMemory_HeapLimitPatches_
+    numbered_only: true
+    script: ida_preprocessor_scripts/find-Sys_InitMemory_HeapLimitPatches.py
+    owner_func: Sys_InitMemory
+    mode: site_locator
+  - match_exact:
+      - VGUIClient001_CreateInterface
+    script: ida_preprocessor_scripts/find-VGUIClient001_CreateInterface.py
+    owner_func: CBaseUI__Initialize
+    mode: preprocess_skill
