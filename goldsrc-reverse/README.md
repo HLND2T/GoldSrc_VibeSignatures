@@ -47,6 +47,29 @@ uv run python goldsrc-reverse/generate_gamedata.py \
   --emit-gamedata-json .tmp/goldsrc-reverse-out/svencoop-10257/gamedata.json \
   --export-only
 
+# 直接导出 MetaHookSv 运行时裁剪格式（<gamever>.json + index.json），可直接放入 metahook/gamedata/<自定义子目录>/
+uv run python goldsrc-reverse/generate_gamedata.py \
+  --config configs/svencoop-10257.yaml \
+  --module engine \
+  --binary "D:\goldsrc-reverse\reports\re-agent\svencoop-engine-10257\win32dbg\Release\hw.dll" \
+  --output-dir .tmp/goldsrc-reverse-out/svencoop-10257/engine \
+  --reference-dir bin_artifacts/svencoop-10257/engine \
+  --emit-gamedata-json .tmp/goldsrc-reverse-out/metahook-gamedata \
+  --gamedata-format metahook \
+  --export-only
+
+# 如需按 MetaHook 宿主或插件 manifest 进一步裁剪符号，可额外传入 --metahook-manifest
+uv run python goldsrc-reverse/generate_gamedata.py \
+  --config configs/svencoop-10257.yaml \
+  --module engine \
+  --binary "D:\goldsrc-reverse\reports\re-agent\svencoop-engine-10257\win32dbg\Release\hw.dll" \
+  --output-dir .tmp/goldsrc-reverse-out/svencoop-10257/engine \
+  --reference-dir bin_artifacts/svencoop-10257/engine \
+  --emit-gamedata-json .tmp/goldsrc-reverse-out/metahook-gamedata-host \
+  --gamedata-format metahook \
+  --metahook-manifest "D:\MetaHookSv\MetaHook\scripts\manifests\metahook.json" \
+  --export-only
+
 # Linux (带 DWARF 的 hw.so)
 uv run python goldsrc-reverse/generate_gamedata.py \
   --config configs/svencoop-10257.yaml \

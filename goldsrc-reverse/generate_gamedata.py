@@ -57,6 +57,43 @@ from ida_preprocessor_scripts._patch_signature_common import run_signature
 from mcp_worker_client import run_mcp_operation
 from release_workflow_lib.hashing import canonical_json_bytes, sha256_bytes, sha256_file, write_canonical_json
 
+# MetaHookSv runtime gamedata pruning rules (mirrors MetaHook/scripts/sync-gamedata.py).
+METAHOOK_CONSUMED_PAYLOAD_FIELDS: dict[str, tuple[str, ...]] = {
+    "function": (
+        "func_rva",
+        "func_size",
+        "func_sig",
+        "func_sig_allow_across_function_boundary",
+    ),
+    "global": (
+        "gv_rva",
+        "gv_sig",
+        "gv_sig_va",
+        "gv_va",
+        "gv_inst_offset",
+        "gv_inst_disp",
+        "gv_inst_length",
+        "gv_sig_allow_across_function_boundary",
+    ),
+    "patch": ("patch_rva",),
+    "scalar": ("scalar_name", "scalar_value"),
+    "structMember": ("struct_name", "member_name", "offset"),
+    "virtualFunction": (
+        "vfunc_index",
+        "vtable_name",
+        "func_rva",
+        "func_size",
+        "vfunc_sig",
+        "func_sig",
+        "vfunc_sig_allow_across_function_boundary",
+        "func_sig_allow_across_function_boundary",
+    ),
+    "vtable": ("vtable_rva", "vtable_size", "vtable_symbol", "vtable_numvfunc"),
+}
+METAHOOK_CONSUMED_TOP_LEVEL_FIELDS: tuple[str, ...] = ("schemaVersion", "source", "binaries", "records")
+METAHOOK_CONSUMED_SOURCE_FIELDS: tuple[str, ...] = ("snapshotSchemaVersion", "analysisOutputContractVersion")
+METAHOOK_CONSUMED_RECORD_FIELDS: tuple[str, ...] = ("platform", "module", "symbolName", "kind", "payload")
+
 BATCH_GV_XREFS_PY = (
     ELF_RESOLVER_PY
     + r"""
@@ -1100,6 +1137,181 @@ def _run_dry_probe(
     return {"platform": platform, "dry_run": True, "counts": dict(counts), "failures": failures, "skipped": skipped}
 
 
+def _serialize_metahook_json(document: object) -> bytes:
+    """Compact UTF-8 JSON with preserved key order and trailing newline (matches MetaHook sync-gamedata.py)."""
+    return (json.dumps(document, ensure_ascii=False, separators=(",", ":"), sort_keys=False) + "\n").encode("utf-8")
+
+
+def _normalize_manifest_symbol_block(value: object) -> dict[str, dict[str, str]]:
+    if value is None:
+        return {}
+    if isinstance(value, list):
+        return {"engine": {str(sym): "" for sym in value if isinstance(sym, str) and sym}}
+    if not isinstance(value, Mapping):
+        raise TypeError("MetaHook manifest symbol block must be a mapping or list")
+    module_scoped = len(value) > 0 and all(isinstance(v, (Mapping, list)) for v in value.values())
+    result: dict[str, dict[str, str]] = {}
+    if module_scoped:
+        for mod, mapping in value.items():
+            if isinstance(mapping, list):
+                result[str(mod)] = {str(sym): "" for sym in mapping if isinstance(sym, str) and sym}
+            elif isinstance(mapping, Mapping):
+                result[str(mod)] = {str(sym): ("" if kind is None else str(kind)) for sym, kind in mapping.items()}
+    else:
+        result["engine"] = {str(sym): ("" if kind is None else str(kind)) for sym, kind in value.items()}
+    return result
+
+
+def _parse_manifest_numbered_sets(value: object) -> list[tuple[str, str]]:
+    if not isinstance(value, list):
+        return []
+    result: list[tuple[str, str]] = []
+    for item in value:
+        if isinstance(item, str) and item:
+            result.append(("engine", item))
+        elif isinstance(item, Mapping) and isinstance(item.get("prefix"), str) and item["prefix"]:
+            result.append((str(item.get("module") or "engine"), str(item["prefix"])))
+    return result
+
+
+def _metahook_manifest_keep_set(
+    manifest: Mapping[str, Any], records: list[dict[str, Any]], game_version: str
+) -> set[tuple[str, str]]:
+    present: set[tuple[str, str]] = {(str(r.get("module", "engine")), str(r.get("symbolName", ""))) for r in records}
+    present_names = {name for _, name in present}
+    keep: set[tuple[str, str]] = set()
+
+    for mod, sym_map in _normalize_manifest_symbol_block(manifest.get("symbols")).items():
+        for sym in sym_map:
+            keep.add((mod, sym))
+    for mod, sym_map in _normalize_manifest_symbol_block(manifest.get("optionalSymbols")).items():
+        for sym in sym_map:
+            if sym in present_names:
+                keep.add((mod, sym))
+    for mod, prefix in _parse_manifest_numbered_sets(manifest.get("numberedPatchSets")):
+        idx = 0
+        while (mod, f"{prefix}_{idx}") in present:
+            keep.add((mod, f"{prefix}_{idx}"))
+            idx += 1
+    for group in manifest.get("conditionalGroups") or []:
+        if not isinstance(group, Mapping):
+            continue
+        exempt = group.get("exempt") or []
+        when = group.get("when") or []
+        if game_version in exempt or (when and game_version not in when):
+            continue
+        for mod, sym_map in _normalize_manifest_symbol_block(group.get("symbols")).items():
+            for sym in sym_map:
+                keep.add((mod, sym))
+        for mod, prefix in _parse_manifest_numbered_sets(group.get("numberedPatchSets")):
+            idx = 0
+            while (mod, f"{prefix}_{idx}") in present:
+                keep.add((mod, f"{prefix}_{idx}"))
+                idx += 1
+    return keep
+
+
+def _prune_record_for_metahook(
+    record: Mapping[str, Any],
+    *,
+    strip_record_fields: set[str],
+    strip_payload_fields: Mapping[str, set[str]],
+) -> dict[str, Any]:
+    pruned: dict[str, Any] = {}
+    for field in METAHOOK_CONSUMED_RECORD_FIELDS:
+        if field in record and field not in strip_record_fields:
+            pruned[field] = record[field]
+
+    kind = record.get("kind")
+    payload = record.get("payload")
+    if isinstance(kind, str) and kind in METAHOOK_CONSUMED_PAYLOAD_FIELDS and isinstance(payload, Mapping):
+        stripped = strip_payload_fields.get(kind, set())
+        keep_keys = [
+            field for field in METAHOOK_CONSUMED_PAYLOAD_FIELDS[kind] if field in payload and field not in stripped
+        ]
+        if keep_keys:
+            pruned["payload"] = {field: payload[field] for field in keep_keys}
+    return pruned
+
+
+def prune_dataset_for_metahook(
+    dataset: Mapping[str, Any],
+    *,
+    game_version: str,
+    manifest: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Convert an upstream Schema-5 dataset into MetaHookSv's pruned runtime JSON format."""
+    raw_records = list(dataset.get("records") or [])
+    strip_record_fields = set(manifest.get("stripRecordFields") or ()) if manifest else set()
+    strip_top_level_fields = set(manifest.get("stripTopLevelFields") or ()) if manifest else set()
+    strip_payload_fields: dict[str, set[str]] = {}
+    if manifest and isinstance(manifest.get("stripPayloadFields"), Mapping):
+        for kind, fields in manifest["stripPayloadFields"].items():
+            strip_payload_fields[str(kind)] = set(fields or ())
+
+    keep_set = _metahook_manifest_keep_set(manifest, raw_records, game_version) if manifest else None
+
+    kept_records: list[dict[str, Any]] = []
+    used_modules: list[str] = []
+    seen_modules: set[str] = set()
+    for record in raw_records:
+        if keep_set is not None:
+            key = (str(record.get("module", "engine")), str(record.get("symbolName", "")))
+            if key not in keep_set:
+                continue
+        pruned = _prune_record_for_metahook(
+            record,
+            strip_record_fields=strip_record_fields,
+            strip_payload_fields=strip_payload_fields,
+        )
+        kept_records.append(pruned)
+        mod = pruned.get("module")
+        if isinstance(mod, str) and mod not in seen_modules:
+            seen_modules.add(mod)
+            used_modules.append(mod)
+
+    allowed_top = set(METAHOOK_CONSUMED_TOP_LEVEL_FIELDS) - strip_top_level_fields
+    pruned_doc: dict[str, Any] = {}
+    if "schemaVersion" in allowed_top and "schemaVersion" in dataset:
+        pruned_doc["schemaVersion"] = dataset["schemaVersion"]
+
+    source = dataset.get("source")
+    if "source" in allowed_top and isinstance(source, Mapping):
+        allowed_source = set(METAHOOK_CONSUMED_SOURCE_FIELDS) - strip_top_level_fields
+        pruned_source: dict[str, Any] = {
+            field: source[field]
+            for field in METAHOOK_CONSUMED_SOURCE_FIELDS
+            if field in allowed_source and field in source
+        }
+        if isinstance(source.get("gameVersion"), str):
+            pruned_source["gameVersion"] = source["gameVersion"]
+        pruned_doc["source"] = pruned_source
+
+    binaries = dataset.get("binaries")
+    if "binaries" in allowed_top and isinstance(binaries, Mapping):
+        pruned_binaries: dict[str, Any] = {}
+        for mod in used_modules:
+            mod_entry = binaries.get(mod)
+            if not isinstance(mod_entry, Mapping):
+                continue
+            pruned_plats: dict[str, Any] = {}
+            for plat, plat_entry in mod_entry.items():
+                if not isinstance(plat_entry, Mapping) or not isinstance(plat_entry.get("crc64"), str):
+                    continue
+                pruned_plat: dict[str, Any] = {"crc64": plat_entry["crc64"]}
+                if "alias" in plat_entry:
+                    pruned_plat["alias"] = plat_entry["alias"]
+                pruned_plats[str(plat)] = pruned_plat
+            if pruned_plats:
+                pruned_binaries[mod] = pruned_plats
+        pruned_doc["binaries"] = pruned_binaries
+
+    if "records" in allowed_top:
+        pruned_doc["records"] = kept_records
+
+    return pruned_doc
+
+
 def export_gamedata_json(
     *,
     artifacts_dir: Path,
@@ -1111,8 +1323,20 @@ def export_gamedata_json(
     output_json_path: Path,
     reference_dir: Path | None = None,
     write_index: bool = True,
+    gamedata_format: str = "upstream",
+    metahook_manifest_path: Path | None = None,
 ) -> dict[str, Any]:
-    """Export Schema-5 gamedata dataset JSON (+ Schema-4 index.json) compatible with MetaHookSv/Metamod."""
+    """Export Schema-5 gamedata dataset JSON (+ Schema-4 index.json) in upstream or MetaHookSv runtime format."""
+    if gamedata_format not in ("upstream", "metahook"):
+        raise ValueError(f"Unsupported gamedata_format: {gamedata_format!r}")
+    if metahook_manifest_path is not None and gamedata_format != "metahook":
+        raise ValueError("--metahook-manifest requires --gamedata-format metahook")
+
+    # Allow passing a directory (or extensionless path) in metahook mode -> <dir>/<game_version>.json.
+    resolved_output = output_json_path
+    if gamedata_format == "metahook" and (resolved_output.is_dir() or resolved_output.suffix.lower() != ".json"):
+        resolved_output = resolved_output / f"{game_version}.json"
+
     bin_hashes = hash_file(binary_path)
     binary_entry = {
         "crc32": bin_hashes["crc32"],
@@ -1185,35 +1409,65 @@ def export_gamedata_json(
         },
     }
 
-    output_json_path.parent.mkdir(parents=True, exist_ok=True)
-    raw = canonical_json_bytes(dataset)
-    digest = sha256_bytes(raw)
-    write_canonical_json(output_json_path, dataset)
+    resolved_output.parent.mkdir(parents=True, exist_ok=True)
+    if gamedata_format == "metahook":
+        manifest_doc: dict[str, Any] | None = None
+        if metahook_manifest_path is not None:
+            manifest_doc = json.loads(metahook_manifest_path.read_text(encoding="utf-8"))
+            if not isinstance(manifest_doc, dict) or manifest_doc.get("schemaVersion") != 1:
+                raise ValueError(f"Unsupported MetaHook manifest (expected schemaVersion 1): {metahook_manifest_path}")
+        emitted_doc = prune_dataset_for_metahook(dataset, game_version=game_version, manifest=manifest_doc)
+        raw = _serialize_metahook_json(emitted_doc)
+        resolved_output.write_bytes(raw)
+        emitted_record_count = len(emitted_doc.get("records") or ())
+    else:
+        raw = canonical_json_bytes(dataset)
+        write_canonical_json(resolved_output, dataset)
+        emitted_record_count = len(records)
 
+    digest = sha256_bytes(raw)
     result: dict[str, Any] = {
-        "gamedata_json": str(output_json_path),
+        "format": gamedata_format,
+        "gamedata_json": str(resolved_output),
         "sha256": digest,
         "size": len(raw),
-        "record_count": len(records),
+        "record_count": emitted_record_count,
         "binary": binary_entry,
     }
     if write_index:
-        index_doc = {
-            "schemaVersion": INDEX_SCHEMA_VERSION,
-            "versions": [
-                {
-                    "fileCount": len(records),
-                    "gameVersion": game_version,
-                    "lastPublishTime": publish_time,
-                    "sha256": digest,
-                    "size": len(raw),
-                    "snapshotSchemaVersion": REQUIRED_SNAPSHOT_SCHEMA_VERSION,
-                    "url": output_json_path.name,
-                }
-            ],
-        }
-        index_path = output_json_path.parent / "index.json"
-        write_canonical_json(index_path, index_doc)
+        index_path = resolved_output.parent / "index.json"
+        if gamedata_format == "metahook":
+            index_doc = {
+                "schemaVersion": INDEX_SCHEMA_VERSION,
+                "versions": [
+                    {
+                        "gameVersion": game_version,
+                        "url": resolved_output.name,
+                        "sha256": digest,
+                        "size": len(raw),
+                        "snapshotSchemaVersion": REQUIRED_SNAPSHOT_SCHEMA_VERSION,
+                        "fileCount": emitted_record_count,
+                        "lastPublishTime": publish_time,
+                    }
+                ],
+            }
+            index_path.write_bytes(_serialize_metahook_json(index_doc))
+        else:
+            index_doc = {
+                "schemaVersion": INDEX_SCHEMA_VERSION,
+                "versions": [
+                    {
+                        "fileCount": emitted_record_count,
+                        "gameVersion": game_version,
+                        "lastPublishTime": publish_time,
+                        "sha256": digest,
+                        "size": len(raw),
+                        "snapshotSchemaVersion": REQUIRED_SNAPSHOT_SCHEMA_VERSION,
+                        "url": resolved_output.name,
+                    }
+                ],
+            }
+            write_canonical_json(index_path, index_doc)
         result["index_json"] = str(index_path)
     return result
 
@@ -1241,7 +1495,22 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--aliases", type=Path, default=None, help="External symbol alias & layout mapping YAML")
     parser.add_argument("--output-dir", required=True, type=Path, help="Output directory for generated symbol YAMLs")
     parser.add_argument(
-        "--emit-gamedata-json", type=Path, default=None, help="Also export Schema-5 gamedata.json + index.json"
+        "--emit-gamedata-json",
+        type=Path,
+        default=None,
+        help="Also export Schema-5 gamedata JSON + Schema-4 index.json (in metahook mode, a directory writes <gamever>.json)",
+    )
+    parser.add_argument(
+        "--gamedata-format",
+        choices=("upstream", "metahook"),
+        default="upstream",
+        help="Gamedata JSON schema style: upstream (full dataset) or metahook (pruned runtime format)",
+    )
+    parser.add_argument(
+        "--metahook-manifest",
+        type=Path,
+        default=None,
+        help="Optional MetaHook consumer manifest JSON (schemaVersion 1) to filter symbols when --gamedata-format=metahook",
     )
     parser.add_argument(
         "--export-only",
@@ -1286,6 +1555,8 @@ def main(argv: list[str] | None = None) -> int:
             game_version=game_version,
             output_json_path=args.emit_gamedata_json,
             reference_dir=args.reference_dir,
+            gamedata_format=args.gamedata_format,
+            metahook_manifest_path=args.metahook_manifest,
         )
         print(json.dumps(exported, indent=2, ensure_ascii=False))
         return 0
@@ -1360,6 +1631,8 @@ def main(argv: list[str] | None = None) -> int:
             game_version=game_version,
             output_json_path=args.emit_gamedata_json,
             reference_dir=args.reference_dir,
+            gamedata_format=args.gamedata_format,
+            metahook_manifest_path=args.metahook_manifest,
         )
 
     report_path = args.report or (args.output_dir / f"generation-report.{platform}.json")
