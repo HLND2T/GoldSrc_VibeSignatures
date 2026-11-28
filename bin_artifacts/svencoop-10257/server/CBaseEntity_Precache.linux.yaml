@@ -1,0 +1,4 @@
+func_name: CBaseEntity_Precache
+vtable_name: CBaseEntity
+vfunc_offset: '0xc'
+vfunc_index: 3

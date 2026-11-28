@@ -1,0 +1,4 @@
+func_name: CBaseEntity_IsPlayer
+vtable_name: CBaseEntity
+vfunc_offset: '0xdc'
+vfunc_index: 55
