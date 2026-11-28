@@ -53,6 +53,43 @@ def fixture(root: Path):
 
 
 class EncoderTests(unittest.TestCase):
+    def test_slot_only_vfunc_preserves_lookup_name_and_platform_offsets(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            tag = "game-1"
+            name = "Widget_Paint"
+            config = write_config(
+                root / "config.yaml",
+                skill={"name": "find", "expected_output": [f"{name}.{{platform}}.yaml"]},
+                symbols=[{"name": name, "category": "vfunc"}],
+            )
+            write_pe32(root / "bin" / tag / "engine" / "hw.dll")
+            write_elf32(root / "bin" / tag / "engine" / "hw.so")
+            artifacts = root / "bin_artifacts" / tag / "engine"
+            artifacts.mkdir(parents=True)
+            payloads = {
+                platform: {
+                    "func_name": name,
+                    "vtable_name": "Widget",
+                    "vfunc_index": index,
+                    "vfunc_offset": hex(index * 4),
+                }
+                for platform, index in (("windows", 5), ("linux", 6))
+            }
+            for platform, payload in payloads.items():
+                (artifacts / f"{name}.{platform}.yaml").write_text(yaml.safe_dump(payload), encoding="utf-8")
+            snapshot = root / f"{tag}.yaml"
+            pack_snapshot(tag, root / "bin", config, snapshot, artifactdir=root / "bin_artifacts")
+            metadata = root / f"{tag}.metadata.yaml"
+            write_metadata(snapshot_path=snapshot, config_path=config, game_version=tag, output_path=metadata)
+
+            dataset = encode_dataset(snapshot.read_bytes(), metadata.read_bytes(), tag)
+            self.assertEqual(2, len(dataset["records"]))
+            for record in dataset["records"]:
+                self.assertEqual(name, record["symbolName"])
+                self.assertEqual("virtualFunction", record["kind"])
+                self.assertEqual(payloads[record["platform"]], record["payload"])
+
     def test_patch_payload_exports_as_patch_kind(self):
         payload = {
             "patch_name": "Cvar_Set_to_Cvar_DirectSet_callsite_0",

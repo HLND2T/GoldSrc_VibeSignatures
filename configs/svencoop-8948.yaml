@@ -4389,6 +4389,15 @@ modules:
     depot_windows: svencoop/dlls/server.dll
     depot_linux: svencoop/dlls/server.so
     skills:
+      - name: find-CBaseEntity-vfuncs
+        expected_output:
+          - CBaseEntity_Precache.{platform}.yaml
+          - CBaseEntity_TraceAttack.{platform}.yaml
+          - CBaseEntity_TakeDamage.{platform}.yaml
+          - CBaseEntity_TakeHealth.{platform}.yaml
+          - CBaseEntity_TakeArmor.{platform}.yaml
+          - CBaseEntity_IsPlayer.{platform}.yaml
+          - CBaseEntity_BeginRevive.{platform}.yaml
       - name: find-asexthook-server-functions
         expected_output:
           - GrappleGetMonsterType.{platform}.yaml
@@ -4594,6 +4603,20 @@ modules:
         expected_output:
           - PM_PlaySoundFX_SERVER.linux.yaml
     symbols:
+      - name: CBaseEntity_Precache
+        category: vfunc
+      - name: CBaseEntity_TraceAttack
+        category: vfunc
+      - name: CBaseEntity_TakeDamage
+        category: vfunc
+      - name: CBaseEntity_TakeHealth
+        category: vfunc
+      - name: CBaseEntity_TakeArmor
+        category: vfunc
+      - name: CBaseEntity_IsPlayer
+        category: vfunc
+      - name: CBaseEntity_BeginRevive
+        category: vfunc
       - name: GrappleGetMonsterType
         category: func
       - name: ApacheTraceAttack
